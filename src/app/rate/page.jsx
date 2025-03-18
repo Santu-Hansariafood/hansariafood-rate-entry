@@ -1,8 +1,9 @@
+import RateManagement from '@/components/ui/Rate/Rate'
 import React from 'react'
 
 const page = () => {
   return (
-    <div>page</div>
+    <RateManagement/>
   )
 }
 
