@@ -70,7 +70,10 @@ export default function CreateCompany() {
     <div className="flex flex-col items-center justify-center p-6 bg-gray-100 min-h-screen">
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="bg-white p-10 rounded-lg shadow-lg w-full max-w-3xl flex flex-col space-y-8">
-        <Title text="Create Company" className="text-center text-2xl font-bold text-gray-800" />
+        <Title
+          text="Create Company"
+          className="text-center text-2xl font-bold text-gray-800"
+        />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Dropdown
             label="Company Name"
@@ -78,9 +81,10 @@ export default function CreateCompany() {
               label: comp.name,
               value: comp.name,
             }))}
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
+            value={companyName} // Ensure value is passed
+            onChange={(val) => setCompanyName(val)} // Use direct value instead of event
           />
+
           <Dropdown
             label="Location"
             options={locations.map((loc) => ({
@@ -88,8 +92,9 @@ export default function CreateCompany() {
               value: loc.name,
             }))}
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={(val) => setLocation(val)} // Fix event handling
           />
+
           <Dropdown
             label="Category"
             options={categories.map((cat) => ({
@@ -97,11 +102,16 @@ export default function CreateCompany() {
               value: cat.name,
             }))}
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(val) => setCategory(val)}
           />
         </div>
         <div className="flex justify-center">
-          <Button onClick={handleSubmit} text="Save" isLoading={loading} className="w-48 py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition duration-300" />
+          <Button
+            onClick={handleSubmit}
+            text="Save"
+            isLoading={loading}
+            className="w-48 py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition duration-300"
+          />
         </div>
       </div>
     </div>
