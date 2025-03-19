@@ -97,16 +97,23 @@ export default function RateManagement() {
 
   const handleSave = async (index) => {
     const rateToSave = rates[index];
+
     if (!rateToSave.newRate) {
       toast.error("New rate cannot be empty!");
       return;
     }
 
     try {
+      const updatedOldRates = [
+        ...rateToSave.oldRates,
+        `${rateToSave.newRate} (${new Date().toLocaleDateString("en-GB")})`,
+      ];
+
       const response = await axios.post("/api/rate", {
         company: selectedCompany,
         location: rateToSave.location,
         newRate: rateToSave.newRate,
+        oldRates: updatedOldRates, // Properly formatted old rates
       });
 
       if (response.status === 200 || response.status === 201) {
@@ -202,11 +209,11 @@ export default function RateManagement() {
                     <td className="border p-2">
                       {rate.oldRates.map((old, i) => (
                         <div key={i} className="text-sm">
-                          {old.rate} (
-                          {new Date(old.date).toLocaleDateString("en-GB")})
+                          {old}
                         </div>
                       ))}
                     </td>
+
                     <td className="border p-2">
                       <input
                         type="text"

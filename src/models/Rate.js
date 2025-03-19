@@ -22,12 +22,12 @@ RateSchema.pre("save", function (next) {
   const lastUpdated = new Date(this.newRateDate);
   lastUpdated.setHours(0, 0, 0, 0);
 
+  // If the last updated date is not today, move the newRate to oldRates
   if (lastUpdated < today) {
-    this.oldRates = this.oldRates || [];
-    this.oldRates.push({ rate: this.newRate, date: this.newRateDate });
-
-    // Update newRateDate to today
-    this.newRateDate = today;
+    if (this.newRate) {
+      this.oldRates.push({ rate: this.newRate, date: this.newRateDate });
+    }
+    this.newRateDate = today; // Set the new rate date to today
   }
 
   this.updatedAt = new Date();

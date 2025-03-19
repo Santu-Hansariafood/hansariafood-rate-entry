@@ -14,7 +14,19 @@ export async function POST(req) {
     let rateEntry = await Rate.findOne({ company, location });
 
     if (rateEntry) {
-      rateEntry.newRate = newRate; // The pre-save hook in the model handles oldRates update automatically
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const lastUpdated = new Date(rateEntry.newRateDate);
+      lastUpdated.setHours(0, 0, 0, 0);
+
+      // Move old rate to history if the date has changed
+      if (lastUpdated < today) {
+        rateEntry.oldRates.push({ rate: rateEntry.newRate, date: rateEntry.newRateDate });
+      }
+
+      // Update with new rate
+      rateEntry.newRate = newRate;
+      rateEntry.newRateDate = today;
       await rateEntry.save();
       return NextResponse.json({ message: "Rate updated successfully!", updatedRate: rateEntry }, { status: 200 });
     }
@@ -40,14 +52,19 @@ export async function GET(req) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const formattedRates = rates.map((rate) => ({
-      company: rate.company,
-      location: rate.location,
-      oldRates: rate.oldRates.map(old => `${old.rate} (${new Date(old.date).toLocaleDateString('en-GB')})`),
-      newRate: new Date(rate.newRateDate).setHours(0, 0, 0, 0) === today.getTime() 
-        ? `${rate.newRate} (${new Date(rate.newRateDate).toLocaleDateString('en-GB')})` 
-        : "",
-    }));
+    const formattedRates = rates.map((rate) => {
+      const lastUpdated = new Date(rate.newRateDate);
+      lastUpdated.setHours(0, 0, 0, 0);
+
+      return {
+        company: rate.company,
+        location: rate.location,
+        oldRates: rate.oldRates.map(old => `${old.rate} (${new Date(old.date).toLocaleDateString('en-GB')})`),
+        newRate: lastUpdated.getTime() === today.getTime()
+          ? `${rate.newRate} (${new Date(rate.newRateDate).toLocaleDateString('en-GB')})`
+          : "", // Empty if it's not today's rate
+      };
+    });
 
     return NextResponse.json(formattedRates, { status: 200 });
   } catch (error) {
