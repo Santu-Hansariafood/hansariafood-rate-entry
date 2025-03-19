@@ -42,6 +42,7 @@ export default function Header() {
         >
           <ul className="flex flex-col md:flex-row items-center md:gap-6 p-4 md:p-0">
             {[
+              { href: "/manage", label: "Manage Company" },
               { href: "/company", label: "Company Name" },
               { href: "/location", label: "Location" },
               { href: "/category", label: "Category" },

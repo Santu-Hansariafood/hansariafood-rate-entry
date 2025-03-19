@@ -1,10 +1,14 @@
-import CreateLocation from '@/components/ui/Location/Location'
-import React from 'react'
+import CreateLocation from "@/components/ui/Location/Location";
+import LocationList from "@/components/ui/LocationList/LocationList";
+import React from "react";
 
 const page = () => {
   return (
-    <CreateLocation/>
-  )
-}
+    <>
+      <CreateLocation />
+      <LocationList />
+    </>
+  );
+};
 
-export default page
+export default page;

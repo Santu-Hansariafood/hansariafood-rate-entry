@@ -19,7 +19,7 @@ export default function RateManagement() {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await axios.get("/api/company");
+        const response = await axios.get("/api/managecompany");
         const companyNames = response.data.companies.map(
           (company) => company.name
         );
@@ -64,7 +64,7 @@ export default function RateManagement() {
     setSelectedCompany(companyName);
 
     try {
-      const { data } = await axios.get("/api/company");
+      const { data } = await axios.get("/api/managecompany");
       const companyData = data.companies.find((c) => c.name === companyName);
 
       if (companyData) {
