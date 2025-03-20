@@ -1,3 +1,4 @@
+import Loading from "@/components/common/Loading/Loading";
 import { useState } from "react";
 
 export default function CompanyList({
@@ -22,7 +23,7 @@ export default function CompanyList({
         className="mb-4 p-2 border border-gray-300 rounded-md w-full text-center"
       />
       {loading ? (
-        <p className="text-gray-500 text-center">Loading companies...</p>
+        <Loading />
       ) : (
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {filteredCompanies.map((company) => (

@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
+import Loading from "@/components/common/Loading/Loading";
 const CreateCategory = dynamic(() =>
   import("@/components/ui/Category/Category")
 );
@@ -9,7 +10,7 @@ const CategoryList = dynamic(() =>
 
 const page = () => {
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<Loading/>}>
       <CreateCategory />
       <CategoryList />
     </Suspense>

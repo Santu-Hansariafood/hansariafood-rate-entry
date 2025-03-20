@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
+import Loading from "@/components/common/Loading/Loading";
 const CompanyList = dynamic(() =>
   import("@/components/ui/CompanyList/CompanyList")
 );
@@ -9,7 +10,7 @@ const CreateCompany = dynamic(() =>
 
 const page = () => {
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<Loading/>}>
       <CreateCompany />
       <CompanyList />
     </Suspense>

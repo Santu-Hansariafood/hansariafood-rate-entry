@@ -5,6 +5,7 @@ import axios from "axios";
 import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Loading from "@/components/common/Loading/Loading";
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Button = dynamic(() => import("@/components/common/Button/Button"));
@@ -62,7 +63,7 @@ export default function CreateCompany() {
   };
 
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<Loading/>}>
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
       <ToastContainer position="top-right" autoClose={3000} />
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl space-y-6">

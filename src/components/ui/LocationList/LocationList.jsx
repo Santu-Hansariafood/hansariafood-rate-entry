@@ -2,6 +2,8 @@
 import React, { Suspense, useEffect, useState } from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
+import Loading from "@/components/common/Loading/Loading";
+const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 const Actions = dynamic(() => import("@/components/common/Actions/Actions"));
 
@@ -34,11 +36,11 @@ const LocationList = () => {
   }));
 
   return (
-    <Suspense fallback={<p>Loading...</p>}>
-    <div className="p-4">
-      <h2 className="text-2xl font-semibold mb-4">Location List</h2>
-      <Table data={data} columns={columns} />
-    </div>
+    <Suspense fallback={<Loading />}>
+      <div className="p-4">
+        <Title text="Location List" />
+        <Table data={data} columns={columns} />
+      </div>
     </Suspense>
   );
 };

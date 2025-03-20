@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Loading from "@/components/common/Loading/Loading";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"));
 const RateTable = dynamic(() => import("./RateTable/RateTable"));
@@ -59,7 +60,7 @@ export default function Rate() {
   };
 
   return (
-    <Suspense fallback={<p>Loading...</p>}>
+    <Suspense fallback={<Loading/>}>
       <div className="flex flex-col items-center p-6 bg-gray-100 min-h-screen w-full">
         <ToastContainer />
         <Title text="Rate Management" />
