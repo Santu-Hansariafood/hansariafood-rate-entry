@@ -1,14 +1,19 @@
-import CreateCategory from '@/components/ui/Category/Category'
-import CategoryList from '@/components/ui/CategoryList/CategoryList'
-import React from 'react'
+import React, { Suspense } from "react";
+import dynamic from "next/dynamic";
+const CreateCategory = dynamic(() =>
+  import("@/components/ui/Category/Category")
+);
+const CategoryList = dynamic(() =>
+  import("@/components/ui/CategoryList/CategoryList")
+);
 
 const page = () => {
   return (
-    <>
-    <CreateCategory/>
-    <CategoryList/>
-    </>
-  )
-}
+    <Suspense fallback={<p>Loading...</p>}>
+      <CreateCategory />
+      <CategoryList />
+    </Suspense>
+  );
+};
 
-export default page
+export default page;

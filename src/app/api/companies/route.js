@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Company from "@/models/Company";
@@ -25,10 +24,10 @@ export async function GET() {
  */
 export async function POST(req) {
   try {
-    const { name } = await req.json();
+    const { name, category } = await req.json();
 
-    if (!name || name.trim() === "") {
-      return NextResponse.json({ error: "Company name is required" }, { status: 400 });
+    if (!name || !category || name.trim() === "" || category.trim() === "") {
+      return NextResponse.json({ error: "Company name and category are required" }, { status: 400 });
     }
 
     const existingCompany = await Company.findOne({ name });
@@ -36,7 +35,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Company already exists" }, { status: 400 });
     }
 
-    const newCompany = await Company.create({ name });
+    const newCompany = await Company.create({ name, category });
     return NextResponse.json(newCompany, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to create company" }, { status: 500 });

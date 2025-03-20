@@ -6,9 +6,9 @@ await connectDB();
 
 export async function POST(req) {
   try {
-    let { name, location, category } = await req.json();
+    let { name, location } = await req.json();
 
-    if (!name || !location || !category) {
+    if (!name || !location) {
       return NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
@@ -28,8 +28,7 @@ export async function POST(req) {
           { status: 409 }
         );
       }
-      let newLocations = [...new Set([...existingCompany.location, ...location])];
-      existingCompany.location = newLocations;
+      existingCompany.location = [...new Set([...existingCompany.location, ...location])];
       await existingCompany.save();
       return NextResponse.json(
         { message: "Company location updated successfully", company: existingCompany },
@@ -37,7 +36,7 @@ export async function POST(req) {
       );
     }
 
-    const newCompany = new ManageCompany({ name, location, category });
+    const newCompany = new ManageCompany({ name, location });
     await newCompany.save();
 
     return NextResponse.json(
@@ -66,9 +65,9 @@ export async function GET() {
   }
 }
 
-export async function DELETE(req, { params }) {
+export async function DELETE(req) {
   try {
-    const { id } = params;
+    const { id } = await req.json();
 
     const deletedCompany = await ManageCompany.findByIdAndDelete(id);
     if (!deletedCompany) {

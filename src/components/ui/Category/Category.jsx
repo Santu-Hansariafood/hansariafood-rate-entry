@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import InputBox from "@/components/common/InputBox/InputBox";
-import Title from "@/components/common/Title/Title";
-import Button from "@/components/common/Button/Button";
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
+const Title = dynamic(() => import("@/components/common/Title/Title"));
+const Button = dynamic(() => import("@/components/common/Button/Button"));
 
 export default function CreateCategory() {
   const [category, setCategory] = useState("");

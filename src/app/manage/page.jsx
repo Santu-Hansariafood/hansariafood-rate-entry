@@ -1,13 +1,14 @@
-import CreateCompany from '@/components/ui/Company/Company'
-import ManageCompanyList from '@/components/ui/ManageCompanyList/ManageCompanyList'
-import React from 'react'
+import React, { Suspense } from 'react';
+import dynamic from 'next/dynamic';
+const CreateCompany = dynamic(() => import('@/components/ui/Company/Company'));
+const ManageCompanyList = dynamic(() => import('@/components/ui/ManageCompanyList/ManageCompanyList'));
 
 const page = () => {
   return (
-    <div>
+    <Suspense fallback={<p>Loading...</p>}>
         <CreateCompany/>
         <ManageCompanyList/>
-    </div>
+    </Suspense>
   )
 }
 

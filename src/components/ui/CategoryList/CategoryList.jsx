@@ -1,8 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import axios from "axios";
-import Table from "@/components/common/Tables/Tables";
-import Actions from "@/components/common/Actions/Actions";
+import dynamic from "next/dynamic";
+const Table = dynamic(() => import("@/components/common/Tables/Tables"));
+const Actions = dynamic(() => import("@/components/common/Actions/Actions"));
 
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
@@ -33,10 +34,12 @@ const CategoryList = () => {
   }));
 
   return (
+    <Suspense fallback={<p>Loading...</p>}>
     <div className="p-4">
       <h2 className="text-2xl font-semibold mb-4">Category List</h2>
       <Table data={data} columns={columns} />
     </div>
+    </Suspense>
   );
 };
 

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import axios from "axios";
+import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import InputBox from "@/components/common/InputBox/InputBox";
-import Title from "@/components/common/Title/Title";
-import Button from "@/components/common/Button/Button";
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
+const Title = dynamic(() => import("@/components/common/Title/Title"));
+const Button = dynamic(() => import("@/components/common/Button/Button"));
 
 export default function CreateLocation() {
   const [location, setLocation] = useState("");
@@ -37,20 +38,22 @@ export default function CreateLocation() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-gray-100 min-h-screen">
-      <ToastContainer position="top-right" autoClose={3000} />
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-        <Title text="Create Location" />
-        <InputBox
-          label="Location"
-          type="text"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="Enter location"
-        />
+    <Suspense fallback={<p>Loading...</p>}>
+      <div className="flex flex-col items-center justify-center p-6 bg-gray-100 min-h-screen">
+        <ToastContainer position="top-right" autoClose={3000} />
+        <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+          <Title text="Create Location" />
+          <InputBox
+            label="Location"
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Enter location"
+          />
 
-        <Button text="Save" onClick={handleSave} isLoading={loading} />
+          <Button text="Save" onClick={handleSave} isLoading={loading} />
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 }

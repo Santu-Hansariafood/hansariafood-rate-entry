@@ -31,13 +31,17 @@ export async function GET(req, { params }) {
 export async function PUT(req, { params }) {
   try {
     const { id } = params;
-    const { name } = await req.json();
+    const { name, category } = await req.json();
 
-    if (!name || name.trim() === "") {
-      return NextResponse.json({ error: "Company name is required" }, { status: 400 });
+    if (!name || !category || name.trim() === "" || category.trim() === "") {
+      return NextResponse.json({ error: "Company name and category are required" }, { status: 400 });
     }
 
-    const updatedCompany = await Company.findByIdAndUpdate(id, { name }, { new: true });
+    const updatedCompany = await Company.findByIdAndUpdate(
+      id,
+      { name, category },
+      { new: true }
+    );
 
     if (!updatedCompany) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
