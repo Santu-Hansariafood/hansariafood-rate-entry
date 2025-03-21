@@ -1,5 +1,5 @@
-import Loading from "@/components/common/Loading/Loading";
 import { useState } from "react";
+import Loading from "@/components/common/Loading/Loading";
 
 export default function CompanyList({
   companies,

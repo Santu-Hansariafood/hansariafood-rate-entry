@@ -10,7 +10,7 @@ const CreateCompany = dynamic(() =>
 
 const page = () => {
   return (
-    <Suspense fallback={<Loading/>}>
+    <Suspense fallback={<Loading />}>
       <CreateCompany />
       <CompanyList />
     </Suspense>

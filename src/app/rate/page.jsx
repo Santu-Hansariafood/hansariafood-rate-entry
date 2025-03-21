@@ -5,7 +5,7 @@ const RateManagement = dynamic(() => import("@/components/ui/Rate/Rate"));
 
 const page = () => {
   return (
-    <Suspense fallback={<Loading/>}>
+    <Suspense fallback={<Loading />}>
       <RateManagement />
     </Suspense>
   );

@@ -21,17 +21,24 @@ export async function POST(req) {
 
     let existingCompany = await ManageCompany.findOne({ name });
     if (existingCompany) {
-      const locationExists = location.every(loc => existingCompany.location.includes(loc));
+      const locationExists = location.every((loc) =>
+        existingCompany.location.includes(loc)
+      );
       if (locationExists) {
         return NextResponse.json(
           { error: "Company with this location already exists" },
           { status: 409 }
         );
       }
-      existingCompany.location = [...new Set([...existingCompany.location, ...location])];
+      existingCompany.location = [
+        ...new Set([...existingCompany.location, ...location]),
+      ];
       await existingCompany.save();
       return NextResponse.json(
-        { message: "Company location updated successfully", company: existingCompany },
+        {
+          message: "Company location updated successfully",
+          company: existingCompany,
+        },
         { status: 200 }
       );
     }

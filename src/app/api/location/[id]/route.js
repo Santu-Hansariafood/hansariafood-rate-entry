@@ -2,7 +2,6 @@ import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
 import { NextResponse } from "next/server";
 
-// ✅ READ LOCATION BY ID (GET)
 export async function GET(req, { params }) {
   try {
     await connectDB();
@@ -24,7 +23,6 @@ export async function GET(req, { params }) {
   }
 }
 
-// ✅ UPDATE LOCATION (PUT)
 export async function PUT(req, { params }) {
   try {
     const { name } = await req.json();
@@ -62,7 +60,6 @@ export async function PUT(req, { params }) {
   }
 }
 
-// ✅ DELETE LOCATION (DELETE)
 export async function DELETE(req, { params }) {
   try {
     await connectDB();

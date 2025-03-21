@@ -63,36 +63,45 @@ export default function CreateCompany() {
   };
 
   return (
-    <Suspense fallback={<Loading/>}>
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
-      <ToastContainer position="top-right" autoClose={3000} />
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl space-y-6">
-        <Title text="Create Company" className="text-center text-2xl font-bold text-gray-800" />
-        <div className="space-y-4">
-          <Dropdown
-            label="Company Name"
-            options={companies.map((comp) => ({ label: comp.name, value: comp.name }))}
-            value={companyName}
-            onChange={(val) => setCompanyName(val)}
+    <Suspense fallback={<Loading />}>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
+        <ToastContainer position="top-right" autoClose={3000} />
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl space-y-6">
+          <Title
+            text="Create Company"
+            className="text-center text-2xl font-bold text-gray-800"
           />
+          <div className="space-y-4">
+            <Dropdown
+              label="Company Name"
+              options={companies.map((comp) => ({
+                label: comp.name,
+                value: comp.name,
+              }))}
+              value={companyName}
+              onChange={(val) => setCompanyName(val)}
+            />
 
-          <Dropdown
-            label="Location"
-            options={locations.map((loc) => ({ label: loc.name, value: loc.name }))}
-            value={location}
-            onChange={(val) => setLocation(val)}
-          />
-        </div>
-        <div className="flex justify-center">
-          <Button
-            onClick={handleSubmit}
-            text="Save"
-            isLoading={loading}
-            className="w-40 py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition duration-300"
-          />
+            <Dropdown
+              label="Location"
+              options={locations.map((loc) => ({
+                label: loc.name,
+                value: loc.name,
+              }))}
+              value={location}
+              onChange={(val) => setLocation(val)}
+            />
+          </div>
+          <div className="flex justify-center">
+            <Button
+              onClick={handleSubmit}
+              text="Save"
+              isLoading={loading}
+              className="w-40 py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition duration-300"
+            />
+          </div>
         </div>
       </div>
-    </div>
     </Suspense>
   );
 }

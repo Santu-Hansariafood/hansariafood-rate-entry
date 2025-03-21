@@ -1,4 +1,5 @@
 "use client";
+
 import React, { Suspense, useEffect, useState } from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
@@ -40,9 +41,9 @@ const ManageCompanyList = () => {
   }));
 
   return (
-    <Suspense fallback={<Loading/>}>
+    <Suspense fallback={<Loading />}>
       <div className="p-4">
-        <Title text="Manage Company List"/>
+        <Title text="Manage Company List" />
         <Table data={data} columns={columns} />
       </div>
     </Suspense>

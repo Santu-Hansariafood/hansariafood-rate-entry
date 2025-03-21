@@ -14,7 +14,6 @@ const RateSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Middleware to move newRate to oldRates if the date changes
 RateSchema.pre("save", function (next) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -22,12 +21,11 @@ RateSchema.pre("save", function (next) {
   const lastUpdated = new Date(this.newRateDate);
   lastUpdated.setHours(0, 0, 0, 0);
 
-  // If the last updated date is not today, move the newRate to oldRates
   if (lastUpdated < today) {
     if (this.newRate) {
       this.oldRates.push({ rate: this.newRate, date: this.newRateDate });
     }
-    this.newRateDate = today; // Set the new rate date to today
+    this.newRateDate = today;
   }
 
   this.updatedAt = new Date();

@@ -3,24 +3,23 @@
 import React, { useState, useEffect } from "react";
 
 const Dropdown = ({ label, options = [], value, onChange }) => {
-  const [searchTerm, setSearchTerm] = useState(value || ""); 
+  const [searchTerm, setSearchTerm] = useState(value || "");
   const [isOpen, setIsOpen] = useState(false);
-  const [isUserTyping, setIsUserTyping] = useState(false); // Track manual input
+  const [isUserTyping, setIsUserTyping] = useState(false);
 
-  // Normalize options
   const normalizedOptions = options.map((option) =>
     typeof option === "string" ? { label: option, value: option } : option
   );
 
-  // Filter options based on search term
   const filteredOptions = normalizedOptions.filter((option) =>
     option.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Update searchTerm only if the user has not manually typed
   useEffect(() => {
     if (!isUserTyping) {
-      const selectedOption = normalizedOptions.find((opt) => opt.value === value);
+      const selectedOption = normalizedOptions.find(
+        (opt) => opt.value === value
+      );
       setSearchTerm(selectedOption ? selectedOption.label : "");
     }
   }, [value, normalizedOptions]);
@@ -50,9 +49,9 @@ const Dropdown = ({ label, options = [], value, onChange }) => {
                 key={index}
                 className="p-2 hover:bg-blue-100 cursor-pointer"
                 onClick={() => {
-                  onChange(option.value); // Update parent state
-                  setSearchTerm(option.label); // Show selected value
-                  setIsUserTyping(false); // Reset manual input tracking
+                  onChange(option.value);
+                  setSearchTerm(option.label);
+                  setIsUserTyping(false);
                   setIsOpen(false);
                 }}
               >

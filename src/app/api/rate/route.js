@@ -22,7 +22,6 @@ export async function POST(req) {
       const lastUpdated = new Date(rateEntry.newRateDate);
       lastUpdated.setHours(0, 0, 0, 0);
 
-      // Move old rate to history if the date has changed
       if (lastUpdated < today) {
         rateEntry.oldRates.push({
           rate: rateEntry.newRate,
@@ -30,7 +29,6 @@ export async function POST(req) {
         });
       }
 
-      // Update with new rate
       rateEntry.newRate = newRate;
       rateEntry.newRateDate = today;
       await rateEntry.save();
@@ -40,7 +38,6 @@ export async function POST(req) {
       );
     }
 
-    // Create a new rate entry
     rateEntry = new Rate({
       company,
       location,
@@ -86,7 +83,7 @@ export async function GET(req) {
             ? `${rate.newRate} (${new Date(rate.newRateDate).toLocaleDateString(
                 "en-GB"
               )})`
-            : "", // Empty if it's not today's rate
+            : "",
       };
     });
 
@@ -115,7 +112,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: "Rate not found" }, { status: 404 });
     }
 
-    rateToUpdate.newRate = newRate; // The pre-save hook in the model will handle oldRates update
+    rateToUpdate.newRate = newRate;
     await rateToUpdate.save();
 
     return NextResponse.json(
@@ -130,7 +127,7 @@ export async function PUT(req) {
 
 export async function DELETE() {
   try {
-    await Rate.deleteMany(); // Deletes all rates
+    await Rate.deleteMany();
     return NextResponse.json(
       { message: "All rates deleted successfully!" },
       { status: 200 }
