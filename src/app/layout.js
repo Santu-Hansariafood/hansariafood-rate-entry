@@ -33,7 +33,7 @@ export const metadata = {
     siteName: "Hansaria Food",
     images: [
       {
-        url: "/images/og-image.jpg",
+        url: "/images/og-image.png",
         width: 1200,
         height: 630,
         alt: "Hansaria Food Private Limited",
