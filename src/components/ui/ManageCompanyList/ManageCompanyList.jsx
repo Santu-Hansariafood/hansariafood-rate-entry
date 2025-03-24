@@ -28,14 +28,14 @@ const ManageCompanyList = () => {
 
   const columns = [
     { header: "Company Name", accessor: "name" },
-    { header: "Category", accessor: "category" },
+    // { header: "Category", accessor: "category" },
     { header: "Locations", accessor: "locations" },
     { header: "Actions", accessor: "actions" },
   ];
 
   const data = companies.map((company) => ({
     name: company.name,
-    category: company.category,
+    // category: company.category,
     locations: company.location.join(", "),
     actions: <Actions item={{ title: company.name }} />,
   }));
