@@ -1,4 +1,5 @@
 "use client";
+
 import React, { Suspense, useEffect, useState } from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
@@ -27,22 +28,22 @@ const ManageCompanyList = () => {
 
   const columns = [
     { header: "Company Name", accessor: "name" },
-    { header: "Category", accessor: "category" },
+    // { header: "Category", accessor: "category" },
     { header: "Locations", accessor: "locations" },
     { header: "Actions", accessor: "actions" },
   ];
 
   const data = companies.map((company) => ({
     name: company.name,
-    category: company.category,
+    // category: company.category,
     locations: company.location.join(", "),
     actions: <Actions item={{ title: company.name }} />,
   }));
 
   return (
-    <Suspense fallback={<Loading/>}>
+    <Suspense fallback={<Loading />}>
       <div className="p-4">
-        <Title text="Manage Company List"/>
+        <Title text="Manage Company List" />
         <Table data={data} columns={columns} />
       </div>
     </Suspense>

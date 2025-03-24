@@ -2,7 +2,14 @@
 
 import React from "react";
 
-const InputBox = ({ label, type = "text", placeholder, value, onChange, required = false }) => {
+const InputBox = ({
+  label,
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+  required = false,
+}) => {
   return (
     <div className="flex flex-col gap-2">
       {label && <label className="text-gray-700 font-medium">{label}</label>}

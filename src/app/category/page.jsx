@@ -10,7 +10,7 @@ const CategoryList = dynamic(() =>
 
 const page = () => {
   return (
-    <Suspense fallback={<Loading/>}>
+    <Suspense fallback={<Loading />}>
       <CreateCategory />
       <CategoryList />
     </Suspense>

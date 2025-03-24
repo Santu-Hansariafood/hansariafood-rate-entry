@@ -36,11 +36,11 @@ const CategoryList = () => {
   }));
 
   return (
-    <Suspense fallback={<Loading/>}>
-    <div className="p-4">
-      <Title text="Category List"/>
-      <Table data={data} columns={columns} />
-    </div>
+    <Suspense fallback={<Loading />}>
+      <div className="p-4">
+        <Title text="Category List" />
+        <Table data={data} columns={columns} />
+      </div>
     </Suspense>
   );
 };

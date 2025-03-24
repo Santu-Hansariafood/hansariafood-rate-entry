@@ -2,7 +2,6 @@ import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
 import { NextResponse } from "next/server";
 
-// ✅ CREATE LOCATION (POST)
 export async function POST(req) {
   try {
     const { name } = await req.json();
@@ -38,7 +37,6 @@ export async function POST(req) {
   }
 }
 
-// ✅ READ ALL LOCATIONS (GET)
 export async function GET() {
   try {
     await connectDB();

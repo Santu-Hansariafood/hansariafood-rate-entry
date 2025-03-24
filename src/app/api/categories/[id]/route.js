@@ -2,7 +2,6 @@ import { connectDB } from "@/lib/mongodb";
 import Category from "@/models/Category";
 import { NextResponse } from "next/server";
 
-// ✅ READ ALL CATEGORIES (GET)
 export async function GET() {
   try {
     await connectDB();
@@ -16,7 +15,6 @@ export async function GET() {
   }
 }
 
-// ✅ UPDATE (PUT)
 export async function PUT(req, { params }) {
   try {
     const { name } = await req.json();
@@ -54,7 +52,6 @@ export async function PUT(req, { params }) {
   }
 }
 
-// ✅ DELETE (DELETE)
 export async function DELETE(req, { params }) {
   try {
     await connectDB();

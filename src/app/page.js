@@ -1,9 +1,16 @@
-import React from 'react'
+import React, { Suspense } from "react";
+import dynamic from "next/dynamic";
+import Loading from "@/components/common/Loading/Loading";
+const RateCalendar = dynamic(() =>
+  import("@/components/common/RateCalendar/RateCalendar")
+);
 
 const page = () => {
   return (
-    <div>page</div>
-  )
-}
+    <Suspense fallback={<Loading />}>
+      <RateCalendar />
+    </Suspense>
+  );
+};
 
-export default page
+export default page;

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Company from "@/models/Company";
 
-// Connect to database
 await connectDB();
 
 /**
@@ -20,7 +19,10 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(company, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch company" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch company" },
+      { status: 500 }
+    );
   }
 }
 
@@ -34,7 +36,10 @@ export async function PUT(req, { params }) {
     const { name, category } = await req.json();
 
     if (!name || !category || name.trim() === "" || category.trim() === "") {
-      return NextResponse.json({ error: "Company name and category are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Company name and category are required" },
+        { status: 400 }
+      );
     }
 
     const updatedCompany = await Company.findByIdAndUpdate(
@@ -49,7 +54,10 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(updatedCompany, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update company" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update company" },
+      { status: 500 }
+    );
   }
 }
 
@@ -66,8 +74,14 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Company deleted successfully" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Company deleted successfully" },
+      { status: 200 }
+    );
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete company" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete company" },
+      { status: 500 }
+    );
   }
 }

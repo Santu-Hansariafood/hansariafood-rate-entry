@@ -53,7 +53,7 @@ export default function CreateCompany() {
   };
 
   return (
-    <Suspense fallback={<Loading/>}>
+    <Suspense fallback={<Loading />}>
       <div className="flex flex-col items-center justify-center p-6 bg-gray-100 min-h-screen">
         <ToastContainer position="top-right" autoClose={3000} />
         <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md space-y-4">
