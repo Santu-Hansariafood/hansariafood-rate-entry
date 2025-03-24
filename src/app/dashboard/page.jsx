@@ -10,19 +10,27 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login");
+      router.replace("/login");
     }
   }, [status, router]);
 
-  if (status === "loading") return <p>Loading...</p>;
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg font-semibold text-gray-500">Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-2xl font-bold">Welcome, {session?.user?.name}!</h1>
-      <p className="text-gray-600">Mobile: {session?.user?.mobile}</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+      <h1 className="text-2xl font-bold text-gray-800">
+        Welcome, {session?.user?.name || "Guest"}!
+      </h1>
+      <p className="text-gray-600">Mobile: {session?.user?.mobile || "N/A"}</p>
       <button
         onClick={() => signOut()}
-        className="mt-4 bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600"
+        className="mt-4 bg-red-500 text-white py-2 px-6 rounded-md hover:bg-red-600 transition"
       >
         Logout
       </button>
