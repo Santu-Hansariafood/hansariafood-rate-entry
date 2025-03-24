@@ -14,11 +14,10 @@ export default function Header() {
         <div className="flex items-center">
           <Link href="/">
             <Image
-              src="/next.svg"
+              src="/logo/logo.png"
               alt="Company Logo"
-              width={50}
+              width={100}
               height={50}
-              className="rounded-full"
               priority
             />
           </Link>
