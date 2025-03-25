@@ -6,6 +6,7 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import dynamic from "next/dynamic";
 import Loading from "../Loading/Loading";
+
 const RateGraph = dynamic(() =>
   import("@/components/common/RateGraph/RateGraph")
 );
@@ -68,7 +69,7 @@ export default function RateCalendar() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         <input
           type="text"
           placeholder="Search Company Name..."
@@ -79,9 +80,9 @@ export default function RateCalendar() {
         {filteredCompanies.map((company) => (
           <div
             key={company}
-            className="mb-8 border p-6 rounded-lg shadow-lg bg-white"
+            className="mb-8 border p-4 sm:p-6 rounded-lg shadow-lg bg-white"
           >
-            <h1 className="text-2xl font-bold text-center text-blue-700 mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-center text-blue-700 mb-6">
               {company} Rate Calendar
             </h1>
             {rateData
@@ -96,7 +97,7 @@ export default function RateCalendar() {
                   </h2>
 
                   <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/2">
+                    <div className="w-full md:w-1/2 overflow-x-auto">
                       <Calendar
                         onChange={setDate}
                         value={date}
@@ -108,7 +109,7 @@ export default function RateCalendar() {
                           );
                           return rateData ? (
                             <div
-                              className={`p-3 w-full text-center rounded-md font-semibold min-h-[50px] flex items-center justify-center ${
+                              className={`p-3 text-center rounded-md font-semibold min-h-[50px] flex items-center justify-center text-sm sm:text-base ${
                                 rateData.rateType === "new"
                                   ? "bg-green-500 text-white"
                                   : rateData.rateType === "old"
@@ -130,11 +131,11 @@ export default function RateCalendar() {
                             ? "border-2 border-blue-400"
                             : "border border-gray-300";
                         }}
-                        className="w-full border rounded-lg shadow-lg p-6 bg-white min-w-[500px]"
+                        className="w-full border rounded-lg shadow-lg p-4 bg-white min-w-[320px] sm:min-w-[500px]"
                       />
                     </div>
                     <div className="w-full md:w-1/2 flex justify-center items-center p-4">
-                      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+                      <div className="w-full max-w-md bg-white p-4 sm:p-6 rounded-lg shadow-lg">
                         <RateGraph
                           rateData={rateData}
                           company={company}

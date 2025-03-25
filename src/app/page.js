@@ -1,14 +1,12 @@
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-const RateCalendar = dynamic(() =>
-  import("@/components/common/RateCalendar/RateCalendar")
-);
+const Login = dynamic(() => import("@/components/ui/Login/Login"));
 
 const page = () => {
   return (
     <Suspense fallback={<Loading />}>
-      <RateCalendar />
+      <Login />
     </Suspense>
   );
 };

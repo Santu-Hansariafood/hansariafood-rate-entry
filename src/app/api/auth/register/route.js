@@ -8,15 +8,38 @@ export async function POST(req) {
     await connectDB();
     const { name, mobile, password } = await req.json();
 
-    const existingUser = await User.findOne({ mobile });
-    if (existingUser) return NextResponse.json({ message: "Mobile number already registered" }, { status: 400 });
+    // Validate request body
+    if (!name || !mobile || !password) {
+      return NextResponse.json(
+        { message: "All fields are required" },
+        { status: 400 }
+      );
+    }
 
+    // Check if mobile number is already registered
+    const existingUser = await User.findOne({ mobile });
+    if (existingUser) {
+      return NextResponse.json(
+        { message: "Mobile number already registered" },
+        { status: 400 }
+      );
+    }
+
+    // Hash password and save user
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({ name, mobile, password: hashedPassword });
 
     await newUser.save();
-    return NextResponse.json({ message: "User registered successfully" }, { status: 201 });
+    return NextResponse.json(
+      { message: "User registered successfully" },
+      { status: 201 }
+    );
   } catch (error) {
-    return NextResponse.json({ message: "Error registering user" }, { status: 500 });
+    console.error("Registration Error:", error);
+
+    return NextResponse.json(
+      { message: error.message || "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
