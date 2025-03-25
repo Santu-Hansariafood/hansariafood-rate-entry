@@ -121,10 +121,11 @@ export default function RateTable({ selectedCompany, onClose }) {
                   >
                     <td className="border p-2">{rate.location}</td>
                     <td className="border p-2 text-sm">
-                      {rate.oldRates.map((old, i) => (
-                        <div key={i}>{old}</div>
-                      ))}
+                      {rate.oldRates.length > 0
+                        ? rate.oldRates[rate.oldRates.length - 1]
+                        : "—"}
                     </td>
+
                     <td className="border p-2">
                       <input
                         type="text"
