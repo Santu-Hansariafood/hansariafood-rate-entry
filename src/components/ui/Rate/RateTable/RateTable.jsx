@@ -1,91 +1,72 @@
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 
 export default function RateTable({ selectedCompany, onClose }) {
   const [rates, setRates] = useState([]);
-  const [locations, setLocations] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
 
-  useEffect(() => {
-    const fetchRates = async () => {
-      try {
-        const { data } = await axios.get("/api/managecompany");
-        const companyData = data.companies.find(
-          (c) => c.name === selectedCompany
-        );
+  const fetchRates = useCallback(async () => {
+    try {
+      const [{ data: companyData }, { data: existingRates }] = await Promise.all([
+        axios.get("/api/managecompany"),
+        axios.get(`/api/rate?company=${selectedCompany}`)
+      ]);
 
-        if (companyData) {
-          setLocations(companyData.location);
-          const rateResponse = await axios.get(
-            `/api/rate?company=${selectedCompany}`
-          );
-          const existingRates = rateResponse.data;
+      const company = companyData.companies.find((c) => c.name === selectedCompany);
 
-          const updatedRates = companyData.location.map((location) => {
-            const foundRate = existingRates.find(
-              (rate) => rate.location === location
-            );
+      if (company) {
+        setRates(
+          company.location.map((location) => {
+            const foundRate = existingRates.find((rate) => rate.location === location);
             return {
               location,
-              oldRates: foundRate?.oldRates || [],
+              oldRate: foundRate?.oldRates?.at(-1) || "—", // Get only the last rate
               newRate: foundRate?.newRate || "",
-              isUpdated: false,
+              isUpdated: false
             };
-          });
-
-          setRates(updatedRates);
-        }
-      } catch (error) {
-        toast.error("Failed to fetch locations or rates");
+          })
+        );
       }
-    };
-
-    fetchRates();
+    } catch (error) {
+      toast.error("Failed to fetch locations or rates");
+    }
   }, [selectedCompany]);
+
+  useEffect(() => {
+    fetchRates();
+  }, [fetchRates]);
 
   const handleEdit = (index) => setEditIndex(index);
 
   const handleSave = async (index) => {
     const rateToSave = rates[index];
 
-    if (!rateToSave.newRate) {
+    if (!rateToSave.newRate.trim()) {
       toast.error("New rate cannot be empty!");
       return;
     }
 
     try {
-      const updatedOldRates = [
-        ...rateToSave.oldRates,
-        `${rateToSave.newRate} (${new Date().toLocaleDateString("en-GB")})`,
-      ];
+      const newOldRate = `${rateToSave.newRate} (${new Date().toLocaleDateString("en-GB")})`;
 
-      const response = await axios.post("/api/rate", {
+      await axios.post("/api/rate", {
         company: selectedCompany,
         location: rateToSave.location,
         newRate: rateToSave.newRate,
-        oldRates: updatedOldRates,
+        oldRates: [newOldRate]
       });
 
-      if (response.status === 200 || response.status === 201) {
-        toast.success("Rate updated successfully!");
-        setEditIndex(null);
-        setRates((prevRates) =>
-          prevRates.map((rate, idx) =>
-            idx === index
-              ? {
-                  ...rate,
-                  oldRates: updatedOldRates,
-                  newRate: "",
-                  isUpdated: true,
-                }
-              : rate
-          )
-        );
-      } else {
-        toast.error("Failed to update rate.");
-      }
+      toast.success("Rate updated successfully!");
+      setEditIndex(null);
+      setRates((prevRates) =>
+        prevRates.map((rate, idx) =>
+          idx === index
+            ? { ...rate, oldRate: newOldRate, newRate: "", isUpdated: true }
+            : rate
+        )
+      );
     } catch (error) {
       toast.error("Error updating rate.");
     }
@@ -106,35 +87,27 @@ export default function RateTable({ selectedCompany, onClose }) {
               <thead className="bg-gray-200 sticky top-0 shadow-md">
                 <tr>
                   <th className="border p-2">Location</th>
-                  <th className="border p-2">Old Rates</th>
+                  <th className="border p-2">Last Rate</th>
                   <th className="border p-2">New Rate</th>
                   <th className="border p-2">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {rates.map((rate, index) => (
-                  <tr
-                    key={index}
-                    className={`text-center ${
-                      rate.isUpdated ? "bg-green-100 transition-all" : ""
-                    }`}
-                  >
+                  <tr key={index} className={`text-center ${rate.isUpdated ? "bg-green-100 transition-all" : ""}`}>
                     <td className="border p-2">{rate.location}</td>
-                    <td className="border p-2 text-sm">
-                      {rate.oldRates.length > 0
-                        ? rate.oldRates[rate.oldRates.length - 1]
-                        : "—"}
-                    </td>
-
+                    <td className="border p-2 text-sm">{rate.oldRate}</td>
                     <td className="border p-2">
                       <input
                         type="text"
-                        value={rate.newRate || ""}
-                        onChange={(e) => {
-                          const updatedRates = [...rates];
-                          updatedRates[index].newRate = e.target.value;
-                          setRates(updatedRates);
-                        }}
+                        value={rate.newRate}
+                        onChange={(e) =>
+                          setRates((prev) =>
+                            prev.map((r, idx) =>
+                              idx === index ? { ...r, newRate: e.target.value } : r
+                            )
+                          )
+                        }
                         className="border p-1 w-full"
                         disabled={editIndex !== index}
                       />
