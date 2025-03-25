@@ -9,22 +9,27 @@ export default function RateTable({ selectedCompany, onClose }) {
 
   const fetchRates = useCallback(async () => {
     try {
-      const [{ data: companyData }, { data: existingRates }] = await Promise.all([
-        axios.get("/api/managecompany"),
-        axios.get(`/api/rate?company=${selectedCompany}`)
-      ]);
+      const [{ data: companyData }, { data: existingRates }] =
+        await Promise.all([
+          axios.get("/api/managecompany"),
+          axios.get(`/api/rate?company=${selectedCompany}`),
+        ]);
 
-      const company = companyData.companies.find((c) => c.name === selectedCompany);
+      const company = companyData.companies.find(
+        (c) => c.name === selectedCompany
+      );
 
       if (company) {
         setRates(
           company.location.map((location) => {
-            const foundRate = existingRates.find((rate) => rate.location === location);
+            const foundRate = existingRates.find(
+              (rate) => rate.location === location
+            );
             return {
               location,
               oldRate: foundRate?.oldRates?.at(-1) || "—",
-              newRate: foundRate?.newRate || "",
-              isUpdated: false
+              newRate: foundRate?.newRate ?? "",
+              isUpdated: false,
             };
           })
         );
@@ -49,13 +54,15 @@ export default function RateTable({ selectedCompany, onClose }) {
     }
 
     try {
-      const newOldRate = `${rateToSave.newRate} (${new Date().toLocaleDateString("en-GB")})`;
+      const newOldRate = `${
+        rateToSave.newRate
+      } (${new Date().toLocaleDateString("en-GB")})`;
 
       await axios.post("/api/rate", {
         company: selectedCompany,
         location: rateToSave.location,
         newRate: rateToSave.newRate,
-        oldRates: [newOldRate]
+        oldRates: [newOldRate],
       });
 
       toast.success("Rate updated successfully!");
@@ -63,7 +70,12 @@ export default function RateTable({ selectedCompany, onClose }) {
       setRates((prevRates) =>
         prevRates.map((rate, idx) =>
           idx === index
-            ? { ...rate, oldRate: newOldRate, newRate: "", isUpdated: true }
+            ? {
+                ...rate,
+                oldRate: newOldRate,
+                newRate: rateToSave.newRate,
+                isUpdated: true,
+              }
             : rate
         )
       );
@@ -94,7 +106,12 @@ export default function RateTable({ selectedCompany, onClose }) {
               </thead>
               <tbody>
                 {rates.map((rate, index) => (
-                  <tr key={index} className={`text-center ${rate.isUpdated ? "bg-green-100 transition-all" : ""}`}>
+                  <tr
+                    key={index}
+                    className={`text-center ${
+                      rate.isUpdated ? "bg-green-100 transition-all" : ""
+                    }`}
+                  >
                     <td className="border p-2">{rate.location}</td>
                     <td className="border p-2 text-sm">{rate.oldRate}</td>
                     <td className="border p-2">
@@ -104,7 +121,9 @@ export default function RateTable({ selectedCompany, onClose }) {
                         onChange={(e) =>
                           setRates((prev) =>
                             prev.map((r, idx) =>
-                              idx === index ? { ...r, newRate: e.target.value } : r
+                              idx === index
+                                ? { ...r, newRate: e.target.value }
+                                : r
                             )
                           )
                         }
