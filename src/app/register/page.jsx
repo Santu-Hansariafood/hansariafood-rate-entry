@@ -4,15 +4,13 @@ import Loading from "@/components/common/Loading/Loading";
 const AuthWrapper = dynamic(() =>
   import("@/components/AuthWrapper/AuthWrapper")
 );
-const RateCalendar = dynamic(() =>
-  import("@/components/common/RateCalendar/RateCalendar")
-);
+const Register = dynamic(() => import("@/components/ui/Register/Register"));
 
 const page = () => {
   return (
     <AuthWrapper>
       <Suspense fallback={<Loading />}>
-        <RateCalendar />
+        <Register />
       </Suspense>
     </AuthWrapper>
   );

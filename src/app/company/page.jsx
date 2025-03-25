@@ -1,6 +1,12 @@
+"use client";
+
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+const AuthWrapper = dynamic(() =>
+  import("@/components/AuthWrapper/AuthWrapper")
+);
+
 const CompanyList = dynamic(() =>
   import("@/components/ui/CompanyList/CompanyList")
 );
@@ -8,13 +14,15 @@ const CreateCompany = dynamic(() =>
   import("@/components/ui/CreateCompany/CreateCompany")
 );
 
-const page = () => {
+const Page = () => {
   return (
-    <Suspense fallback={<Loading />}>
-      <CreateCompany />
-      <CompanyList />
-    </Suspense>
+    <AuthWrapper>
+      <Suspense fallback={<Loading />}>
+        <CreateCompany />
+        <CompanyList />
+      </Suspense>
+    </AuthWrapper>
   );
 };
 
-export default page;
+export default Page;
