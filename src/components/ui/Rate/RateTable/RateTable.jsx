@@ -22,7 +22,7 @@ export default function RateTable({ selectedCompany, onClose }) {
             const foundRate = existingRates.find((rate) => rate.location === location);
             return {
               location,
-              oldRate: foundRate?.oldRates?.at(-1) || "—", // Get only the last rate
+              oldRate: foundRate?.oldRates?.at(-1) || "—",
               newRate: foundRate?.newRate || "",
               isUpdated: false
             };
