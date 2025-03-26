@@ -7,5 +7,5 @@ export default withAuth({
 });
 
 export const config = {
-  matcher: ["/", "/company", "/rate", "/manage", "/location", "/category"],
+  matcher: ["/", "/company", "/rate", "/manage", "/location", "/category", "/register"],
 };
