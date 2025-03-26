@@ -74,7 +74,7 @@ export default function Register() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                 placeholder="Enter your name"
               />
               {errors.name && (
@@ -88,7 +88,7 @@ export default function Register() {
                 type="tel"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                 placeholder="Enter your mobile number"
               />
               {errors.mobile && (
@@ -102,7 +102,7 @@ export default function Register() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                 placeholder="Enter your password"
               />
               {errors.password && (
@@ -112,7 +112,7 @@ export default function Register() {
 
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
+              className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition"
               disabled={loading}
             >
               {loading ? "Registering..." : "Register"}

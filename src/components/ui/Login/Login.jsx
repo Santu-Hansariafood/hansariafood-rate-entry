@@ -54,7 +54,7 @@ export default function Login() {
             />
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button className="w-full mt-2 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600">
+          <button className="w-full mt-2 bg-green-500 text-white py-2 rounded-md hover:bg-green-600">
             Login
           </button>
         </form>

@@ -39,7 +39,7 @@ const Dropdown = ({ label, options = [], value, onChange }) => {
         value={searchTerm}
         onChange={handleChange}
         onFocus={() => setIsOpen(true)}
-        className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-500"
       />
       {isOpen && (
         <div className="absolute top-full left-0 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10">
@@ -47,7 +47,7 @@ const Dropdown = ({ label, options = [], value, onChange }) => {
             filteredOptions.map((option, index) => (
               <div
                 key={index}
-                className="p-2 hover:bg-blue-100 cursor-pointer"
+                className="p-2 hover:bg-green-100 cursor-pointer"
                 onClick={() => {
                   onChange(option.value);
                   setSearchTerm(option.label);

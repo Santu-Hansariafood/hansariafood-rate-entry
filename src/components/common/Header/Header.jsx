@@ -122,7 +122,7 @@ export default function Header() {
         {!session && (
           <Link
             href="/"
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+            className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
           >
             Login
           </Link>

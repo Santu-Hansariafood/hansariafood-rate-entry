@@ -73,7 +73,7 @@ export default function RateCalendar() {
         <input
           type="text"
           placeholder="Search Company Name..."
-          className="w-full p-3 mb-6 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 mb-6 border rounded-lg shadow-sm focus:ring-2 focus:ring-green-500"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -82,7 +82,7 @@ export default function RateCalendar() {
             key={company}
             className="mb-8 border p-4 sm:p-6 rounded-lg shadow-lg bg-white"
           >
-            <h1 className="text-xl sm:text-2xl font-bold text-center text-blue-700 mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-center text-green-700 mb-6">
               {company} Rate Calendar
             </h1>
             {rateData
@@ -128,7 +128,7 @@ export default function RateCalendar() {
                             location
                           );
                           return rateData && rateData.rateType !== "none"
-                            ? "border-2 border-blue-400"
+                            ? "border-2 border-green-400"
                             : "border border-gray-300";
                         }}
                         className="w-full border rounded-lg shadow-lg p-4 bg-white min-w-[320px] sm:min-w-[500px]"
