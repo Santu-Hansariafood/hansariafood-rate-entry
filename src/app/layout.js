@@ -89,7 +89,7 @@ export default function RootLayout({ children }) {
         />
         <meta name="twitter:image" content={metadata.twitter.image} />
         <link rel="canonical" href={metadata.url} />
-        <link rel="icon" href="/icons/favicon.ico" type="image/x-icon" />
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
