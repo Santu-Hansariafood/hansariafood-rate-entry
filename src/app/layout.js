@@ -20,19 +20,19 @@ const geistMono = Geist_Mono({
 });
 
 const metadata = {
-  title: "Hansaria Food Private Limited | Best Quality & Service",
+  title: "Hansaria Food Private Limited | Commodity & Brokerage Services",
   description:
-    "Hansaria Food Private Limited provides premium quality food with fast delivery and excellent service. Order fresh and hygienic food today!",
+    "Hansaria Food Private Limited supplies high-quality raw materials for the poultry and feed industry across India. We also provide global commodity and brokerage services with assured quality and reliability.",
   keywords:
-    "Hansaria Food, premium food service, online food delivery, high-quality food, fast delivery, hygienic food, food industry, best food service",
-  author: "Santu De",
+    "Hansaria Food, raw material supply, poultry feed industry, commodity trading, brokerage services, supply chain, Kolkata, India, international trade",
+  author: "Hansaria Food Private Limited",
   url: "https://www.hansariafood.com",
   siteName: "Hansaria Food",
   image: "/images/og-image.png",
   openGraph: {
     title: "Hansaria Food Private Limited",
     description:
-      "Discover the best quality food with Hansaria Food Private Limited. Fast delivery and excellent service guaranteed!",
+      "Hansaria Food Private Limited delivers premium raw materials for the poultry and feed industry while offering global commodity and brokerage services.",
     url: "https://www.hansariafood.com",
     siteName: "Hansaria Food",
     images: [
@@ -48,7 +48,7 @@ const metadata = {
   twitter: {
     card: "summary_large_image",
     site: "@hansariafood",
-    creator: "@santude",
+    creator: "@hansaria_food_private_limited",
     image: "/images/og-image.png",
   },
 };
@@ -88,26 +88,44 @@ export default function RootLayout({ children }) {
         />
         <meta name="twitter:image" content={metadata.twitter.image} />
         <link rel="canonical" href={metadata.url} />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/icons/favicon.ico" type="image/x-icon" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Organization",
+              "@type": "Private Limited",
               name: metadata.siteName,
               url: metadata.url,
               logo: metadata.image,
               description: metadata.description,
+              founder: {
+                "@type": "Person",
+                name: "Gopal Agarwal & Sunita Agarwalla",
+                jobTitle: "Founder & CEO",
+              },
+              foundingDate: "2018-06-15",
+              location: {
+                "@type": "PostalAddress",
+                streetAddress:
+                  "Primarc Square, Plot No.1, Salt Lake Bypass, LA Block, Sector: 3, Bidhannagar",
+                addressLocality: "Kolkata",
+                addressRegion: "West Bengal",
+                postalCode: "700098",
+                addressCountry: "IN",
+              },
               contactPoint: {
                 "@type": "ContactPoint",
-                telephone: "+91-XXXXXXXXXX",
+                email: "info@hansariafood.com",
                 contactType: "customer service",
+                telephone: "+91-XXXXXXXXXX",
+                location:
+                  "Primarc Square, Plot No.1, Salt Lake Bypass, LA Block, Sector: 3, Bidhannagar, Kolkata, West Bengal 700098",
               },
               sameAs: [
-                "https://www.facebook.com/hansariafood",
-                "https://twitter.com/hansariafood",
-                "https://www.instagram.com/hansariafood",
+                "https://www.facebook.com/profile.php?id=100087874624812",
+                "https://www.instagram.com/hansaria_food?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+                "https://www.youtube.com/@hansariafood",
               ],
             }),
           }}
