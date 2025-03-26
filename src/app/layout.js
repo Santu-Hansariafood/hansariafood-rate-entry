@@ -57,6 +57,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <Head>
+      <title>{metadata.title}</title>
         <meta charSet="UTF-8" />
         <meta
           name="viewport"
