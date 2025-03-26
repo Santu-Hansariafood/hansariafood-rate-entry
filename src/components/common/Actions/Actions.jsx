@@ -18,7 +18,7 @@ const Actions = ({ item }) => {
       </button>
       <button
         onClick={() => openModal("edit")}
-        className="text-blue-600 hover:text-blue-800"
+        className="text-green-600 hover:text-green-800"
       >
         <Edit size={20} />
       </button>

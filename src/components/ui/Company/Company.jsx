@@ -97,7 +97,7 @@ export default function CreateCompany() {
               onClick={handleSubmit}
               text="Save"
               isLoading={loading}
-              className="w-40 py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition duration-300"
+              className="w-40 py-3 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md transition duration-300"
             />
           </div>
         </div>

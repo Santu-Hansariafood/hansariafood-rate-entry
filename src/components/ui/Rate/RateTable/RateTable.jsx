@@ -123,7 +123,7 @@ export default function RateTable({ selectedCompany, onClose }) {
                       ) : (
                         <button
                           onClick={() => handleEdit(index)}
-                          className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600"
+                          className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600"
                         >
                           Edit
                         </button>
