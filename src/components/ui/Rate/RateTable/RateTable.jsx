@@ -3,11 +3,23 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
-import { Edit2, Save, X } from "lucide-react";
+import { Edit2, Save, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function RateTable({ selectedCompany, onClose }) {
   const [rates, setRates] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const fetchRates = useCallback(async () => {
     try {
@@ -86,6 +98,16 @@ export default function RateTable({ selectedCompany, onClose }) {
     }
   };
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = rates.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(rates.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   return (
     <Suspense fallback={<Loading />}>
       <motion.div
@@ -116,104 +138,134 @@ export default function RateTable({ selectedCompany, onClose }) {
           </div>
 
           <div className="max-h-[70vh] overflow-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-50 sticky top-0">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
-                    Location
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
-                    Last Rate
-                  </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
-                    New Rate
-                  </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-gray-600 border-b">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {rates.map((rate, index) => (
-                    <motion.tr
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className={`${
-                        rate.isUpdated
-                          ? "bg-green-50/50 transition-colors duration-300"
-                          : "hover:bg-gray-50"
-                      }`}
-                    >
-                      <td className="px-6 py-4 border-b text-gray-800">
-                        {rate.location}
-                      </td>
-                      <td className="px-6 py-4 border-b text-gray-600 text-sm">
-                        {rate.oldRate}
-                      </td>
-                      <td className="px-6 py-4 border-b">
-                        <input
-                          type="text"
-                          value={rate.newRate}
-                          onChange={(e) =>
-                            setRates((prev) =>
-                              prev.map((r, idx) =>
-                                idx === index
-                                  ? { ...r, newRate: e.target.value }
-                                  : r
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b whitespace-nowrap">
+                      Location
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b whitespace-nowrap">
+                      Last Rate
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b whitespace-nowrap">
+                      New Rate
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-600 border-b whitespace-nowrap">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <AnimatePresence>
+                    {currentItems.map((rate, index) => (
+                      <motion.tr
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className={`${
+                          rate.isUpdated
+                            ? "bg-green-50/50 transition-colors duration-300"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
+                          {rate.location}
+                        </td>
+                        <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap">
+                          {rate.oldRate}
+                        </td>
+                        <td className="px-6 py-4 border-b whitespace-nowrap">
+                          <input
+                            type="text"
+                            value={rate.newRate}
+                            onChange={(e) =>
+                              setRates((prev) =>
+                                prev.map((r, idx) =>
+                                  idx === index
+                                    ? { ...r, newRate: e.target.value }
+                                    : r
+                                )
                               )
-                            )
-                          }
-                          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
-                            editIndex === index
-                              ? "border-green-500"
-                              : "border-gray-300"
-                          }`}
-                          disabled={editIndex !== index}
-                          placeholder="Enter new rate"
-                        />
-                      </td>
-                      <td className="px-6 py-4 border-b text-center">
-                        {editIndex === index ? (
-                          <div className="flex items-center justify-center gap-2">
+                            }
+                            className={`w-full min-w-[120px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
+                              editIndex === index
+                                ? "border-green-500"
+                                : "border-gray-300"
+                            }`}
+                            disabled={editIndex !== index}
+                            placeholder="Enter new rate"
+                          />
+                        </td>
+                        <td className="px-6 py-4 border-b text-center whitespace-nowrap">
+                          {editIndex === index ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleSave(index)}
+                                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+                              >
+                                <Save className="w-4 h-4" />
+                                Save
+                              </motion.button>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setEditIndex(null)}
+                                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
+                              >
+                                <X className="w-4 h-4" />
+                                Cancel
+                              </motion.button>
+                            </div>
+                          ) : (
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => handleSave(index)}
+                              onClick={() => handleEdit(index)}
                               className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
                             >
-                              <Save className="w-4 h-4" />
-                              Save
+                              <Edit2 className="w-4 h-4" />
+                              Edit
                             </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setEditIndex(null)}
-                              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
-                            >
-                              <X className="w-4 h-4" />
-                              Cancel
-                            </motion.button>
-                          </div>
-                        ) : (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleEdit(index)}
-                            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Edit
-                          </motion.button>
-                        )}
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                          )}
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Pagination */}
+          <div className="p-4 border-t flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Showing {indexOfFirstItem + 1} to{" "}
+              {Math.min(indexOfLastItem, rates.length)} of {rates.length}{" "}
+              entries
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="text-gray-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </motion.div>
       </motion.div>

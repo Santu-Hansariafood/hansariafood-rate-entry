@@ -107,6 +107,8 @@ export default function RateGraph({ rateData, company, location }) {
       scales: {
         y: {
           beginAtZero: false,
+          suggestedMin: Math.max(0, Math.min(...rates) * 0.8),
+          suggestedMax: Math.max(...rates) * 1.2,
           title: {
             display: true,
             text: "Rate",
@@ -114,7 +116,7 @@ export default function RateGraph({ rateData, company, location }) {
             font: { size: 14, weight: "bold" },
             padding: { top: 10, bottom: 10 },
           },
-          grid: { 
+          grid: {
             color: "rgba(0, 0, 0, 0.05)",
             drawBorder: false,
           },
@@ -139,7 +141,7 @@ export default function RateGraph({ rateData, company, location }) {
         },
       },
     }),
-    []
+    [rates]
   );
 
   return (
@@ -155,9 +157,7 @@ export default function RateGraph({ rateData, company, location }) {
             <div className="p-2 rounded-lg bg-blue-100">
               <TrendingUp className="w-5 h-5 text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-800">
-              Rate Trends
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-800">Rate Trends</h3>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-500" />
@@ -171,7 +171,7 @@ export default function RateGraph({ rateData, company, location }) {
             </select>
           </div>
         </div>
-        <div className="h-72 min-w-0 bg-white rounded-xl p-4">
+        <div className="w-full overflow-x-auto bg-white rounded-xl p-4 min-h-[250px] md:min-h-[300px] lg:min-h-[400px]">
           <Bar data={data} options={options} />
         </div>
       </motion.div>

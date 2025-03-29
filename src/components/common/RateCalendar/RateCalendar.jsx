@@ -39,29 +39,38 @@ export default function RateCalendar() {
 
   const getRatesForDate = useCallback(
     (date, company, location) => {
-      const formattedDate = date.toLocaleDateString("en-GB");
+      const formattedDate = date.toLocaleDateString("en-GB"); // Format: DD/MM/YYYY
       const data = rateData.find(
         (item) => item.company === company && item.location === location
       );
 
       if (!data) return null;
 
-      const oldRateEntry = data.oldRates.find(
-        (rate) =>
-          new Date(rate.date).toLocaleDateString("en-GB") === formattedDate
-      );
-      const isNewRate =
-        new Date(data.newRateDate).toLocaleDateString("en-GB") ===
-        formattedDate;
-
       let rate = "No Rate";
       let rateType = "none";
 
+      // Extract old rates properly
+      const oldRateEntry = data.oldRates.find((rateString) => {
+        const match = rateString.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
+        return match && match[2] === formattedDate;
+      });
+
       if (oldRateEntry) {
-        rate = oldRateEntry.rate;
-        rateType = "old";
-      } else if (isNewRate) {
-        rate = data.newRate;
+        const match = oldRateEntry.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
+        if (match) {
+          rate = match[1].trim(); // Extract rate value
+          rateType = "old";
+        }
+      }
+
+      // Check for new rate
+      const newRateMatch = data.newRate.match(
+        /(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/
+      );
+      const isNewRate = newRateMatch && newRateMatch[2] === formattedDate;
+
+      if (isNewRate) {
+        rate = newRateMatch[1].trim();
         rateType = "new";
       }
 
@@ -139,10 +148,10 @@ export default function RateCalendar() {
                         {location}
                       </h3>
 
-                      <div className="flex flex-col lg:flex-row gap-8">
+                      <div className="flex flex-col lg:flex-row gap-6">
                         <div className="w-full lg:w-[50%]">
                           {" "}
-                          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                          <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100 overflow-x-auto">
                             <Calendar
                               className="w-full h-full border-none rounded-xl shadow-sm"
                               onChange={setDate}
