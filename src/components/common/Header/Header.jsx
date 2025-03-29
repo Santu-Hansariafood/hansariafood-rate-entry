@@ -28,19 +28,14 @@ export default function Header() {
   }
 
   return (
-    <header 
+    <header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        isScrolled 
-          ? "bg-black shadow-lg" 
-          : "bg-black"
+        isScrolled ? "bg-black shadow-lg" : "bg-black"
       }`}
     >
       <div className="container mx-auto flex items-center justify-between p-4 md:px-8">
         <Link href={session ? "/dashboard" : "/"}>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Image
               src="/logo/logo.png"
               alt="Company Logo"
@@ -77,7 +72,7 @@ export default function Header() {
                 "Rate",
                 "Register",
               ].map((label, index) => (
-                <motion.li 
+                <motion.li
                   key={index}
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.95 }}
@@ -94,9 +89,14 @@ export default function Header() {
                     }
                   >
                     {label}
-                    <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full ${
-                      activeLink === `/${label.toLowerCase().replace(/ /g, "")}` ? "w-full" : ""
-                    }`} />
+                    <span
+                      className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full ${
+                        activeLink ===
+                        `/${label.toLowerCase().replace(/ /g, "")}`
+                          ? "w-full"
+                          : ""
+                      }`}
+                    />
                   </Link>
                 </motion.li>
               ))}
@@ -117,10 +117,7 @@ export default function Header() {
         </nav>
 
         {!session && (
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link
               href="/"
               className="flex items-center gap-2 bg-green-500/90 text-white px-6 py-2.5 rounded-lg hover:bg-green-600 transition-all duration-300 shadow-lg hover:shadow-green-500/20"
@@ -162,7 +159,7 @@ export default function Header() {
                   <X size={24} className="text-white" />
                 </button>
               </div>
-              
+
               {[
                 "Manage Company",
                 "Company",
@@ -185,7 +182,9 @@ export default function Header() {
                         : "text-white/90 hover:text-white hover:bg-white/10"
                     } transition-colors duration-200`}
                     onClick={() => {
-                      setActiveLink(`/${label.toLowerCase().replace(/ /g, "")}`);
+                      setActiveLink(
+                        `/${label.toLowerCase().replace(/ /g, "")}`
+                      );
                       setMenuOpen(false);
                     }}
                   >
@@ -193,7 +192,7 @@ export default function Header() {
                   </Link>
                 </motion.div>
               ))}
-              
+
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

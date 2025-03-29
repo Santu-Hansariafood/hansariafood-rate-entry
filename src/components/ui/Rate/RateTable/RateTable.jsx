@@ -17,8 +17,8 @@ export default function RateTable({ selectedCompany, onClose }) {
       setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const fetchRates = useCallback(async () => {
@@ -243,7 +243,9 @@ export default function RateTable({ selectedCompany, onClose }) {
           {/* Pagination */}
           <div className="p-4 border-t flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, rates.length)} of {rates.length} entries
+              Showing {indexOfFirstItem + 1} to{" "}
+              {Math.min(indexOfLastItem, rates.length)} of {rates.length}{" "}
+              entries
             </div>
             <div className="flex items-center gap-2">
               <button
