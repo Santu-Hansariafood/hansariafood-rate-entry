@@ -2,33 +2,12 @@ import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
 import { NextResponse } from "next/server";
 
-export async function GET(req, { params }) {
-  try {
-    await connectDB();
-    const location = await Location.findById(params.id);
-
-    if (!location) {
-      return NextResponse.json(
-        { error: "Location not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ location }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch location" },
-      { status: 500 }
-    );
-  }
-}
-
 export async function PUT(req, { params }) {
   try {
-    const { name } = await req.json();
-    if (!name) {
+    const { state, name } = await req.json();
+    if (!state || !name) {
       return NextResponse.json(
-        { error: "Location name is required" },
+        { error: "State and location name are required" },
         { status: 400 }
       );
     }
@@ -37,7 +16,7 @@ export async function PUT(req, { params }) {
 
     const updatedLocation = await Location.findByIdAndUpdate(
       params.id,
-      { name },
+      { state, name },
       { new: true }
     );
 

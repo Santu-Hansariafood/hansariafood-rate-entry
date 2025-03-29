@@ -6,6 +6,8 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import dynamic from "next/dynamic";
 import Loading from "../Loading/Loading";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Building2, TrendingUp } from "lucide-react";
 
 const RateGraph = dynamic(() =>
   import("@/components/common/RateGraph/RateGraph")
@@ -44,21 +46,22 @@ export default function RateCalendar() {
 
       if (!data) return null;
 
-      const oldRateEntry = data.oldRates.find((rate) =>
-        rate.includes(formattedDate)
+      const oldRateEntry = data.oldRates.find(
+        (rate) =>
+          new Date(rate.date).toLocaleDateString("en-GB") === formattedDate
       );
-      const newRateEntry = data.newRate.includes(formattedDate)
-        ? data.newRate
-        : "";
+      const isNewRate =
+        new Date(data.newRateDate).toLocaleDateString("en-GB") ===
+        formattedDate;
 
       let rate = "No Rate";
       let rateType = "none";
 
       if (oldRateEntry) {
-        rate = oldRateEntry.split(" ")[0];
+        rate = oldRateEntry.rate;
         rateType = "old";
-      } else if (newRateEntry) {
-        rate = newRateEntry.split(" ")[0];
+      } else if (isNewRate) {
+        rate = data.newRate;
         rateType = "new";
       }
 
@@ -69,85 +72,139 @@ export default function RateCalendar() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <input
-          type="text"
-          placeholder="Search Company Name..."
-          className="w-full p-3 mb-6 border rounded-lg shadow-sm focus:ring-2 focus:ring-green-500"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {filteredCompanies.map((company) => (
-          <div
-            key={company}
-            className="mb-8 border p-4 sm:p-6 rounded-lg shadow-lg bg-white"
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12"
           >
-            <h1 className="text-xl sm:text-2xl font-bold text-center text-green-700 mb-6">
-              {company} Rate Calendar
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+              <TrendingUp className="w-8 h-8 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Rate Calendar
             </h1>
-            {rateData
-              .filter((item) => item.company === company)
-              .map(({ location }) => (
-                <div
-                  key={location}
-                  className="mb-6 border p-4 rounded-lg bg-gray-100 shadow-md"
-                >
-                  <h2 className="text-lg font-semibold text-center text-gray-800 mb-3">
-                    {location}
-                  </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Track and visualize rate changes across different companies and
+              locations.
+            </p>
+          </motion.div>
 
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="w-full md:w-1/2 overflow-x-auto">
-                      <Calendar
-                        onChange={setDate}
-                        value={date}
-                        tileContent={({ date }) => {
-                          const rateData = getRatesForDate(
-                            date,
-                            company,
-                            location
-                          );
-                          return rateData ? (
-                            <div
-                              className={`p-3 text-center rounded-md font-semibold min-h-[50px] flex items-center justify-center text-sm sm:text-base ${
-                                rateData.rateType === "new"
-                                  ? "bg-green-500 text-white"
-                                  : rateData.rateType === "old"
-                                  ? "bg-yellow-500 text-white"
-                                  : "bg-red-500 text-white"
-                              }`}
-                            >
-                              {rateData.rate}
-                            </div>
-                          ) : null;
-                        }}
-                        tileClassName={({ date }) => {
-                          const rateData = getRatesForDate(
-                            date,
-                            company,
-                            location
-                          );
-                          return rateData && rateData.rateType !== "none"
-                            ? "border-2 border-green-400"
-                            : "border border-gray-300";
-                        }}
-                        className="w-full border rounded-lg shadow-lg p-4 bg-white min-w-[320px] sm:min-w-[500px]"
-                      />
-                    </div>
-                    <div className="w-full md:w-1/2 flex justify-center items-center p-4">
-                      <div className="w-full max-w-md bg-white p-4 sm:p-6 rounded-lg shadow-lg">
-                        <RateGraph
-                          rateData={rateData}
-                          company={company}
-                          location={location}
-                        />
-                      </div>
-                    </div>
+          <motion.div className="relative mb-8">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search Company Name..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </motion.div>
+
+          <AnimatePresence>
+            {filteredCompanies.map((company, index) => (
+              <motion.div
+                key={company}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="mb-8 bg-white rounded-2xl shadow-lg overflow-hidden p-6"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-green-100">
+                    <Building2 className="w-6 h-6 text-green-600" />
                   </div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {company} Rate Calendar
+                  </h2>
                 </div>
-              ))}
-          </div>
-        ))}
+
+                {rateData
+                  .filter((item) => item.company === company)
+                  .map(({ location }) => (
+                    <motion.div
+                      key={location}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mb-8 bg-gray-50 rounded-xl p-6"
+                    >
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        {location}
+                      </h3>
+
+                      <div className="flex flex-col lg:flex-row gap-8">
+                        <div className="w-full lg:w-[50%]">
+                          {" "}
+                          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                            <Calendar
+                              className="w-full h-full border-none rounded-xl shadow-sm"
+                              onChange={setDate}
+                              value={date}
+                              tileContent={({ date }) => {
+                                const rateData = getRatesForDate(
+                                  date,
+                                  company,
+                                  location
+                                );
+                                return rateData ? (
+                                  <div className="flex flex-col items-center">
+                                    {/* <span className="text-xs font-bold">{date.getDate()}</span> */}
+                                    <div
+                                      className={`p-1 text-center rounded-lg font-medium text-[11px] sm:text-sm shadow-sm transition-all duration-200 hover:shadow-md ${
+                                        rateData.rateType === "new"
+                                          ? "bg-green-500 text-white"
+                                          : rateData.rateType === "old"
+                                          ? "bg-yellow-500 text-white"
+                                          : "bg-red-500 text-white"
+                                      }`}
+                                    >
+                                      {rateData.rate}
+                                    </div>
+                                  </div>
+                                ) : null;
+                              }}
+                              tileClassName={({ date }) => {
+                                const rateData = getRatesForDate(
+                                  date,
+                                  company,
+                                  location
+                                );
+                                return rateData && rateData.rateType !== "none"
+                                  ? "border-2 border-green-400 hover:border-green-500 transition-colors duration-200"
+                                  : "border border-gray-200 hover:border-gray-300 transition-colors duration-200";
+                              }}
+                              // className="w-full border-none rounded-xl shadow-sm"
+                              minDetail="month"
+                              maxDetail="month"
+                              showNeighboringMonth={false}
+                              calendarType="gregory"
+                              formatDay={(locale, date) => date.getDate()}
+                            />
+                          </div>
+                        </div>
+                        <div className="w-full lg:w-[50%]">
+                          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                            <RateGraph
+                              rateData={rateData}
+                              company={company}
+                              location={location}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
     </Suspense>
   );

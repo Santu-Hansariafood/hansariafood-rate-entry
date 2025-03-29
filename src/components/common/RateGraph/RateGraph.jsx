@@ -11,6 +11,8 @@ import {
   Legend,
 } from "chart.js";
 import Loading from "../Loading/Loading";
+import { motion } from "framer-motion";
+import { Calendar, TrendingUp } from "lucide-react";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -92,6 +94,14 @@ export default function RateGraph({ rateData, company, location }) {
           bodyColor: "#fff",
           borderWidth: 1,
           borderColor: "#fff",
+          padding: 12,
+          titleFont: {
+            size: 14,
+            weight: "bold",
+          },
+          bodyFont: {
+            size: 13,
+          },
         },
       },
       scales: {
@@ -102,8 +112,16 @@ export default function RateGraph({ rateData, company, location }) {
             text: "Rate",
             color: "#333",
             font: { size: 14, weight: "bold" },
+            padding: { top: 10, bottom: 10 },
           },
-          grid: { color: "rgba(0, 0, 0, 0.1)" },
+          grid: { 
+            color: "rgba(0, 0, 0, 0.05)",
+            drawBorder: false,
+          },
+          ticks: {
+            font: { size: 12 },
+            padding: 8,
+          },
         },
         x: {
           title: {
@@ -111,8 +129,13 @@ export default function RateGraph({ rateData, company, location }) {
             text: "Date",
             color: "#333",
             font: { size: 14, weight: "bold" },
+            padding: { top: 10, bottom: 10 },
           },
           grid: { display: false },
+          ticks: {
+            font: { size: 12 },
+            padding: 8,
+          },
         },
       },
     }),
@@ -121,24 +144,37 @@ export default function RateGraph({ rateData, company, location }) {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="w-full min-w-0 p-3">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-lg font-semibold text-gray-700">
-            {location} Rate Trends
-          </h2>
-          <select
-            className="p-2 border rounded"
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-          >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full min-w-0"
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-100">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Rate Trends
+            </h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gray-500" />
+            <select
+              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+            >
+              <option value="weekly">Weekly View</option>
+              <option value="monthly">Monthly View</option>
+            </select>
+          </div>
         </div>
-        <div className="h-72 min-w-0 bg-white p-3 rounded-lg shadow-lg">
+        <div className="h-72 min-w-0 bg-white rounded-xl p-4">
           <Bar data={data} options={options} />
         </div>
-      </div>
+      </motion.div>
     </Suspense>
   );
 }
