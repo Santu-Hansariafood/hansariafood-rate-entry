@@ -6,6 +6,10 @@ import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
+import { motion } from "framer-motion";
+import { Building2, PlusCircle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Button = dynamic(() => import("@/components/common/Button/Button"));
@@ -15,6 +19,7 @@ export default function CreateCompany() {
   const [company, setCompany] = useState("");
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -35,6 +40,7 @@ export default function CreateCompany() {
     }
 
     try {
+      setIsLoading(true);
       const response = await axios.post("/api/companies", {
         name: company,
         category,
@@ -49,33 +55,103 @@ export default function CreateCompany() {
       const errorMessage =
         error.response?.data?.error || "Failed to save company";
       toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex flex-col items-center justify-center p-6 bg-gray-100 min-h-screen">
-        <ToastContainer position="top-right" autoClose={3000} />
-        <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md space-y-4">
-          <Title text="Create Company" />
-          <InputBox
-            label="Company"
-            type="text"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            placeholder="Enter company name"
-          />
-          <Dropdown
-            label="Category"
-            options={categories.map((cat) => ({
-              label: cat.name,
-              value: cat.name,
-            }))}
-            value={category}
-            onChange={(val) => setCategory(val)}
-          />
-          <Button onClick={handleSave} text="Save" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="max-w-4xl mx-auto p-6">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex items-center gap-4 mb-8"
+          >
+            <Link
+              href="/dashboard"
+              className="p-2 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-200"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            </Link>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-100">
+                <Building2 className="w-6 h-6 text-blue-600" />
+              </div>
+              <Title text="Create New Company" />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-lg overflow-hidden"
+          >
+            <div className="p-8">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Company Name
+                  </label>
+                  <InputBox
+                    type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="Enter company name"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category
+                  </label>
+                  <Dropdown
+                    options={categories.map((cat) => ({
+                      label: cat.name,
+                      value: cat.name,
+                    }))}
+                    value={category}
+                    onChange={(val) => setCategory(val)}
+                    className="w-full"
+                  />
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    onClick={handleSave}
+                    text={isLoading ? "Saving..." : "Create Company"}
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-medium transition-all duration-200"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <PlusCircle className="w-5 h-5" />
+                    )}
+                    {isLoading ? "Saving..." : "Create Company"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
       </div>
     </Suspense>
   );

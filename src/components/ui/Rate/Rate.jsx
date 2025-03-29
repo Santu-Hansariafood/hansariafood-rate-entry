@@ -6,6 +6,8 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
+import { motion } from "framer-motion";
+import { Building2, ArrowLeft } from "lucide-react";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"));
 const RateTable = dynamic(() => import("./RateTable/RateTable"));
@@ -61,21 +63,69 @@ export default function Rate() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex flex-col items-center p-6 bg-gray-100 min-h-screen w-full">
-        <ToastContainer />
-        <Title text="Rate Management" />
-        <CompanyList
-          companies={companies}
-          completedCompanies={completedCompanies}
-          loading={loading}
-          onCompanySelect={setSelectedCompany}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
         />
-        {selectedCompany && (
-          <RateTable
-            selectedCompany={selectedCompany}
-            onClose={() => setSelectedCompany(null)}
-          />
-        )}
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+              <Building2 className="w-8 h-8 text-green-600" />
+            </div>
+            <Title text="Rate Management" />
+          </motion.div>
+
+          {selectedCompany ? (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="relative"
+            >
+              <button
+                onClick={() => setSelectedCompany(null)}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>Back to Companies</span>
+              </button>
+              <RateTable
+                selectedCompany={selectedCompany}
+                onClose={() => setSelectedCompany(null)}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
+                <CompanyList
+                  companies={companies}
+                  completedCompanies={completedCompanies}
+                  loading={loading}
+                  onCompanySelect={setSelectedCompany}
+                />
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </Suspense>
   );
