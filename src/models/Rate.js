@@ -5,11 +5,11 @@ const RateSchema = new mongoose.Schema({
   location: { type: String, required: true },
   oldRates: [
     {
-      rate: { type: Number, required: true },
+      rate: { type: String, required: true },
       date: { type: Date, required: true },
     },
   ],
-  newRate: { type: Number, required: true },
+  newRate: { type: String, required: true },
   newRateDate: { type: Date, required: true },
   updatedAt: { type: Date, default: Date.now },
 });

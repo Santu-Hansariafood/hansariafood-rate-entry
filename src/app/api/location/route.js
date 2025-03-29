@@ -4,25 +4,25 @@ import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { name } = await req.json();
-    if (!name) {
+    const { state, name } = await req.json();
+    if (!state || !name) {
       return NextResponse.json(
-        { error: "Location name is required" },
+        { error: "State and location name are required" },
         { status: 400 }
       );
     }
 
     await connectDB();
 
-    const existingLocation = await Location.findOne({ name });
+    const existingLocation = await Location.findOne({ state, name });
     if (existingLocation) {
       return NextResponse.json(
-        { error: "Location already exists" },
+        { error: "Location already exists in this state" },
         { status: 409 }
       );
     }
 
-    const newLocation = new Location({ name });
+    const newLocation = new Location({ state, name });
     await newLocation.save();
 
     return NextResponse.json(
@@ -30,6 +30,7 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (error) {
+    console.error("Server Error:", error);
     return NextResponse.json(
       { error: "Failed to create location" },
       { status: 500 }

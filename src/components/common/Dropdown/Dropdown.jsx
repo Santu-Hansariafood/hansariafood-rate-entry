@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const Dropdown = ({ label, options = [], value, onChange }) => {
   const [searchTerm, setSearchTerm] = useState(value || "");
   const [isOpen, setIsOpen] = useState(false);
   const [isUserTyping, setIsUserTyping] = useState(false);
+  const dropdownRef = useRef(null);
 
   const normalizedOptions = options.map((option) =>
     typeof option === "string" ? { label: option, value: option } : option
@@ -24,6 +25,21 @@ const Dropdown = ({ label, options = [], value, onChange }) => {
     }
   }, [value, normalizedOptions]);
 
+  // Handle clicks outside the dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+        setIsUserTyping(false);
+        setSearchTerm(value ? normalizedOptions.find(opt => opt.value === value)?.label || "" : "");
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [value, normalizedOptions]);
+
   const handleChange = (e) => {
     setSearchTerm(e.target.value);
     setIsUserTyping(true);
@@ -31,7 +47,7 @@ const Dropdown = ({ label, options = [], value, onChange }) => {
   };
 
   return (
-    <div className="flex flex-col gap-2 w-full max-w-xs relative">
+    <div className="flex flex-col gap-2 w-full max-w-xs relative" ref={dropdownRef}>
       {label && <label className="text-gray-700 font-bold">{label}</label>}
       <input
         type="text"

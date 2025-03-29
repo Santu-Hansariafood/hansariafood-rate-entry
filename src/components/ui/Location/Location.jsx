@@ -21,7 +21,6 @@ export default function CreateLocation() {
   const [isStateDropdownOpen, setIsStateDropdownOpen] = useState(false);
   const [filteredStates, setFilteredStates] = useState([]);
 
-  // Filter states based on input
   useEffect(() => {
     if (state) {
       const filtered = stateCityData.filter((item) =>
@@ -49,11 +48,14 @@ export default function CreateLocation() {
       return;
     }
 
+    console.log("Sending State:", state); // Debugging Log
+    console.log("Sending Location:", location);
+
     setLoading(true);
 
     try {
       const response = await axios.post("/api/location", {
-        state,
+        state: state,
         name: location,
       });
 
@@ -85,8 +87,6 @@ export default function CreateLocation() {
             <Building2 className="w-6 h-6 text-blue-600" />
             <Title text="Create Location" />
           </div>
-
-          {/* State Dropdown */}
           <div className="relative mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               State
@@ -105,8 +105,6 @@ export default function CreateLocation() {
               />
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             </div>
-
-            {/* State Dropdown List */}
             {isStateDropdownOpen && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -125,8 +123,6 @@ export default function CreateLocation() {
               </motion.div>
             )}
           </div>
-
-          {/* Location Input */}
           <div className="mb-6">
             <InputBox
               label="Location"
