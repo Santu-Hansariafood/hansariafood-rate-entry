@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-toastify';
-import { X, Plus, Loader2, Check, Trash2 } from 'lucide-react';
-import Table from '@/components/common/Tables/Tables';
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-toastify";
+import { X, Plus, Loader2, Check, Trash2, CheckSquare, Square } from "lucide-react";
+import Table from "@/components/common/Tables/Tables";
 
 export default function RegisterList() {
   const [users, setUsers] = useState([]);
@@ -23,13 +23,13 @@ export default function RegisterList() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('/api/auth/register');
-      if (!res.ok) throw new Error('Failed to fetch users');
+      const res = await fetch("/api/auth/register");
+      if (!res.ok) throw new Error("Failed to fetch users");
       const data = await res.json();
       setUsers(data);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to fetch users');
+      toast.error("Failed to fetch users");
     } finally {
       setIsLoading(false);
     }
@@ -37,13 +37,13 @@ export default function RegisterList() {
 
   const fetchCompanies = async () => {
     try {
-      const res = await fetch('/api/managecompany');
-      if (!res.ok) throw new Error('Failed to fetch companies');
+      const res = await fetch("/api/managecompany");
+      if (!res.ok) throw new Error("Failed to fetch companies");
       const data = await res.json();
       setCompanies(data.companies);
     } catch (error) {
       console.error(error);
-      toast.error('Failed to fetch companies');
+      toast.error("Failed to fetch companies");
     }
   };
 
@@ -66,42 +66,106 @@ export default function RegisterList() {
   };
 
   const handleRemoveCompany = (companyId) => {
-    setSelectedCompanies(selectedCompanies.filter(id => id !== companyId));
-    setSelectedLocations(selectedLocations.filter(loc => {
-      const company = companies.find(c => c._id === companyId);
-      return !company?.location.includes(loc);
-    }));
+    setSelectedCompanies(selectedCompanies.filter((id) => id !== companyId));
+    setSelectedLocations(
+      selectedLocations.filter((loc) => {
+        const company = companies.find((c) => c._id === companyId);
+        return !company?.location.includes(loc);
+      })
+    );
+  };
+
+  const handleSelectAllLocations = (companyId) => {
+    const company = companies.find((c) => c._id === companyId);
+    if (company) {
+      const allLocations = company.location;
+      const currentSelected = selectedLocations.filter(
+        (loc) => !allLocations.includes(loc)
+      );
+      setSelectedLocations([...currentSelected, ...allLocations]);
+    }
+  };
+
+  const handleDeselectAllLocations = (companyId) => {
+    const company = companies.find((c) => c._id === companyId);
+    if (company) {
+      setSelectedLocations(
+        selectedLocations.filter((loc) => !company.location.includes(loc))
+      );
+    }
+  };
+
+  const isAllLocationsSelected = (companyId) => {
+    const company = companies.find((c) => c._id === companyId);
+    if (!company) return false;
+    return company.location.every((loc) => selectedLocations.includes(loc));
   };
 
   const handleSave = async () => {
     if (!selectedCompanies.length || !selectedLocations.length) {
-      toast.error('Please select at least one company and location');
+      toast.error("Please select at least one company and location");
       return;
     }
 
     try {
       setIsLoading(true);
-      // Add your API call here to save the user's companies and locations
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
-      toast.success('Companies and locations assigned successfully');
+      
+      // Prepare the data structure
+      const companiesData = selectedCompanies.map((companyId) => {
+        const company = companies.find((c) => c._id === companyId);
+        if (!company) {
+          throw new Error(`Company with ID ${companyId} not found`);
+        }
+        
+        return {
+          companyId,
+          locations: selectedLocations.filter((loc) =>
+            company.location.includes(loc)
+          ),
+        };
+      });
+
+      // Validate the data structure
+      if (!companiesData.every(company => company.locations.length > 0)) {
+        toast.error("Each selected company must have at least one location");
+        return;
+      }
+
+      const response = await fetch("/api/user-companies", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: selectedUser._id,
+          companies: companiesData,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save user companies");
+      }
+
+      toast.success("Companies and locations assigned successfully");
       handleClosePopup();
-      fetchUsers(); // Refresh the users list
+      fetchUsers();
     } catch (error) {
-      console.error(error);
-      toast.error('Failed to assign companies and locations');
+      console.error("Save error:", error);
+      toast.error(error.message || "Failed to assign companies and locations");
     } finally {
       setIsLoading(false);
     }
   };
 
   const columns = [
-    { header: 'Name', accessor: 'name' },
-    { header: 'Mobile', accessor: 'mobile' },
-    // { header: 'Email', accessor: 'email' },
-    { header: 'Action', accessor: 'action' }
+    { header: "Name", accessor: "name" },
+    { header: "Mobile", accessor: "mobile" },
+    { header: "Action", accessor: "action" },
   ];
 
-  const usersWithActions = users.map(user => ({
+  const usersWithActions = users.map((user) => ({
     ...user,
     action: (
       <motion.button
@@ -113,7 +177,7 @@ export default function RegisterList() {
         <Plus size={16} />
         Add Company
       </motion.button>
-    )
+    ),
   }));
 
   return (
@@ -144,7 +208,9 @@ export default function RegisterList() {
               className="bg-white p-6 rounded-xl w-[500px] shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-800">Assign Companies and Locations</h3>
+                <h3 className="text-xl font-semibold text-gray-800">
+                  Assign Companies and Locations
+                </h3>
                 <button
                   onClick={handleClosePopup}
                   className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -163,9 +229,13 @@ export default function RegisterList() {
                     onChange={(e) => handleCompanyChange(e.target.value)}
                     value=""
                   >
-                    <option value="" disabled>Choose a company</option>
+                    <option value="" disabled>
+                      Choose a company
+                    </option>
                     {companies
-                      .filter(company => !selectedCompanies.includes(company._id))
+                      .filter(
+                        (company) => !selectedCompanies.includes(company._id)
+                      )
                       .map((company) => (
                         <option key={company._id} value={company._id}>
                           {company.name}
@@ -175,17 +245,40 @@ export default function RegisterList() {
                 </div>
 
                 {selectedCompanies.map((companyId) => {
-                  const company = companies.find(c => c._id === companyId);
+                  const company = companies.find((c) => c._id === companyId);
                   return company ? (
                     <div key={companyId} className="bg-gray-50 p-4 rounded-lg">
                       <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-semibold text-gray-800">{company.name}</h4>
-                        <button
-                          onClick={() => handleRemoveCompany(companyId)}
-                          className="text-red-500 hover:text-red-700 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <h4 className="font-semibold text-gray-800">
+                          {company.name}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              isAllLocationsSelected(companyId)
+                                ? handleDeselectAllLocations(companyId)
+                                : handleSelectAllLocations(companyId)
+                            }
+                            className="text-blue-500 hover:text-blue-700 transition-colors"
+                            title={
+                              isAllLocationsSelected(companyId)
+                                ? "Deselect All"
+                                : "Select All"
+                            }
+                          >
+                            {isAllLocationsSelected(companyId) ? (
+                              <CheckSquare size={16} />
+                            ) : (
+                              <Square size={16} />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleRemoveCompany(companyId)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         {company.location.map((loc) => (
@@ -199,9 +292,14 @@ export default function RegisterList() {
                               checked={selectedLocations.includes(loc)}
                               onChange={(e) => {
                                 if (e.target.checked) {
-                                  setSelectedLocations([...selectedLocations, loc]);
+                                  setSelectedLocations([
+                                    ...selectedLocations,
+                                    loc,
+                                  ]);
                                 } else {
-                                  setSelectedLocations(selectedLocations.filter((l) => l !== loc));
+                                  setSelectedLocations(
+                                    selectedLocations.filter((l) => l !== loc)
+                                  );
                                 }
                               }}
                               className="rounded text-blue-500 focus:ring-blue-500"
@@ -228,7 +326,11 @@ export default function RegisterList() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSave}
-                  disabled={isLoading || !selectedCompanies.length || !selectedLocations.length}
+                  disabled={
+                    isLoading ||
+                    !selectedCompanies.length ||
+                    !selectedLocations.length
+                  }
                   className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {isLoading ? (
