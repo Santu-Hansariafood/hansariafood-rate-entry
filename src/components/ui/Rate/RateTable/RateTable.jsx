@@ -34,19 +34,31 @@ export default function RateTable({ selectedCompany, onClose }) {
       );
 
       if (company) {
-        setRates(
-          company.location.map((location) => {
-            const foundRate = existingRates.find(
-              (rate) => rate.location === location
-            );
-            return {
-              location,
-              oldRate: foundRate?.oldRates?.at(-1) || "—",
-              newRate: foundRate?.newRate ?? "",
-              isUpdated: false,
-            };
-          })
-        );
+        // Create initial rates array
+        const initialRates = company.location.map((location) => {
+          const foundRate = existingRates.find(
+            (rate) => rate.location === location
+          );
+          return {
+            location,
+            oldRate: foundRate?.oldRates?.at(-1) || "—",
+            newRate: foundRate?.newRate ?? "",
+            isUpdated: foundRate?.newRate ? true : false,
+            lastUpdated: foundRate?.oldRates?.at(-1) ? new Date(foundRate.oldRates[foundRate.oldRates.length - 1].split('(')[1].split(')')[0]) : null
+          };
+        });
+
+        // Sort rates: unupdated first, then by last update date
+        const sortedRates = initialRates.sort((a, b) => {
+          if (!a.isUpdated && b.isUpdated) return -1;
+          if (a.isUpdated && !b.isUpdated) return 1;
+          if (a.isUpdated && b.isUpdated) {
+            return b.lastUpdated - a.lastUpdated;
+          }
+          return 0;
+        });
+
+        setRates(sortedRates);
       }
     } catch (error) {
       toast.error("Failed to fetch locations or rates");
@@ -81,18 +93,31 @@ export default function RateTable({ selectedCompany, onClose }) {
 
       toast.success("Rate updated successfully!");
       setEditIndex(null);
-      setRates((prevRates) =>
-        prevRates.map((rate, idx) =>
+      
+      // Update the rates array with the new rate
+      setRates((prevRates) => {
+        const updatedRates = prevRates.map((rate, idx) =>
           idx === index
             ? {
                 ...rate,
                 oldRate: newOldRate,
                 newRate: rateToSave.newRate,
                 isUpdated: true,
+                lastUpdated: new Date()
               }
             : rate
-        )
-      );
+        );
+        
+        // Re-sort the rates after update
+        return updatedRates.sort((a, b) => {
+          if (!a.isUpdated && b.isUpdated) return -1;
+          if (a.isUpdated && !b.isUpdated) return 1;
+          if (a.isUpdated && b.isUpdated) {
+            return b.lastUpdated - a.lastUpdated;
+          }
+          return 0;
+        });
+      });
     } catch (error) {
       toast.error("Error updating rate.");
     }
@@ -158,82 +183,82 @@ export default function RateTable({ selectedCompany, onClose }) {
                 </thead>
                 <tbody>
                   <AnimatePresence>
-                    {currentItems.map((rate, index) => (
-                      <motion.tr
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className={`${
-                          rate.isUpdated
-                            ? "bg-green-50/50 transition-colors duration-300"
-                            : "hover:bg-gray-50"
-                        }`}
-                      >
-                        <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
-                          {rate.location}
-                        </td>
-                        <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap">
-                          {rate.oldRate}
-                        </td>
-                        <td className="px-6 py-4 border-b whitespace-nowrap">
-                          <input
-                            type="text"
-                            value={rate.newRate}
-                            onChange={(e) =>
-                              setRates((prev) =>
-                                prev.map((r, idx) =>
-                                  idx === index
-                                    ? { ...r, newRate: e.target.value }
-                                    : r
+                    {currentItems.map((rate, index) => {
+                      const actualIndex = indexOfFirstItem + index;
+                      return (
+                        <motion.tr
+                          key={`${rate.location}-${rate.isUpdated}`}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          className={`${
+                            rate.isUpdated
+                              ? "bg-green-50/50 transition-colors duration-300"
+                              : "hover:bg-gray-50"
+                          }`}
+                        >
+                          <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
+                            {rate.location}
+                          </td>
+                          <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap">
+                            {rate.oldRate}
+                          </td>
+                          <td className="px-6 py-4 border-b whitespace-nowrap">
+                            <input
+                              type="text"
+                              value={rate.newRate}
+                              onChange={(e) =>
+                                setRates((prev) =>
+                                  prev.map((r, idx) =>
+                                    idx === actualIndex
+                                      ? { ...r, newRate: e.target.value }
+                                      : r
+                                  )
                                 )
-                              )
-                            }
-                            className={`w-full min-w-[120px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
-                              editIndex === index
-                                ? "border-green-500"
-                                : "border-gray-300"
-                            }`}
-                            disabled={editIndex !== index}
-                            placeholder="Enter new rate"
-                          />
-                        </td>
-                        <td className="px-6 py-4 border-b text-center whitespace-nowrap">
-                          {editIndex === index ? (
-                            <div className="flex items-center justify-center gap-2">
+                              }
+                              className={`w-full min-w-[120px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
+                                editIndex === actualIndex
+                                  ? "border-green-500"
+                                  : "border-gray-300"
+                              }`}
+                              disabled={editIndex !== actualIndex}
+                              placeholder="Enter new rate"
+                            />
+                          </td>
+                          <td className="px-6 py-4 border-b text-center whitespace-nowrap">
+                            {editIndex === actualIndex ? (
+                              <div className="flex items-center justify-center gap-2">
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleSave(actualIndex)}
+                                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
+                                >
+                                  <Save className="w-4 h-4" /> Save
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setEditIndex(null)}
+                                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
+                                >
+                                  <X className="w-4 h-4" /> Cancel
+                                </motion.button>
+                              </div>
+                            ) : (
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => handleSave(index)}
+                                onClick={() => handleEdit(actualIndex)}
                                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
                               >
-                                <Save className="w-4 h-4" />
-                                Save
+                                <Edit2 className="w-4 h-4" /> Edit
                               </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setEditIndex(null)}
-                                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2"
-                              >
-                                <X className="w-4 h-4" />
-                                Cancel
-                              </motion.button>
-                            </div>
-                          ) : (
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleEdit(index)}
-                              className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                              Edit
-                            </motion.button>
-                          )}
-                        </td>
-                      </motion.tr>
-                    ))}
+                            )}
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
                   </AnimatePresence>
                 </tbody>
               </table>

@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+import RegisterList from "@/components/ui/RegisterList/RegisterList";
 const AuthWrapper = dynamic(() =>
   import("@/components/AuthWrapper/AuthWrapper")
 );
@@ -11,6 +12,7 @@ const page = () => {
     <AuthWrapper>
       <Suspense fallback={<Loading />}>
         <Register />
+        <RegisterList/>
       </Suspense>
     </AuthWrapper>
   );
