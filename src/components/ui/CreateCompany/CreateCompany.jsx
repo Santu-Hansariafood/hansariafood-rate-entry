@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
@@ -24,8 +24,8 @@ export default function CreateCompany() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("/api/categories");
-        setCategories(response.data.categories || []);
+        const { data } = await axios.get("/api/categories");
+        setCategories(data.categories || []);
       } catch (error) {
         toast.error("Failed to fetch categories");
       }
@@ -33,32 +33,28 @@ export default function CreateCompany() {
     fetchCategories();
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!company.trim() || !category) {
       toast.error("All fields are required");
       return;
     }
-
     try {
       setIsLoading(true);
       const response = await axios.post("/api/companies", {
         name: company,
         category,
       });
-
       if (response.status === 201) {
         toast.success("Company saved successfully");
         setCompany("");
         setCategory("");
       }
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.error || "Failed to save company";
-      toast.error(errorMessage);
+      toast.error(error.response?.data?.error || "Failed to save company");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [company, category]);
 
   return (
     <Suspense fallback={<Loading />}>
@@ -115,8 +111,8 @@ export default function CreateCompany() {
                       value: cat.name,
                     }))}
                     value={category}
-                    onChange={(val) => setCategory(val)}
-                    className="w-full"
+                    onChange={setCategory}
+                    className="w-full max-h-60 overflow-y-auto"
                   />
                 </div>
 

@@ -8,6 +8,23 @@ const Actions = ({ item }) => {
   const openModal = (type) => setModal({ open: true, type });
   const closeModal = () => setModal({ open: false, type: "" });
 
+  const handleAction = () => {
+    switch (modal.type) {
+      case "view":
+        item.onView(item.id);
+        break;
+      case "edit":
+        item.onEdit(item);
+        break;
+      case "delete":
+        item.onDelete(item.id);
+        break;
+      default:
+        break;
+    }
+    closeModal();
+  };
+
   return (
     <div className="flex space-x-2">
       <button
@@ -18,7 +35,7 @@ const Actions = ({ item }) => {
       </button>
       <button
         onClick={() => openModal("edit")}
-        className="text-green-600 hover:text-green-800"
+        className="text-blue-600 hover:text-blue-800"
       >
         <Edit size={20} />
       </button>
@@ -41,11 +58,29 @@ const Actions = ({ item }) => {
             <h2 className="text-lg font-semibold mb-4 capitalize">
               {modal.type} Item
             </h2>
-            <p className="text-gray-700">
+            <p className="text-gray-700 mb-4">
               {modal.type === "view"
                 ? item.title
                 : `Are you sure you want to ${modal.type} this item?`}
             </p>
+            {modal.type !== "view" && (
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 rounded text-gray-700 bg-gray-300 hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAction}
+                  className={`px-4 py-2 rounded text-white ${
+                    modal.type === "delete" ? "bg-red-600" : "bg-blue-600"
+                  } hover:bg-opacity-80`}
+                >
+                  Confirm
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

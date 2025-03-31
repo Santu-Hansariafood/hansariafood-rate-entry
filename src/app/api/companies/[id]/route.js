@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Company from "@/models/Company";
 
+// Ensure database connection
 await connectDB();
 
 /**
- * @desc Get a single company by ID
- * @route GET /api/companies/:id
+ * @desc Get a company by ID
+ * @route GET /api/companies/[id]
  */
 export async function GET(req, { params }) {
   try {
@@ -27,8 +28,8 @@ export async function GET(req, { params }) {
 }
 
 /**
- * @desc Update a company
- * @route PUT /api/companies/:id
+ * @desc Update a company by ID
+ * @route PUT /api/companies/[id]
  */
 export async function PUT(req, { params }) {
   try {
@@ -62,8 +63,8 @@ export async function PUT(req, { params }) {
 }
 
 /**
- * @desc Delete a company
- * @route DELETE /api/companies/:id
+ * @desc Delete a company by ID
+ * @route DELETE /api/companies/[id]
  */
 export async function DELETE(req, { params }) {
   try {
