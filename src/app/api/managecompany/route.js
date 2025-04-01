@@ -37,7 +37,7 @@ export async function POST(req) {
       existingCompany.location = [
         ...new Set([...existingCompany.location, ...location]),
       ];
-      existingCompany.state = state; // Update state
+      existingCompany.state = state;
       await existingCompany.save();
 
       return NextResponse.json(
@@ -71,91 +71,6 @@ export async function GET() {
     console.error("Error in GET /managecompany:", error);
     return NextResponse.json(
       { error: "Failed to fetch companies" },
-      { status: 500 }
-    );
-  }
-}
-
-// ✅ Get Company by ID
-export async function GET_BY_ID(req, { params }) {
-  try {
-    const { id } = params;
-    if (!id) {
-      return NextResponse.json({ error: "ID is required" }, { status: 400 });
-    }
-
-    const company = await ManageCompany.findById(id);
-    if (!company) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ company }, { status: 200 });
-  } catch (error) {
-    console.error("Error in GET_BY_ID /managecompany:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch company" },
-      { status: 500 }
-    );
-  }
-}
-
-// ✅ Update Company (PUT)
-export async function PUT(req) {
-  try {
-    const { id, name, location, state } = await req.json();
-
-    if (!id || !name || !location) {
-      return NextResponse.json(
-        { error: "ID, name, and location are required" },
-        { status: 400 }
-      );
-    }
-
-    const company = await ManageCompany.findById(id);
-    if (!company) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 });
-    }
-
-    company.name = name;
-    company.location = Array.isArray(location) ? location : [location];
-    company.state = state || company.state; // Keep existing state if not provided
-
-    await company.save();
-
-    return NextResponse.json(
-      { message: "Company updated successfully", company },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error in PUT /managecompany:", error);
-    return NextResponse.json(
-      { error: "Failed to update company" },
-      { status: 500 }
-    );
-  }
-}
-
-// ✅ Delete Company
-export async function DELETE(req) {
-  try {
-    const { id } = await req.json();
-    if (!id) {
-      return NextResponse.json({ error: "ID is required" }, { status: 400 });
-    }
-
-    const deletedCompany = await ManageCompany.findByIdAndDelete(id);
-    if (!deletedCompany) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(
-      { message: "Company deleted successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error in DELETE /managecompany:", error);
-    return NextResponse.json(
-      { error: "Failed to delete company" },
       { status: 500 }
     );
   }

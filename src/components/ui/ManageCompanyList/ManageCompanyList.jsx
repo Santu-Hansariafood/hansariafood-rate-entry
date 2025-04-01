@@ -5,9 +5,9 @@ import axios from "axios";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import { toast } from "react-toastify";
-import { Edit2, Trash2, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import stateData from "@/data/state-city.json";
+import Actions from "@/components/common/Actions/Actions";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
@@ -23,7 +23,7 @@ const ManageCompanyList = () => {
       const response = await axios.get("/api/managecompany");
       setCompanies(response.data.companies || []);
     } catch (error) {
-      console.error("Error fetching managed companies:", error);
+      console.error("Error fetching companies:", error);
       toast.error("Failed to fetch companies");
     }
   };
@@ -32,14 +32,46 @@ const ManageCompanyList = () => {
     fetchCompanies();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this company?")) {
-      return;
+  const handleView = async (id) => {
+    try {
+      const response = await axios.get(`/api/managecompany/${id}`);
+      const company = response.data.company;
+      alert(`Company: ${company.name} - Location: ${company.location.join(", ")}`);
+    } catch (error) {
+      console.error("Error fetching company details:", error);
+      toast.error("Failed to fetch company details");
     }
+  };
 
+  const handleEdit = (company) => {
+    setEditingCompany(company);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
     try {
       setIsLoading(true);
-      await axios.delete("/api/managecompany", { data: { id } });
+      await axios.put(`/api/managecompany/${editingCompany._id}`, {
+        name: editingCompany.name,
+        location: editingCompany.location,
+        state: editingCompany.state,
+      });
+      toast.success("Company updated successfully");
+      setEditingCompany(null);
+      fetchCompanies();
+    } catch (error) {
+      console.error("Error updating company:", error);
+      toast.error("Failed to update company");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this company?")) return;
+    try {
+      setIsLoading(true);
+      await axios.delete(`/api/managecompany/${id}`);
       toast.success("Company deleted successfully");
       fetchCompanies();
     } catch (error) {
@@ -50,37 +82,6 @@ const ManageCompanyList = () => {
     }
   };
 
-  const handleEdit = async (company) => {
-    setEditingCompany(company);
-  };
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      setIsLoading(true);
-      await axios.put("/api/managecompany", {
-        id: editingCompany._id,
-        name: editingCompany.name,
-        location: editingCompany.location,
-        state: editingCompany.state,
-      });
-      toast.success("Company updated successfully");
-      setEditingCompany(null);
-      setShowStateDropdown(false);
-      fetchCompanies();
-    } catch (error) {
-      console.error("Error updating company:", error);
-      toast.error("Failed to update company");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStateSelect = (state) => {
-    setEditingCompany({ ...editingCompany, state });
-    setShowStateDropdown(false);
-  };
-
   const columns = [
     { header: "Company Name", accessor: "name" },
     { header: "Locations", accessor: "locations" },
@@ -89,107 +90,19 @@ const ManageCompanyList = () => {
   ];
 
   const data = companies.map((company) => ({
-    name: editingCompany?._id === company._id ? (
-      <input
-        type="text"
-        value={editingCompany.name}
-        onChange={(e) =>
-          setEditingCompany({ ...editingCompany, name: e.target.value })
-        }
-        className="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-      />
-    ) : (
-      company.name
-    ),
-    locations: editingCompany?._id === company._id ? (
-      <input
-        type="text"
-        value={editingCompany.location.join(", ")}
-        onChange={(e) =>
-          setEditingCompany({
-            ...editingCompany,
-            location: e.target.value.split(",").map((loc) => loc.trim()),
-          })
-        }
-        className="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-      />
-    ) : (
-      company.location.join(", ")
-    ),
-    state: editingCompany?._id === company._id ? (
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setShowStateDropdown(!showStateDropdown)}
-          className="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-between bg-white"
-        >
-          <span>{editingCompany.state || "Select State"}</span>
-          <ChevronDown className="w-4 h-4" />
-        </button>
-        {showStateDropdown && (
-          <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-            {stateData.map((stateItem, index) => (
-              <div
-                key={index}
-                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleStateSelect(stateItem.state)}
-              >
-                {stateItem.state}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    ) : (
-      company.state || "N.A"
-    ),
+    name: company.name,
+    locations: Array.isArray(company.location) ? company.location.join(", ") : "N.A",
+    state: company.state || "N.A",
     actions: (
-      <div className="flex items-center gap-2">
-        {editingCompany?._id === company._id ? (
-          <>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleUpdate}
-              disabled={isLoading}
-              className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
-            >
-              Save
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setEditingCompany(null);
-                setShowStateDropdown(false);
-              }}
-              className="bg-gray-200 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Cancel
-            </motion.button>
-          </>
-        ) : (
-          <>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleEdit(company)}
-              className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              <Edit2 size={16} />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleDelete(company._id)}
-              disabled={isLoading}
-              className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-            >
-              <Trash2 size={16} />
-            </motion.button>
-          </>
-        )}
-      </div>
+      <Actions
+        item={{
+          id: company._id,
+          title: company.name,
+          onView: handleView,
+          onEdit: handleEdit,
+          onDelete: handleDelete,
+        }}
+      />
     ),
   }));
 
@@ -198,6 +111,46 @@ const ManageCompanyList = () => {
       <div className="p-4">
         <Title text="Manage Company List" />
         <Table data={data} columns={columns} />
+
+        {editingCompany && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-5 rounded-lg shadow-lg w-1/3">
+              <h2 className="text-lg font-semibold mb-4">Edit Company</h2>
+              <form onSubmit={handleUpdate}>
+                <label className="block mb-2">
+                  Name:
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded"
+                    value={editingCompany.name}
+                    onChange={(e) =>
+                      setEditingCompany({ ...editingCompany, name: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="block mb-2">
+                  Location:
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded"
+                    value={editingCompany.location}
+                    onChange={(e) =>
+                      setEditingCompany({ ...editingCompany, location: e.target.value.split(", ") })
+                    }
+                  />
+                </label>
+                <div className="flex justify-end mt-4">
+                  <button type="button" onClick={() => setEditingCompany(null)} className="mr-2 px-4 py-2 bg-gray-300 rounded">
+                    Cancel
+                  </button>
+                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
+                    Update
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </Suspense>
   );

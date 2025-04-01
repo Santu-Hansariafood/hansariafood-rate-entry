@@ -1,25 +1,25 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
-import Company from "@/models/Company";
+import ManageCompany from "@/models/ManageCompany";
 
-// Ensure database connection
 await connectDB();
 
-/**
- * @desc Get a company by ID
- * @route GET /api/companies/[id]
- */
+// ✅ Get Company by ID
 export async function GET(req, { params }) {
   try {
     const { id } = params;
-    const company = await Company.findById(id);
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
 
+    const company = await ManageCompany.findById(id);
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    return NextResponse.json(company, { status: 200 });
+    return NextResponse.json({ company }, { status: 200 });
   } catch (error) {
+    console.error("Error in GET /managecompany/[id]:", error);
     return NextResponse.json(
       { error: "Failed to fetch company" },
       { status: 500 }
@@ -27,34 +27,36 @@ export async function GET(req, { params }) {
   }
 }
 
-/**
- * @desc Update a company by ID
- * @route PUT /api/companies/[id]
- */
+// ✅ Update Company (PUT)
 export async function PUT(req, { params }) {
   try {
     const { id } = params;
-    const { name, category } = await req.json();
+    const { name, location, state } = await req.json();
 
-    if (!name || !category || name.trim() === "" || category.trim() === "") {
+    if (!id || !name || !location) {
       return NextResponse.json(
-        { error: "Company name and category are required" },
+        { error: "ID, name, and location are required" },
         { status: 400 }
       );
     }
 
-    const updatedCompany = await Company.findByIdAndUpdate(
-      id,
-      { name, category },
-      { new: true }
-    );
-
-    if (!updatedCompany) {
+    const company = await ManageCompany.findById(id);
+    if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    return NextResponse.json(updatedCompany, { status: 200 });
+    company.name = name;
+    company.location = Array.isArray(location) ? location : [location];
+    company.state = state || company.state;
+
+    await company.save();
+
+    return NextResponse.json(
+      { message: "Company updated successfully", company },
+      { status: 200 }
+    );
   } catch (error) {
+    console.error("Error in PUT /managecompany/[id]:", error);
     return NextResponse.json(
       { error: "Failed to update company" },
       { status: 500 }
@@ -62,15 +64,15 @@ export async function PUT(req, { params }) {
   }
 }
 
-/**
- * @desc Delete a company by ID
- * @route DELETE /api/companies/[id]
- */
+// ✅ Delete Company
 export async function DELETE(req, { params }) {
   try {
     const { id } = params;
-    const deletedCompany = await Company.findByIdAndDelete(id);
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
 
+    const deletedCompany = await ManageCompany.findByIdAndDelete(id);
     if (!deletedCompany) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
@@ -80,6 +82,7 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error in DELETE /managecompany/[id]:", error);
     return NextResponse.json(
       { error: "Failed to delete company" },
       { status: 500 }
