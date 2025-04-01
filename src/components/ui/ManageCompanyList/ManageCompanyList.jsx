@@ -51,8 +51,7 @@ const ManageCompanyList = () => {
     e.preventDefault();
     try {
       setIsLoading(true);
-      await axios.put("/api/managecompany", {
-        id: editingCompany._id,
+      await axios.put(`/api/managecompany/${editingCompany._id}`, {
         name: editingCompany.name,
         location: editingCompany.location,
         state: editingCompany.state,
@@ -72,7 +71,7 @@ const ManageCompanyList = () => {
     if (!window.confirm("Are you sure you want to delete this company?")) return;
     try {
       setIsLoading(true);
-      await axios.delete("/api/managecompany", { data: { id } });
+      await axios.delete(`/api/managecompany/${id}`);
       toast.success("Company deleted successfully");
       fetchCompanies();
     } catch (error) {
@@ -92,7 +91,7 @@ const ManageCompanyList = () => {
 
   const data = companies.map((company) => ({
     name: company.name,
-    locations: company.location.join(", "),
+    locations: Array.isArray(company.location) ? company.location.join(", ") : "N.A",
     state: company.state || "N.A",
     actions: (
       <Actions
@@ -112,6 +111,46 @@ const ManageCompanyList = () => {
       <div className="p-4">
         <Title text="Manage Company List" />
         <Table data={data} columns={columns} />
+
+        {editingCompany && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-5 rounded-lg shadow-lg w-1/3">
+              <h2 className="text-lg font-semibold mb-4">Edit Company</h2>
+              <form onSubmit={handleUpdate}>
+                <label className="block mb-2">
+                  Name:
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded"
+                    value={editingCompany.name}
+                    onChange={(e) =>
+                      setEditingCompany({ ...editingCompany, name: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="block mb-2">
+                  Location:
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded"
+                    value={editingCompany.location}
+                    onChange={(e) =>
+                      setEditingCompany({ ...editingCompany, location: e.target.value.split(", ") })
+                    }
+                  />
+                </label>
+                <div className="flex justify-end mt-4">
+                  <button type="button" onClick={() => setEditingCompany(null)} className="mr-2 px-4 py-2 bg-gray-300 rounded">
+                    Cancel
+                  </button>
+                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
+                    Update
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </Suspense>
   );
