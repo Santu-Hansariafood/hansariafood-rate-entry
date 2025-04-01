@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
 import { Building2, ArrowLeft } from "lucide-react";
+import CategoryCard from "./CategoryCard/CategoryCard";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"));
 const RateTable = dynamic(() => import("./RateTable/RateTable"));
@@ -88,6 +89,9 @@ export default function Rate() {
               <Building2 className="w-8 h-8 text-green-600" />
             </div>
             <Title text="Rate Management" />
+            <div className="mb-8">
+              <CategoryCard />
+            </div>
           </motion.div>
 
           {selectedCompany ? (
