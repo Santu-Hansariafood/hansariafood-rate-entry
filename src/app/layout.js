@@ -4,6 +4,7 @@ import Head from "next/head";
 import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
+import { UserProvider } from "@/context/UserContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -138,7 +139,11 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
-          <main className="flex-1 pt-16">{children}</main>
+          <main className="flex-1 pt-16">
+            <UserProvider>
+            {children}
+            </UserProvider>
+            </main>
           <Footer className="mt-auto" />
         </AuthProvider>
       </body>

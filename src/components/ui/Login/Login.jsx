@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
+import { useUser } from "@/context/UserContext";
+
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 export default function Login() {
@@ -12,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const { setMobile: setGlobalMobile } = useUser();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,6 +27,7 @@ export default function Login() {
     if (result.error) {
       setError("Invalid credentials");
     } else {
+      setGlobalMobile(mobile);
       router.push("/dashboard");
     }
   };
