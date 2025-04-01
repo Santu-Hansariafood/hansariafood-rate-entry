@@ -9,18 +9,12 @@ const Actions = ({ item }) => {
   const closeModal = () => setModal({ open: false, type: "" });
 
   const handleAction = () => {
-    switch (modal.type) {
-      case "view":
-        item.onView(item.id);
-        break;
-      case "edit":
-        item.onEdit(item);
-        break;
-      case "delete":
-        item.onDelete(item.id);
-        break;
-      default:
-        break;
+    if (modal.type === "view") {
+      item.onView(item.id);
+    } else if (modal.type === "edit") {
+      item.onEdit(item);
+    } else if (modal.type === "delete") {
+      item.onDelete(item.id);
     }
     closeModal();
   };
@@ -64,22 +58,14 @@ const Actions = ({ item }) => {
                 : `Are you sure you want to ${modal.type} this item?`}
             </p>
             {modal.type !== "view" && (
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 rounded text-gray-700 bg-gray-300 hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAction}
-                  className={`px-4 py-2 rounded text-white ${
-                    modal.type === "delete" ? "bg-red-600" : "bg-blue-600"
-                  } hover:bg-opacity-80`}
-                >
-                  Confirm
-                </button>
-              </div>
+              <button
+                onClick={handleAction}
+                className={`px-4 py-2 rounded text-white ${
+                  modal.type === "delete" ? "bg-red-600" : "bg-blue-600"
+                } hover:bg-opacity-80`}
+              >
+                Confirm
+              </button>
             )}
           </div>
         </div>
