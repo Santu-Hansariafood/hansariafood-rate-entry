@@ -6,10 +6,17 @@ import { Plus } from "lucide-react";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 
+const STORAGE_KEY = process.env.NEXT_PUBLIC_STORAGE_KEY
+
 const CategoryCard = () => {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedFilters, setSelectedFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState(() => {
+    if (typeof window !== "undefined") {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    }
+    return {};
+  });
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -29,21 +36,26 @@ const CategoryCard = () => {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedFilters));
+    }
+  }, [selectedFilters]);
+
   const handleFilterClick = (category) => {
     setSelectedFilters((prev) => {
       const newFilters = { ...prev };
       const isRemoving = newFilters[category._id];
-  
+
       if (isRemoving) {
         delete newFilters[category._id];
       } else {
         newFilters[category._id] = category.name;
       }
-  
+
       return newFilters;
     });
-  
-    // Show toast notification after state update
+
     setTimeout(() => {
       if (selectedFilters[category._id]) {
         toast.info(`Filter removed: ${category.name}`);
@@ -52,7 +64,6 @@ const CategoryCard = () => {
       }
     }, 0);
   };
-  
 
   if (isLoading) {
     return <Loading />;
