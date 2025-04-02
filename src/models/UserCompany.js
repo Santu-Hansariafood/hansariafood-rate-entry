@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 const userCompanySchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    mobile: {
+      type: String,
       required: true,
+      unique: true,
     },
     companies: [
       {
@@ -14,10 +14,12 @@ const userCompanySchema = new mongoose.Schema(
           ref: "ManageCompany",
           required: true,
         },
-        locations: [{
-          type: String,
-          required: true,
-        }],
+        locations: [
+          {
+            type: String,
+            required: true,
+          },
+        ],
       },
     ],
   },
@@ -28,4 +30,4 @@ const userCompanySchema = new mongoose.Schema(
 
 const UserCompany = mongoose.models.UserCompany || mongoose.model("UserCompany", userCompanySchema);
 
-export default UserCompany; 
+export default UserCompany;

@@ -34,7 +34,6 @@ export default function RateTable({ selectedCompany, onClose }) {
       );
 
       if (company) {
-        // Create initial rates array
         const initialRates = company.location.map((location) => {
           const foundRate = existingRates.find(
             (rate) => rate.location === location
@@ -44,11 +43,16 @@ export default function RateTable({ selectedCompany, onClose }) {
             oldRate: foundRate?.oldRates?.at(-1) || "—",
             newRate: foundRate?.newRate ?? "",
             isUpdated: foundRate?.newRate ? true : false,
-            lastUpdated: foundRate?.oldRates?.at(-1) ? new Date(foundRate.oldRates[foundRate.oldRates.length - 1].split('(')[1].split(')')[0]) : null
+            lastUpdated: foundRate?.oldRates?.at(-1)
+              ? new Date(
+                  foundRate.oldRates[foundRate.oldRates.length - 1]
+                    .split("(")[1]
+                    .split(")")[0]
+                )
+              : null,
           };
         });
 
-        // Sort rates: unupdated first, then by last update date
         const sortedRates = initialRates.sort((a, b) => {
           if (!a.isUpdated && b.isUpdated) return -1;
           if (a.isUpdated && !b.isUpdated) return 1;
@@ -93,8 +97,7 @@ export default function RateTable({ selectedCompany, onClose }) {
 
       toast.success("Rate updated successfully!");
       setEditIndex(null);
-      
-      // Update the rates array with the new rate
+
       setRates((prevRates) => {
         const updatedRates = prevRates.map((rate, idx) =>
           idx === index
@@ -103,12 +106,11 @@ export default function RateTable({ selectedCompany, onClose }) {
                 oldRate: newOldRate,
                 newRate: rateToSave.newRate,
                 isUpdated: true,
-                lastUpdated: new Date()
+                lastUpdated: new Date(),
               }
             : rate
         );
-        
-        // Re-sort the rates after update
+
         return updatedRates.sort((a, b) => {
           if (!a.isUpdated && b.isUpdated) return -1;
           if (a.isUpdated && !b.isUpdated) return 1;
@@ -123,7 +125,6 @@ export default function RateTable({ selectedCompany, onClose }) {
     }
   };
 
-  // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = rates.slice(indexOfFirstItem, indexOfLastItem);
@@ -265,7 +266,6 @@ export default function RateTable({ selectedCompany, onClose }) {
             </div>
           </div>
 
-          {/* Pagination */}
           <div className="p-4 border-t flex items-center justify-between">
             <div className="text-sm text-gray-600">
               Showing {indexOfFirstItem + 1} to{" "}

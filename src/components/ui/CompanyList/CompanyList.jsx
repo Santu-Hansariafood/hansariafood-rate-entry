@@ -50,7 +50,9 @@ const CompanyList = () => {
       await axios.put(`/api/companies/${selectedCompany._id}`, formData);
       setCompanies((prevCompanies) =>
         prevCompanies.map((company) =>
-          company._id === selectedCompany._id ? { ...company, ...formData } : company
+          company._id === selectedCompany._id
+            ? { ...company, ...formData }
+            : company
         )
       );
       setModalOpen(false);
@@ -133,7 +135,9 @@ const CompanyList = () => {
             ) : (
               <>
                 <h2 className="text-lg font-bold">{selectedCompany.name}</h2>
-                <p className="text-sm text-gray-600">Category: {selectedCompany.category}</p>
+                <p className="text-sm text-gray-600">
+                  Category: {selectedCompany.category}
+                </p>
               </>
             )}
           </Modal>
