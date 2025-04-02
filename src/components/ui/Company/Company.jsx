@@ -13,7 +13,7 @@ const Button = dynamic(() => import("@/components/common/Button/Button"));
 export default function CreateCompany() {
   const [companyName, setCompanyName] = useState("");
   const [location, setLocation] = useState("");
-  const [state, setState] = useState(""); // State for storing the corresponding state of the selected location
+  const [state, setState] = useState("");
   const [companies, setCompanies] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,38 +35,37 @@ export default function CreateCompany() {
     fetchData();
   }, []);
 
-  // Function to handle location selection
   const handleLocationChange = (val) => {
     setLocation(val);
     const selectedLocation = locations.find((loc) => loc.name === val);
-    setState(selectedLocation ? selectedLocation.state : ""); // Set corresponding state
-  };  
+    setState(selectedLocation ? selectedLocation.state : "");
+  };
 
   const handleSubmit = async () => {
     if (!companyName.trim() || !location) {
       toast.error("All fields are required!");
       return;
     }
-  
+
     if (!state) {
       toast.error("State is missing. Please select a valid location.");
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       const response = await axios.post("/api/managecompany", {
         name: companyName,
         location,
-        state: state || "N.A", // Ensure state is not empty
+        state: state || "N.A",
       });
-  
+
       if (response.status === 201) {
         toast.success("Company created successfully!");
         setCompanyName("");
         setLocation("");
-        setState(""); // Reset state
+        setState("");
       } else if (response.status === 200) {
         toast.info(response.data.message);
       }
@@ -76,7 +75,7 @@ export default function CreateCompany() {
       setLoading(false);
     }
   };
-  
+
   return (
     <Suspense fallback={<Loading />}>
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">

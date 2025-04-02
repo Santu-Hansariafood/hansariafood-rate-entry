@@ -27,14 +27,14 @@ const metadata = {
   keywords:
     "Hansaria Food, raw material supply, poultry feed industry, commodity trading, brokerage services, supply chain, Kolkata, India, international trade",
   author: "Hansaria Food Private Limited",
-  url: "https://www.hansariafood.com",
+  url: "https://www.hansariafood.site",
   siteName: "Hansaria Food",
   image: "/images/og-image.png",
   openGraph: {
     title: "Hansaria Food Private Limited",
     description:
       "Hansaria Food Private Limited delivers premium raw materials for the poultry and feed industry while offering global commodity and brokerage services.",
-    url: "https://www.hansariafood.com",
+    url: "https://www.hansariafood.site",
     siteName: "Hansaria Food",
     images: [
       {
@@ -58,7 +58,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <Head>
-      <title>{metadata.title}</title>
+        <title>{metadata.title}</title>
         <meta charSet="UTF-8" />
         <meta
           name="viewport"
@@ -118,16 +118,16 @@ export default function RootLayout({ children }) {
               },
               contactPoint: {
                 "@type": "ContactPoint",
-                email: "info@hansariafood.com",
+                email: "info@hansariafood.site",
                 contactType: "customer service",
                 telephone: "+91-XXXXXXXXXX",
                 location:
                   "Primarc Square, Plot No.1, Salt Lake Bypass, LA Block, Sector: 3, Bidhannagar, Kolkata, West Bengal 700098",
               },
               sameAs: [
-                "https://www.facebook.com/profile.php?id=100087874624812",
-                "https://www.instagram.com/hansaria_food?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
-                "https://www.youtube.com/@hansariafood",
+                "https://www.facebook.site/profile.php?id=100087874624812",
+                "https://www.instagram.site/hansaria_food?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+                "https://www.youtube.site/@hansariafood",
               ],
             }),
           }}
@@ -140,10 +140,8 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
           <main className="flex-1 pt-16">
-            <UserProvider>
-            {children}
-            </UserProvider>
-            </main>
+            <UserProvider>{children}</UserProvider>
+          </main>
           <Footer className="mt-auto" />
         </AuthProvider>
       </body>

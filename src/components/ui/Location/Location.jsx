@@ -48,9 +48,6 @@ export default function CreateLocation() {
       return;
     }
 
-    console.log("Sending State:", state); // Debugging Log
-    console.log("Sending Location:", location);
-
     setLoading(true);
 
     try {

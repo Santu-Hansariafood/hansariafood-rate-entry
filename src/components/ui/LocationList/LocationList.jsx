@@ -30,7 +30,6 @@ const LocationList = () => {
       }
     };
 
-    // Load states from the imported JSON file
     const stateNames = stateData.map((item) => item.state);
     setStates(stateNames);
 
@@ -108,11 +107,16 @@ const LocationList = () => {
         <Title text="Location List" />
         <Table data={data} columns={columns} />
         {showModal && (
-          <Modal title={editMode ? "Edit Location" : "Location Details"} onClose={() => setShowModal(false)}>
+          <Modal
+            title={editMode ? "Edit Location" : "Location Details"}
+            onClose={() => setShowModal(false)}
+          >
             {editMode ? (
               <div className="space-y-4 p-4">
                 <label className="block">
-                  <span className="text-gray-700 font-semibold">Location Name</span>
+                  <span className="text-gray-700 font-semibold">
+                    Location Name
+                  </span>
                   <input
                     type="text"
                     name="name"
@@ -130,9 +134,13 @@ const LocationList = () => {
                     onChange={handleInputChange}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
                   >
-                    <option value="" disabled>Select a state</option>
+                    <option value="" disabled>
+                      Select a state
+                    </option>
                     {states.map((state, index) => (
-                      <option key={index} value={state}>{state}</option>
+                      <option key={index} value={state}>
+                        {state}
+                      </option>
                     ))}
                   </select>
                 </label>
