@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { X, Plus, Loader2, Check, Trash2, CheckSquare, Square } from "lucide-react";
+import axios from "axios";
 import Table from "@/components/common/Tables/Tables";
 
 export default function RegisterList() {
@@ -101,63 +102,50 @@ export default function RegisterList() {
     return company.location.every((loc) => selectedLocations.includes(loc));
   };
 
-  const handleSave = async () => {
-    if (!selectedCompanies.length || !selectedLocations.length) {
-      toast.error("Please select at least one company and location");
+const handleSave = async () => {
+  if (!selectedCompanies.length || !selectedLocations.length) {
+    toast.error("Please select at least one company and location");
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+    const companiesData = selectedCompanies.map((companyId) => {
+      const company = companies.find((c) => c._id === companyId);
+      if (!company) {
+        throw new Error(`Company with ID ${companyId} not found`);
+      }
+
+      return {
+        companyId,
+        locations: selectedLocations.filter((loc) =>
+          company.location.includes(loc)
+        ),
+      };
+    });
+
+    if (!companiesData.every(company => company.locations.length > 0)) {
+      toast.error("Each selected company must have at least one location");
       return;
     }
 
-    try {
-      setIsLoading(true);
-      
-      // Prepare the data structure
-      const companiesData = selectedCompanies.map((companyId) => {
-        const company = companies.find((c) => c._id === companyId);
-        if (!company) {
-          throw new Error(`Company with ID ${companyId} not found`);
-        }
-        
-        return {
-          companyId,
-          locations: selectedLocations.filter((loc) =>
-            company.location.includes(loc)
-          ),
-        };
-      });
+    // Use Axios to make the API request
+    await axios.post("/api/user-companies", {
+      mobile: selectedUser.mobile,  // Using mobile instead of userId
+      companies: companiesData,
+    });
 
-      // Validate the data structure
-      if (!companiesData.every(company => company.locations.length > 0)) {
-        toast.error("Each selected company must have at least one location");
-        return;
-      }
+    toast.success("Companies and locations assigned successfully");
+    handleClosePopup();
+    fetchUsers();
+  } catch (error) {
+    console.error("Save error:", error);
+    toast.error(error.response?.data?.error || "Failed to assign companies and locations");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-      const response = await fetch("/api/user-companies", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: selectedUser._id,
-          companies: companiesData,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to save user companies");
-      }
-
-      toast.success("Companies and locations assigned successfully");
-      handleClosePopup();
-      fetchUsers();
-    } catch (error) {
-      console.error("Save error:", error);
-      toast.error(error.message || "Failed to assign companies and locations");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const columns = [
     { header: "Name", accessor: "name" },
