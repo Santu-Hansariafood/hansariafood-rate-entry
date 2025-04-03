@@ -106,7 +106,7 @@ export async function GET(req) {
 
     // Find user company data by mobile number
     const userCompany = await UserCompany.findOne({ mobile })
-      .populate("companies.companyId", "name location")
+      .populate("companies.companyId", "name location") // Populate companyId with name and location from ManageCompany
       .lean();
 
     if (!userCompany) {

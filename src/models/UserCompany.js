@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import ManageCompany from "@/models/ManageCompany";  // Import your ManageCompany model
 
 const userCompanySchema = new mongoose.Schema(
   {
@@ -11,7 +12,7 @@ const userCompanySchema = new mongoose.Schema(
       {
         companyId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "ManageCompany",
+          ref: "ManageCompany", // Ensure you refer to the correct model name here
           required: true,
         },
         locations: [

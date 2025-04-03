@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useUser } from "@/context/UserContext";
 import { motion } from "framer-motion";
@@ -24,10 +25,12 @@ export default function Welcome() {
         axios.get("/api/auth/register"),
         axios.get(`/api/user-companies?mobile=${mobile}`),
       ]);
-      
+
+      // Get the user data and format the name
       const userData = userResponse.data.find((user) => user.mobile.toString() === mobile);
       if (userData) setName(formatName(userData.name));
-      
+
+      // Assuming companyResponse.data contains the companies field
       setAssignedCompanies(companyResponse.data.companies || []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -78,7 +81,7 @@ export default function Welcome() {
   if (loading) return <Loading />;
 
   return (
-    <Suspense fallback={<Loading />}> 
+    <Suspense fallback={<Loading />}>
       <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
