@@ -20,29 +20,34 @@ export default function RateTable({ selectedCompany, onClose }) {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-
+  const allRatesFilled = rates.every(rate => rate.newRate.trim());
+  
   const fetchRates = useCallback(async () => {
     try {
       const [{ data: companyData }, { data: existingRates }] =
         await Promise.all([
           axios.get("/api/managecompany"),
-          axios.get(`/api/rate?company=${selectedCompany}`),
+          axios.get(
+            `/api/rate?company=${encodeURIComponent(selectedCompany.trim())}`
+          ),
         ]);
 
       const company = companyData.companies.find(
-        (c) => c.name === selectedCompany
+        (c) => c.name.trim() === selectedCompany.trim()
       );
 
       if (company) {
         const initialRates = company.location.map((location) => {
+          const cleanLocation = location.trim();
           const foundRate = existingRates.find(
-            (rate) => rate.location === location
+            (rate) => rate.location.trim() === cleanLocation
           );
+
           return {
-            location,
+            location: cleanLocation,
             oldRate: foundRate?.oldRates?.at(-1) || "—",
             newRate: foundRate?.newRate ?? "",
-            isUpdated: foundRate?.newRate ? true : false,
+            isUpdated: !!foundRate?.newRate,
             lastUpdated: foundRate?.oldRates?.at(-1)
               ? new Date(
                   foundRate.oldRates[foundRate.oldRates.length - 1]
@@ -56,15 +61,16 @@ export default function RateTable({ selectedCompany, onClose }) {
         const sortedRates = initialRates.sort((a, b) => {
           if (!a.isUpdated && b.isUpdated) return -1;
           if (a.isUpdated && !b.isUpdated) return 1;
-          if (a.isUpdated && b.isUpdated) {
-            return b.lastUpdated - a.lastUpdated;
-          }
-          return 0;
+          return b.lastUpdated - a.lastUpdated;
         });
 
         setRates(sortedRates);
+      } else {
+        console.error("Company not found:", selectedCompany);
+        toast.error("Company not found in the database.");
       }
     } catch (error) {
+      console.error("Error fetching rates:", error);
       toast.error("Failed to fetch locations or rates");
     }
   }, [selectedCompany]);
@@ -163,7 +169,7 @@ export default function RateTable({ selectedCompany, onClose }) {
             </div>
           </div>
 
-          <div className="max-h-[70vh] overflow-auto">
+          <div className={`max-h-[70vh] overflow-auto ${allRatesFilled ? "bg-green-50" : "bg-red-50"}`}>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead className="bg-gray-50 sticky top-0">
@@ -192,10 +198,8 @@ export default function RateTable({ selectedCompany, onClose }) {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
-                          className={`${
-                            rate.isUpdated
-                              ? "bg-green-50/50 transition-colors duration-300"
-                              : "hover:bg-gray-50"
+                          className={`transition-colors duration-300 ${
+                            rate.newRate.trim() ? "bg-green-50" : "bg-red-50"
                           }`}
                         >
                           <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
