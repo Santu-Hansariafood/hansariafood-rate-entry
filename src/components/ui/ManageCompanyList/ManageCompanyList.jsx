@@ -9,17 +9,27 @@ import { toast } from "react-toastify";
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 const Actions = dynamic(() => import("@/components/common/Actions/Actions"));
+const EditCompanyModal = dynamic(() =>
+  import("@/components/ui/ManageCompanyList/EditCompanyModal/EditCompanyModal")
+);
 
 const ManageCompanyList = () => {
   const [companies, setCompanies] = useState([]);
   const [editingCompany, setEditingCompany] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showStateDropdown, setShowStateDropdown] = useState(false);
 
   const fetchCompanies = async () => {
     try {
       const response = await axios.get("/api/managecompany");
-      setCompanies(response.data.companies || []);
+      const formattedCompanies = (response.data.companies || []).map((c) => ({
+        ...c,
+        location: Array.isArray(c.location)
+          ? c.location.map((loc) =>
+              typeof loc === "string" ? { name: loc, state: "" } : loc
+            )
+          : [],
+      }));
+      setCompanies(formattedCompanies);
     } catch (error) {
       console.error("Error fetching companies:", error);
       toast.error("Failed to fetch companies");
@@ -34,9 +44,14 @@ const ManageCompanyList = () => {
     try {
       const response = await axios.get(`/api/managecompany/${id}`);
       const company = response.data.company;
-      alert(
-        `Company: ${company.name} - Location: ${company.location.join(", ")}`
-      );
+      const locations = Array.isArray(company.location)
+        ? company.location
+            .map((l) =>
+              typeof l === "string" ? l : `${l.name} (${l.state})`
+            )
+            .join(", ")
+        : "N.A";
+      alert(`Company: ${company.name}\nLocation(s): ${locations}`);
     } catch (error) {
       console.error("Error fetching company details:", error);
       toast.error("Failed to fetch company details");
@@ -44,18 +59,37 @@ const ManageCompanyList = () => {
   };
 
   const handleEdit = (company) => {
-    setEditingCompany(company);
+    const formattedCompany = {
+      ...company,
+      location: Array.isArray(company.location)
+        ? company.location.map((loc) => {
+            if (typeof loc === "string") {
+              const parts = loc.trim().split(" ");
+              const state = parts.pop(); // last word is state
+              const name = parts.join(" "); // rest is location name
+              return { name, state };
+            } else if (typeof loc === "object" && loc !== null) {
+              return {
+                name: loc.name || "",
+                state: loc.state || "",
+              };
+            }
+            return { name: "", state: "" };
+          })
+        : [],
+    };
+  
+    setEditingCompany(formattedCompany);
   };
-
+  
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
       setIsLoading(true);
       await axios.put(`/api/managecompany/${editingCompany._id}`, {
         name: editingCompany.name,
-        location: editingCompany.location,
-        state: editingCompany.state,
-      });
+        location: editingCompany.location.map(loc => `${loc.name} ${loc.state}`.trim()),
+      });      
       toast.success("Company updated successfully");
       setEditingCompany(null);
       fetchCompanies();
@@ -92,10 +126,14 @@ const ManageCompanyList = () => {
 
   const data = companies.map((company) => ({
     name: company.name,
-    locations: Array.isArray(company.location)
-      ? company.location.join(", ")
-      : "N.A",
-    state: company.state || "N.A",
+    locations:
+      Array.isArray(company.location) && company.location.length > 0
+        ? company.location.map((l) => l.name).join(", ")
+        : "N.A",
+    state:
+      Array.isArray(company.location) && company.location.length > 0
+        ? company.location.map((l) => l.state).join(", ")
+        : "N.A",
     actions: (
       <Actions
         item={{
@@ -114,58 +152,13 @@ const ManageCompanyList = () => {
       <div className="p-4">
         <Title text="Manage Company List" />
         <Table data={data} columns={columns} />
-
         {editingCompany && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white p-5 rounded-lg shadow-lg w-1/3">
-              <h2 className="text-lg font-semibold mb-4">Edit Company</h2>
-              <form onSubmit={handleUpdate}>
-                <label className="block mb-2">
-                  Name:
-                  <input
-                    type="text"
-                    className="w-full p-2 border rounded"
-                    value={editingCompany.name}
-                    onChange={(e) =>
-                      setEditingCompany({
-                        ...editingCompany,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                </label>
-                <label className="block mb-2">
-                  Location:
-                  <input
-                    type="text"
-                    className="w-full p-2 border rounded"
-                    value={editingCompany.location}
-                    onChange={(e) =>
-                      setEditingCompany({
-                        ...editingCompany,
-                        location: e.target.value.split(", "),
-                      })
-                    }
-                  />
-                </label>
-                <div className="flex justify-end mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setEditingCompany(null)}
-                    className="mr-2 px-4 py-2 bg-gray-300 rounded"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded"
-                  >
-                    Update
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+          <EditCompanyModal
+            company={editingCompany}
+            onCancel={() => setEditingCompany(null)}
+            onChange={setEditingCompany}
+            onSubmit={handleUpdate}
+          />
         )}
       </div>
     </Suspense>

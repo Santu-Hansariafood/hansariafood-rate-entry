@@ -31,7 +31,7 @@ export async function GET(req, { params }) {
 export async function PUT(req, { params }) {
   try {
     const { id } = params;
-    const { name, location, state } = await req.json();
+    const { name, location } = await req.json();
 
     if (!id || !name || !location) {
       return NextResponse.json(
@@ -45,9 +45,13 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
+    // Convert { name, state } objects into strings like "Chopra WB"
+    const flatLocations = Array.isArray(location)
+      ? location.map((loc) => `${loc.name} ${loc.state}`.trim())
+      : [];
+
     company.name = name;
-    company.location = Array.isArray(location) ? location : [location];
-    company.state = state || company.state;
+    company.location = flatLocations;
 
     await company.save();
 
