@@ -1,8 +1,50 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+
+const states = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
+  "Uttar Pradesh", "Uttarakhand", "West Bengal"
+];
 
 const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
+  const [locations, setLocations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await axios.get("/api/managecompany");
+        const allLocations = response.data.companies.flatMap(c => 
+          Array.isArray(c.location) ? c.location : []
+        );
+        // Extract location names from "name state" format
+        const uniqueLocations = [...new Set(allLocations.map(loc => {
+          if (typeof loc === "string") {
+            const parts = loc.trim().split(" ");
+            parts.pop(); // Remove state
+            return parts.join(" ");
+          }
+          return loc.name;
+        }))];
+        setLocations(uniqueLocations);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+        toast.error("Failed to fetch locations");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
   if (!company) return null;
 
   const handleLocationChange = (index, field, value) => {
@@ -46,45 +88,60 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
 
           <div className="mb-4">
             <h3 className="text-lg font-semibold mb-2">Locations</h3>
-            {company.location.map((loc, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-2 gap-4 items-center mb-3"
-              >
-                <input
-                  type="text"
-                  placeholder="Location"
-                  className="p-2 border rounded"
-                  value={loc.name}
-                  onChange={(e) =>
-                    handleLocationChange(index, "name", e.target.value)
-                  }
-                />
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="State"
-                    className="p-2 border rounded w-full"
-                    value={loc.state}
-                    onChange={(e) =>
-                      handleLocationChange(index, "state", e.target.value)
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveLocation(index)}
-                    className="text-red-600"
-                  >
-                    ✕
-                  </button>
+            <div className="space-y-4">
+              {company.location.map((loc, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-2 gap-4 items-center p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="relative">
+                    <input
+                      type="text"
+                      list="locations"
+                      placeholder="Enter location name"
+                      className="w-full p-2 border rounded"
+                      value={loc.name}
+                      onChange={(e) =>
+                        handleLocationChange(index, "name", e.target.value)
+                      }
+                    />
+                    <datalist id="locations">
+                      {locations.map((location, i) => (
+                        <option key={i} value={location} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div className="flex gap-2">
+                    <select
+                      className="p-2 border rounded w-full"
+                      value={loc.state}
+                      onChange={(e) =>
+                        handleLocationChange(index, "state", e.target.value)
+                      }
+                    >
+                      <option value="">Select State</option>
+                      {states.map((state, i) => (
+                        <option key={i} value={state}>
+                          {state}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveLocation(index)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
 
             <button
               type="button"
               onClick={handleAddLocation}
-              className="text-blue-600 mt-2"
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               + Add Location
             </button>
@@ -94,13 +151,13 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 mr-2 bg-gray-300 rounded"
+              className="px-4 py-2 mr-2 bg-gray-300 rounded hover:bg-gray-400"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               Update
             </button>

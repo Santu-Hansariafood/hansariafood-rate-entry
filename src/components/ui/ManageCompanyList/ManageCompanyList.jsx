@@ -62,23 +62,24 @@ const ManageCompanyList = () => {
     const formattedCompany = {
       ...company,
       location: Array.isArray(company.location)
-        ? company.location.map((loc) => {
-            if (typeof loc === "string") {
-              const parts = loc.trim().split(" ");
-              const state = parts.pop(); // last word is state
-              const name = parts.join(" "); // rest is location name
-              return { name, state };
-            } else if (typeof loc === "object" && loc !== null) {
-              return {
-                name: loc.name || "",
-                state: loc.state || "",
-              };
+        ? company.location.map(loc => {
+          if (typeof loc === "string") {
+            const parts = loc.trim().split(" ");
+            if (parts.length === 1) {
+              return { name: parts[0], state: "" };
             }
-            return { name: "", state: "" };
-          })
-        : [],
+            const state = parts.pop();
+            const name = parts.join(" ");
+            return { name, state };
+          }
+          return {
+            name: loc?.name || "",
+            state: loc?.state || ""
+          };
+        })
+        : []
     };
-  
+
     setEditingCompany(formattedCompany);
   };
   
@@ -86,10 +87,16 @@ const ManageCompanyList = () => {
     e.preventDefault();
     try {
       setIsLoading(true);
+      
+      const formattedLocations = editingCompany.location.map(loc => 
+        `${loc.name} ${loc.state}`.trim()
+      );
+
       await axios.put(`/api/managecompany/${editingCompany._id}`, {
         name: editingCompany.name,
-        location: editingCompany.location.map(loc => `${loc.name} ${loc.state}`.trim()),
+        location: formattedLocations
       });      
+      
       toast.success("Company updated successfully");
       setEditingCompany(null);
       fetchCompanies();
