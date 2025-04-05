@@ -65,8 +65,19 @@ const ManageCompanyList = () => {
     }
   };
 
+  const fetchAvailableLocations = async () => {
+    try {
+      const response = await axios.get("/api/location");
+      setLocations(response.data.locations || []);
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      toast.error("Failed to fetch available locations");
+    }
+  };
+
   useEffect(() => {
     fetchCompanies();
+    fetchAvailableLocations();
   }, []);
 
   const handleView = async (id) => {
@@ -91,13 +102,11 @@ const ManageCompanyList = () => {
       const company = response.data.company;
 
       const formattedLocation = Array.isArray(company.location)
-        ? company.location.map((loc) => {
-            const [name, ...stateParts] = loc.split(" ");
-            return {
-              name: name,
-              state: stateParts.join(" "),
-            };
-          })
+        ? company.location.map((loc) =>
+            typeof loc === "object"
+              ? { name: loc.name, state: loc.state }
+              : { name: loc, state: "" }
+          )
         : [];
 
       setEditingCompany({
@@ -116,13 +125,9 @@ const ManageCompanyList = () => {
     try {
       setIsLoading(true);
 
-      const formattedLocations = editingCompany.location.map((loc) =>
-        `${loc.name} ${loc.state}`.trim()
-      );
-
       await axios.put(`/api/managecompany/${editingCompany._id}`, {
         name: editingCompany.name,
-        location: formattedLocations,
+        location: editingCompany.location,
       });
 
       toast.success("Company updated successfully");
@@ -269,12 +274,15 @@ const ManageCompanyList = () => {
                             }
                           >
                             <option value="">Select State</option>
-                            {states.map((state, i) => (
+                            {[
+                              ...new Set(locations.map((loc) => loc.state)),
+                            ].map((state, i) => (
                               <option key={i} value={state}>
                                 {state}
                               </option>
                             ))}
                           </select>
+
                           <button
                             type="button"
                             onClick={() => handleRemoveLocation(index)}
