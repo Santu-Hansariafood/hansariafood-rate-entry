@@ -4,51 +4,49 @@ import ManageCompany from "@/models/ManageCompany";
 
 await connectDB();
 
+// ✅ Create or Update Company
 export async function POST(req) {
   try {
-    let { name, category, location, state } = await req.json();
+    let { name, location, state } = await req.json();
 
-    if (!name || !category || !location || !state) {
+    if (!name || !location) {
       return NextResponse.json(
-        { error: "Name, category, location, and state are required" },
+        { error: "Name and location are required" },
         { status: 400 }
       );
     }
 
-    const locationObj = { name: location, state };
+    if (!Array.isArray(location)) {
+      location = [location];
+    }
+
+    state = state || "N.A"; // Default to "N.A" if state is missing
 
     let existingCompany = await ManageCompany.findOne({ name });
-
     if (existingCompany) {
-      const exists = existingCompany.location.some(
-        (loc) => loc.name === location
+      const locationExists = location.every((loc) =>
+        existingCompany.location.includes(loc)
       );
-
-      if (exists) {
+      if (locationExists) {
         return NextResponse.json(
           { error: "Company with this location already exists" },
           { status: 409 }
         );
       }
 
-      existingCompany.location.push(locationObj);
+      existingCompany.location = [
+        ...new Set([...existingCompany.location, ...location]),
+      ];
+      existingCompany.state = state;
       await existingCompany.save();
 
       return NextResponse.json(
-        {
-          message: "Company location added successfully",
-          company: existingCompany,
-        },
+        { message: "Company location updated successfully", company: existingCompany },
         { status: 200 }
       );
     }
 
-    const newCompany = new ManageCompany({
-      name,
-      category,
-      location: [locationObj],
-    });
-
+    const newCompany = new ManageCompany({ name, location, state });
     await newCompany.save();
 
     return NextResponse.json(
