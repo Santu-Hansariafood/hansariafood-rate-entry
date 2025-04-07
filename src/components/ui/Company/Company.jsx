@@ -6,12 +6,14 @@ import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
+
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Button = dynamic(() => import("@/components/common/Button/Button"));
 
 export default function CreateCompany() {
   const [companyName, setCompanyName] = useState("");
+  const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
   const [state, setState] = useState("");
   const [companies, setCompanies] = useState([]);
@@ -35,6 +37,12 @@ export default function CreateCompany() {
     fetchData();
   }, []);
 
+  const handleCompanyChange = (val) => {
+    setCompanyName(val);
+    const selectedCompany = companies.find((comp) => comp.name === val);
+    setCategory(selectedCompany ? selectedCompany.category : "");
+  };
+
   const handleLocationChange = (val) => {
     setLocation(val);
     const selectedLocation = locations.find((loc) => loc.name === val);
@@ -42,7 +50,7 @@ export default function CreateCompany() {
   };
 
   const handleSubmit = async () => {
-    if (!companyName.trim() || !location) {
+    if (!companyName.trim() || !location || !category) {
       toast.error("All fields are required!");
       return;
     }
@@ -57,8 +65,9 @@ export default function CreateCompany() {
     try {
       const response = await axios.post("/api/managecompany", {
         name: companyName,
+        category,
         location,
-        state: state || "N.A",
+        state,
       });
 
       if (response.status === 201) {
@@ -66,6 +75,7 @@ export default function CreateCompany() {
         setCompanyName("");
         setLocation("");
         setState("");
+        setCategory("");
       } else if (response.status === 200) {
         toast.info(response.data.message);
       }
@@ -93,8 +103,20 @@ export default function CreateCompany() {
                 value: comp.name,
               }))}
               value={companyName}
-              onChange={(val) => setCompanyName(val)}
+              onChange={handleCompanyChange}
             />
+
+            <div>
+              <label className="block text-gray-700 font-semibold">
+                Category
+              </label>
+              <input
+                type="text"
+                value={category}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+              />
+            </div>
 
             <Dropdown
               label="Location"
@@ -106,7 +128,6 @@ export default function CreateCompany() {
               onChange={handleLocationChange}
             />
 
-            {/* Read-Only State Field */}
             <div>
               <label className="block text-gray-700 font-semibold">State</label>
               <input

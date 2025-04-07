@@ -4,7 +4,7 @@ import ManageCompany from "@/models/ManageCompany";
 
 await connectDB();
 
-// ✅ Get Company by ID
+// ✅ GET Company by ID
 export async function GET(req, { params }) {
   try {
     const { id } = params;
@@ -27,40 +27,45 @@ export async function GET(req, { params }) {
   }
 }
 
-// ✅ Update Company (PUT)
-export async function PUT(req, context) {
-  await connectDB();
-
-  const id = context.params.id;
-  const { name, location } = await req.json();
-
-  if (!id || !name || !location) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-  }
-
+// ✅ UPDATE Company by ID
+export async function PUT(req, { params }) {
   try {
+    const { id } = params;
+    const { name, category, location } = await req.json();
+
+    if (!id || !name || !category || !Array.isArray(location)) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
     const company = await ManageCompany.findById(id);
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    const flatLocations = Array.isArray(location)
-      ? location.map((loc) => `${loc.name} ${loc.state}`.trim())
-      : [];
-
+    // Update fields
     company.name = name;
-    company.location = flatLocations;
+    company.category = category;
+    company.location = location;
 
     await company.save();
 
-    return NextResponse.json({ message: "Company updated", company }, { status: 200 });
+    return NextResponse.json(
+      { message: "Company updated successfully", company },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error("PUT error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error in PUT /managecompany/[id]:", error);
+    return NextResponse.json(
+      { error: "Failed to update company" },
+      { status: 500 }
+    );
   }
 }
 
-// ✅ Delete Company
+// ✅ DELETE Company by ID
 export async function DELETE(req, { params }) {
   try {
     const { id } = params;
