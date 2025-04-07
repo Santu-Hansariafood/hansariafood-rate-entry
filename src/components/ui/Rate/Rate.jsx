@@ -19,15 +19,28 @@ export default function Rate() {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({});
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+  };
 
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
         const response = await axios.get("/api/managecompany");
-        const companyNames = response.data.companies.map(
-          (company) => company.name
-        );
+        const allCompanies = response.data.companies; // include category in this object
+
+        const selectedCategoryNames = Object.values(filters); // ['Feed Mills', 'STARCH', ...]
+        const filtered = selectedCategoryNames.length
+          ? allCompanies.filter((company) =>
+              selectedCategoryNames.includes(company.category)
+            )
+          : allCompanies;
+
+        const companyNames = filtered.map((c) => c.name);
         setCompanies(companyNames);
+
         await checkAllCompanies(companyNames);
       } catch (error) {
         toast.error("Failed to fetch companies");
@@ -35,8 +48,9 @@ export default function Rate() {
         setLoading(false);
       }
     };
+
     fetchCompanies();
-  }, []);
+  }, [filters]);
 
   const checkAllCompanies = async (companyNames) => {
     try {
@@ -90,7 +104,7 @@ export default function Rate() {
             </div>
             <Title text="Rate Management" />
             <div className="mb-8">
-              <CategoryCard />
+              <CategoryCard onFilterChange={handleFilterChange} />
             </div>
           </motion.div>
 

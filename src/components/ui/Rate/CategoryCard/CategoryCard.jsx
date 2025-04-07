@@ -8,7 +8,7 @@ import Loading from "@/components/common/Loading/Loading";
 
 const STORAGE_KEY = process.env.NEXT_PUBLIC_STORAGE_KEY;
 
-const CategoryCard = () => {
+const CategoryCard = ({ onFilterChange }) => {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState(() => {
@@ -39,6 +39,9 @@ const CategoryCard = () => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedFilters));
+    }
+    if (onFilterChange) {
+      onFilterChange(selectedFilters);
     }
   }, [selectedFilters]);
 
