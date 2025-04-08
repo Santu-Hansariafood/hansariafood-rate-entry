@@ -1,16 +1,30 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, {
+  Suspense,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import { toast } from "react-toastify";
 import stateData from "@/data/state-city.json";
 
-const Title = dynamic(() => import("@/components/common/Title/Title"));
-const Table = dynamic(() => import("@/components/common/Tables/Tables"));
-const Actions = dynamic(() => import("@/components/common/Actions/Actions"));
-const Modal = dynamic(() => import("@/components/common/Modal/Modal"));
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  loading: () => <Loading />,
+});
+const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
+  loading: () => <Loading />,
+});
+const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
+  loading: () => <Loading />,
+});
+const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
+  loading: () => <Loading />,
+});
 
 const LocationList = () => {
   const [locations, setLocations] = useState([]);
@@ -18,94 +32,105 @@ const LocationList = () => {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({ name: "", state: "" });
-  const [states, setStates] = useState([]);
+
+  const states = useMemo(() => stateData.map((item) => item.state), []);
 
   useEffect(() => {
     const fetchLocations = async () => {
       try {
         const response = await axios.get("/api/location");
-        setLocations(response.data.locations || []);
+        const sorted = response.data.locations?.sort((a, b) =>
+          a.name.localeCompare(b.name)
+        );
+        setLocations(sorted || []);
       } catch (error) {
         toast.error("Error fetching locations");
       }
     };
 
-    const stateNames = stateData.map((item) => item.state);
-    setStates(stateNames);
-
     fetchLocations();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     try {
       await axios.delete(`/api/location/${id}`);
-      setLocations((prev) => prev.filter((location) => location._id !== id));
+      setLocations((prev) => prev.filter((loc) => loc._id !== id));
       toast.success("Location deleted successfully");
       setShowModal(false);
     } catch (error) {
       toast.error("Failed to delete location");
     }
-  };
+  }, []);
 
-  const handleEdit = async () => {
+  const handleEdit = useCallback(async () => {
     try {
       const { _id } = selectedLocation;
-      const response = await axios.put(`/api/location/${_id}`, formData);
+      const { data } = await axios.put(`/api/location/${_id}`, formData);
       setLocations((prev) =>
-        prev.map((loc) => (loc._id === _id ? response.data.location : loc))
+        prev
+          .map((loc) => (loc._id === _id ? data.location : loc))
+          .sort((a, b) => a.name.localeCompare(b.name))
       );
       toast.success("Location updated successfully");
       setShowModal(false);
     } catch (error) {
       toast.error("Failed to update location");
     }
-  };
+  }, [formData, selectedLocation]);
 
-  const handleView = (location) => {
+  const handleView = useCallback((location) => {
     setSelectedLocation(location);
     setShowModal(true);
     setEditMode(false);
-  };
+  }, []);
 
-  const handleEditClick = (location) => {
+  const handleEditClick = useCallback((location) => {
     setSelectedLocation(location);
     setFormData({ name: location.name, state: location.state });
     setEditMode(true);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
-  const columns = [
-    { header: "Location Name", accessor: "name" },
-    { header: "State", accessor: "state" },
-    { header: "Actions", accessor: "actions" },
-  ];
+  const columns = useMemo(
+    () => [
+      { header: "Location Name", accessor: "name" },
+      { header: "State", accessor: "state" },
+      { header: "Actions", accessor: "actions" },
+    ],
+    []
+  );
 
-  const data = locations.map((location) => ({
-    name: location.name,
-    state: location.state,
-    actions: (
-      <Actions
-        item={{
-          title: location.name,
-          id: location._id,
-          onView: () => handleView(location),
-          onEdit: () => handleEditClick(location),
-          onDelete: () => handleDelete(location._id),
-        }}
-      />
-    ),
-  }));
+  const data = useMemo(
+    () =>
+      locations.map((location) => ({
+        name: location.name,
+        state: location.state,
+        actions: (
+          <Actions
+            item={{
+              title: location.name,
+              id: location._id,
+              onView: () => handleView(location),
+              onEdit: () => handleEditClick(location),
+              onDelete: () => handleDelete(location._id),
+            }}
+          />
+        ),
+      })),
+    [locations, handleDelete, handleEditClick, handleView]
+  );
 
   return (
     <Suspense fallback={<Loading />}>
       <div className="p-4">
         <Title text="Location List" />
         <Table data={data} columns={columns} />
+
         {showModal && (
           <Modal
             title={editMode ? "Edit Location" : "Location Details"}
@@ -126,6 +151,7 @@ const LocationList = () => {
                     placeholder="Enter location name"
                   />
                 </label>
+
                 <label className="block">
                   <span className="text-gray-700 font-semibold">State</span>
                   <select
@@ -144,6 +170,7 @@ const LocationList = () => {
                     ))}
                   </select>
                 </label>
+
                 <div className="flex justify-end space-x-2 mt-4">
                   <button
                     onClick={handleEdit}

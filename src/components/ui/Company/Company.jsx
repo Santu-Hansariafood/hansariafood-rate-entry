@@ -7,9 +7,24 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 
-const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
-const Title = dynamic(() => import("@/components/common/Title/Title"));
-const Button = dynamic(() => import("@/components/common/Button/Button"));
+const Dropdown = dynamic(
+  () => import("@/components/common/Dropdown/Dropdown"),
+  {
+    loading: () => <Loading />,
+  }
+);
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  loading: () => <Loading />,
+});
+const Button = dynamic(() => import("@/components/common/Button/Button"), {
+  loading: () => <Loading />,
+});
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  {
+    loading: () => <Loading />,
+  }
+);
 
 export default function CreateCompany() {
   const [companyName, setCompanyName] = useState("");
@@ -78,14 +93,14 @@ export default function CreateCompany() {
       toast.error("All fields are required!");
       return;
     }
-  
+
     if (!state) {
       toast.error("State is missing. Please select a valid location.");
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       const response = await axios.post("/api/managecompany", {
         name: companyName,
@@ -93,7 +108,7 @@ export default function CreateCompany() {
         state: state || "N.A",
         category: category || "N.A",
       });
-  
+
       if (response.status === 201) {
         toast.success("Company created successfully!");
         setCompanyName("");
@@ -109,7 +124,7 @@ export default function CreateCompany() {
       setLoading(false);
     }
   };
-  
+
   return (
     <Suspense fallback={<Loading />}>
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
@@ -134,27 +149,9 @@ export default function CreateCompany() {
               onChange={handleLocationChange}
             />
 
-            {/* Read-Only State Field */}
-            <div>
-              <label className="block text-gray-700 font-semibold">State</label>
-              <input
-                type="text"
-                value={state}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
-              />
-            </div>
+            <InputBox label="State" value={state} readOnly />
 
-            {/* Read-Only Category Field */}
-            <div>
-              <label className="block text-gray-700 font-semibold">Category</label>
-              <input
-                type="text"
-                value={category}
-                readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
-              />
-            </div>
+            <InputBox label="Category" value={category} readOnly />
           </div>
 
           <div className="flex justify-center">
