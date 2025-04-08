@@ -21,14 +21,13 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
     const fetchLocations = async () => {
       try {
         const response = await axios.get("/api/managecompany");
-        const allLocations = response.data.companies.flatMap(c => 
+        const allLocations = response.data.companies.flatMap(c =>
           Array.isArray(c.location) ? c.location : []
         );
-        // Extract location names from "name state" format
         const uniqueLocations = [...new Set(allLocations.map(loc => {
           if (typeof loc === "string") {
             const parts = loc.trim().split(" ");
-            parts.pop(); // Remove state
+            parts.pop();
             return parts.join(" ");
           }
           return loc.name;
@@ -48,13 +47,9 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
   if (!company) return null;
 
   const handleLocationChange = (index, field, value) => {
-    const updatedLocations = company.location.map((loc, i) => {
-      if (i === index) {
-        return { ...loc, [field]: value };
-      }
-      return loc;
-    });
-
+    const updatedLocations = company.location.map((loc, i) =>
+      i === index ? { ...loc, [field]: value } : loc
+    );
     onChange({ ...company, location: updatedLocations });
   };
 
@@ -76,6 +71,7 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
         <h2 className="text-xl font-bold mb-4">Edit Company</h2>
 
         <form onSubmit={onSubmit}>
+          {/* Company Name */}
           <label className="block mb-4">
             <span className="block mb-1">Company Name:</span>
             <input
@@ -86,6 +82,18 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
             />
           </label>
 
+          {/* Category */}
+          <label className="block mb-4">
+            <span className="block mb-1">Category:</span>
+            <input
+              type="text"
+              className="w-full p-2 border rounded"
+              value={company.category || ""}
+              onChange={(e) => onChange({ ...company, category: e.target.value })}
+            />
+          </label>
+
+          {/* Locations */}
           <div className="mb-4">
             <h3 className="text-lg font-semibold mb-2">Locations</h3>
             <div className="space-y-4">
@@ -147,6 +155,7 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
             </button>
           </div>
 
+          {/* Actions */}
           <div className="flex justify-end mt-4">
             <button
               type="button"

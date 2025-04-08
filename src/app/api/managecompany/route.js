@@ -4,10 +4,9 @@ import ManageCompany from "@/models/ManageCompany";
 
 await connectDB();
 
-// ✅ Create or Update Company
 export async function POST(req) {
   try {
-    let { name, location, state } = await req.json();
+    let { name, location, state, category } = await req.json();
 
     if (!name || !location) {
       return NextResponse.json(
@@ -20,13 +19,15 @@ export async function POST(req) {
       location = [location];
     }
 
-    state = state || "N.A"; // Default to "N.A" if state is missing
+    state = state || "N.A";
+    category = category || "N.A";
 
     let existingCompany = await ManageCompany.findOne({ name });
     if (existingCompany) {
       const locationExists = location.every((loc) =>
         existingCompany.location.includes(loc)
       );
+
       if (locationExists) {
         return NextResponse.json(
           { error: "Company with this location already exists" },
@@ -38,6 +39,7 @@ export async function POST(req) {
         ...new Set([...existingCompany.location, ...location]),
       ];
       existingCompany.state = state;
+      existingCompany.category = category;
       await existingCompany.save();
 
       return NextResponse.json(
@@ -46,7 +48,7 @@ export async function POST(req) {
       );
     }
 
-    const newCompany = new ManageCompany({ name, location, state });
+    const newCompany = new ManageCompany({ name, location, state, category });
     await newCompany.save();
 
     return NextResponse.json(

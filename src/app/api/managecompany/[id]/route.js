@@ -4,7 +4,6 @@ import ManageCompany from "@/models/ManageCompany";
 
 await connectDB();
 
-// ✅ Get Company by ID
 export async function GET(req, { params }) {
   try {
     const { id } = params;
@@ -27,12 +26,11 @@ export async function GET(req, { params }) {
   }
 }
 
-// ✅ Update Company (PUT)
 export async function PUT(req, context) {
   await connectDB();
 
   const id = context.params.id;
-  const { name, location } = await req.json();
+  const { name, location, category, state } = await req.json();
 
   if (!id || !name || !location) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -50,6 +48,8 @@ export async function PUT(req, context) {
 
     company.name = name;
     company.location = flatLocations;
+    company.category = category || company.category;
+    company.state = state || company.state;
 
     await company.save();
 
@@ -60,7 +60,6 @@ export async function PUT(req, context) {
   }
 }
 
-// ✅ Delete Company
 export async function DELETE(req, { params }) {
   try {
     const { id } = params;

@@ -44,6 +44,7 @@ const states = [
 const ManageCompanyList = () => {
   const [companies, setCompanies] = useState([]);
   const [editingCompany, setEditingCompany] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [locations, setLocations] = useState([]);
 
@@ -75,9 +76,20 @@ const ManageCompanyList = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get("/api/categories");
+      setCategories(response.data.categories || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      toast.error("Failed to fetch categories");
+    }
+  };
+
   useEffect(() => {
     fetchCompanies();
     fetchAvailableLocations();
+    fetchCategories();
   }, []);
 
   const handleView = async (id) => {
@@ -113,6 +125,7 @@ const ManageCompanyList = () => {
         _id: company._id,
         name: company.name,
         location: formattedLocation,
+        category: company.category || "",
       });
     } catch (error) {
       console.error("Error loading company for editing:", error);
@@ -128,6 +141,7 @@ const ManageCompanyList = () => {
       await axios.put(`/api/managecompany/${editingCompany._id}`, {
         name: editingCompany.name,
         location: editingCompany.location,
+        category: editingCompany.category,
       });
 
       toast.success("Company updated successfully");
@@ -185,6 +199,7 @@ const ManageCompanyList = () => {
     { header: "Company Name", accessor: "name" },
     { header: "Locations", accessor: "locations" },
     { header: "State", accessor: "state" },
+    { header: "Category", accessor: "category" },
     { header: "Actions", accessor: "actions" },
   ];
 
@@ -198,6 +213,7 @@ const ManageCompanyList = () => {
       Array.isArray(company.location) && company.location.length > 0
         ? company.location.map((l) => l.state).join(", ")
         : "N.A",
+    category: company.category || "N.A",
     actions: (
       <Actions
         item={{
@@ -236,6 +252,26 @@ const ManageCompanyList = () => {
                       })
                     }
                   />
+                </label>
+                <label className="block mb-4">
+                  <span className="block mb-1">Category:</span>
+                  <select
+                    className="w-full p-2 border rounded"
+                    value={editingCompany.category}
+                    onChange={(e) =>
+                      setEditingCompany({
+                        ...editingCompany,
+                        category: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((cat) => (
+                      <option key={cat._id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <div className="mb-4">

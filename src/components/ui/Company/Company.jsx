@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
+
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Button = dynamic(() => import("@/components/common/Button/Button"));
@@ -14,6 +15,7 @@ export default function CreateCompany() {
   const [companyName, setCompanyName] = useState("");
   const [location, setLocation] = useState("");
   const [state, setState] = useState("");
+  const [category, setCategory] = useState("");
   const [companies, setCompanies] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,37 +37,69 @@ export default function CreateCompany() {
     fetchData();
   }, []);
 
-  const handleLocationChange = (val) => {
-    setLocation(val);
-    const selectedLocation = locations.find((loc) => loc.name === val);
-    setState(selectedLocation ? selectedLocation.state : "");
-  };
+  const companyOptions = useMemo(
+    () =>
+      companies.map((comp) => ({
+        label: comp.name,
+        value: comp.name,
+      })),
+    [companies]
+  );
+
+  const locationOptions = useMemo(
+    () =>
+      locations.map((loc) => ({
+        label: loc.name,
+        value: loc.name,
+      })),
+    [locations]
+  );
+
+  const handleLocationChange = useCallback(
+    (val) => {
+      setLocation(val);
+      const selectedLocation = locations.find((loc) => loc.name === val);
+      setState(selectedLocation?.state || "");
+    },
+    [locations]
+  );
+
+  const handleCompanyChange = useCallback(
+    (val) => {
+      setCompanyName(val);
+      const selectedCompany = companies.find((comp) => comp.name === val);
+      setCategory(selectedCompany?.category || "");
+    },
+    [companies]
+  );
 
   const handleSubmit = async () => {
     if (!companyName.trim() || !location) {
       toast.error("All fields are required!");
       return;
     }
-
+  
     if (!state) {
       toast.error("State is missing. Please select a valid location.");
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
       const response = await axios.post("/api/managecompany", {
         name: companyName,
         location,
         state: state || "N.A",
+        category: category || "N.A",
       });
-
+  
       if (response.status === 201) {
         toast.success("Company created successfully!");
         setCompanyName("");
         setLocation("");
         setState("");
+        setCategory("");
       } else if (response.status === 200) {
         toast.info(response.data.message);
       }
@@ -75,7 +109,7 @@ export default function CreateCompany() {
       setLoading(false);
     }
   };
-
+  
   return (
     <Suspense fallback={<Loading />}>
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
@@ -88,20 +122,14 @@ export default function CreateCompany() {
           <div className="space-y-4">
             <Dropdown
               label="Company Name"
-              options={companies.map((comp) => ({
-                label: comp.name,
-                value: comp.name,
-              }))}
+              options={companyOptions}
               value={companyName}
-              onChange={(val) => setCompanyName(val)}
+              onChange={handleCompanyChange}
             />
 
             <Dropdown
               label="Location"
-              options={locations.map((loc) => ({
-                label: loc.name,
-                value: loc.name,
-              }))}
+              options={locationOptions}
               value={location}
               onChange={handleLocationChange}
             />
@@ -116,7 +144,19 @@ export default function CreateCompany() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
               />
             </div>
+
+            {/* Read-Only Category Field */}
+            <div>
+              <label className="block text-gray-700 font-semibold">Category</label>
+              <input
+                type="text"
+                value={category}
+                readOnly
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+              />
+            </div>
           </div>
+
           <div className="flex justify-center">
             <Button
               onClick={handleSubmit}
