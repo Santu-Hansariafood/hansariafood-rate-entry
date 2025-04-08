@@ -11,9 +11,19 @@ export default function CompanyList({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCompanies = companies.filter((company) =>
-    company.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const formatCompanyName = (name) =>
+    name
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+  const filteredCompanies = companies
+    .map(formatCompanyName)
+    .filter((company) =>
+      company.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => a.localeCompare(b));
 
   return (
     <Suspense fallback={<Loading />}>
