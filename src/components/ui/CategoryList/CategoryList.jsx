@@ -1,33 +1,48 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, {
+  Suspense,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 
-const Title = dynamic(() => import("@/components/common/Title/Title"));
-const Table = dynamic(() => import("@/components/common/Tables/Tables"));
-const Actions = dynamic(() => import("@/components/common/Actions/Actions"));
-const Modal = dynamic(() => import("@/components/common/Modal/Modal"));
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  loading: () => <Loading />,
+});
+const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
+  loading: () => <Loading />,
+});
+const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
+  loading: () => <Loading />,
+});
+const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
+  loading: () => <Loading />,
+});
 
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [modal, setModal] = useState({ open: false, type: "", data: null });
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get("/api/categories");
-        setCategories(response.data.categories || []);
-      } catch (error) {
-        console.error("Error fetching categories");
-      }
-    };
-    fetchCategories();
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await axios.get("/api/categories");
+      setCategories(response.data.categories || []);
+    } catch (error) {
+      console.error("Error fetching categories");
+    }
   }, []);
 
-  const handleEdit = async (id, newName) => {
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const handleEdit = useCallback(async (id, newName) => {
     try {
       const response = await axios.put(`/api/categories/${id}`, {
         name: newName,
@@ -41,9 +56,9 @@ const CategoryList = () => {
     } catch (error) {
       console.error("Error updating category");
     }
-  };
+  }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     try {
       await axios.delete(`/api/categories/${id}`);
       setCategories((prev) => prev.filter((cat) => cat._id !== id));
@@ -51,39 +66,47 @@ const CategoryList = () => {
     } catch (error) {
       console.error("Error deleting category");
     }
-  };
+  }, []);
 
-  const handleView = (category) => {
+  const handleView = useCallback((category) => {
     setSelectedCategory(category);
-  };
+  }, []);
 
-  const openModal = (type, data = null) => {
+  const openModal = useCallback((type, data = null) => {
     setModal({ open: true, type, data });
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setModal({ open: false, type: "", data: null });
-  };
+  }, []);
 
-  const columns = [
-    { header: "Category Name", accessor: "name" },
-    { header: "Actions", accessor: "actions" },
-  ];
+  const columns = useMemo(
+    () => [
+      { header: "Category Name", accessor: "name" },
+      { header: "Actions", accessor: "actions" },
+    ],
+    []
+  );
 
-  const data = categories.map((category) => ({
-    name: category.name,
-    actions: (
-      <Actions
-        item={{
-          id: category._id,
-          title: category.name,
-          onEdit: () => openModal("edit", category),
-          onDelete: () => openModal("delete", category),
-          onView: () => handleView(category),
-        }}
-      />
-    ),
-  }));
+  const data = useMemo(
+    () =>
+      categories.map((category) => ({
+        name: category.name,
+        actions: (
+          <Actions
+            key={category._id}
+            item={{
+              id: category._id,
+              title: category.name,
+              onEdit: () => openModal("edit", category),
+              onDelete: () => openModal("delete", category),
+              onView: () => handleView(category),
+            }}
+          />
+        ),
+      })),
+    [categories, openModal, handleView]
+  );
 
   return (
     <Suspense fallback={<Loading />}>
