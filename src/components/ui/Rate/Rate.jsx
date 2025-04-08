@@ -1,47 +1,61 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
 import { Building2, ArrowLeft } from "lucide-react";
-import CategoryCard from "./CategoryCard/CategoryCard";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"));
 const RateTable = dynamic(() => import("./RateTable/RateTable"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
+const CategoryCard = dynamic(() =>
+  import("@/components/ui/Rate/CategoryCard/CategoryCard")
+);
 
 export default function Rate() {
+  const [allCompanies, setAllCompanies] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
-  };
+  }, []);
+
+  const filteredCompanies = useMemo(() => {
+    const selectedCategories = Object.values(filters);
+    if (selectedCategories.length === 0) return allCompanies;
+
+    return allCompanies.filter((company) =>
+      selectedCategories.includes(company.category)
+    );
+  }, [allCompanies, filters]);
 
   useEffect(() => {
     const fetchCompanies = async () => {
+      setLoading(true);
       try {
         const response = await axios.get("/api/managecompany");
-        const allCompanies = response.data.companies; // include category in this object
+        const companyList = response.data.companies || [];
 
-        const selectedCategoryNames = Object.values(filters); // ['Feed Mills', 'STARCH', ...]
-        const filtered = selectedCategoryNames.length
-          ? allCompanies.filter((company) =>
-              selectedCategoryNames.includes(company.category)
-            )
-          : allCompanies;
+        setAllCompanies(companyList);
 
-        const companyNames = filtered.map((c) => c.name);
-        setCompanies(companyNames);
+        const filteredNames = companyList
+          .filter(
+            (c) =>
+              Object.values(filters).length === 0 ||
+              Object.values(filters).includes(c.category)
+          )
+          .map((c) => c.name);
 
-        await checkAllCompanies(companyNames);
+        setCompanies(filteredNames);
+        await checkAllCompanies(filteredNames);
       } catch (error) {
         toast.error("Failed to fetch companies");
       } finally {
@@ -52,7 +66,7 @@ export default function Rate() {
     fetchCompanies();
   }, [filters]);
 
-  const checkAllCompanies = async (companyNames) => {
+  const checkAllCompanies = useCallback(async (companyNames) => {
     try {
       const statusMap = await Promise.all(
         companyNames.map(async (company) => {
@@ -74,7 +88,7 @@ export default function Rate() {
     } catch (error) {
       console.error("Error checking company completion status:", error);
     }
-  };
+  }, []);
 
   return (
     <Suspense fallback={<Loading />}>
