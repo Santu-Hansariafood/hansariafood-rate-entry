@@ -12,9 +12,12 @@ const Title = dynamic(() => import("@/components/common/Title/Title"), {
 const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
   loading: () => <Loading />,
 });
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
-  loading: () => <Loading />,
-});
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  {
+    loading: () => <Loading />,
+  }
+);
 const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
   loading: () => <Loading />,
 });
@@ -25,6 +28,9 @@ const ManageCompanyList = () => {
   const [categories, setCategories] = useState([]);
   const [editingCompany, setEditingCompany] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const capitalizeWords = (str) =>
+    str.replace(/\b\w/g, (char) => char.toUpperCase()).trim();
 
   const fetchAllData = async () => {
     try {
@@ -89,7 +95,10 @@ const ManageCompanyList = () => {
     e.preventDefault();
     try {
       setIsLoading(true);
-      await axios.put(`/api/managecompany/${editingCompany._id}`, editingCompany);
+      await axios.put(
+        `/api/managecompany/${editingCompany._id}`,
+        editingCompany
+      );
       toast.success("Company updated");
       setEditingCompany(null);
       fetchAllData();
@@ -129,23 +138,34 @@ const ManageCompanyList = () => {
     { header: "Actions", accessor: "actions" },
   ];
 
-  const data = companies.map((company) => ({
-    name: company.name,
-    locations: company.location.map((l) => l.name).join(", ") || "N.A",
-    state: company.location.map((l) => l.state).join(", ") || "N.A",
-    category: company.category || "N.A",
-    actions: (
-      <Actions
-        item={{
-          id: company._id,
-          title: company.name,
-          onView: handleView,
-          onEdit: () => handleEdit(company._id),
-          onDelete: handleDelete,
-        }}
-      />
-    ),
-  }));
+  const data = [...companies]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((company) => {
+      const capitalizedName = capitalizeWords(company.name);
+      const capitalizedCategory = capitalizeWords(company.category || "N.A");
+
+      return {
+        name: capitalizedName,
+        locations:
+          company.location.map((l) => capitalizeWords(l.name)).join(", ") ||
+          "N.A",
+        state:
+          company.location.map((l) => capitalizeWords(l.state)).join(", ") ||
+          "N.A",
+        category: capitalizedCategory,
+        actions: (
+          <Actions
+            item={{
+              id: company._id,
+              title: capitalizedName,
+              onView: handleView,
+              onEdit: () => handleEdit(company._id),
+              onDelete: handleDelete,
+            }}
+          />
+        ),
+      };
+    });
 
   return (
     <Suspense fallback={<Loading />}>
@@ -163,7 +183,10 @@ const ManageCompanyList = () => {
                   label="Company Name"
                   value={editingCompany.name}
                   onChange={(e) =>
-                    setEditingCompany({ ...editingCompany, name: e.target.value })
+                    setEditingCompany({
+                      ...editingCompany,
+                      name: e.target.value,
+                    })
                   }
                 />
 

@@ -32,6 +32,9 @@ const InputBox = dynamic(
   }
 );
 
+const capitalizeWords = (str) =>
+  str.replace(/\b\w/g, (char) => char.toUpperCase());
+
 const CompanyList = React.memo(() => {
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -108,15 +111,20 @@ const CompanyList = React.memo(() => {
     []
   );
 
-  const data = useMemo(
-    () =>
-      companies.map((company) => ({
-        name: company.name,
-        category: company.category,
+  const data = useMemo(() => {
+    const sorted = [...companies].sort((a, b) => a.name.localeCompare(b.name));
+
+    return sorted.map((company) => {
+      const capitalizedName = capitalizeWords(company.name);
+      const capitalizedCategory = capitalizeWords(company.category);
+
+      return {
+        name: capitalizedName,
+        category: capitalizedCategory,
         actions: (
           <Actions
             item={{
-              title: company.name,
+              title: capitalizedName,
               id: company._id,
               onDelete: () => handleDelete(company._id),
               onEdit: () => handleEdit(company),
@@ -124,9 +132,9 @@ const CompanyList = React.memo(() => {
             }}
           />
         ),
-      })),
-    [companies, handleDelete, handleEdit, handleView]
-  );
+      };
+    });
+  }, [companies, handleDelete, handleEdit, handleView]);
 
   return (
     <Suspense fallback={<Loading />}>
