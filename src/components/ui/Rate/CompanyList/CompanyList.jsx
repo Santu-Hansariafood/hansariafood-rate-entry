@@ -11,9 +11,11 @@ export default function CompanyList({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCompanies = companies.filter((company) =>
-    company.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCompanies = [...companies]
+    .sort((a, b) => a.localeCompare(b))
+    .filter((company) =>
+      company.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <Suspense fallback={<Loading />}>
@@ -57,15 +59,13 @@ export default function CompanyList({
                   transition={{ duration: 0.2, delay: index * 0.05 }}
                   onClick={() => onCompanySelect(company)}
                   className={`
-                    group relative overflow-hidden rounded-xl p-4 transition-all duration-200
-                    ${
-                      isSingleCompleted
-                        ? "bg-green-200 hover:bg-green-300 border border-green-300"
-                        : completedCompanies[company]
-                        ? "bg-green-50 hover:bg-green-100 border border-green-200"
-                        : "bg-red-50 hover:bg-red-100 border border-red-200"
-                    }
-                  `}                  
+                  group relative overflow-hidden rounded-xl p-4 transition-all duration-200
+                  ${
+                    completedCompanies[company]
+                      ? "bg-green-50 hover:bg-green-100 border border-green-200"
+                      : "bg-red-50 hover:bg-red-100 border border-red-200"
+                  }
+                `}
                 >
                   <div className="flex items-center gap-3">
                     <div
