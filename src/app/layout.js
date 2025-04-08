@@ -1,6 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Head from "next/head";
 import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
@@ -20,16 +19,14 @@ const geistMono = Geist_Mono({
   preload: true,
 });
 
-const metadata = {
+export const metadata = {
   title: "Hansaria Food Private Limited | Commodity & Brokerage Services",
   description:
     "Hansaria Food Private Limited supplies high-quality raw materials for the poultry and feed industry across India. We also provide global commodity and brokerage services with assured quality and reliability.",
   keywords:
     "Hansaria Food, raw material supply, poultry feed industry, commodity trading, brokerage services, supply chain, Kolkata, India, international trade",
-  author: "Hansaria Food Private Limited",
-  url: "https://www.hansariafood.site",
-  siteName: "Hansaria Food",
-  image: "/images/og-image.png",
+  authors: [{ name: "Hansaria Food Private Limited" }],
+  metadataBase: new URL("https://www.hansariafood.site"),
   openGraph: {
     title: "Hansaria Food Private Limited",
     description:
@@ -50,57 +47,31 @@ const metadata = {
     card: "summary_large_image",
     site: "@hansariafood",
     creator: "@hansaria_food_private_limited",
-    image: "/images/og-image.png",
+    title: "Hansaria Food Private Limited",
+    description:
+      "Hansaria Food Private Limited delivers premium raw materials for the poultry and feed industry while offering global commodity and brokerage services.",
+    images: ["/images/og-image.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
   },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <Head>
-        <title>{metadata.title}</title>
-        <meta charSet="UTF-8" />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=5"
-        />
-        <meta name="theme-color" content="#ffffff" />
-        <meta name="robots" content="index, follow" />
-        <meta name="author" content={metadata.author} />
-        <meta name="keywords" content={metadata.keywords} />
-        <meta name="description" content={metadata.description} />
-        <meta property="og:title" content={metadata.openGraph.title} />
-        <meta
-          property="og:description"
-          content={metadata.openGraph.description}
-        />
-        <meta property="og:url" content={metadata.openGraph.url} />
-        <meta property="og:site_name" content={metadata.openGraph.siteName} />
-        <meta property="og:image" content={metadata.openGraph.images[0].url} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content={metadata.twitter.card} />
-        <meta name="twitter:site" content={metadata.twitter.site} />
-        <meta name="twitter:creator" content={metadata.twitter.creator} />
-        <meta name="twitter:title" content={metadata.openGraph.title} />
-        <meta
-          name="twitter:description"
-          content={metadata.openGraph.description}
-        />
-        <meta name="twitter:image" content={metadata.twitter.image} />
-        <link rel="canonical" href={metadata.url} />
-        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+      <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Private Limited",
-              name: metadata.siteName,
-              url: metadata.url,
-              logo: metadata.image,
-              description: metadata.description,
+              name: "Hansaria Food",
+              url: "https://www.hansariafood.site",
+              logo: "/images/og-image.png",
+              description:
+                "Hansaria Food Private Limited supplies high-quality raw materials for the poultry and feed industry across India. We also provide global commodity and brokerage services with assured quality and reliability.",
               founder: {
                 "@type": "Person",
                 name: "Gopal Agarwal & Sunita Agarwalla",
@@ -125,15 +96,16 @@ export default function RootLayout({ children }) {
                   "Primarc Square, Plot No.1, Salt Lake Bypass, LA Block, Sector: 3, Bidhannagar, Kolkata, West Bengal 700098",
               },
               sameAs: [
-                "https://www.facebook.site/profile.php?id=100087874624812",
-                "https://www.instagram.site/hansaria_food?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
-                "https://www.youtube.site/@hansariafood",
+                "https://www.facebook.com/hansariafood",
+                "https://www.instagram.com/hansaria_food",
+                "https://www.youtube.com/@hansariafood",
+                "https://www.linkedin.com/company/hansaria-food",
+                "https://www.x.com/hansariafood",
               ],
             }),
           }}
         />
-      </Head>
-
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >

@@ -12,7 +12,7 @@ const Footer = () => {
           >
             Hansaria Food Private Limited
           </a>
-          © {new Date().getFullYear()}
+          <span> </span> © {new Date().getFullYear()}
         </p>
         <div className="flex gap-6 text-sm">
           <a
