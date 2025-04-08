@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, useMemo } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
@@ -11,11 +11,13 @@ export default function CompanyList({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCompanies = [...companies]
-    .sort((a, b) => a.localeCompare(b))
-    .filter((company) =>
-      company.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const filteredCompanies = useMemo(() => {
+    return [...companies]
+      .sort((a, b) => a.localeCompare(b))
+      .filter((company) =>
+        company.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+  }, [companies, searchQuery]);
 
   return (
     <Suspense fallback={<Loading />}>

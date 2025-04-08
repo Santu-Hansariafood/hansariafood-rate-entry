@@ -8,7 +8,13 @@ import Loading from "@/components/common/Loading/Loading";
 
 export default function Welcome() {
   const { mobile } = useUser();
-  const [name, setName] = useState("Guest");
+  const [name, setName] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("username") || "Guest";
+    }
+    return "Guest";
+  });
+
   const [assignedCompanies, setAssignedCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,11 +32,15 @@ export default function Welcome() {
         axios.get(`/api/user-companies?mobile=${mobile}`),
       ]);
 
-      // Get the user data and format the name
-      const userData = userResponse.data.find((user) => user.mobile.toString() === mobile);
-      if (userData) setName(formatName(userData.name));
+      const userData = userResponse.data.find(
+        (user) => user.mobile.toString() === mobile
+      );
+      if (userData) {
+        const formatted = formatName(userData.name);
+        setName(formatted);
+        localStorage.setItem("username", formatted);
+      }
 
-      // Assuming companyResponse.data contains the companies field
       setAssignedCompanies(companyResponse.data.companies || []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -44,39 +54,41 @@ export default function Welcome() {
     fetchUserData();
   }, [fetchUserData]);
 
-  const assignedCompaniesList = useMemo(() => (
-    assignedCompanies.length > 0 ? (
-      <div className="mt-4 text-left">
-        <h2 className="text-xl font-semibold text-gray-700 mb-3">
-          Assigned Companies:
-        </h2>
-        <div className="space-y-4">
-          {assignedCompanies.map((company) => (
-            <div
-              key={company.companyId._id}
-              className="bg-gray-50 p-4 rounded-lg shadow-md"
-            >
-              <h3 className="font-semibold text-lg text-blue-700">
-                {company.companyId.name}
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
-                {company.locations.map((loc, index) => (
-                  <span
-                    key={`${company.companyId._id}-${index}`}
-                    className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full text-center"
-                  >
-                    {loc}
-                  </span>
-                ))}
+  const assignedCompaniesList = useMemo(
+    () =>
+      assignedCompanies.length > 0 ? (
+        <div className="mt-4 text-left">
+          <h2 className="text-xl font-semibold text-gray-700 mb-3">
+            Assigned Companies:
+          </h2>
+          <div className="space-y-4">
+            {assignedCompanies.map((company) => (
+              <div
+                key={company.companyId._id}
+                className="bg-gray-50 p-4 rounded-lg shadow-md"
+              >
+                <h3 className="font-semibold text-lg text-blue-700">
+                  {company.companyId.name}
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
+                  {company.locations.map((loc, index) => (
+                    <span
+                      key={`${company.companyId._id}-${index}`}
+                      className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full text-center"
+                    >
+                      {loc}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    ) : (
-      <p className="text-gray-500 mt-4">No assigned companies found.</p>
-    )
-  ), [assignedCompanies]);
+      ) : (
+        <p className="text-gray-500 mt-4">No assigned companies found.</p>
+      ),
+    [assignedCompanies]
+  );
 
   if (loading) return <Loading />;
 
