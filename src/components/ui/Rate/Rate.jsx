@@ -86,13 +86,14 @@ export default function Rate() {
             return {
               [company]:
                 rateResponse.data.length > 0 &&
-                rateResponse.data.every((rate) => rate.newRate),
+                rateResponse.data.every((rate) => rate.hasNewRateToday),
             };
           } catch {
             return { [company]: false };
           }
         })
       );
+
       setCompletedCompanies(Object.assign({}, ...statusMap));
     } catch (error) {
       console.error("Error checking company completion status:", error);
@@ -148,6 +149,7 @@ export default function Rate() {
               <RateTable
                 selectedCompany={selectedCompany}
                 onClose={() => setSelectedCompany(null)}
+                onRateUpdate={async () => await checkAllCompanies(companies)}
               />
             </motion.div>
           ) : (

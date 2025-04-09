@@ -71,6 +71,8 @@ export async function GET(req) {
       const lastUpdated = new Date(rate.newRateDate);
       lastUpdated.setHours(0, 0, 0, 0);
 
+      const isToday = lastUpdated.getTime() === today.getTime();
+
       return {
         company: rate.company,
         location: rate.location,
@@ -78,12 +80,9 @@ export async function GET(req) {
           (old) =>
             `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`
         ),
-        newRate:
-          lastUpdated.getTime() === today.getTime()
-            ? `${rate.newRate} (${new Date(rate.newRateDate).toLocaleDateString(
-                "en-GB"
-              )})`
-            : "",
+        newRate: rate.newRate,
+        newRateDate: rate.newRateDate,
+        hasNewRateToday: isToday,
       };
     });
 

@@ -126,6 +126,16 @@ export default function RateTable({ selectedCompany, onClose }) {
           return 0;
         });
       });
+
+      // 👇 Add this after updating state
+      if (
+        rates.every((r, i) =>
+          i === index ? rateToSave.newRate.trim() : r.newRate.trim()
+        )
+      ) {
+        await onRateUpdate?.();
+        onClose();
+      }
     } catch (error) {
       toast.error("Error updating rate.");
     }
