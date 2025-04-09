@@ -12,13 +12,17 @@ export default function CompanyList({
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredCompanies = useMemo(() => {
-    return [...companies]
-      .sort((a, b) => a.localeCompare(b))
+    if (!searchQuery) {
+      return [...companies].sort((a, b) => a.localeCompare(b));
+    }
+  
+    return companies
       .filter((company) =>
         company.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      )
+      .sort((a, b) => a.localeCompare(b));
   }, [companies, searchQuery]);
-
+  
   return (
     <Suspense fallback={<Loading />}>
       <div className="w-full max-w-4xl mx-auto p-4">
