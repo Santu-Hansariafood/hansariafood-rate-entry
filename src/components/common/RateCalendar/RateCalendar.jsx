@@ -26,16 +26,49 @@ export default function RateCalendar() {
       .catch((error) => console.error("Error fetching rate data:", error));
   }, []);
 
+  // useEffect(() => {
+  //   axios
+  //     .get("/api/companies?limit=1000")
+  //     .then((response) => {
+  //       const data = response.data;
+  //       setCompanies(Array.isArray(data) ? data : data.companies || []);
+  //     })
+  //     .catch((error) => console.error("Error fetching companies:", error));
+  // }, []);
+
   useEffect(() => {
-    axios
-      .get("/api/companies")
-      .then((response) => setCompanies(response.data))
-      .catch((error) => console.error("Error fetching companies:", error));
+    const fetchAllCompanies = async () => {
+      let allCompanies = [];
+      let page = 1;
+      let hasMore = true;
+
+      try {
+        while (hasMore) {
+          const response = await axios.get(`/api/companies?page=${page}`);
+          const data = Array.isArray(response.data)
+            ? response.data
+            : response.data.companies || [];
+
+          if (data.length > 0) {
+            allCompanies = [...allCompanies, ...data];
+            page++;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        setCompanies(allCompanies);
+      } catch (error) {
+        console.error("Error fetching paginated companies:", error);
+      }
+    };
+
+    fetchAllCompanies();
   }, []);
 
   const getRatesForDate = useCallback(
     (date, company, location) => {
-      const formattedDate = date.toLocaleDateString("en-GB"); // Format: DD/MM/YYYY
+      const formattedDate = date.toLocaleDateString("en-GB");
       const data = rateData.find(
         (item) => item.company === company && item.location === location
       );

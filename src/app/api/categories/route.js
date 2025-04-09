@@ -37,11 +37,29 @@ export async function POST(req) {
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
     await connectDB();
-    const categories = await Category.find({});
-    return NextResponse.json({ categories }, { status: 200 });
+
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
+
+    const [categories, total] = await Promise.all([
+      Category.find().sort({ name: 1 }).skip(skip).limit(limit),
+      Category.countDocuments(),
+    ]);
+
+    return NextResponse.json(
+      {
+        categories,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch categories" },

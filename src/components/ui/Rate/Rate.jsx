@@ -15,6 +15,9 @@ const Title = dynamic(() => import("@/components/common/Title/Title"));
 const CategoryCard = dynamic(() =>
   import("@/components/ui/Rate/CategoryCard/CategoryCard")
 );
+const Pagination = dynamic(() =>
+  import("@/components/common/Pagination/Pagination")
+);
 
 export default function Rate() {
   const [allCompanies, setAllCompanies] = useState([]);
@@ -23,6 +26,9 @@ export default function Rate() {
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
@@ -41,10 +47,13 @@ export default function Rate() {
     const fetchCompanies = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("/api/managecompany");
-        const companyList = response.data.companies || [];
+        const response = await axios.get(
+          `/api/managecompany?page=${currentPage}&limit=${itemsPerPage}`
+        );
+        const { companies: companyList, total } = response.data;
 
         setAllCompanies(companyList);
+        setTotalItems(total);
 
         const filteredNames = companyList
           .filter(
@@ -64,7 +73,7 @@ export default function Rate() {
     };
 
     fetchCompanies();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   const checkAllCompanies = useCallback(async (companyNames) => {
     try {
@@ -153,11 +162,19 @@ export default function Rate() {
                   completedCompanies={completedCompanies}
                   loading={loading}
                   onCompanySelect={setSelectedCompany}
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
                 />
               </div>
             </motion.div>
           )}
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
       </div>
     </Suspense>
   );

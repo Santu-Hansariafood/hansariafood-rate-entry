@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  Suspense,
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
@@ -23,54 +17,56 @@ const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
+const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"), {
+  loading: () => <Loading />,
+});
 
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [modal, setModal] = useState({ open: false, type: "", data: null });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalEntries, setTotalEntries] = useState(0);
 
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = useCallback(async (page = 1) => {
     try {
-      const response = await axios.get("/api/categories");
+      const response = await axios.get(`/api/categories?page=${page}&limit=10`);
       setCategories(response.data.categories || []);
+      setTotalEntries(response.data.total);
     } catch (error) {
       console.error("Error fetching categories");
     }
   }, []);
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    fetchCategories(currentPage);
+  }, [fetchCategories, currentPage]);
 
-  const handleEdit = useCallback(async (id, newName) => {
-    try {
-      const response = await axios.put(`/api/categories/${id}`, {
-        name: newName,
-      });
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat._id === id ? { ...cat, name: response.data.category.name } : cat
-        )
-      );
-      closeModal();
-    } catch (error) {
-      console.error("Error updating category");
-    }
-  }, []);
+  const handleEdit = useCallback((index, newName) => {
+    const id = categories[index]._id;
+    axios
+      .put(`/api/categories/${id}`, { name: newName })
+      .then((res) => {
+        const updated = [...categories];
+        updated[index].name = res.data.category.name;
+        setCategories(updated);
+        closeModal();
+      })
+      .catch(() => console.error("Error updating category"));
+  }, [categories]);
 
-  const handleDelete = useCallback(async (id) => {
-    try {
-      await axios.delete(`/api/categories/${id}`);
-      setCategories((prev) => prev.filter((cat) => cat._id !== id));
-      closeModal();
-    } catch (error) {
-      console.error("Error deleting category");
-    }
-  }, []);
-
-  const handleView = useCallback((category) => {
-    setSelectedCategory(category);
-  }, []);
+  const handleDelete = useCallback((index) => {
+    const id = categories[index]._id;
+    axios
+      .delete(`/api/categories/${id}`)
+      .then(() => {
+        const updated = [...categories];
+        updated.splice(index, 1);
+        setCategories(updated);
+        closeModal();
+      })
+      .catch(() => console.error("Error deleting category"));
+  }, [categories]);
 
   const openModal = useCallback((type, data = null) => {
     setModal({ open: true, type, data });
@@ -80,39 +76,44 @@ const CategoryList = () => {
     setModal({ open: false, type: "", data: null });
   }, []);
 
-  const columns = useMemo(
-    () => [
-      { header: "Category Name", accessor: "name" },
-      { header: "Actions", accessor: "actions" },
-    ],
-    []
-  );
+  const handleView = useCallback((category) => {
+    setSelectedCategory(category);
+  }, []);
 
-  const data = useMemo(
-    () =>
-      categories.map((category) => ({
-        name: category.name,
-        actions: (
-          <Actions
-            key={category._id}
-            item={{
-              id: category._id,
-              title: category.name,
-              onEdit: () => openModal("edit", category),
-              onDelete: () => openModal("delete", category),
-              onView: () => handleView(category),
-            }}
-          />
-        ),
-      })),
-    [categories, openModal, handleView]
-  );
+  const columns = useMemo(() => [
+    { header: "Category Name", accessor: "name" },
+    { header: "Actions", accessor: "actions" },
+  ], []);
+
+  const data = useMemo(() =>
+    categories.map((category, index) => ({
+      name: category.name,
+      actions: (
+        <Actions
+          key={category._id}
+          item={{
+            title: category.name,
+            id: category._id,
+            onEdit: () => openModal("edit", { ...category, index }),
+            onDelete: () => openModal("delete", { ...category, index }),
+            onView: () => handleView(category),
+          }}
+        />
+      ),
+    })), [categories, openModal, handleView]);
 
   return (
     <Suspense fallback={<Loading />}>
       <div className="p-4">
         <Title text="Category List" />
         <Table data={data} columns={columns} />
+
+        <Pagination
+          totalItems={totalEntries}
+          itemsPerPage={10}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+        />
 
         {selectedCategory && (
           <div className="mt-4 p-4 bg-gray-100 rounded">
@@ -136,7 +137,7 @@ const CategoryList = () => {
                   className="px-4 py-2 bg-blue-600 text-white rounded"
                   onClick={() =>
                     handleEdit(
-                      modal.data._id,
+                      modal.data.index,
                       document.getElementById("editCategoryInput").value
                     )
                   }
@@ -158,7 +159,7 @@ const CategoryList = () => {
                   </button>
                   <button
                     className="px-4 py-2 bg-red-600 text-white rounded"
-                    onClick={() => handleDelete(modal.data._id)}
+                    onClick={() => handleDelete(modal.data.index)}
                   >
                     Confirm
                   </button>

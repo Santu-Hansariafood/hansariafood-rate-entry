@@ -20,13 +20,13 @@ export default function RateTable({ selectedCompany, onClose }) {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-  const allRatesFilled = rates.every(rate => rate.newRate.trim());
-  
+  const allRatesFilled = rates.every((rate) => rate.newRate.trim());
+
   const fetchRates = useCallback(async () => {
     try {
       const [{ data: companyData }, { data: existingRates }] =
         await Promise.all([
-          axios.get("/api/managecompany"),
+          axios.get("/api/managecompany?limit=100"),
           axios.get(
             `/api/rate?company=${encodeURIComponent(selectedCompany.trim())}`
           ),
@@ -169,7 +169,11 @@ export default function RateTable({ selectedCompany, onClose }) {
             </div>
           </div>
 
-          <div className={`max-h-[70vh] overflow-auto ${allRatesFilled ? "bg-green-50" : "bg-red-50"}`}>
+          <div
+            className={`max-h-[70vh] overflow-auto ${
+              allRatesFilled ? "bg-green-50" : "bg-red-50"
+            }`}
+          >
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead className="bg-gray-50 sticky top-0">

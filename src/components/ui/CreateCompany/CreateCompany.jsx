@@ -35,18 +35,36 @@ export default function CreateCompany() {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const { data } = await axios.get("/api/categories");
-      setCategories(data.categories || []);
-    } catch {
-      toast.error("Failed to fetch categories");
-    }
-  }, []);
-
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    const fetchAllCategories = async () => {
+      let allCategories = [];
+      let page = 1;
+      let hasMore = true;
+
+      try {
+        while (hasMore) {
+          const response = await axios.get(`/api/categories?page=${page}`);
+          const data = Array.isArray(response.data)
+            ? response.data
+            : response.data.categories || [];
+
+          if (data.length > 0) {
+            allCategories = [...allCategories, ...data];
+            page++;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        setCategories(allCategories);
+      } catch (error) {
+        console.error("Error fetching paginated categories:", error);
+        toast.error("Failed to fetch categories");
+      }
+    };
+
+    fetchAllCategories();
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (!company.trim() || !category.trim()) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import axios from "axios";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
@@ -18,6 +18,12 @@ const InputBox = dynamic(
     loading: () => <Loading />,
   }
 );
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  {
+    loading: () => <Loading />,
+  }
+);
 const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
   loading: () => <Loading />,
 });
@@ -28,6 +34,10 @@ const ManageCompanyList = () => {
   const [categories, setCategories] = useState([]);
   const [editingCompany, setEditingCompany] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const ITEMS_PER_PAGE = 10;
 
   const capitalizeWords = (str) =>
     str.replace(/\b\w/g, (char) => char.toUpperCase()).trim();
@@ -35,7 +45,9 @@ const ManageCompanyList = () => {
   const fetchAllData = async () => {
     try {
       const [companyRes, locationRes, categoryRes] = await Promise.all([
-        axios.get("/api/managecompany"),
+        axios.get(
+          `/api/managecompany?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
+        ),
         axios.get("/api/location"),
         axios.get("/api/categories"),
       ]);
@@ -50,6 +62,7 @@ const ManageCompanyList = () => {
       }));
 
       setCompanies(formattedCompanies);
+      setTotalItems(companyRes.data.total || 0);
       setLocations(locationRes.data.locations || []);
       setCategories(categoryRes.data.categories || []);
     } catch (err) {
@@ -59,7 +72,7 @@ const ManageCompanyList = () => {
 
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [currentPage]);
 
   const handleView = async (id) => {
     try {
@@ -73,22 +86,20 @@ const ManageCompanyList = () => {
     }
   };
 
-  const handleEdit = async (id) => {
-    try {
-      const { data } = await axios.get(`/api/managecompany/${id}`);
-      const loc = data.company.location.map((loc) =>
-        typeof loc === "string" ? { name: loc, state: "" } : loc
-      );
+  const handleEdit = (id) => {
+    const company = companies.find((c) => c._id === id);
+    if (!company) return;
 
-      setEditingCompany({
-        _id: data.company._id,
-        name: data.company.name,
-        location: loc,
-        category: data.company.category || "",
-      });
-    } catch {
-      toast.error("Failed to load company for editing");
-    }
+    const loc = company.location.map((loc) =>
+      typeof loc === "string" ? { name: loc, state: "" } : loc
+    );
+
+    setEditingCompany({
+      _id: company._id,
+      name: company.name,
+      location: loc,
+      category: company.category || "",
+    });
   };
 
   const handleUpdate = async (e) => {
@@ -138,7 +149,7 @@ const ManageCompanyList = () => {
     { header: "Actions", accessor: "actions" },
   ];
 
-  const data = [...companies]
+  const data = companies
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((company) => {
       const capitalizedName = capitalizeWords(company.name);
@@ -158,9 +169,9 @@ const ManageCompanyList = () => {
             item={{
               id: company._id,
               title: capitalizedName,
-              onView: handleView,
+              onView: () => handleView(company._id),
               onEdit: () => handleEdit(company._id),
-              onDelete: handleDelete,
+              onDelete: () => handleDelete(company._id),
             }}
           />
         ),
@@ -172,6 +183,12 @@ const ManageCompanyList = () => {
       <div className="p-4">
         <Title text="Manage Company List" />
         <Table data={data} columns={columns} />
+        <Pagination
+          currentPage={currentPage}
+          totalItems={totalItems}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
 
         {editingCompany && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">

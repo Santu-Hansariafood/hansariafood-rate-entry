@@ -36,37 +36,83 @@ export default function CreateCompany() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAllCompanies = async () => {
+      let allCompanies = [];
+      let page = 1;
+      let hasMore = true;
+
       try {
-        const [companyRes, locationRes] = await Promise.all([
-          axios.get("/api/companies"),
-          axios.get("/api/location"),
-        ]);
-        setCompanies(companyRes.data || []);
-        setLocations(locationRes.data.locations || []);
+        while (hasMore) {
+          const response = await axios.get(`/api/companies?page=${page}`);
+          const data = Array.isArray(response.data)
+            ? response.data
+            : response.data.companies || [];
+
+          if (data.length > 0) {
+            allCompanies = [...allCompanies, ...data];
+            page++;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        setCompanies(allCompanies);
       } catch (error) {
-        toast.error("Failed to fetch data");
+        console.error("Error fetching companies:", error);
+        toast.error("Failed to fetch companies");
       }
     };
 
-    fetchData();
+    const fetchAllLocations = async () => {
+      let allLocations = [];
+      let page = 1;
+      let hasMore = true;
+
+      try {
+        while (hasMore) {
+          const response = await axios.get(`/api/location?page=${page}`);
+          const data = Array.isArray(response.data)
+            ? response.data
+            : response.data.locations || [];
+
+          if (data.length > 0) {
+            allLocations = [...allLocations, ...data];
+            page++;
+          } else {
+            hasMore = false;
+          }
+        }
+
+        setLocations(allLocations);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+        toast.error("Failed to fetch locations");
+      }
+    };
+
+    fetchAllCompanies();
+    fetchAllLocations();
   }, []);
 
   const companyOptions = useMemo(
     () =>
-      companies.map((comp) => ({
-        label: comp.name,
-        value: comp.name,
-      })),
+      Array.isArray(companies)
+        ? companies.map((comp) => ({
+            label: comp.name,
+            value: comp.name,
+          }))
+        : [],
     [companies]
   );
 
   const locationOptions = useMemo(
     () =>
-      locations.map((loc) => ({
-        label: loc.name,
-        value: loc.name,
-      })),
+      Array.isArray(locations)
+        ? locations.map((loc) => ({
+            label: loc.name,
+            value: loc.name,
+          }))
+        : [],
     [locations]
   );
 

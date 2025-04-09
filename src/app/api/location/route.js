@@ -38,11 +38,32 @@ export async function POST(req) {
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
     await connectDB();
-    const locations = await Location.find({});
-    return NextResponse.json({ locations }, { status: 200 });
+
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
+
+    const [locations, total] = await Promise.all([
+      Location.find()
+        .sort({ name: 1 })
+        .skip(skip)
+        .limit(limit),
+      Location.countDocuments(),
+    ]);
+
+    return NextResponse.json(
+      {
+        locations,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch locations" },

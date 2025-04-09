@@ -22,6 +22,12 @@ const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
 const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
   loading: () => <Loading />,
 });
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  {
+    loading: () => <Loading />,
+  }
+);
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
@@ -32,24 +38,31 @@ const LocationList = () => {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({ name: "", state: "" });
+  const [totalEntries, setTotalEntries] = useState(0);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const states = useMemo(() => stateData.map((item) => item.state), []);
 
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await axios.get("/api/location");
+        const response = await axios.get(
+          `/api/location?page=${currentPage}&limit=${itemsPerPage}`
+        );
         const sorted = response.data.locations?.sort((a, b) =>
           a.name.localeCompare(b.name)
         );
         setLocations(sorted || []);
+        setTotalEntries(response.data.total || 0);
       } catch (error) {
         toast.error("Error fetching locations");
       }
     };
 
     fetchLocations();
-  }, []);
+  }, [currentPage]);
 
   const handleDelete = useCallback(async (id) => {
     try {
@@ -105,6 +118,11 @@ const LocationList = () => {
     []
   );
 
+  const paginatedLocations = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return locations.slice(start, start + itemsPerPage);
+  }, [locations, currentPage]);
+
   const data = useMemo(
     () =>
       locations.map((location) => ({
@@ -125,12 +143,22 @@ const LocationList = () => {
     [locations, handleDelete, handleEditClick, handleView]
   );
 
+  const startEntry = (currentPage - 1) * itemsPerPage + 1;
+  const endEntry = Math.min(startEntry + itemsPerPage - 1, totalEntries);
+
   return (
     <Suspense fallback={<Loading />}>
       <div className="p-4">
         <Title text="Location List" />
         <Table data={data} columns={columns} />
+        <Pagination
+          currentPage={currentPage}
+          totalItems={totalEntries}
+          itemsPerPage={itemsPerPage}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
 
+        {/* Modal Section */}
         {showModal && (
           <Modal
             title={editMode ? "Edit Location" : "Location Details"}
