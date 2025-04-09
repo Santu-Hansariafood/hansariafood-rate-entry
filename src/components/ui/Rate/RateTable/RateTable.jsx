@@ -127,7 +127,6 @@ export default function RateTable({ selectedCompany, onClose }) {
         });
       });
 
-      // 👇 Add this after updating state
       if (
         rates.every((r, i) =>
           i === index ? rateToSave.newRate.trim() : r.newRate.trim()

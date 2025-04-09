@@ -9,14 +9,24 @@ import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
 import { Building2, ArrowLeft } from "lucide-react";
 
-const CompanyList = dynamic(() => import("./CompanyList/CompanyList"));
-const RateTable = dynamic(() => import("./RateTable/RateTable"));
-const Title = dynamic(() => import("@/components/common/Title/Title"));
+const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
+  loading: () => <Loading />,
+});
+const RateTable = dynamic(() => import("./RateTable/RateTable"), {
+  loading: () => <Loading />,
+});
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  loading: () => <Loading />,
+});
 const CategoryCard = dynamic(() =>
-  import("@/components/ui/Rate/CategoryCard/CategoryCard")
+  import("@/components/ui/Rate/CategoryCard/CategoryCard"), {
+    loading: () => <Loading />,
+  }
 );
 const Pagination = dynamic(() =>
-  import("@/components/common/Pagination/Pagination")
+  import("@/components/common/Pagination/Pagination"), {
+    loading: () => <Loading />,
+  }
 );
 
 export default function Rate() {
