@@ -14,35 +14,42 @@ export async function POST(req) {
       );
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     let rateEntry = await Rate.findOne({ company, location });
 
     if (rateEntry) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
       const lastUpdated = new Date(rateEntry.newRateDate);
       lastUpdated.setHours(0, 0, 0, 0);
 
-      if (lastUpdated < today) {
-        rateEntry.oldRates.push({
-          rate: rateEntry.newRate,
-          date: rateEntry.newRateDate,
-        });
+      if (lastUpdated.getTime() !== today.getTime()) {
+        // Push the old newRate to oldRates if it's not today
+        if (rateEntry.newRate) {
+          rateEntry.oldRates.push({
+            rate: rateEntry.newRate,
+            date: rateEntry.newRateDate,
+          });
+        }
       }
 
+      // Always update newRate and newRateDate to today
       rateEntry.newRate = newRate;
       rateEntry.newRateDate = today;
       await rateEntry.save();
+
       return NextResponse.json(
         { message: "Rate updated successfully!", updatedRate: rateEntry },
         { status: 200 }
       );
     }
 
+    // New entry
     rateEntry = new Rate({
       company,
       location,
       newRate,
-      newRateDate: new Date(),
+      newRateDate: today,
       oldRates: [],
     });
     await rateEntry.save();
@@ -70,19 +77,22 @@ export async function GET(req) {
     const formattedRates = rates.map((rate) => {
       const lastUpdated = new Date(rate.newRateDate);
       lastUpdated.setHours(0, 0, 0, 0);
-
       const isToday = lastUpdated.getTime() === today.getTime();
+
+      const oldRatesFormatted = rate.oldRates.map(
+        (old) =>
+          `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`
+      );
 
       return {
         company: rate.company,
         location: rate.location,
-        oldRates: rate.oldRates.map(
-          (old) =>
-            `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`
-        ),
-        newRate: rate.newRate,
-        newRateDate: rate.newRateDate,
+        oldRates: oldRatesFormatted,
+        newRate: isToday ? rate.newRate : "",
         hasNewRateToday: isToday,
+        lastUpdated: isToday
+          ? rate.newRateDate
+          : rate.oldRates.at(-1)?.date || null,
       };
     });
 
