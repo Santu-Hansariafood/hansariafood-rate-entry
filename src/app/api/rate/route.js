@@ -14,33 +14,49 @@ export async function POST(req) {
       );
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     let rateEntry = await Rate.findOne({ company, location });
 
     if (rateEntry) {
+      const lastUpdated = new Date(rateEntry.newRateDate);
+      lastUpdated.setHours(0, 0, 0, 0);
+
+      if (lastUpdated.getTime() !== today.getTime()) {
+        if (rateEntry.newRate) {
+          rateEntry.oldRates.push({
+            rate: rateEntry.newRate,
+            date: rateEntry.newRateDate,
+          });
+        }
+      }
       rateEntry.newRate = newRate;
+      rateEntry.newRateDate = today;
       await rateEntry.save();
+
       return NextResponse.json(
         { message: "Rate updated successfully!", updatedRate: rateEntry },
         { status: 200 }
       );
     }
 
-    const newEntry = new Rate({
+    // New entry
+    rateEntry = new Rate({
       company,
       location,
       newRate,
-      newRateDate: new Date(),
+      newRateDate: today,
       oldRates: [],
     });
-
-    await newEntry.save();
+    await rateEntry.save();
 
     return NextResponse.json(
-      { message: "Rate created successfully!", newRate: newEntry },
+      { message: "Rate saved successfully!", newRate: rateEntry },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error in POST /rate:", error);
+    console.error("Error in POST /rates:", error);
     return NextResponse.json({ error: "Error saving rate" }, { status: 500 });
   }
 }
@@ -50,9 +66,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const company = searchParams.get("company");
 
-    let rates = company
-      ? await Rate.find({ company })
-      : await Rate.find();
+    let rates = company ? await Rate.find({ company }) : await Rate.find();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -60,26 +74,60 @@ export async function GET(req) {
     const formattedRates = rates.map((rate) => {
       const lastUpdated = new Date(rate.newRateDate);
       lastUpdated.setHours(0, 0, 0, 0);
-
       const isToday = lastUpdated.getTime() === today.getTime();
+
+      const oldRatesFormatted = rate.oldRates.map(
+        (old) =>
+          `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`
+      );
 
       return {
         company: rate.company,
         location: rate.location,
-        newRate: rate.newRate,
-        newRateDate: rate.newRateDate,
-        oldRates: rate.oldRates.map(
-          (entry) =>
-            `${entry.rate} (${new Date(entry.date).toLocaleDateString("en-GB")})`
-        ),
+        oldRates: oldRatesFormatted,
+        newRate: isToday ? rate.newRate : "",
         hasNewRateToday: isToday,
+        lastUpdated: isToday
+          ? rate.newRateDate
+          : rate.oldRates.at(-1)?.date || null,
       };
     });
 
     return NextResponse.json(formattedRates, { status: 200 });
   } catch (error) {
-    console.error("Error in GET /rate:", error);
-    return NextResponse.json({ error: "Error fetching rates" }, { status: 500 });
+    console.error("Error in GET /rates:", error);
+    return NextResponse.json(
+      { error: "Error fetching rates" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req) {
+  try {
+    const { company, location, newRate } = await req.json();
+    if (!company || !location || newRate === undefined) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const rateToUpdate = await Rate.findOne({ company, location });
+    if (!rateToUpdate) {
+      return NextResponse.json({ error: "Rate not found" }, { status: 404 });
+    }
+
+    rateToUpdate.newRate = newRate;
+    await rateToUpdate.save();
+
+    return NextResponse.json(
+      { message: "Rate updated successfully!", updatedRate: rateToUpdate },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error in PUT /rates:", error);
+    return NextResponse.json({ error: "Error updating rate" }, { status: 500 });
   }
 }
 
@@ -91,7 +139,7 @@ export async function DELETE() {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error in DELETE /rate:", error);
+    console.error("Error in DELETE /rates:", error);
     return NextResponse.json(
       { error: "Error deleting rates" },
       { status: 500 }
