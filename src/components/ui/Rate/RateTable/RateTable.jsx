@@ -5,7 +5,11 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
-import { Edit2, Save, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Edit2, Save, X } from "lucide-react";
+import dynamic from "next/dynamic";
+const Pagination = dynamic(() =>
+  import("@/components/common/Pagination/Pagination")
+);
 
 export default function RateTable({ selectedCompany, onClose }) {
   const [rates, setRates] = useState([]);
@@ -25,10 +29,13 @@ export default function RateTable({ selectedCompany, onClose }) {
 
   const fetchRates = useCallback(async () => {
     try {
-      const [{ data: companyData }, { data: existingRates }] = await Promise.all([
-        axios.get("/api/managecompany?limit=100"),
-        axios.get(`/api/rate?company=${encodeURIComponent(selectedCompany.trim())}`),
-      ]);
+      const [{ data: companyData }, { data: existingRates }] =
+        await Promise.all([
+          axios.get("/api/managecompany?limit=100"),
+          axios.get(
+            `/api/rate?company=${encodeURIComponent(selectedCompany.trim())}`
+          ),
+        ]);
 
       const company = companyData.companies.find(
         (c) => c.name.trim() === selectedCompany.trim()
@@ -47,7 +54,11 @@ export default function RateTable({ selectedCompany, onClose }) {
             newRate: foundRate?.newRate ?? "",
             isUpdated: !!foundRate?.newRate,
             lastUpdated: foundRate?.oldRates?.at(-1)
-              ? new Date(foundRate.oldRates[foundRate.oldRates.length - 1].split("(")[1].split(")")[0])
+              ? new Date(
+                  foundRate.oldRates[foundRate.oldRates.length - 1]
+                    .split("(")[1]
+                    .split(")")[0]
+                )
               : null,
           };
         });
@@ -84,7 +95,9 @@ export default function RateTable({ selectedCompany, onClose }) {
     }
 
     try {
-      const newOldRate = `${parsedRate} (${new Date().toLocaleDateString("en-GB")})`;
+      const newOldRate = `${parsedRate} (${new Date().toLocaleDateString(
+        "en-GB"
+      )})`;
 
       await axios.post("/api/rate", {
         company: selectedCompany,
@@ -123,9 +136,6 @@ export default function RateTable({ selectedCompany, onClose }) {
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = rates.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(rates.length / itemsPerPage);
-
-  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <Suspense fallback={<Loading />}>
@@ -143,21 +153,38 @@ export default function RateTable({ selectedCompany, onClose }) {
           className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden"
         >
           <div className="p-6 border-b flex justify-between items-center">
-            <h3 className="text-2xl font-bold text-gray-800">Rates for {selectedCompany}</h3>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+            <h3 className="text-2xl font-bold text-gray-800">
+              Rates for {selectedCompany}
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
 
-          <div className={`max-h-[70vh] overflow-auto ${allRatesFilled ? "bg-green-50" : "bg-red-50"}`}>
+          <div
+            className={`max-h-[70vh] overflow-auto ${
+              allRatesFilled ? "bg-green-50" : "bg-red-50"
+            }`}
+          >
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
-                <thead className="bg-gray-50 sticky top-0">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">Location</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">Last Rate</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">New Rate</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-600 border-b">Actions</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                      Location
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                      Last Rate
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                      New Rate
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-600 border-b">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -171,11 +198,17 @@ export default function RateTable({ selectedCompany, onClose }) {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
                           className={`transition-colors duration-300 ${
-                            rate.newRate.toString().trim() ? "bg-green-50" : "bg-red-50"
+                            rate.newRate.toString().trim()
+                              ? "bg-green-50"
+                              : "bg-red-50"
                           }`}
                         >
-                          <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">{rate.location}</td>
-                          <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap">{rate.oldRate}</td>
+                          <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
+                            {rate.location}
+                          </td>
+                          <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap">
+                            {rate.oldRate}
+                          </td>
                           <td className="px-6 py-4 border-b whitespace-nowrap">
                             <input
                               type="number"
@@ -190,7 +223,9 @@ export default function RateTable({ selectedCompany, onClose }) {
                                 )
                               }
                               className={`w-full min-w-[120px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
-                                editIndex === actualIndex ? "border-green-500" : "border-gray-300"
+                                editIndex === actualIndex
+                                  ? "border-green-500"
+                                  : "border-gray-300"
                               }`}
                               disabled={editIndex !== actualIndex}
                               placeholder="Enter new rate"
@@ -235,31 +270,12 @@ export default function RateTable({ selectedCompany, onClose }) {
               </table>
             </div>
           </div>
-
-          <div className="p-4 border-t flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, rates.length)} of {rates.length} entries
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <span className="text-gray-600">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalItems={rates.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+          />
         </motion.div>
       </motion.div>
     </Suspense>
