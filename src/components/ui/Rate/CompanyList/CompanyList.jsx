@@ -1,28 +1,54 @@
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
+import axios from "axios";
+import debounce from "lodash.debounce";
 
 export default function CompanyList({
   companies,
   completedCompanies,
-  loading,
+  loading: initialLoading,
   onCompanySelect,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const filteredCompanies = useMemo(() => {
-    if (!searchQuery) {
-      return [...companies].sort((a, b) => a.localeCompare(b));
+  const defaultCompanies = useMemo(() => {
+    return [...companies].sort((a, b) => a.localeCompare(b));
+  }, [companies]);
+
+  const performSearch = useMemo(
+    () =>
+      debounce(async (query) => {
+        setLoading(true);
+        try {
+          const response = await axios.get(`/api/managecompany?q=${query}`);
+          const companyNames = response.data.companies.map((c) => c.name);
+          setSearchResults(companyNames);
+        } catch (err) {
+          console.error("Search error:", err);
+          setSearchResults([]);
+        } finally {
+          setLoading(false);
+        }
+      }, 300),
+    []
+  );
+
+  useEffect(() => {
+    if (searchQuery.trim() !== "") {
+      performSearch(searchQuery);
+    } else {
+      setSearchResults([]);
     }
-  
-    return companies
-      .filter((company) =>
-        company.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      .sort((a, b) => a.localeCompare(b));
-  }, [companies, searchQuery]);
-  
+    return () => performSearch.cancel();
+  }, [searchQuery]);
+
+  const displayCompanies =
+    searchQuery.trim() === "" ? defaultCompanies : searchResults;
+
   return (
     <Suspense fallback={<Loading />}>
       <div className="w-full max-w-4xl mx-auto p-4">
@@ -46,7 +72,7 @@ export default function CompanyList({
           </div>
         </motion.div>
 
-        {loading ? (
+        {initialLoading || loading ? (
           <Loading />
         ) : (
           <motion.div
@@ -56,7 +82,7 @@ export default function CompanyList({
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
           >
             <AnimatePresence>
-              {filteredCompanies.map((company, index) => (
+              {displayCompanies.map((company, index) => (
                 <motion.button
                   key={company}
                   initial={{ opacity: 0, y: 20 }}
@@ -65,71 +91,71 @@ export default function CompanyList({
                   transition={{ duration: 0.2, delay: index * 0.05 }}
                   onClick={() => onCompanySelect(company)}
                   className={`
-                  group relative overflow-hidden rounded-xl p-4 transition-all duration-200
-                  ${
-                    completedCompanies[company]
-                      ? "bg-green-50 hover:bg-green-100 border border-green-200"
-                      : "bg-red-50 hover:bg-red-100 border border-red-200"
-                  }
-                `}
+                    group relative overflow-hidden rounded-xl p-4 transition-all duration-200
+                    ${
+                      completedCompanies[company]
+                        ? "bg-green-50 hover:bg-green-100 border border-green-200"
+                        : "bg-red-50 hover:bg-red-100 border border-red-200"
+                    }
+                  `}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`
-                    p-2 rounded-lg transition-colors duration-200
-                    ${
-                      completedCompanies[company]
-                        ? "bg-green-100 group-hover:bg-green-200"
-                        : "bg-red-100 group-hover:bg-red-200"
-                    }
-                  `}
+                        p-2 rounded-lg transition-colors duration-200
+                        ${
+                          completedCompanies[company]
+                            ? "bg-green-100 group-hover:bg-green-200"
+                            : "bg-red-100 group-hover:bg-red-200"
+                        }
+                      `}
                     >
                       <Building2
                         className={`
-                      w-5 h-5 transition-colors duration-200
-                      ${
-                        completedCompanies[company]
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
-                    `}
+                          w-5 h-5 transition-colors duration-200
+                          ${
+                            completedCompanies[company]
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }
+                        `}
                       />
                     </div>
                     <div className="flex-1 text-left">
                       <h3
                         className={`
-                      font-medium truncate transition-colors duration-200
-                      ${
-                        completedCompanies[company]
-                          ? "text-green-800"
-                          : "text-red-800"
-                      }
-                    `}
+                          font-medium truncate transition-colors duration-200
+                          ${
+                            completedCompanies[company]
+                              ? "text-green-800"
+                              : "text-red-800"
+                          }
+                        `}
                       >
                         {company}
                       </h3>
                       <p
                         className={`
-                      text-sm transition-colors duration-200
-                      ${
-                        completedCompanies[company]
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }
-                    `}
+                          text-sm transition-colors duration-200
+                          ${
+                            completedCompanies[company]
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }
+                        `}
                       >
                         {completedCompanies[company] ? "Completed" : "Pending"}
                       </p>
                     </div>
                     <div
                       className={`
-                    p-1 rounded-full transition-colors duration-200
-                    ${
-                      completedCompanies[company]
-                        ? "bg-green-100 group-hover:bg-green-200"
-                        : "bg-red-100 group-hover:bg-red-200"
-                    }
-                  `}
+                        p-1 rounded-full transition-colors duration-200
+                        ${
+                          completedCompanies[company]
+                            ? "bg-green-100 group-hover:bg-green-200"
+                            : "bg-red-100 group-hover:bg-red-200"
+                        }
+                      `}
                     >
                       {completedCompanies[company] ? (
                         <CheckCircle2 className="w-5 h-5 text-green-600" />
@@ -144,7 +170,7 @@ export default function CompanyList({
           </motion.div>
         )}
 
-        {!loading && filteredCompanies.length === 0 && (
+        {!loading && displayCompanies.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
