@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Hansaria Food Private Limited | Commodity & Brokerage Services",
   description:
-    "Hansaria Food Private Limited supplies high-quality raw materials for the poultry and feed industry across India. We also provide global commodity and brokerage services with assured quality and reliability.",
+    "Hansaria Food Private Limited is a leading supplier of high-quality raw materials for the poultry and animal feed industry in India. With a reputation for excellence, we specialize in sourcing and delivering premium feed ingredients that support healthy livestock growth. Our global commodity trading and brokerage services ensure consistent supply, competitive pricing, and unmatched reliability. Trusted by poultry farms, feed manufacturers, and agribusinesses, Hansaria Food is your dependable partner for feed solutions with assured quality and on-time delivery.",
   keywords:
     "Hansaria Food, raw material supply, poultry feed industry, commodity trading, brokerage services, supply chain, Kolkata, India, international trade",
   authors: [{ name: "Hansaria Food Private Limited" }],
@@ -49,7 +49,7 @@ export const metadata = {
     creator: "@hansaria_food_private_limited",
     title: "Hansaria Food Private Limited",
     description:
-      "Hansaria Food Private Limited delivers premium raw materials for the poultry and feed industry while offering global commodity and brokerage services.",
+      "Hansaria Food Private Limited is a leading supplier of high-quality raw materials for the poultry and animal feed industry in India. With a reputation for excellence, we specialize in sourcing and delivering premium feed ingredients that support healthy livestock growth. Our global commodity trading and brokerage services ensure consistent supply, competitive pricing, and unmatched reliability. Trusted by poultry farms, feed manufacturers, and agribusinesses, Hansaria Food is your dependable partner for feed solutions with assured quality and on-time delivery.",
     images: ["/images/og-image.png"],
   },
   icons: {
@@ -71,7 +71,7 @@ export default function RootLayout({ children }) {
               url: "https://www.hansariafood.site",
               logo: "/images/og-image.png",
               description:
-                "Hansaria Food Private Limited supplies high-quality raw materials for the poultry and feed industry across India. We also provide global commodity and brokerage services with assured quality and reliability.",
+                "Hansaria Food Private Limited is a leading supplier of high-quality raw materials for the poultry and animal feed industry in India. With a reputation for excellence, we specialize in sourcing and delivering premium feed ingredients that support healthy livestock growth. Our global commodity trading and brokerage services ensure consistent supply, competitive pricing, and unmatched reliability. Trusted by poultry farms, feed manufacturers, and agribusinesses, Hansaria Food is your dependable partner for feed solutions with assured quality and on-time delivery.",
               founder: {
                 "@type": "Person",
                 name: "Gopal Agarwal & Sunita Agarwalla",
