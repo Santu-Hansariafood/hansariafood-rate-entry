@@ -43,7 +43,10 @@ export async function POST(req) {
       await existingCompany.save();
 
       return NextResponse.json(
-        { message: "Company location updated successfully", company: existingCompany },
+        {
+          message: "Company location updated successfully",
+          company: existingCompany,
+        },
         { status: 200 }
       );
     }
@@ -69,17 +72,20 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
+    const query = searchParams.get("q")?.toLowerCase() || "";
     const skip = (page - 1) * limit;
 
+    let filter = {};
+    if (query) {
+      filter = { name: { $regex: query, $options: "i" } };
+    }
+
     const [companies, total] = await Promise.all([
-      ManageCompany.find().skip(skip).limit(limit),
-      ManageCompany.countDocuments(),
+      ManageCompany.find(filter).skip(skip).limit(limit),
+      ManageCompany.countDocuments(filter),
     ]);
 
-    return NextResponse.json(
-      { companies, total },
-      { status: 200 }
-    );
+    return NextResponse.json({ companies, total }, { status: 200 });
   } catch (error) {
     console.error("Error in GET /managecompany:", error);
     return NextResponse.json(
