@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  Suspense,
+  useTransition,
+} from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
@@ -17,6 +23,7 @@ export default function RateTable({ selectedCompany, onClose }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -29,13 +36,22 @@ export default function RateTable({ selectedCompany, onClose }) {
 
   const fetchRates = useCallback(async () => {
     try {
-      const [{ data: companyData }, { data: existingRates }] =
-        await Promise.all([
-          axios.get("/api/managecompany?limit=100"),
-          axios.get(
-            `/api/rate?company=${encodeURIComponent(selectedCompany.trim())}`
-          ),
-        ]);
+      const [
+        { data: companyData },
+        { data: existingRates },
+        { data: locationData },
+      ] = await Promise.all([
+        axios.get("/api/managecompany?limit=100"),
+        axios.get(
+          `/api/rate?company=${encodeURIComponent(selectedCompany.trim())}`
+        ),
+        axios.get("/api/location?limit=1000"),
+      ]);
+
+      const locationMap = {};
+      locationData.locations.forEach((loc) => {
+        locationMap[loc.name.trim().toUpperCase()] = loc.state;
+      });
 
       const company = companyData.companies.find(
         (c) => c.name.trim() === selectedCompany.trim()
@@ -50,6 +66,7 @@ export default function RateTable({ selectedCompany, onClose }) {
 
           return {
             location: cleanLocation,
+            state: locationMap[cleanLocation.toUpperCase()] || "Unknown",
             oldRate: foundRate?.oldRates?.at(-1) || "—",
             newRate: foundRate?.newRate ?? "",
             isUpdated: !!foundRate?.newRate,
@@ -69,7 +86,9 @@ export default function RateTable({ selectedCompany, onClose }) {
           return b.lastUpdated - a.lastUpdated;
         });
 
-        setRates(sortedRates);
+        startTransition(() => {
+          setRates(sortedRates);
+        });
       } else {
         toast.error("Company not found in the database.");
       }
@@ -177,6 +196,9 @@ export default function RateTable({ selectedCompany, onClose }) {
                       Location
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                      State
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
                       Last Rate
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
@@ -205,6 +227,9 @@ export default function RateTable({ selectedCompany, onClose }) {
                         >
                           <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
                             {rate.location}
+                          </td>
+                          <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
+                            {rate.state}
                           </td>
                           <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap">
                             {rate.oldRate}
