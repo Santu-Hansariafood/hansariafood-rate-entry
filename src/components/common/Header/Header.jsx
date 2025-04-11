@@ -69,6 +69,7 @@ export default function Header() {
                 "Company",
                 "Location",
                 "Category",
+                "Commodity",
                 "Rate",
                 "Register",
               ].map((label, index) => (
@@ -167,6 +168,7 @@ export default function Header() {
                 "Company",
                 "Location",
                 "Category",
+                "Commodity",
                 "Rate",
                 "Register",
               ].map((label, index) => (
