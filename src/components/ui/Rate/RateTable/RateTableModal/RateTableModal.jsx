@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
-const RateTableBody = dynamic(() => import("../RateTableBody/RateTableBody"));
+const RateTableBody = dynamic(() => import("../RateTableBody/RateTableBody"),{ loading: () => <Loading /> });
 
 export default function RateTableModal({
   selectedCompany,

@@ -11,10 +11,14 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
-const Pagination = dynamic(() =>
-  import("@/components/common/Pagination/Pagination")
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  { loading: () => <Loading /> }
 );
-const RateTableModal = dynamic(() => import("./RateTableModal/RateTableModal"));
+const RateTableModal = dynamic(
+  () => import("./RateTableModal/RateTableModal"),
+  { loading: () => <Loading /> }
+);
 
 export default function RateTable({ selectedCompany, onClose }) {
   const [rates, setRates] = useState([]);
