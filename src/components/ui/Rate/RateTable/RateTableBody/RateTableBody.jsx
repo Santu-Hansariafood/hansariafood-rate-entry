@@ -1,9 +1,6 @@
 import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
-import Loading from "@/components/common/Loading/Loading";
-const RateTableRow = dynamic(() => import("../RateTableRow/RateTableRow"), {
-  loading: () => <Loading />,
-});
+const RateTableRow = dynamic(() => import("../RateTableRow/RateTableRow"));
 
 export default function RateTableBody({
   rates,
