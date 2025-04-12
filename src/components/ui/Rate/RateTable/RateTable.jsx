@@ -11,10 +11,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
-const Pagination = dynamic(
-  () => import("@/components/common/Pagination/Pagination"),
-  { loading: () => <Loading /> }
-);
+
 const RateTableModal = dynamic(
   () => import("./RateTableModal/RateTableModal"),
   { loading: () => <Loading /> }
@@ -23,8 +20,6 @@ const RateTableModal = dynamic(
 export default function RateTable({ selectedCompany, onClose }) {
   const [rates, setRates] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
   const [isPending, startTransition] = useTransition();
 
   const allRatesFilled = rates.every((rate) => rate.newRate.toString().trim());
@@ -147,34 +142,19 @@ export default function RateTable({ selectedCompany, onClose }) {
     }
   };
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = rates.slice(indexOfFirstItem, indexOfLastItem);
-
   return (
     <Suspense fallback={<Loading />}>
       <RateTableModal
         selectedCompany={selectedCompany}
         onClose={onClose}
-        rates={currentItems}
+        rates={rates}
         allRatesFilled={allRatesFilled}
         editIndex={editIndex}
         handleEdit={handleEdit}
         handleSave={handleSave}
         setRates={setRates}
-        actualStartIndex={indexOfFirstItem}
-      >
-        {rates.length > itemsPerPage && (
-          <div className="mt-4 flex justify-center">
-            <Pagination
-              currentPage={currentPage}
-              totalItems={rates.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        )}
-      </RateTableModal>
+        actualStartIndex={0}
+      />
     </Suspense>
   );
 }
