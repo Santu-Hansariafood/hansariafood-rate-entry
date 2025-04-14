@@ -14,6 +14,8 @@ export default function Header() {
   const [isMounted, setIsMounted] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const baseUrl = "https://hansariafood.site";
+
   useEffect(() => {
     setIsMounted(true);
     const handleScroll = () => {
@@ -106,9 +108,7 @@ export default function Header() {
                 whileTap={{ scale: 0.95 }}
               >
                 <button
-                  onClick={() =>
-                    signOut({ callbackUrl: baseUrl })
-                  }
+                  onClick={() => signOut({ callbackUrl: baseUrl })}
                   className="flex items-center gap-2 bg-red-500/90 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-300 shadow-lg hover:shadow-red-500/20"
                 >
                   <LogOut size={18} />
@@ -203,9 +203,7 @@ export default function Header() {
                 className="w-full mt-auto"
               >
                 <button
-                  onClick={() =>
-                    signOut({ callbackUrl: baseUrl })
-                  }
+                  onClick={() => signOut({ callbackUrl: baseUrl })}
                   className="flex items-center gap-2 bg-red-500/90 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-300 shadow-lg hover:shadow-red-500/20"
                 >
                   <LogOut size={18} />

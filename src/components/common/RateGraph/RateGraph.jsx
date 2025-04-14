@@ -30,33 +30,43 @@ export default function RateGraph({ rateData, company, location }) {
   if (!filteredData) return null;
 
   const oldRatesFiltered = useMemo(() => {
-    let oldRates = filteredData.oldRates;
+    const oldRates = Array.isArray(filteredData.oldRates) ? filteredData.oldRates : [];
     return timeRange === "weekly"
       ? oldRates.slice(-7)
       : oldRates.filter((_, index) => index % 4 === 0);
   }, [filteredData, timeRange]);
 
   const { labels, rates, colors } = useMemo(() => {
-    const labels = oldRatesFiltered.map((rate) =>
-      rate.split(" ")[1].replace(/[()]/g, "")
-    );
-    if (filteredData.newRate)
-      labels.push(filteredData.newRate.split(" ")[1].replace(/[()]/g, ""));
+    const labels = [];
+    const rates = [];
 
-    const rates = [
-      ...oldRatesFiltered.map((rate) => parseInt(rate.split(" ")[0], 10)),
-      filteredData.newRate
-        ? parseInt(filteredData.newRate.split(" ")[0], 10)
-        : null,
-    ].filter(Boolean);
+    oldRatesFiltered.forEach((rateStr) => {
+      const match = rateStr.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
+      if (match) {
+        const [_, rate, date] = match;
+        labels.push(date);
+        rates.push(parseFloat(rate));
+      }
+    });
 
-    const colors = rates.map((rate, index) =>
-      index === 0
-        ? "rgba(54, 162, 235, 0.9)"
-        : rate >= rates[index - 1]
+    // Handle newRate
+    if (filteredData.newRate && filteredData.lastUpdated) {
+      const rateValue =
+        typeof filteredData.newRate === "string"
+          ? parseFloat(filteredData.newRate)
+          : filteredData.newRate;
+      const newDate = new Date(filteredData.lastUpdated).toLocaleDateString("en-GB");
+      labels.push(newDate);
+      rates.push(rateValue);
+    }
+
+    // Dynamic bar color generation
+    const colors = rates.map((rate, index) => {
+      if (index === 0) return "rgba(54, 162, 235, 0.9)";
+      return rate >= rates[index - 1]
         ? "rgba(46, 204, 113, 0.9)"
-        : "rgba(231, 76, 60, 0.9)"
-    );
+        : "rgba(231, 76, 60, 0.9)";
+    });
 
     return { labels, rates, colors };
   }, [oldRatesFiltered, filteredData]);

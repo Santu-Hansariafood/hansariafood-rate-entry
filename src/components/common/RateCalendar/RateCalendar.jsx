@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import axios from "axios";
+import dynamic from "next/dynamic";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import dynamic from "next/dynamic";
 import Loading from "../Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, TrendingUp } from "lucide-react";
 
-const RateGraph = dynamic(() =>
-  import("@/components/common/RateGraph/RateGraph")
-);
+// Lazy load graph
+const RateGraph = dynamic(() => import("@/components/common/RateGraph/RateGraph"));
 
 export default function RateCalendar() {
   const [date, setDate] = useState(new Date());
@@ -19,190 +18,195 @@ export default function RateCalendar() {
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
 
+  // Fetch rate data
   useEffect(() => {
-    axios
-      .get("/api/rate")
-      .then((response) => setRateData(response.data))
-      .catch((error) => console.error("Error fetching rate data:", error));
+    axios.get("/api/rate")
+      .then((res) => setRateData(res.data))
+      .catch((err) => console.error("Error fetching rate data:", err));
   }, []);
 
-  // useEffect(() => {
-  //   axios
-  //     .get("/api/companies?limit=1000")
-  //     .then((response) => {
-  //       const data = response.data;
-  //       setCompanies(Array.isArray(data) ? data : data.companies || []);
-  //     })
-  //     .catch((error) => console.error("Error fetching companies:", error));
-  // }, []);
-
+  // Fetch companies
   useEffect(() => {
-    const fetchAllCompanies = async () => {
-      let allCompanies = [];
-      let page = 1;
-      let hasMore = true;
+    const fetchCompanies = async () => {
+      let all = [], page = 1, hasMore = true;
 
       try {
         while (hasMore) {
-          const response = await axios.get(`/api/companies?page=${page}`);
-          const data = Array.isArray(response.data)
-            ? response.data
-            : response.data.companies || [];
-
+          const res = await axios.get(`/api/companies?page=${page}`);
+          const data = Array.isArray(res.data) ? res.data : res.data.companies || [];
           if (data.length > 0) {
-            allCompanies = [...allCompanies, ...data];
+            all = [...all, ...data];
             page++;
           } else {
             hasMore = false;
           }
         }
-
-        setCompanies(allCompanies);
-      } catch (error) {
-        console.error("Error fetching paginated companies:", error);
+        setCompanies(all);
+      } catch (err) {
+        console.error("Error fetching companies:", err);
       }
     };
 
-    fetchAllCompanies();
+    fetchCompanies();
   }, []);
 
-  const getRatesForDate = useCallback(
-    (date, company, location) => {
-      const formattedDate = date.toLocaleDateString("en-GB");
-      const data = rateData.find(
-        (item) => item.company === company && item.location === location
-      );
+  // Get rate for date and company
+  const getRatesForDate = useCallback((date, company, location) => {
+    const formatted = date.toLocaleDateString("en-GB");
+    const todayFormatted = new Date().toLocaleDateString("en-GB");
+    const data = rateData.find((d) => d.company === company && d.location === location);
+    if (!data) return { rate: null, rateType: "none" };
 
-      if (!data) return null;
+    let rate = null;
+    let rateType = "none";
 
-      let rate = "No Rate";
-      let rateType = "none";
-
-      const oldRateEntry = data.oldRates.find((rateString) => {
-        const match = rateString.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
-        return match && match[2] === formattedDate;
-      });
-
-      if (oldRateEntry) {
-        const match = oldRateEntry.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
-        if (match) {
-          rate = match[1].trim();
-          rateType = "old";
-        }
+    const old = data.oldRates?.find((r) => r.includes(`(${formatted})`));
+    if (old) {
+      const match = old.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
+      if (match) {
+        rate = match[1].trim();
+        rateType = "old";
       }
+    }
 
-      const newRateMatch = data.newRate.match(
-        /(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/
-      );
-      const isNewRate = newRateMatch && newRateMatch[2] === formattedDate;
-
-      if (isNewRate) {
-        rate = newRateMatch[1].trim();
+    if (data.newRate !== undefined && data.lastUpdated) {
+      const updatedDate = new Date(data.lastUpdated).toLocaleDateString("en-GB");
+      if (updatedDate === formatted) {
+        rate = data.newRate;
         rateType = "new";
       }
+    }
 
-      return { rate, rateType };
-    },
-    [rateData]
-  );
+    if (formatted === todayFormatted && rate !== null) {
+      rateType = "new"; // Highlight today’s rate in green
+    }
+
+    return { rate, rateType };
+  }, [rateData]);
+
+  const getTileStyle = (rateType) => {
+    switch (rateType) {
+      case "new":
+        return "bg-green-500 text-white";
+      case "old":
+        return "bg-yellow-400 text-white";
+      default:
+        return "bg-red-500 text-white"; // No rate
+    }
+  };
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+      <div className="min-h-screen bg-gradient-to-tr from-pink-50 via-sky-100 to-violet-100 p-4 sm:p-6">
         <div className="max-w-7xl mx-auto">
+
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
+            transition={{ duration: 0.6 }}
+            className="text-center mb-10"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-              <TrendingUp className="w-8 h-8 text-green-600" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-200 to-green-400 shadow-lg mb-4">
+              <TrendingUp className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Rate Calendar
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Track and visualize rate changes across different companies and
-              locations.
+            <h1 className="text-4xl font-bold text-gray-800">Rate Calendar</h1>
+            <p className="text-gray-600 mt-2 max-w-xl mx-auto">
+              Explore and track rate changes visually by company and location.
             </p>
           </motion.div>
 
-          <motion.div className="relative mb-8">
+          {/* Company Dropdown */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="mb-8"
+          >
             <select
-              className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 text-lg border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               value={selectedCompany}
               onChange={(e) => setSelectedCompany(e.target.value)}
             >
               <option value="">Select a Company</option>
-              {companies.map((company) => (
-                <option key={company._id} value={company.name}>
-                  {company.name}
-                </option>
+              {companies.map((c) => (
+                <option key={c._id} value={c.name}>{c.name}</option>
               ))}
             </select>
           </motion.div>
 
+          {/* Calendar and Graph Sections */}
           <AnimatePresence>
             {rateData
               .filter((item) => item.company === selectedCompany)
               .map(({ company, location }) => (
                 <motion.div
-                  key={location}
-                  initial={{ opacity: 0, y: 20 }}
+                  key={`${company}-${location}`}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="mb-8 bg-white rounded-2xl shadow-lg overflow-hidden p-6"
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="mb-10 bg-white p-6 rounded-2xl shadow-xl"
                 >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-lg bg-green-100">
-                      <Building2 className="w-6 h-6 text-green-600" />
+                  {/* Section Title */}
+                  <div className="flex items-center mb-6">
+                    <div className="p-3 bg-indigo-100 rounded-xl mr-4">
+                      <Building2 className="w-6 h-6 text-indigo-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-gray-800">
                       {company} - {location}
                     </h2>
                   </div>
 
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    <div className="w-full lg:w-[50%]">
-                      <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100 overflow-x-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Calendar */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                      className="w-full"
+                    >
+                      <div className="rounded-xl border border-gray-200 shadow-inner p-3 sm:p-4 bg-white">
                         <Calendar
-                          className="w-full h-full border-none rounded-xl shadow-sm"
                           onChange={setDate}
                           value={date}
                           tileContent={({ date }) => {
-                            const rateData = getRatesForDate(
-                              date,
-                              company,
-                              location
-                            );
-                            return rateData ? (
-                              <div
-                                className={`p-1 text-center rounded-lg font-medium text-[11px] sm:text-sm shadow-sm transition-all duration-200 hover:shadow-md ${
-                                  rateData.rateType === "new"
-                                    ? "bg-green-500 text-white"
-                                    : rateData.rateType === "old"
-                                    ? "bg-yellow-500 text-white"
-                                    : "bg-red-500 text-white"
-                                }`}
+                            const { rate, rateType } = getRatesForDate(date, company, location);
+                            return (
+                              <motion.div
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.2 }}
+                                className="mt-1 px-1"
                               >
-                                {rateData.rate}
-                              </div>
-                            ) : null;
+                                <div
+                                  className={`text-[12px] sm:text-sm font-semibold text-center rounded-md py-1 ${getTileStyle(rateType)}`}
+                                >
+                                  {rate === null ? "No Rate" : `₹ ${rate}`}
+                                </div>
+                              </motion.div>
+                            );
                           }}
+                          className="!w-full calendar-custom"
                         />
                       </div>
-                    </div>
-                    <div className="w-full lg:w-[50%]">
-                      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                    </motion.div>
+
+                    {/* Graph */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="w-full"
+                    >
+                      <div className="border border-gray-200 shadow-inner rounded-xl p-4 sm:p-6 bg-white">
                         <RateGraph
                           rateData={rateData}
                           company={company}
                           location={location}
                         />
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
                 </motion.div>
               ))}
