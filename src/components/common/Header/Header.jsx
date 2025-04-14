@@ -107,7 +107,7 @@ export default function Header() {
               >
                 <button
                   onClick={() =>
-                    signOut({ callbackUrl: "https://hansariafood.site" })
+                    signOut({ callbackUrl: baseUrl })
                   }
                   className="flex items-center gap-2 bg-red-500/90 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-300 shadow-lg hover:shadow-red-500/20"
                 >
@@ -204,7 +204,7 @@ export default function Header() {
               >
                 <button
                   onClick={() =>
-                    signOut({ callbackUrl: "https://hansariafood.site" })
+                    signOut({ callbackUrl: baseUrl })
                   }
                   className="flex items-center gap-2 bg-red-500/90 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-300 shadow-lg hover:shadow-red-500/20"
                 >
