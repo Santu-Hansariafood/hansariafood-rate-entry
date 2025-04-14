@@ -17,7 +17,12 @@ export default function RateTableBody({
 }) {
   const [expandedStates, setExpandedStates] = useState({});
 
-  const groupedRates = rates.reduce((acc, rate) => {
+  const indexedRates = rates.map((rate, i) => ({
+    ...rate,
+    actualIndex: actualStartIndex + i,
+  }));
+
+  const groupedRates = indexedRates.reduce((acc, rate) => {
     if (!acc[rate.state]) acc[rate.state] = [];
     acc[rate.state].push(rate);
     return acc;
@@ -80,11 +85,11 @@ export default function RateTableBody({
                     </thead>
                     <tbody>
                       <AnimatePresence>
-                        {stateRates.map((rate, idx) => (
+                        {stateRates.map((rate) => (
                           <RateTableRow
-                            key={`${rate.location}-${rate.isUpdated}`}
+                            key={`${rate.location}-${rate.actualIndex}`}
                             rate={rate}
-                            index={actualStartIndex + idx}
+                            index={rate.actualIndex}
                             editIndex={editIndex}
                             handleEdit={handleEdit}
                             handleSave={handleSave}
