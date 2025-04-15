@@ -1,8 +1,15 @@
+import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
-import { NextResponse } from "next/server";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+
+await connectDB();
 
 export async function POST(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { state, name } = await req.json();
     if (!state || !name) {
@@ -11,8 +18,6 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    await connectDB();
 
     const existingLocation = await Location.findOne({ state, name });
     if (existingLocation) {
@@ -30,7 +35,6 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Server Error:", error);
     return NextResponse.json(
       { error: "Failed to create location" },
       { status: 500 }
@@ -39,19 +43,18 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
-  try {
-    await connectDB();
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  try {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
     const [locations, total] = await Promise.all([
-      Location.find()
-        .sort({ name: 1 })
-        .skip(skip)
-        .limit(limit),
+      Location.find().sort({ name: 1 }).skip(skip).limit(limit),
       Location.countDocuments(),
     ]);
 

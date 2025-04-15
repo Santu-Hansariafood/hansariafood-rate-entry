@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
 export async function POST(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     let { name, location, state, category } = await req.json();
 
@@ -68,6 +73,10 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");

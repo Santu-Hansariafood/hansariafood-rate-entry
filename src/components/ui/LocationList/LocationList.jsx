@@ -7,7 +7,7 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import { toast } from "react-toastify";
@@ -48,8 +48,8 @@ const LocationList = () => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await axios.get(
-          `/api/location?page=${currentPage}&limit=${itemsPerPage}`
+        const response = await axiosInstance.get(
+          `/location?page=${currentPage}&limit=${itemsPerPage}`
         );
         const sorted = response.data.locations?.sort((a, b) =>
           a.name.localeCompare(b.name)
@@ -66,7 +66,7 @@ const LocationList = () => {
 
   const handleDelete = useCallback(async (id) => {
     try {
-      await axios.delete(`/api/location/${id}`);
+      await axiosInstance.delete(`/location/${id}`);
       setLocations((prev) => prev.filter((loc) => loc._id !== id));
       toast.success("Location deleted successfully");
       setShowModal(false);
@@ -78,7 +78,7 @@ const LocationList = () => {
   const handleEdit = useCallback(async () => {
     try {
       const { _id } = selectedLocation;
-      const { data } = await axios.put(`/api/location/${_id}`, formData);
+      const { data } = await axiosInstance.put(`/location/${_id}`, formData);
       setLocations((prev) =>
         prev
           .map((loc) => (loc._id === _id ? data.location : loc))

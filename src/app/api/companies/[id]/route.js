@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Company from "@/models/Company";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-// Ensure database connection
 await connectDB();
 
-/**
- * @desc Get a company by ID
- * @route GET /api/companies/[id]
- */
 export async function GET(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = params;
     const company = await Company.findById(id);
@@ -27,11 +27,11 @@ export async function GET(req, { params }) {
   }
 }
 
-/**
- * @desc Update a company by ID
- * @route PUT /api/companies/[id]
- */
 export async function PUT(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = params;
     const { name, category } = await req.json();
@@ -62,11 +62,11 @@ export async function PUT(req, { params }) {
   }
 }
 
-/**
- * @desc Delete a company by ID
- * @route DELETE /api/companies/[id]
- */
 export async function DELETE(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = params;
     const deletedCompany = await Company.findByIdAndDelete(id);

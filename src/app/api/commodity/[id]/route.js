@@ -1,11 +1,17 @@
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { connectDB } from "@/lib/mongodb";
 import Commodity from "@/models/Commodity";
 import { NextResponse } from "next/server";
 
 export async function PUT(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = params;
     const { name } = await req.json();
+
     if (!name) {
       return NextResponse.json(
         { error: "Commodity name is required" },
@@ -41,8 +47,13 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = params;
+
     await connectDB();
 
     const deletedCommodity = await Commodity.findByIdAndDelete(id);

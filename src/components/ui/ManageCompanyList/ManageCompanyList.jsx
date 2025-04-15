@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, Suspense } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import { toast } from "react-toastify";
@@ -45,11 +45,11 @@ const ManageCompanyList = () => {
   const fetchAllData = async () => {
     try {
       const [companyRes, locationRes, categoryRes] = await Promise.all([
-        axios.get(
-          `/api/managecompany?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
+        axiosInstance.get(
+          `/managecompany?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
         ),
-        axios.get("/api/location"),
-        axios.get("/api/categories"),
+        axiosInstance.get("/location"),
+        axiosInstance.get("/categories"),
       ]);
 
       const formattedCompanies = (companyRes.data.companies || []).map((c) => ({
@@ -76,7 +76,7 @@ const ManageCompanyList = () => {
 
   const handleView = async (id) => {
     try {
-      const { data } = await axios.get(`/api/managecompany/${id}`);
+      const { data } = await axiosInstance.get(`/managecompany/${id}`);
       const locations = (data.company.location || [])
         .map((l) => (typeof l === "string" ? l : `${l.name} (${l.state})`))
         .join(", ");
@@ -106,8 +106,8 @@ const ManageCompanyList = () => {
     e.preventDefault();
     try {
       setIsLoading(true);
-      await axios.put(
-        `/api/managecompany/${editingCompany._id}`,
+      await axiosInstance.put(
+        `/managecompany/${editingCompany._id}`,
         editingCompany
       );
       toast.success("Company updated");
@@ -124,7 +124,7 @@ const ManageCompanyList = () => {
     if (!window.confirm("Delete this company?")) return;
     try {
       setIsLoading(true);
-      await axios.delete(`/api/managecompany/${id}`);
+      await axiosInstance.delete(`/managecompany/${id}`);
       toast.success("Deleted successfully");
       fetchAllData();
     } catch {

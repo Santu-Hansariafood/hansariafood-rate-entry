@@ -2,7 +2,7 @@ import { Suspense, useState, useEffect, useMemo } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import debounce from "lodash.debounce";
 
 export default function CompanyList({
@@ -24,7 +24,9 @@ export default function CompanyList({
       debounce(async (query) => {
         setLoading(true);
         try {
-          const response = await axios.get(`/api/managecompany?q=${query}`);
+          const response = await axiosInstance.get(
+            `/api/managecompany?q=${query}`
+          );
           const companyNames = response.data.companies.map((c) => c.name);
           setSearchResults(companyNames);
         } catch (err) {

@@ -7,7 +7,7 @@ import React, {
   useCallback,
   Suspense,
 } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 
@@ -23,9 +23,12 @@ const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
-const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"), {
-  loading: () => <Loading />,
-});
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  {
+    loading: () => <Loading />,
+  }
+);
 
 const CommodityList = () => {
   const [commodities, setCommodities] = useState([]);
@@ -36,7 +39,9 @@ const CommodityList = () => {
 
   const fetchCommodities = useCallback(async (page = 1) => {
     try {
-      const response = await axios.get(`/api/commodity?page=${page}&limit=10`);
+      const response = await axiosInstance.get(
+        `/commodity?page=${page}&limit=10`
+      );
       setCommodities(response.data.commodities || []);
       setTotalEntries(response.data.total);
     } catch (error) {
@@ -51,8 +56,8 @@ const CommodityList = () => {
   const handleEdit = useCallback(
     (index, newName) => {
       const id = commodities[index]._id;
-      axios
-        .put(`/api/commodity/${id}`, { name: newName })
+      axiosInstance
+        .put(`/commodity/${id}`, { name: newName })
         .then((res) => {
           const updated = [...commodities];
           updated[index].name = res.data.commodity.name;
@@ -67,8 +72,8 @@ const CommodityList = () => {
   const handleDelete = useCallback(
     (index) => {
       const id = commodities[index]._id;
-      axios
-        .delete(`/api/commodity/${id}`)
+      axiosInstance
+        .delete(`/commodity/${id}`)
         .then(() => {
           const updated = [...commodities];
           updated.splice(index, 1);

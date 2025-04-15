@@ -7,7 +7,7 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 
@@ -54,8 +54,8 @@ const CompanyList = React.memo(() => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await axios.get(
-          `/api/companies?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
+        const response = await axiosInstance.get(
+          `/companies?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
         );
         setCompanies(response.data.companies || []);
         setTotalCompanies(response.data.total || 0);
@@ -69,7 +69,7 @@ const CompanyList = React.memo(() => {
 
   const handleDelete = useCallback(async (id) => {
     try {
-      await axios.delete(`/api/companies/${id}`);
+      await axiosInstance.delete(`/companies/${id}`);
       setCompanies((prev) => prev.filter((company) => company._id !== id));
     } catch (error) {
       console.error("Error deleting company:", error);
@@ -92,8 +92,8 @@ const CompanyList = React.memo(() => {
     if (selectedIndex === null) return;
 
     try {
-      await axios.put(
-        `/api/companies/${companies[selectedIndex]._id}`,
+      await axiosInstance.put(
+        `/companies/${companies[selectedIndex]._id}`,
         formData
       );
       setCompanies((prev) => {
@@ -114,7 +114,7 @@ const CompanyList = React.memo(() => {
 
   const handleView = useCallback(async (id) => {
     try {
-      const response = await axios.get(`/api/companies/${id}`);
+      const response = await axiosInstance.get(`/companies/${id}`);
       setSelectedCompany(response.data);
       setEditMode(false);
       setModalOpen(true);

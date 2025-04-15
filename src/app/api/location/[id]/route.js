@@ -1,8 +1,13 @@
 import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
 import { NextResponse } from "next/server";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 export async function PUT(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { state, name } = await req.json();
     if (!state || !name) {
@@ -40,8 +45,13 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectDB();
+
     const deletedLocation = await Location.findByIdAndDelete(params.id);
 
     if (!deletedLocation) {
@@ -58,6 +68,32 @@ export async function DELETE(req, { params }) {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to delete location" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    await connectDB();
+
+    const location = await Location.findById(params.id);
+
+    if (!location) {
+      return NextResponse.json(
+        { error: "Location not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ location }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch location" },
       { status: 500 }
     );
   }

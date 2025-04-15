@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
 export async function POST(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { company, location, newRate } = await req.json();
     if (!company || !location || newRate === undefined) {
@@ -31,6 +36,7 @@ export async function POST(req) {
           });
         }
       }
+
       rateEntry.newRate = newRate;
       rateEntry.newRateDate = today;
       await rateEntry.save();
@@ -41,7 +47,6 @@ export async function POST(req) {
       );
     }
 
-    // New entry
     rateEntry = new Rate({
       company,
       location,
@@ -62,6 +67,10 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const company = searchParams.get("company");
@@ -104,6 +113,10 @@ export async function GET(req) {
 }
 
 export async function PUT(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { company, location, newRate } = await req.json();
     if (!company || !location || newRate === undefined) {
@@ -131,7 +144,11 @@ export async function PUT(req) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await Rate.deleteMany();
     return NextResponse.json(

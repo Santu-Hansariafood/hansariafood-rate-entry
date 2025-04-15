@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import UserCompany from "@/models/UserCompany";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 export async function POST(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { mobile, companies } = body;
 
-    // Validate input data
     if (!mobile) {
       return NextResponse.json(
         { error: "Mobile number is required" },
@@ -22,9 +26,12 @@ export async function POST(req) {
       );
     }
 
-    // Validate each company object
     for (const company of companies) {
-      if (!company.companyId || !Array.isArray(company.locations) || company.locations.length === 0) {
+      if (
+        !company.companyId ||
+        !Array.isArray(company.locations) ||
+        company.locations.length === 0
+      ) {
         return NextResponse.json(
           { error: "Invalid company data structure" },
           { status: 400 }
@@ -34,53 +41,45 @@ export async function POST(req) {
 
     await connectDB();
 
-    try {
-      // Check if user already exists
-      let existingUserCompany = await UserCompany.findOne({ mobile });
+    let existingUserCompany = await UserCompany.findOne({ mobile });
 
-      if (existingUserCompany) {
-        // Check for duplicate company-location combinations
-        for (const newCompany of companies) {
-          const existingCompany = existingUserCompany.companies.find(
-            (c) => c.companyId.toString() === newCompany.companyId
+    if (existingUserCompany) {
+      for (const newCompany of companies) {
+        const existingCompany = existingUserCompany.companies.find(
+          (c) => c.companyId.toString() === newCompany.companyId
+        );
+
+        if (existingCompany) {
+          const duplicateLocations = newCompany.locations.filter((loc) =>
+            existingCompany.locations.includes(loc)
           );
 
-          if (existingCompany) {
-            const duplicateLocations = newCompany.locations.filter((loc) =>
-              existingCompany.locations.includes(loc)
+          if (duplicateLocations.length > 0) {
+            return NextResponse.json(
+              {
+                error: `Company already has assigned locations: ${duplicateLocations.join(
+                  ", "
+                )}`,
+              },
+              { status: 400 }
             );
-
-            if (duplicateLocations.length > 0) {
-              return NextResponse.json(
-                { error: `Company already has assigned locations: ${duplicateLocations.join(", ")}` },
-                { status: 400 }
-              );
-            }
-
-            // Add new unique locations
-            existingCompany.locations.push(...newCompany.locations);
-          } else {
-            existingUserCompany.companies.push(newCompany);
           }
-        }
 
-        await existingUserCompany.save();
-      } else {
-        // Create new record
-        await UserCompany.create({ mobile, companies });
+          existingCompany.locations.push(...newCompany.locations);
+        } else {
+          existingUserCompany.companies.push(newCompany);
+        }
       }
 
-      return NextResponse.json(
-        { message: "Companies and locations assigned successfully" },
-        { status: 200 }
-      );
-    } catch (dbError) {
-      console.error("Database error:", dbError);
-      return NextResponse.json(
-        { error: "Database error: " + dbError.message },
-        { status: 500 }
-      );
+      await existingUserCompany.save();
+    } else {
+      await UserCompany.create({ mobile, companies });
     }
+
+    return NextResponse.json(
+      { message: "Companies and locations assigned successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error in POST /api/user-companies:", error);
     return NextResponse.json(
@@ -91,6 +90,10 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const mobile = searchParams.get("mobile");
@@ -104,9 +107,8 @@ export async function GET(req) {
 
     await connectDB();
 
-    // Find user company data by mobile number
     const userCompany = await UserCompany.findOne({ mobile })
-      .populate("companies.companyId", "name location") // Populate companyId with name and location from ManageCompany
+      .populate("companies.companyId", "name location")
       .lean();
 
     if (!userCompany) {

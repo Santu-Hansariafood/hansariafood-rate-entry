@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useUser } from "@/context/UserContext";
 import { motion } from "framer-motion";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 
 export default function Welcome() {
@@ -28,8 +28,8 @@ export default function Welcome() {
   const fetchUserData = useCallback(async () => {
     try {
       const [userResponse, companyResponse] = await Promise.all([
-        axios.get("/api/auth/register"),
-        axios.get(`/api/user-companies?mobile=${mobile}`),
+        axiosInstance.get("/auth/register"),
+        axiosInstance.get(`/user-companies?mobile=${mobile}`),
       ]);
 
       const userData = userResponse.data.find(

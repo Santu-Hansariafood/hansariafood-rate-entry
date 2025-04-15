@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useMemo, useCallback } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -52,7 +52,7 @@ export default function CreateLocation() {
 
     try {
       setLoading(true);
-      const { status } = await axios.post("/api/location", {
+      const { status } = await axiosInstance.post("/location", {
         state,
         name: location,
       });

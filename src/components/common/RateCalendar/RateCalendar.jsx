@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
-import axios from "axios";
-import dynamic from "next/dynamic";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import Loading from "../Loading/Loading";
@@ -20,20 +19,23 @@ export default function RateCalendar() {
 
   // Fetch rate data
   useEffect(() => {
-    axios.get("/api/rate")
-      .then((res) => setRateData(res.data))
-      .catch((err) => console.error("Error fetching rate data:", err));
+    axiosInstance
+      .get("/rate")
+      .then((response) => setRateData(response.data))
+      .catch((error) => console.error("Error fetching rate data:", error));
   }, []);
 
-  // Fetch companies
   useEffect(() => {
     const fetchCompanies = async () => {
       let all = [], page = 1, hasMore = true;
 
       try {
         while (hasMore) {
-          const res = await axios.get(`/api/companies?page=${page}`);
-          const data = Array.isArray(res.data) ? res.data : res.data.companies || [];
+          const response = await axiosInstance.get(`/companies?page=${page}`);
+          const data = Array.isArray(response.data)
+            ? response.data
+            : response.data.companies || [];
+
           if (data.length > 0) {
             all = [...all, ...data];
             page++;

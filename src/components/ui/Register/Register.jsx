@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
@@ -38,7 +38,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const res = await axios.post("/api/auth/register", {
+      const res = await axiosInstance.post("/auth/register", {
         name,
         mobile,
         password,

@@ -7,7 +7,7 @@ import {
   Suspense,
   useTransition,
 } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
@@ -31,11 +31,11 @@ export default function RateTable({ selectedCompany, onClose }) {
         { data: existingRates },
         { data: locationData },
       ] = await Promise.all([
-        axios.get("/api/managecompany?limit=100"),
-        axios.get(
-          `/api/rate?company=${encodeURIComponent(selectedCompany.trim())}`
+        axiosInstance.get("/managecompany?limit=100"),
+        axiosInstance.get(
+          `/rate?company=${encodeURIComponent(selectedCompany.trim())}`
         ),
-        axios.get("/api/location?limit=1000"),
+        axiosInstance.get("/location?limit=1000"),
       ]);
 
       const locationMap = {};
@@ -108,7 +108,7 @@ export default function RateTable({ selectedCompany, onClose }) {
         "en-GB"
       )})`;
 
-      await axios.post("/api/rate", {
+      await axiosInstance.post("/rate", {
         company: selectedCompany,
         location: rateToSave.location,
         newRate: parsedRate,

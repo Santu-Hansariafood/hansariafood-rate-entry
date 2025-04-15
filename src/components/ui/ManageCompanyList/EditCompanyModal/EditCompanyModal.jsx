@@ -1,16 +1,38 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
 const states = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
-  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
-  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
-  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
-  "Uttar Pradesh", "Uttarakhand", "West Bengal"
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
 ];
 
 const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
@@ -20,18 +42,22 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await axios.get("/api/managecompany");
-        const allLocations = response.data.companies.flatMap(c =>
+        const response = await axiosInstance.get("/managecompany");
+        const allLocations = response.data.companies.flatMap((c) =>
           Array.isArray(c.location) ? c.location : []
         );
-        const uniqueLocations = [...new Set(allLocations.map(loc => {
-          if (typeof loc === "string") {
-            const parts = loc.trim().split(" ");
-            parts.pop();
-            return parts.join(" ");
-          }
-          return loc.name;
-        }))];
+        const uniqueLocations = [
+          ...new Set(
+            allLocations.map((loc) => {
+              if (typeof loc === "string") {
+                const parts = loc.trim().split(" ");
+                parts.pop();
+                return parts.join(" ");
+              }
+              return loc.name;
+            })
+          ),
+        ];
         setLocations(uniqueLocations);
       } catch (error) {
         console.error("Error fetching locations:", error);
@@ -89,7 +115,9 @@ const EditCompanyModal = ({ company, onChange, onCancel, onSubmit }) => {
               type="text"
               className="w-full p-2 border rounded"
               value={company.category || ""}
-              onChange={(e) => onChange({ ...company, category: e.target.value })}
+              onChange={(e) =>
+                onChange({ ...company, category: e.target.value })
+              }
             />
           </label>
 

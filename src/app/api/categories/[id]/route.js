@@ -1,14 +1,17 @@
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { connectDB } from "@/lib/mongodb";
 import Category from "@/models/Category";
 import { NextResponse } from "next/server";
 
-// GET all categories
 export async function GET(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectDB();
-    
+
     if (params?.id) {
-      // GET by ID
       const category = await Category.findById(params.id);
       if (!category) {
         return NextResponse.json(
@@ -19,7 +22,6 @@ export async function GET(req, { params }) {
       return NextResponse.json({ category }, { status: 200 });
     }
 
-    // GET all categories
     const categories = await Category.find({});
     return NextResponse.json({ categories }, { status: 200 });
   } catch (error) {
@@ -30,8 +32,11 @@ export async function GET(req, { params }) {
   }
 }
 
-// UPDATE category by ID
 export async function PUT(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { name } = await req.json();
     if (!name) {
@@ -68,8 +73,11 @@ export async function PUT(req, { params }) {
   }
 }
 
-// DELETE category by ID
 export async function DELETE(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectDB();
     const deletedCategory = await Category.findByIdAndDelete(params.id);
