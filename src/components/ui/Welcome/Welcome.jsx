@@ -8,13 +8,7 @@ import Loading from "@/components/common/Loading/Loading";
 
 export default function Welcome() {
   const { mobile } = useUser();
-  const [name, setName] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("username") || "Guest";
-    }
-    return "Guest";
-  });
-
+  const [name, setName] = useState("Guest");
   const [assignedCompanies, setAssignedCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +21,8 @@ export default function Welcome() {
 
   const fetchUserData = useCallback(async () => {
     try {
+      setLoading(true);
+
       const [userResponse, companyResponse] = await Promise.all([
         axiosInstance.get("/auth/register"),
         axiosInstance.get(`/user-companies?mobile=${mobile}`),
@@ -35,10 +31,10 @@ export default function Welcome() {
       const userData = userResponse.data.find(
         (user) => user.mobile.toString() === mobile
       );
+
       if (userData) {
-        const formatted = formatName(userData.name);
-        setName(formatted);
-        localStorage.setItem("username", formatted);
+        const formattedName = formatName(userData.name);
+        setName(formattedName);
       }
 
       setAssignedCompanies(companyResponse.data.companies || []);
@@ -51,12 +47,14 @@ export default function Welcome() {
   }, [mobile, formatName]);
 
   useEffect(() => {
-    fetchUserData();
-  }, [fetchUserData]);
+    if (mobile) {
+      fetchUserData();
+    }
+  }, [fetchUserData, mobile]);
 
-  const assignedCompaniesList = useMemo(
-    () =>
-      assignedCompanies.length > 0 ? (
+  const assignedCompaniesList = useMemo(() => {
+    if (assignedCompanies.length > 0) {
+      return (
         <div className="mt-4 text-left">
           <h2 className="text-xl font-semibold text-gray-700 mb-3">
             Assigned Companies:
@@ -84,11 +82,11 @@ export default function Welcome() {
             ))}
           </div>
         </div>
-      ) : (
-        <p className="text-gray-500 mt-4">No assigned companies found.</p>
-      ),
-    [assignedCompanies]
-  );
+      );
+    } else {
+      return <p className="text-gray-500 mt-4">No assigned companies found.</p>;
+    }
+  }, [assignedCompanies]);
 
   if (loading) return <Loading />;
 

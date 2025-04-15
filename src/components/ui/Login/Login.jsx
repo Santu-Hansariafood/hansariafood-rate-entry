@@ -49,6 +49,8 @@ export default function Login() {
     if (result.error) {
       setError("Invalid credentials");
     } else {
+      localStorage.setItem("user", JSON.stringify({ mobile }));
+
       setGlobalMobile(mobile);
       router.push("/dashboard");
     }
