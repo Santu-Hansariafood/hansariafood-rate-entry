@@ -12,7 +12,7 @@ import {
   CheckSquare,
   Square,
 } from "lucide-react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
@@ -34,9 +34,7 @@ export default function RegisterList() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/auth/register");
-      if (!res.ok) throw new Error("Failed to fetch users");
-      const data = await res.json();
+      const { data } = await axiosInstance.get("/auth/register");
       setUsers(data);
     } catch (error) {
       console.error(error);
@@ -48,9 +46,7 @@ export default function RegisterList() {
 
   const fetchCompanies = async () => {
     try {
-      const res = await fetch("/api/managecompany");
-      if (!res.ok) throw new Error("Failed to fetch companies");
-      const data = await res.json();
+      const { data } = await axiosInstance.get("/managecompany");
       setCompanies(data.companies);
     } catch (error) {
       console.error(error);
@@ -139,7 +135,7 @@ export default function RegisterList() {
         return;
       }
 
-      await axios.post("/api/user-companies", {
+      await axiosInstance.post("/user-companies", {
         mobile: selectedUser.mobile,
         companies: companiesData,
       });

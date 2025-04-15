@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
 export async function GET(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = params;
     if (!id) {
@@ -27,13 +32,20 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, context) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   await connectDB();
 
   const id = context.params.id;
   const { name, location, category, state } = await req.json();
 
   if (!id || !name || !location) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing required fields" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -53,14 +65,24 @@ export async function PUT(req, context) {
 
     await company.save();
 
-    return NextResponse.json({ message: "Company updated", company }, { status: 200 });
+    return NextResponse.json(
+      { message: "Company updated", company },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("PUT error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(req, { params }) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = params;
     if (!id) {

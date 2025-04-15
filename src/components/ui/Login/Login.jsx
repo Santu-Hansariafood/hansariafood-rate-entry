@@ -14,14 +14,35 @@ export default function Login() {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [mobileError, setMobileError] = useState("");
   const router = useRouter();
   const { setMobile: setGlobalMobile } = useUser();
 
+  const validateMobile = (value) => {
+    const mobileRegex = /^[6-9]\d{9}$/;
+    return mobileRegex.test(value);
+  };
+
+  const handleMobileChange = (e) => {
+    const value = e.target.value;
+    if (/^\d{0,10}$/.test(value)) {
+      setMobile(value);
+      setMobileError("");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateMobile(mobile)) {
+      setMobileError("Enter a valid 10-digit mobile number");
+      return;
+    }
+
     const result = await signIn("credentials", {
       mobile,
       password,
+      apiKey: process.env.NEXT_PUBLIC_API_KEY,
       redirect: false,
     });
 
@@ -55,10 +76,20 @@ export default function Login() {
               <input
                 type="text"
                 value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
+                onChange={handleMobileChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 outline-none"
                 placeholder="Enter your mobile number"
+                maxLength={10}
               />
+              {mobileError && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-red-500 text-sm mt-1"
+                >
+                  {mobileError}
+                </motion.p>
+              )}
             </div>
 
             <div>

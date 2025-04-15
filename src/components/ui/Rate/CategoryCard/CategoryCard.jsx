@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { toast } from "react-toastify";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 
 const STORAGE_KEY = process.env.NEXT_PUBLIC_STORAGE_KEY;
@@ -22,10 +23,8 @@ const CategoryCard = ({ onFilterChange }) => {
     const fetchCategories = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/categories");
-        if (!response.ok) throw new Error("Failed to fetch categories");
-        const data = await response.json();
-        setCategories(data.categories);
+        const response = await axiosInstance.get("/categories");
+        setCategories(response.data.categories);
       } catch (error) {
         console.error("Error fetching categories:", error);
         toast.error("Failed to load categories");

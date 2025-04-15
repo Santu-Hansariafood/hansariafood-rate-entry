@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
@@ -36,7 +36,9 @@ export default function CreateCategory() {
 
     setLoading(true);
     try {
-      const response = await axios.post("/api/categories", { name: category });
+      const response = await axiosInstance.post("/categories", {
+        name: category,
+      });
       if (response.status === 201) {
         toast.success("Category saved successfully");
         setCategory("");

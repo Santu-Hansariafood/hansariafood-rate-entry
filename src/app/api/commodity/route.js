@@ -1,8 +1,13 @@
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Commodity from "@/models/Commodity";
-import { NextResponse } from "next/server";
 
 export async function POST(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { name } = await req.json();
     if (!name) {
@@ -29,7 +34,7 @@ export async function POST(req) {
       { message: "Commodity created", commodity: newCommodity },
       { status: 201 }
     );
-  } catch {
+  } catch (err) {
     return NextResponse.json(
       { error: "Failed to create commodity" },
       { status: 500 }
@@ -38,6 +43,10 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectDB();
 
@@ -60,45 +69,10 @@ export async function GET(req) {
       },
       { status: 200 }
     );
-  } catch {
+  } catch (err) {
     return NextResponse.json(
       { error: "Failed to fetch commodities" },
       { status: 500 }
     );
   }
 }
-
-// Apply this letter
-
-// import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
-// import { NextResponse } from "next/server";
-// import { connectDB } from "@/lib/mongodb";
-// import Commodity from "@/models/Commodity";
-
-// export async function POST(req) {
-//   if (!verifyApiKey(req)) {
-//     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-//   }
-//   console.log(verifyApiKey);
-
-//   try {
-//     const { name } = await req.json();
-//     if (!name) {
-//       return NextResponse.json({ error: "Commodity name is required" }, { status: 400 });
-//     }
-
-//     await connectDB();
-
-//     const existing = await Commodity.findOne({ name });
-//     if (existing) {
-//       return NextResponse.json({ error: "Commodity already exists" }, { status: 409 });
-//     }
-
-//     const newCommodity = new Commodity({ name });
-//     await newCommodity.save();
-
-//     return NextResponse.json({ message: "Commodity created", commodity: newCommodity }, { status: 201 });
-//   } catch (err) {
-//     return NextResponse.json({ error: "Failed to create commodity" }, { status: 500 });
-//   }
-// }

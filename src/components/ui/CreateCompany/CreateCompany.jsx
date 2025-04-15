@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -43,7 +43,7 @@ export default function CreateCompany() {
 
       try {
         while (hasMore) {
-          const response = await axios.get(`/api/categories?page=${page}`);
+          const response = await axiosInstance.get(`/categories?page=${page}`);
           const data = Array.isArray(response.data)
             ? response.data
             : response.data.categories || [];
@@ -74,7 +74,7 @@ export default function CreateCompany() {
 
     try {
       setIsLoading(true);
-      const { status } = await axios.post("/api/companies", {
+      const { status } = await axiosInstance.post("/companies", {
         name: company,
         category,
       });

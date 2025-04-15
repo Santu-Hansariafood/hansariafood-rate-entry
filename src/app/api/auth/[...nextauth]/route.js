@@ -11,14 +11,27 @@ export const authOptions = {
       credentials: {
         mobile: { label: "Mobile Number", type: "text" },
         password: { label: "Password", type: "password" },
+        apiKey: { label: "API Key", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
+        const apiKey =
+          credentials?.apiKey ||
+          req?.headers?.get("x-api-key") ||
+          req?.body?.apiKey;
+
+        if (apiKey !== process.env.API_KEY) {
+          throw new Error("Unauthorized: Invalid API Key");
+        }
+
         await connectDB();
         const user = await User.findOne({ mobile: credentials.mobile });
 
         if (!user) throw new Error("User not found");
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
         if (!isValid) throw new Error("Invalid credentials");
 
         return { id: user._id, name: user.name, mobile: user.mobile };

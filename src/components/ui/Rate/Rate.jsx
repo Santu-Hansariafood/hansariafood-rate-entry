@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
@@ -18,13 +18,15 @@ const RateTable = dynamic(() => import("./RateTable/RateTable"), {
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
 });
-const CategoryCard = dynamic(() =>
-  import("@/components/ui/Rate/CategoryCard/CategoryCard"), {
+const CategoryCard = dynamic(
+  () => import("@/components/ui/Rate/CategoryCard/CategoryCard"),
+  {
     loading: () => <Loading />,
   }
 );
-const Pagination = dynamic(() =>
-  import("@/components/common/Pagination/Pagination"), {
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  {
     loading: () => <Loading />,
   }
 );
@@ -57,8 +59,8 @@ export default function Rate() {
     const fetchCompanies = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          `/api/managecompany?page=${currentPage}&limit=${itemsPerPage}`
+        const response = await axiosInstance.get(
+          `/managecompany?page=${currentPage}&limit=${itemsPerPage}`
         );
         const { companies: companyList, total } = response.data;
 
@@ -90,8 +92,8 @@ export default function Rate() {
       const statusMap = await Promise.all(
         companyNames.map(async (company) => {
           try {
-            const rateResponse = await axios.get(
-              `/api/rate?company=${company}`
+            const rateResponse = await axiosInstance.get(
+              `/rate?company=${company}`
             );
             return {
               [company]:
