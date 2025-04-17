@@ -221,19 +221,29 @@ export default function CompanyList({
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axiosInstance.get("/rate?limit=1000");
-        setNotifications(response.data);
+        const response = await axiosInstance.get("/rate", {
+          params: {
+            sort: "updatedAt_desc",
+            limit: 5000,
+          },
+        });
+    
+        const sortedNotifications = response.data.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+    
+        setNotifications(sortedNotifications);
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
       }
     };
-
+    
     fetchNotifications();
 
     const interval = setInterval(() => {
       fetchNotifications();
-    }, 5 * 60 * 1000);
-
+    }, 30 * 1000);
+    
     return () => clearInterval(interval);
   }, []);
 
