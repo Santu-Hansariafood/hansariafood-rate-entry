@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { ToastContainer, toast } from "react-toastify";
@@ -77,13 +77,15 @@ export default function CreateCategory() {
   );
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-6">
-      <ToastContainer position="top-right" autoClose={3000} />
-      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-6">
-        <Title text="Create Category" />
-        {memoizedInput}
-        {memoizedButton}
+    <Suspense fallback={<Loading />}>
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-6">
+        <ToastContainer position="top-right" autoClose={3000} />
+        <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-6">
+          <Title text="Create Category" />
+          {memoizedInput}
+          {memoizedButton}
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 }
