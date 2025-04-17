@@ -57,41 +57,47 @@ export default function RateCalendar() {
   }, []);
 
   const getRatesForDate = useCallback(
-    (date, company, location) => {
-      const formattedDate = date.toLocaleDateString("en-GB");
+    (calendarDate, company, location) => {
+      const formattedDate = calendarDate.toLocaleDateString("en-GB");
       const data = rateData.find(
         (item) => item.company === company && item.location === location
       );
 
-      if (!data) return null;
+      if (!data) return { rate: "No Rate", rateType: "none" };
 
-      let rate = "No Rate";
-      let rateType = "none";
-
-      const oldRateEntry = data.oldRates.find((rateString) => {
-        const match = rateString.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
-        return match && match[2] === formattedDate;
-      });
-
-      if (oldRateEntry) {
-        const match = oldRateEntry.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
-        if (match) {
-          rate = match[1].trim();
-          rateType = "old";
+      // Check for new rate
+      if (data.newRate) {
+        const newRateMatch = data.newRate.match(
+          /(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/
+        );
+        if (newRateMatch && newRateMatch[2] === formattedDate) {
+          return {
+            rate: newRateMatch[1].trim(),
+            rateType: "new",
+          };
         }
       }
 
-      const newRateMatch = data.newRate.match(
-        /(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/
-      );
-      const isNewRate = newRateMatch && newRateMatch[2] === formattedDate;
+      // Check for old rate
+      if (Array.isArray(data.oldRates)) {
+        const oldRateMatch = data.oldRates.find((rateString) => {
+          const match = rateString.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
+          return match && match[2] === formattedDate;
+        });
 
-      if (isNewRate) {
-        rate = newRateMatch[1].trim();
-        rateType = "new";
+        if (oldRateMatch) {
+          const match = oldRateMatch.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
+          return {
+            rate: match[1].trim(),
+            rateType: "old",
+          };
+        }
       }
 
-      return { rate, rateType };
+      return {
+        rate: "No Rate",
+        rateType: "none",
+      };
     },
     [rateData]
   );
@@ -162,24 +168,27 @@ export default function RateCalendar() {
                           onChange={setDate}
                           value={date}
                           tileContent={({ date }) => {
-                            const rateData = getRatesForDate(
+                            const rateInfo = getRatesForDate(
                               date,
                               company,
                               location
                             );
-                            return rateData ? (
+
+                            const colorClass =
+                              rateInfo.rateType === "new"
+                                ? "bg-green-500"
+                                : rateInfo.rateType === "old"
+                                ? "bg-yellow-500"
+                                : "bg-red-500";
+
+                            return (
                               <div
-                                className={`p-1 text-center rounded-lg font-medium text-[11px] sm:text-sm shadow-sm transition-all duration-200 hover:shadow-md ${
-                                  rateData.rateType === "new"
-                                    ? "bg-green-500 text-white"
-                                    : rateData.rateType === "old"
-                                    ? "bg-yellow-500 text-white"
-                                    : "bg-red-500 text-white"
-                                }`}
+                                className={`w-full h-full flex items-center justify-center rounded-lg text-white text-[11px] sm:text-xs font-semibold ${colorClass}`}
+                                style={{ minHeight: "50px" }}
                               >
-                                {rateData.rate}
+                                {rateInfo.rate}
                               </div>
-                            ) : null;
+                            );
                           }}
                         />
                       </div>

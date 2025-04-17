@@ -24,9 +24,7 @@ export default function CompanyList({
       debounce(async (query) => {
         setLoading(true);
         try {
-          const response = await axiosInstance.get(
-            `/api/managecompany?q=${query}`
-          );
+          const response = await axiosInstance.get(`/managecompany?q=${query}`);
           const companyNames = response.data.companies.map((c) => c.name);
           setSearchResults(companyNames);
         } catch (err) {
