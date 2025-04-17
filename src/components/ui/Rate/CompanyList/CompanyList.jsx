@@ -192,14 +192,16 @@
 //   );
 // }
 
-
 import { Suspense, useState, useEffect, useMemo } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import debounce from "lodash.debounce";
-import NotificationList from "@/components/NotificationList/NotificationList"; // adjust path if needed
+import dynamic from "next/dynamic";
+const NotificationList = dynamic(() =>
+  import("@/components/NotificationList/NotificationList")
+);
 
 export default function CompanyList({
   companies,
