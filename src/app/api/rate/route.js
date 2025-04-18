@@ -99,6 +99,7 @@ export async function GET(req) {
         lastUpdated: isToday
           ? rate.newRateDate
           : rate.oldRates.at(-1)?.date || null,
+        updateTime: rate.updateTime || "",
       };
     });
 
@@ -132,6 +133,7 @@ export async function PUT(req) {
     }
 
     rateToUpdate.newRate = newRate;
+    rateToUpdate.newRateDate = new Date();
     await rateToUpdate.save();
 
     return NextResponse.json(

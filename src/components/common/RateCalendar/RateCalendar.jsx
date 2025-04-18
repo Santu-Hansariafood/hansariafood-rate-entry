@@ -65,30 +65,28 @@ export default function RateCalendar() {
 
       if (!data) return { rate: "No Rate", rateType: "none" };
 
-      // Check for new rate
-      if (data.newRate) {
-        const newRateMatch = data.newRate.match(
-          /(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/
-        );
-        if (newRateMatch && newRateMatch[2] === formattedDate) {
-          return {
-            rate: newRateMatch[1].trim(),
-            rateType: "new",
-          };
-        }
+      const newRateDate = new Date(
+        data.newRateDate || data.updatedAt || 0
+      ).toLocaleDateString("en-GB");
+
+      if (data.newRate && formattedDate === newRateDate) {
+        return {
+          rate: `₹${data.newRate}`,
+          rateType: "new",
+        };
       }
 
-      // Check for old rate
       if (Array.isArray(data.oldRates)) {
-        const oldRateMatch = data.oldRates.find((rateString) => {
-          const match = rateString.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
-          return match && match[2] === formattedDate;
+        const oldMatch = data.oldRates.find((rateObj) => {
+          const rateDate = new Date(rateObj.date || 0).toLocaleDateString(
+            "en-GB"
+          );
+          return formattedDate === rateDate;
         });
 
-        if (oldRateMatch) {
-          const match = oldRateMatch.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
+        if (oldMatch) {
           return {
-            rate: match[1].trim(),
+            rate: `₹${oldMatch.rate}`,
             rateType: "old",
           };
         }

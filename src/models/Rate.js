@@ -12,14 +12,23 @@ const RateSchema = new mongoose.Schema({
   newRate: { type: Number, required: true },
   newRateDate: { type: Date, required: true },
   updatedAt: { type: Date, default: Date.now },
+  updateTime: { type: String },
 });
 
 RateSchema.pre("save", function (next) {
-  const today = new Date();
+  const now = new Date();
+  const today = new Date(now);
   today.setHours(0, 0, 0, 0);
 
   const lastUpdated = new Date(this.newRateDate);
   lastUpdated.setHours(0, 0, 0, 0);
+
+  // Always update time regardless of rate change
+  this.updateTime = now.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   if (lastUpdated < today) {
     this.oldRates.push({
@@ -30,7 +39,7 @@ RateSchema.pre("save", function (next) {
     this.newRateDate = today;
   }
 
-  this.updatedAt = new Date();
+  this.updatedAt = now;
   next();
 });
 
