@@ -50,8 +50,13 @@ export default function RateTable({ selectedCompany, onClose }) {
       if (company) {
         const initialRates = company.location.map((location) => {
           const cleanLocation = location.trim();
+
           const foundRate = existingRates.find(
             (rate) => rate.location.trim() === cleanLocation
+          );
+
+          const matchedMobile = company.mobileNumbers?.find(
+            (entry) => entry.location.trim() === cleanLocation
           );
 
           return {
@@ -67,6 +72,8 @@ export default function RateTable({ selectedCompany, onClose }) {
                     .split(")")[0]
                 )
               : null,
+            primaryMobile: matchedMobile?.primaryMobile || "N/A",
+            secondaryMobile: matchedMobile?.secondaryMobile || "N/A",
           };
         });
 

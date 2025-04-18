@@ -18,16 +18,40 @@ export default function RateTableRow({
         rate.newRate.toString().trim() ? "bg-green-50" : "bg-red-50"
       }`}
     >
-      <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
-        {rate.location}
+      <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap align-top">
+        <div className="font-semibold">{rate.location}</div>
+        <div className="text-sm text-gray-600 mt-1 space-y-1">
+          {rate.primaryMobile && (
+            <div>
+              📞{" "}
+              <a
+                href={`tel:${rate.primaryMobile}`}
+                className="text-blue-600 hover:underline"
+              >
+                {rate.primaryMobile}
+              </a>
+            </div>
+          )}
+          {rate.secondaryMobile && (
+            <div>
+              ☎️{" "}
+              <a
+                href={`tel:${rate.secondaryMobile}`}
+                className="text-blue-600 hover:underline"
+              >
+                {rate.secondaryMobile}
+              </a>
+            </div>
+          )}
+        </div>
       </td>
-      <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap">
+      <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap align-middle">
         {rate.state}
       </td>
-      <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap">
+      <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap align-middle">
         {rate.oldRate}
       </td>
-      <td className="px-6 py-4 border-b whitespace-nowrap">
+      <td className="px-6 py-4 border-b whitespace-nowrap align-middle">
         <input
           type="number"
           value={rate.newRate}
@@ -45,7 +69,8 @@ export default function RateTableRow({
           placeholder="Enter new rate"
         />
       </td>
-      <td className="px-6 py-4 border-b text-center whitespace-nowrap">
+
+      <td className="px-6 py-4 border-b text-center whitespace-nowrap align-middle">
         {editIndex === index ? (
           <div className="flex items-center justify-center gap-2">
             <motion.button
@@ -59,7 +84,7 @@ export default function RateTableRow({
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setRates((prev) => [...prev]) && handleEdit(null)}
+              onClick={() => handleEdit(null)}
               className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 flex items-center gap-2"
             >
               <X className="w-4 h-4" /> Cancel

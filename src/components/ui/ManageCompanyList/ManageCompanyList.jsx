@@ -55,9 +55,25 @@ const ManageCompanyList = () => {
       const formattedCompanies = (companyRes.data.companies || []).map((c) => ({
         ...c,
         location: Array.isArray(c.location)
-          ? c.location.map((loc) =>
-              typeof loc === "string" ? { name: loc, state: "" } : loc
-            )
+          ? c.location.map((loc) => {
+              const locationName = typeof loc === "string" ? loc : loc.name;
+              const matchingMobile = c.mobileNumbers?.find(
+                (mob) => mob.location === locationName
+              );
+
+              return {
+                name: locationName,
+                state: typeof loc === "string" ? "" : loc.state,
+                mobileNumbers: matchingMobile
+                  ? [
+                      {
+                        primary: matchingMobile.primaryMobile || "",
+                        secondary: matchingMobile.secondaryMobile || "",
+                      },
+                    ]
+                  : [{ primary: "", secondary: "" }],
+              };
+            })
           : [],
       }));
 
@@ -90,14 +106,13 @@ const ManageCompanyList = () => {
     const company = companies.find((c) => c._id === id);
     if (!company) return;
 
-    const loc = company.location.map((loc) =>
-      typeof loc === "string" ? { name: loc, state: "" } : loc
-    );
-
     setEditingCompany({
       _id: company._id,
       name: company.name,
-      location: loc,
+      location: company.location.map((loc) => ({
+        ...loc,
+        mobileNumbers: loc.mobileNumbers || [{ primary: "", secondary: "" }],
+      })),
       category: company.category || "",
     });
   };
@@ -106,10 +121,27 @@ const ManageCompanyList = () => {
     e.preventDefault();
     try {
       setIsLoading(true);
+
+      const updatedData = {
+        name: editingCompany.name,
+        category: editingCompany.category,
+        location: editingCompany.location.map((loc) => ({
+          name: loc.name,
+          state: loc.state,
+        })),
+        mobileNumbers: editingCompany.location.map((loc) => ({
+          location: loc.name,
+          primaryMobile: loc.mobileNumbers?.[0]?.primary || "",
+          secondaryMobile: loc.mobileNumbers?.[0]?.secondary || "",
+        })),
+      };
+
+      console.log("🛠️ Payload being sent:", updatedData); // optional
       await axiosInstance.put(
         `/managecompany/${editingCompany._id}`,
-        editingCompany
+        updatedData
       );
+
       toast.success("Company updated");
       setEditingCompany(null);
       fetchAllData();
@@ -141,11 +173,49 @@ const ManageCompanyList = () => {
     setEditingCompany({ ...editingCompany, location: updated });
   };
 
+  const handleLocationMobileChange = (locIndex, mobileIndex, field, value) => {
+    const updatedLocations = editingCompany.location.map((loc, i) => {
+      if (i !== locIndex) return loc;
+      const updatedMobiles = loc.mobileNumbers.map((mob, j) =>
+        j === mobileIndex ? { ...mob, [field]: value } : mob
+      );
+      return { ...loc, mobileNumbers: updatedMobiles };
+    });
+    setEditingCompany({ ...editingCompany, location: updatedLocations });
+  };
+
+  const addLocationMobile = (locIndex) => {
+    const updatedLocations = editingCompany.location.map((loc, i) => {
+      if (i !== locIndex) return loc;
+      return {
+        ...loc,
+        mobileNumbers: [
+          ...(loc.mobileNumbers || []),
+          { primary: "", secondary: "" },
+        ],
+      };
+    });
+    setEditingCompany({ ...editingCompany, location: updatedLocations });
+  };
+
+  const removeLocationMobile = (locIndex, mobileIndex) => {
+    const updatedLocations = editingCompany.location.map((loc, i) => {
+      if (i !== locIndex) return loc;
+      const updatedMobiles = loc.mobileNumbers.filter(
+        (_, j) => j !== mobileIndex
+      );
+      return { ...loc, mobileNumbers: updatedMobiles };
+    });
+    setEditingCompany({ ...editingCompany, location: updatedLocations });
+  };
+
   const columns = [
     { header: "Company Name", accessor: "name" },
     { header: "Locations", accessor: "locations" },
     { header: "State", accessor: "state" },
     { header: "Category", accessor: "category" },
+    { header: "Primary Mobile", accessor: "primaryMobile" },
+    { header: "Secondary Mobile", accessor: "secondaryMobile" },
     { header: "Actions", accessor: "actions" },
   ];
 
@@ -154,6 +224,18 @@ const ManageCompanyList = () => {
     .map((company) => {
       const capitalizedName = capitalizeWords(company.name);
       const capitalizedCategory = capitalizeWords(company.category || "N.A");
+
+      const primaryNumbers = Array.isArray(company.location)
+        ? company.location
+            .map((loc) => loc.mobileNumbers?.[0]?.primary || "")
+            .join(", ")
+        : "N.A";
+
+      const secondaryNumbers = Array.isArray(company.location)
+        ? company.location
+            .map((loc) => loc.mobileNumbers?.[0]?.secondary || "")
+            .join(", ")
+        : "N.A";
 
       return {
         name: capitalizedName,
@@ -164,6 +246,8 @@ const ManageCompanyList = () => {
           company.location.map((l) => capitalizeWords(l.state)).join(", ") ||
           "N.A",
         category: capitalizedCategory,
+        primaryMobile: primaryNumbers || "N.A",
+        secondaryMobile: secondaryNumbers || "N.A",
         actions: (
           <Actions
             item={{
@@ -194,7 +278,6 @@ const ManageCompanyList = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-lg w-3/4 max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-bold mb-4">Edit Company</h2>
-
               <form onSubmit={handleUpdate}>
                 <InputBox
                   label="Company Name"
@@ -231,49 +314,97 @@ const ManageCompanyList = () => {
                 <div className="mb-4">
                   <h3 className="font-semibold mb-2">Locations</h3>
                   {editingCompany.location.map((loc, i) => (
-                    <div
-                      key={i}
-                      className="flex gap-4 items-center mb-3 bg-gray-50 p-3 rounded-lg"
-                    >
-                      <InputBox
-                        placeholder="Location name"
-                        value={loc.name}
-                        onChange={(e) =>
-                          handleLocationChange(i, "name", e.target.value)
-                        }
-                      />
-                      <select
-                        className="p-2 border rounded w-full"
-                        value={loc.state}
-                        onChange={(e) =>
-                          handleLocationChange(i, "state", e.target.value)
-                        }
-                      >
-                        <option value="">Select State</option>
-                        {[...new Set(locations.map((loc) => loc.state))].map(
-                          (state, idx) => (
-                            <option key={idx} value={state}>
-                              {state}
-                            </option>
-                          )
-                        )}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setEditingCompany({
-                            ...editingCompany,
-                            location: editingCompany.location.filter(
-                              (_, index) => index !== i
-                            ),
-                          })
-                        }
-                        className="text-red-600 hover:bg-red-100 px-2 rounded"
-                      >
-                        ✕
-                      </button>
+                    <div key={i} className="bg-gray-50 p-4 rounded mb-4">
+                      <div className="flex gap-4 mb-2">
+                        <InputBox
+                          placeholder="Location name"
+                          value={loc.name}
+                          onChange={(e) =>
+                            handleLocationChange(i, "name", e.target.value)
+                          }
+                        />
+                        <select
+                          className="p-2 border rounded w-full"
+                          value={loc.state}
+                          onChange={(e) =>
+                            handleLocationChange(i, "state", e.target.value)
+                          }
+                        >
+                          <option value="">Select State</option>
+                          {[...new Set(locations.map((loc) => loc.state))].map(
+                            (state, idx) => (
+                              <option key={idx} value={state}>
+                                {state}
+                              </option>
+                            )
+                          )}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingCompany({
+                              ...editingCompany,
+                              location: editingCompany.location.filter(
+                                (_, index) => index !== i
+                              ),
+                            })
+                          }
+                          className="text-red-600 hover:bg-red-100 px-2 rounded"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div className="w-full">
+                        <h4 className="text-sm font-medium mb-1">
+                          Mobile Numbers
+                        </h4>
+                        {loc.mobileNumbers?.map((num, j) => (
+                          <div key={j} className="flex gap-2 mb-2">
+                            <InputBox
+                              placeholder="Primary Mobile"
+                              value={num.primary}
+                              onChange={(e) =>
+                                handleLocationMobileChange(
+                                  i,
+                                  j,
+                                  "primary",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <InputBox
+                              placeholder="Secondary Mobile"
+                              value={num.secondary}
+                              onChange={(e) =>
+                                handleLocationMobileChange(
+                                  i,
+                                  j,
+                                  "secondary",
+                                  e.target.value
+                                )
+                              }
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeLocationMobile(i, j)}
+                              className="text-red-600 hover:bg-red-100 px-2 rounded"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => addLocationMobile(i)}
+                          className="text-xs mt-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                          + Add Mobile
+                        </button>
+                      </div>
                     </div>
                   ))}
+
                   <button
                     type="button"
                     onClick={() =>
@@ -281,7 +412,7 @@ const ManageCompanyList = () => {
                         ...editingCompany,
                         location: [
                           ...editingCompany.location,
-                          { name: "", state: "" },
+                          { name: "", state: "", mobileNumbers: [] },
                         ],
                       })
                     }

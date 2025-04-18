@@ -39,7 +39,7 @@ export async function PUT(req, context) {
   await connectDB();
 
   const id = context.params.id;
-  const { name, location, category, state } = await req.json();
+  const { name, location, category, state, mobileNumbers } = await req.json();
 
   if (!id || !name || !location) {
     return NextResponse.json(
@@ -62,6 +62,22 @@ export async function PUT(req, context) {
     company.location = flatLocations;
     company.category = category || company.category;
     company.state = state || company.state;
+
+    if (Array.isArray(mobileNumbers)) {
+      const updatedMobileMap = new Map();
+
+      for (const entry of company.mobileNumbers || []) {
+        updatedMobileMap.set(entry.location, entry);
+      }
+
+      for (const entry of mobileNumbers) {
+        if (entry?.location) {
+          updatedMobileMap.set(entry.location, entry);
+        }
+      }
+
+      company.mobileNumbers = Array.from(updatedMobileMap.values());
+    }
 
     await company.save();
 

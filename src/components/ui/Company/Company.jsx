@@ -31,6 +31,8 @@ export default function CreateCompany() {
   const [location, setLocation] = useState("");
   const [state, setState] = useState("");
   const [category, setCategory] = useState("");
+  const [primaryNumber, setPrimaryNumber] = useState("");
+  const [secondaryNumber, setSecondaryNumber] = useState("");
   const [companies, setCompanies] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -135,8 +137,8 @@ export default function CreateCompany() {
   );
 
   const handleSubmit = async () => {
-    if (!companyName.trim() || !location) {
-      toast.error("All fields are required!");
+    if (!companyName.trim() || !location || !primaryNumber.trim()) {
+      toast.error("Company name, location, and primary number are required!");
       return;
     }
 
@@ -153,6 +155,13 @@ export default function CreateCompany() {
         location,
         state: state || "N.A",
         category: category || "N.A",
+        mobileNumbers: [
+          {
+            location: location,
+            primaryMobile: primaryNumber, // ✅ corrected key
+            secondaryMobile: secondaryNumber || "", // ✅ corrected key
+          },
+        ],
       });
 
       if (response.status === 201) {
@@ -161,6 +170,8 @@ export default function CreateCompany() {
         setLocation("");
         setState("");
         setCategory("");
+        setPrimaryNumber("");
+        setSecondaryNumber("");
       } else if (response.status === 200) {
         toast.info(response.data.message);
       }
@@ -196,8 +207,23 @@ export default function CreateCompany() {
             />
 
             <InputBox label="State" value={state} readOnly />
-
             <InputBox label="Category" value={category} readOnly />
+
+            <InputBox
+              label="Primary Mobile Number"
+              value={primaryNumber}
+              onChange={(e) => setPrimaryNumber(e.target.value)}
+              type="tel"
+              placeholder="e.g. 9876543210"
+            />
+
+            <InputBox
+              label="Secondary Mobile Number"
+              value={secondaryNumber}
+              onChange={(e) => setSecondaryNumber(e.target.value)}
+              type="tel"
+              placeholder="Optional"
+            />
           </div>
 
           <div className="flex justify-center">

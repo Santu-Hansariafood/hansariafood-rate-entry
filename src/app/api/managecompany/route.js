@@ -11,7 +11,7 @@ export async function POST(req) {
   }
 
   try {
-    let { name, location, state, category } = await req.json();
+    let { name, location, state, category, mobileNumbers } = await req.json();
 
     if (!name || !location) {
       return NextResponse.json(
@@ -22,6 +22,10 @@ export async function POST(req) {
 
     if (!Array.isArray(location)) {
       location = [location];
+    }
+
+    if (!Array.isArray(mobileNumbers)) {
+      mobileNumbers = [];
     }
 
     state = state || "N.A";
@@ -43,8 +47,23 @@ export async function POST(req) {
       existingCompany.location = [
         ...new Set([...existingCompany.location, ...location]),
       ];
+
+      const existingMobileNumbers = existingCompany.mobileNumbers || [];
+      const newMobileNumbers = mobileNumbers.filter(
+        (newNum) =>
+          !existingMobileNumbers.some(
+            (oldNum) => oldNum.location === newNum.location
+          )
+      );
+
+      existingCompany.mobileNumbers = [
+        ...existingMobileNumbers,
+        ...newMobileNumbers,
+      ];
+
       existingCompany.state = state;
       existingCompany.category = category;
+
       await existingCompany.save();
 
       return NextResponse.json(
@@ -56,7 +75,14 @@ export async function POST(req) {
       );
     }
 
-    const newCompany = new ManageCompany({ name, location, state, category });
+    const newCompany = new ManageCompany({
+      name,
+      location,
+      state,
+      category,
+      mobileNumbers,
+    });
+
     await newCompany.save();
 
     return NextResponse.json(
