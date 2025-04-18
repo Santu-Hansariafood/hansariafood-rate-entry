@@ -17,22 +17,17 @@ const RateSchema = new mongoose.Schema({
 
 RateSchema.pre("save", function (next) {
   const now = new Date();
-
-  const ISTOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + ISTOffset);
-
-  this.updateTime = istTime.toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Asia/Kolkata",
-  });
-
-  const today = new Date(istTime);
+  const today = new Date(now);
   today.setHours(0, 0, 0, 0);
 
   const lastUpdated = new Date(this.newRateDate);
   lastUpdated.setHours(0, 0, 0, 0);
+
+  this.updateTime = now.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   if (lastUpdated < today) {
     this.oldRates.push({
