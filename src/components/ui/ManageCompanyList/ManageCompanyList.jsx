@@ -136,7 +136,6 @@ const ManageCompanyList = () => {
         })),
       };
 
-      console.log("🛠️ Payload being sent:", updatedData); // optional
       await axiosInstance.put(
         `/managecompany/${editingCompany._id}`,
         updatedData

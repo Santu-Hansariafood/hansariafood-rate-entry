@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
+import { Eye, EyeOff } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import Loading from "@/components/common/Loading/Loading";
 
@@ -13,15 +14,13 @@ const Title = dynamic(() => import("@/components/common/Title/Title"));
 export default function Login() {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [mobileError, setMobileError] = useState("");
   const router = useRouter();
   const { setMobile: setGlobalMobile } = useUser();
 
-  const validateMobile = (value) => {
-    const mobileRegex = /^[6-9]\d{9}$/;
-    return mobileRegex.test(value);
-  };
+  const validateMobile = (value) => /^[6-9]\d{9}$/.test(value);
 
   const handleMobileChange = (e) => {
     const value = e.target.value;
@@ -50,7 +49,6 @@ export default function Login() {
       setError("Invalid credentials");
     } else {
       localStorage.setItem("user", JSON.stringify({ mobile }));
-
       setGlobalMobile(mobile);
       router.push("/dashboard");
     }
@@ -98,13 +96,22 @@ export default function Login() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Password
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 outline-none"
-                placeholder="Enter your password"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 outline-none pr-12"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                </button>
+              </div>
             </div>
 
             {error && (

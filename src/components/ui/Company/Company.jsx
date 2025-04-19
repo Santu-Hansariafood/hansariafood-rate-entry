@@ -158,8 +158,8 @@ export default function CreateCompany() {
         mobileNumbers: [
           {
             location: location,
-            primaryMobile: primaryNumber, // ✅ corrected key
-            secondaryMobile: secondaryNumber || "", // ✅ corrected key
+            primaryMobile: primaryNumber,
+            secondaryMobile: secondaryNumber || "",
           },
         ],
       });

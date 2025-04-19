@@ -66,7 +66,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Private Limited",
+              "@type": "Corporation",
               name: "Hansaria Food",
               url: "https://www.hansariafood.site",
               logo: "/images/og-image.png",

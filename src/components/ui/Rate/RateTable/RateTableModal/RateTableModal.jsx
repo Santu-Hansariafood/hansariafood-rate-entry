@@ -1,3 +1,5 @@
+"use client";
+
 import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";

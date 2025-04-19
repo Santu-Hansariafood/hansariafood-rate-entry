@@ -158,7 +158,6 @@ const LocationList = () => {
           onPageChange={(page) => setCurrentPage(page)}
         />
 
-        {/* Modal Section */}
         {showModal && (
           <Modal
             title={editMode ? "Edit Location" : "Location Details"}

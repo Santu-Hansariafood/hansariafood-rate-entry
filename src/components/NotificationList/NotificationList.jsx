@@ -80,7 +80,6 @@ export default function NotificationList({ notifications }) {
           </div>
         </div>
 
-        {/* Notification List */}
         {filteredNotifications.length === 0 ? (
           <div className="text-center py-8 text-gray-500">No notifications</div>
         ) : (
