@@ -11,12 +11,12 @@ const ManageCompanyList = dynamic(() =>
 
 const page = () => {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<Loading />}>
+    <Suspense fallback={<Loading />}>
+      <AuthWrapper>
         <CreateCompany />
         <ManageCompanyList />
-      </Suspense>
-    </AuthWrapper>
+      </AuthWrapper>
+    </Suspense>
   );
 };
 

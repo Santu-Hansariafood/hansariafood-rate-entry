@@ -9,12 +9,12 @@ const Register = dynamic(() => import("@/components/ui/Register/Register"));
 
 const page = () => {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<Loading />}>
+    <Suspense fallback={<Loading />}>
+      <AuthWrapper>
         <Register />
-        <RegisterList/>
-      </Suspense>
-    </AuthWrapper>
+        <RegisterList />
+      </AuthWrapper>
+    </Suspense>
   );
 };
 

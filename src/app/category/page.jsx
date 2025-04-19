@@ -14,12 +14,12 @@ const CategoryList = dynamic(() =>
 
 const Page = () => {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<Loading />}>
+    <Suspense fallback={<Loading />}>
+      <AuthWrapper>
         <CreateCategory />
         <CategoryList />
-      </Suspense>
-    </AuthWrapper>
+      </AuthWrapper>
+    </Suspense>
   );
 };
 

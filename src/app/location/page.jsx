@@ -13,12 +13,12 @@ const LocationList = dynamic(() =>
 
 const page = () => {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<Loading />}>
+    <Suspense fallback={<Loading />}>
+      <AuthWrapper>
         <CreateLocation />
         <LocationList />
-      </Suspense>
-    </AuthWrapper>
+      </AuthWrapper>
+    </Suspense>
   );
 };
 

@@ -11,12 +11,12 @@ const RateCalendar = dynamic(() =>
 
 const page = () => {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<Loading />}>
-      <Welcome/>
+    <Suspense fallback={<Loading />}>
+      <AuthWrapper>
+        <Welcome />
         <RateCalendar />
-      </Suspense>
-    </AuthWrapper>
+      </AuthWrapper>
+    </Suspense>
   );
 };
 

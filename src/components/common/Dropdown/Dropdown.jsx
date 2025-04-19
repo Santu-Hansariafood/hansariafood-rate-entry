@@ -1,81 +1,96 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 
 const Dropdown = ({ label, options = [], value, onChange }) => {
-  const [searchTerm, setSearchTerm] = useState(value || "");
+  const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [isUserTyping, setIsUserTyping] = useState(false);
   const dropdownRef = useRef(null);
 
-  const normalizedOptions = options.map((option) =>
-    typeof option === "string" ? { label: option, value: option } : option
+  const normalizedOptions = useMemo(
+    () =>
+      options.map((option) =>
+        typeof option === "string" ? { label: option, value: option } : option
+      ),
+    [options]
   );
 
-  const filteredOptions = normalizedOptions.filter((option) =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = useMemo(() => {
+    return normalizedOptions.filter((option) =>
+      option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, normalizedOptions]);
 
   useEffect(() => {
-    if (!isUserTyping) {
-      const selectedOption = normalizedOptions.find(
-        (opt) => opt.value === value
-      );
-      setSearchTerm(selectedOption ? selectedOption.label : "");
-    }
+    const selected = normalizedOptions.find((opt) => opt.value === value);
+    if (selected) setSearchTerm(selected.label);
   }, [value, normalizedOptions]);
 
-  // Handle clicks outside the dropdown
   useEffect(() => {
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
-        setIsUserTyping(false);
-        setSearchTerm(value ? normalizedOptions.find(opt => opt.value === value)?.label || "" : "");
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [value, normalizedOptions]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     setSearchTerm(e.target.value);
-    setIsUserTyping(true);
     setIsOpen(true);
-  };
+  }, []);
+
+  const handleSelect = useCallback((option) => {
+    onChange(option.value);
+    setSearchTerm(option.label);
+    setIsOpen(false);
+  }, [onChange]);
 
   return (
-    <div className="flex flex-col gap-2 w-full max-w-xs relative" ref={dropdownRef}>
-      {label && <label className="text-gray-700 font-bold">{label}</label>}
+    <div
+      className="flex flex-col gap-2 w-full max-w-xs relative"
+      ref={dropdownRef}
+    >
+      {label && (
+        <label className="text-gray-700 dark:text-gray-100 font-medium transition-colors duration-200">
+          {label}
+        </label>
+      )}
+
       <input
         type="text"
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-controls="dropdown-options"
+        aria-autocomplete="list"
         placeholder={`Search ${label}`}
         value={searchTerm}
         onChange={handleChange}
         onFocus={() => setIsOpen(true)}
-        className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
       />
+
       {isOpen && (
-        <div className="absolute top-full left-0 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10">
+        <div
+          id="dropdown-options"
+          className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10"
+        >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => (
               <div
                 key={index}
-                className="p-2 hover:bg-green-100 cursor-pointer"
-                onClick={() => {
-                  onChange(option.value);
-                  setSearchTerm(option.label);
-                  setIsUserTyping(false);
-                  setIsOpen(false);
-                }}
+                role="option"
+                className="p-2 hover:bg-green-100 dark:hover:bg-green-700 cursor-pointer text-gray-800 dark:text-white"
+                onClick={() => handleSelect(option)}
               >
                 {option.label}
               </div>
             ))
           ) : (
-            <div className="p-2 text-gray-500">No options found</div>
+            <div className="p-2 text-gray-500 dark:text-gray-400">
+              No options found
+            </div>
           )}
         </div>
       )}

@@ -16,12 +16,12 @@ const CreateCompany = dynamic(() =>
 
 const Page = () => {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<Loading />}>
+    <Suspense fallback={<Loading />}>
+      <AuthWrapper>
         <CreateCompany />
         <CompanyList />
-      </Suspense>
-    </AuthWrapper>
+      </AuthWrapper>
+    </Suspense>
   );
 };
 

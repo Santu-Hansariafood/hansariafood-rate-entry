@@ -9,11 +9,11 @@ const RateManagement = dynamic(() => import("@/components/ui/Rate/Rate"));
 
 const Page = () => {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<Loading />}>
+    <Suspense fallback={<Loading />}>
+      <AuthWrapper>
         <RateManagement />
-      </Suspense>
-    </AuthWrapper>
+      </AuthWrapper>
+    </Suspense>
   );
 };
 

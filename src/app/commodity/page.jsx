@@ -14,12 +14,12 @@ const CommodityList = dynamic(() =>
 
 const Page = () => {
   return (
-    <AuthWrapper>
-      <Suspense fallback={<Loading />}>
+    <Suspense fallback={<Loading />}>
+      <AuthWrapper>
         <CreateCommodity />
         <CommodityList />
-      </Suspense>
-    </AuthWrapper>
+      </AuthWrapper>
+    </Suspense>
   );
 };
 
