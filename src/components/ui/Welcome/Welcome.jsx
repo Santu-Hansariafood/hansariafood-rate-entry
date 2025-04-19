@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 export default function Welcome() {
   const { mobile } = useUser();
@@ -58,9 +60,7 @@ export default function Welcome() {
     if (assignedCompanies.length > 0) {
       return (
         <div className="mt-4 text-left">
-          <h2 className="text-xl font-semibold text-gray-700 mb-3">
-            Assigned Companies:
-          </h2>
+          <Title text="Assigned Companies:" />
           <div className="space-y-4">
             {assignedCompanies.map((company) => (
               <div
