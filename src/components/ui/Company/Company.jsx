@@ -191,7 +191,7 @@ export default function CreateCompany() {
             text="Create Company"
             className="text-center text-2xl font-bold text-gray-800"
           />
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Dropdown
               label="Company Name"
               options={companyOptions}
@@ -210,19 +210,19 @@ export default function CreateCompany() {
             <InputBox label="Category" value={category} readOnly />
 
             <InputBox
-              label="Primary Mobile Number"
+              label="Enter Mobile Number"
               value={primaryNumber}
               onChange={(e) => setPrimaryNumber(e.target.value)}
               type="tel"
-              placeholder="e.g. 9876543210"
+              placeholder="Enter Mobile Number"
             />
 
             <InputBox
-              label="Secondary Mobile Number"
+              label="Enter Contact Name"
               value={secondaryNumber}
               onChange={(e) => setSecondaryNumber(e.target.value)}
               type="tel"
-              placeholder="Optional"
+              placeholder="Enter Contact Person Name"
             />
           </div>
 

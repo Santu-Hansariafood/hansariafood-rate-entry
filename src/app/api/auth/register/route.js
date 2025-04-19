@@ -70,28 +70,31 @@ export async function PUT(req) {
 
   try {
     await connectDB();
-    const { id, name, mobile, password } = await req.json();
+    const { mobile, password } = await req.json();
 
-    const user = await User.findById(id);
+    if (!mobile || !password) {
+      return NextResponse.json(
+        { message: "Mobile and new password are required" },
+        { status: 400 }
+      );
+    }
+
+    const user = await User.findOne({ mobile });
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    user.name = name || user.name;
-    user.mobile = mobile || user.mobile;
-    if (password) {
-      user.password = await bcrypt.hash(password, 10);
-    }
-
+    user.password = await bcrypt.hash(password, 10);
     await user.save();
+
     return NextResponse.json(
-      { message: "User updated successfully" },
+      { message: "Password updated successfully" },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Update User Error:", error);
+    console.error("Reset Password Error:", error);
     return NextResponse.json(
-      { message: "Failed to update user" },
+      { message: "Failed to reset password" },
       { status: 500 }
     );
   }

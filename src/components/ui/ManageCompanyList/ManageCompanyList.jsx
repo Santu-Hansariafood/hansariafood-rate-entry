@@ -211,7 +211,7 @@ const ManageCompanyList = () => {
   const columns = [
     { header: "Company Name", accessor: "name" },
     { header: "Locations", accessor: "locations" },
-    { header: "State", accessor: "state" },
+    // { header: "State", accessor: "state" },
     { header: "Category", accessor: "category" },
     { header: "Primary Mobile", accessor: "primaryMobile" },
     { header: "Secondary Mobile", accessor: "secondaryMobile" },
@@ -241,9 +241,9 @@ const ManageCompanyList = () => {
         locations:
           company.location.map((l) => capitalizeWords(l.name)).join(", ") ||
           "N.A",
-        state:
-          company.location.map((l) => capitalizeWords(l.state)).join(", ") ||
-          "N.A",
+        // state:
+        //   company.location.map((l) => capitalizeWords(l.state)).join(", ") ||
+        //   "N.A",
         category: capitalizedCategory,
         primaryMobile: primaryNumbers || "N.A",
         secondaryMobile: secondaryNumbers || "N.A",

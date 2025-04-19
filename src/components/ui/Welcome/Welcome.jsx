@@ -5,6 +5,7 @@ import { useUser } from "@/context/UserContext";
 import { motion } from "framer-motion";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
+import Link from "next/link";
 
 export default function Welcome() {
   const { mobile } = useUser();
@@ -35,6 +36,7 @@ export default function Welcome() {
       if (userData) {
         const formattedName = formatName(userData.name);
         setName(formattedName);
+        localStorage.setItem("mobile", userData.mobile);
       }
 
       setAssignedCompanies(companyResponse.data.companies || []);
@@ -102,6 +104,9 @@ export default function Welcome() {
           <h1 className="text-3xl font-bold text-gray-800 mb-6">
             Welcome, {name}
           </h1>
+          <p className="text-sm text-blue-600 hover:underline mt-2">
+            <Link href="/resetpassword">Reset Your Password</Link>
+          </p>
           {assignedCompaniesList}
         </motion.div>
       </div>
