@@ -160,7 +160,7 @@ const CompanyList = React.memo(() => {
   }, [companies, handleDelete, handleEdit, handleView]);
 
   const handlePageChange = (page) => {
-    if (page >= 1 && page <= Math.ceil(companies.length / ITEMS_PER_PAGE)) {
+    if (page >= 1 && page <= Math.ceil(totalCompanies / ITEMS_PER_PAGE)) {
       setCurrentPage(page);
     }
   };
