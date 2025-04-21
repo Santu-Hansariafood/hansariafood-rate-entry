@@ -108,11 +108,17 @@ export async function GET(req) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const query = searchParams.get("q")?.toLowerCase() || "";
+    const categories = searchParams.getAll("category");
     const skip = (page - 1) * limit;
 
     let filter = {};
+
     if (query) {
-      filter = { name: { $regex: query, $options: "i" } };
+      filter.name = { $regex: query, $options: "i" };
+    }
+
+    if (categories.length > 0) {
+      filter.category = { $in: categories };
     }
 
     const [companies, total] = await Promise.all([

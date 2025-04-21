@@ -59,21 +59,20 @@ export default function Rate() {
     const fetchCompanies = async () => {
       setLoading(true);
       try {
+        const categoryParams = Object.values(filters)
+          .map((cat) => `category=${encodeURIComponent(cat)}`)
+          .join("&");
+
         const response = await axiosInstance.get(
-          `/managecompany?page=${currentPage}&limit=${itemsPerPage}`
+          `/managecompany?page=${currentPage}&limit=${itemsPerPage}&${categoryParams}`
         );
+
         const { companies: companyList, total } = response.data;
 
         setAllCompanies(companyList);
         setTotalItems(total);
 
-        const filteredNames = companyList
-          .filter(
-            (c) =>
-              Object.values(filters).length === 0 ||
-              Object.values(filters).includes(c.category)
-          )
-          .map((c) => c.name);
+        const filteredNames = companyList.map((c) => c.name);
 
         setCompanies(filteredNames);
         await checkAllCompanies(filteredNames);
