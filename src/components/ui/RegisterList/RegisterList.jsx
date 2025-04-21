@@ -46,7 +46,7 @@ export default function RegisterList() {
 
   const fetchCompanies = async () => {
     try {
-      const { data } = await axiosInstance.get("/managecompany");
+      const { data } = await axiosInstance.get("/managecompany?limit=1000");
       setCompanies(data.companies);
     } catch (error) {
       console.error(error);

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Edit2, Save, X } from "lucide-react";
+import { Edit2, Save, X, UserCircle, PhoneCall } from "lucide-react";
 
 export default function RateTableRow({
   rate,
@@ -22,8 +22,8 @@ export default function RateTableRow({
         <div className="font-semibold">{rate.location}</div>
         <div className="text-sm text-gray-600 mt-1 space-y-1">
           {rate.primaryMobile && (
-            <div>
-              📞{" "}
+            <div className="flex items-center gap-2 flex-wrap">
+              <PhoneCall className="w-4 h-4 text-blue-600" />
               <a
                 href={`tel:${rate.primaryMobile}`}
                 className="text-blue-600 hover:underline"
@@ -33,14 +33,14 @@ export default function RateTableRow({
             </div>
           )}
           {rate.secondaryMobile && (
-            <div>
-              ☎️{" "}
-              <a
+            <div className="flex items-center gap-2 flex-wrap">
+              <UserCircle className="w-4 h-4 text-gray-600" />
+              {/* <a
                 href={`tel:${rate.secondaryMobile}`}
                 className="text-blue-600 hover:underline"
-              >
-                {rate.secondaryMobile}
-              </a>
+              > */}
+              {rate.secondaryMobile}
+              {/* </a> */}
             </div>
           )}
         </div>
