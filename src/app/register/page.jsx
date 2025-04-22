@@ -1,18 +1,31 @@
-import React, { Suspense } from "react";
+"use client";
+
+import React, { Suspense, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-import RegisterList from "@/components/ui/RegisterList/RegisterList";
+const RegisterList = dynamic(() =>
+  import("@/components/ui/RegisterList/RegisterList")
+);
 const AuthWrapper = dynamic(() =>
   import("@/components/AuthWrapper/AuthWrapper")
 );
 const Register = dynamic(() => import("@/components/ui/Register/Register"));
 
 const page = () => {
+  useEffect(() => {
+    import("@/components/AuthWrapper/AuthWrapper");
+    import("@/components/ui/Register/Register");
+    import("@/components/ui/RegisterList/RegisterList");
+  }, []);
   return (
     <Suspense fallback={<Loading />}>
       <AuthWrapper>
-        <Register />
-        <RegisterList />
+        <Suspense fallback={<Loading />}>
+          <Register />
+        </Suspense>
+        <Suspense fallback={<Loading />}>
+          <RegisterList />
+        </Suspense>
       </AuthWrapper>
     </Suspense>
   );

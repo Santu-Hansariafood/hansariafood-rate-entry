@@ -1,5 +1,6 @@
+"use client";
 import dynamic from "next/dynamic";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import Loading from "@/components/common/Loading/Loading";
 const AuthWrapper = dynamic(() =>
   import("@/components/AuthWrapper/AuthWrapper")
@@ -9,10 +10,17 @@ const ResetPassword = dynamic(() =>
 );
 
 const page = () => {
+  useEffect(() => {
+    import("@/components/AuthWrapper/AuthWrapper");
+    import("@/components/ui/ResetPassword/ResetPassword");
+  }, []);
+
   return (
     <Suspense fallback={<Loading />}>
       <AuthWrapper>
-        <ResetPassword />
+        <Suspense fallback={<Loading />}>
+          <ResetPassword />
+        </Suspense>
       </AuthWrapper>
     </Suspense>
   );

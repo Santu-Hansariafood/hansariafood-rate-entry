@@ -1,4 +1,6 @@
-import React, { Suspense } from "react";
+"use client";
+
+import React, { Suspense, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 const AuthWrapper = dynamic(() =>
@@ -12,11 +14,20 @@ const LocationList = dynamic(() =>
 );
 
 const page = () => {
+  useEffect(() => {
+    import("@/components/AuthWrapper/AuthWrapper");
+    import("@/components/ui/Location/Location");
+    import("@/components/ui/LocationList/LocationList");
+  }, []);
   return (
     <Suspense fallback={<Loading />}>
       <AuthWrapper>
-        <CreateLocation />
-        <LocationList />
+        <Suspense fallback={<Loading />}>
+          <CreateLocation />
+        </Suspense>
+        <Suspense fallback={<Loading />}>
+          <LocationList />
+        </Suspense>
       </AuthWrapper>
     </Suspense>
   );

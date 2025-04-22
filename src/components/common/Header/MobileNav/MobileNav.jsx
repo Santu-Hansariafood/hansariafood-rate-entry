@@ -4,7 +4,10 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { X } from "lucide-react";
-import LogoutButton from "../LogoutButton/LogoutButton";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
+import Loading from "../../Loading/Loading";
+const LogoutButton = dynamic(() => import("../LogoutButton/LogoutButton"));
 
 export default function MobileNav({
   menuOpen,
@@ -23,7 +26,7 @@ export default function MobileNav({
   ];
 
   return (
-    <>
+    <Suspense fallback={<Loading />}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -88,6 +91,6 @@ export default function MobileNav({
           <LogoutButton />
         </motion.div>
       </motion.div>
-    </>
+    </Suspense>
   );
 }

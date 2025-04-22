@@ -1,4 +1,6 @@
-import React, { Suspense } from "react";
+"use client";
+
+import React, { Suspense, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 const AuthWrapper = dynamic(() =>
@@ -10,11 +12,21 @@ const ManageCompanyList = dynamic(() =>
 );
 
 const page = () => {
+  useEffect(() => {
+    import("@/components/AuthWrapper/AuthWrapper");
+    import("@/components/ui/Company/Company");
+    import("@/components/ui/ManageCompanyList/ManageCompanyList");
+  }, []);
+
   return (
     <Suspense fallback={<Loading />}>
       <AuthWrapper>
-        <CreateCompany />
-        <ManageCompanyList />
+        <Suspense fallback={<Loading />}>
+          <CreateCompany />
+        </Suspense>
+        <Suspense fallback={<Loading />}>
+          <ManageCompanyList />
+        </Suspense>
       </AuthWrapper>
     </Suspense>
   );

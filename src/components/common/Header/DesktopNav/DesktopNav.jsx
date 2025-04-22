@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import NotificationBell from "../NotificationBell/NotificationBell";
-import LogoutButton from "../LogoutButton/LogoutButton";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
+import Loading from "../../Loading/Loading";
+const NotificationBell = dynamic(() =>
+  import("../NotificationBell/NotificationBell")
+);
+const LogoutButton = dynamic(() => import("../LogoutButton/LogoutButton"));
 
 export default function DesktopNav({
   activeLink,
@@ -21,42 +26,44 @@ export default function DesktopNav({
   ];
 
   return (
-    <nav className="hidden md:flex items-center gap-8">
-      <ul className="flex items-center gap-8 text-sm md:text-base">
-        {navLinks.map((label, index) => {
-          const path = `/${label.toLowerCase().replace(/ /g, "")}`;
-          return (
-            <motion.li
-              key={index}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                href={path}
-                className={`relative group ${
-                  activeLink === path
-                    ? "text-green-400"
-                    : "text-white/90 hover:text-white"
-                }`}
-                onClick={() => setActiveLink(path)}
+    <Suspense fallback={<Loading />}>
+      <nav className="hidden md:flex items-center gap-8">
+        <ul className="flex items-center gap-8 text-sm md:text-base">
+          {navLinks.map((label, index) => {
+            const path = `/${label.toLowerCase().replace(/ /g, "")}`;
+            return (
+              <motion.li
+                key={index}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {label}
-                <span
-                  className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full ${
-                    activeLink === path ? "w-full" : ""
+                <Link
+                  href={path}
+                  className={`relative group ${
+                    activeLink === path
+                      ? "text-green-400"
+                      : "text-white/90 hover:text-white"
                   }`}
-                />
-              </Link>
-            </motion.li>
-          );
-        })}
+                  onClick={() => setActiveLink(path)}
+                >
+                  {label}
+                  <span
+                    className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full ${
+                      activeLink === path ? "w-full" : ""
+                    }`}
+                  />
+                </Link>
+              </motion.li>
+            );
+          })}
 
-        <NotificationBell notifications={notifications} />
+          <NotificationBell notifications={notifications} />
 
-        <motion.li whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <LogoutButton />
-        </motion.li>
-      </ul>
-    </nav>
+          <motion.li whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <LogoutButton />
+          </motion.li>
+        </ul>
+      </nav>
+    </Suspense>
   );
 }
