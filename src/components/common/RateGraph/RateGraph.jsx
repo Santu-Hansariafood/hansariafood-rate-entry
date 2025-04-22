@@ -10,11 +10,19 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import Loading from "../Loading/Loading";
 import { motion } from "framer-motion";
 import { Calendar, TrendingUp } from "lucide-react";
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+  ChartDataLabels
+);
 
 export default function RateGraph({ rateData, company, location }) {
   const [timeRange, setTimeRange] = useState("weekly");
@@ -29,130 +37,133 @@ export default function RateGraph({ rateData, company, location }) {
 
   if (!filteredData) return null;
 
-  const oldRatesFiltered = useMemo(() => {
-    const oldRates = Array.isArray(filteredData.oldRates) ? filteredData.oldRates : [];
-    return timeRange === "weekly"
-      ? oldRates.slice(-7)
-      : oldRates.filter((_, index) => index % 4 === 0);
-  }, [filteredData, timeRange]);
+  const processedRates = useMemo(() => {
+    const ratesArray = [];
 
-  const { labels, rates, colors } = useMemo(() => {
-    const labels = [];
-    const rates = [];
-
-    oldRatesFiltered.forEach((rateStr) => {
-      const match = rateStr.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
-      if (match) {
-        const [_, rate, date] = match;
-        labels.push(date);
-        rates.push(parseFloat(rate));
-      }
-    });
-
-    // Handle newRate
-    if (filteredData.newRate && filteredData.lastUpdated) {
-      const rateValue =
-        typeof filteredData.newRate === "string"
-          ? parseFloat(filteredData.newRate)
-          : filteredData.newRate;
-      const newDate = new Date(filteredData.lastUpdated).toLocaleDateString("en-GB");
-      labels.push(newDate);
-      rates.push(rateValue);
+    if (Array.isArray(filteredData.oldRates)) {
+      filteredData.oldRates.forEach((rateStr) => {
+        const match = rateStr.match(/(.+)\s\((\d{2}\/\d{2}\/\d{4})\)/);
+        if (match) {
+          const [_, rate, date] = match;
+          ratesArray.push({
+            date,
+            value: parseFloat(rate),
+          });
+        }
+      });
     }
 
-    // Dynamic bar color generation
-    const colors = rates.map((rate, index) => {
-      if (index === 0) return "rgba(54, 162, 235, 0.9)";
-      return rate >= rates[index - 1]
-        ? "rgba(46, 204, 113, 0.9)"
-        : "rgba(231, 76, 60, 0.9)";
+    if (filteredData.newRate && filteredData.lastUpdated) {
+      const newDate = new Date(
+        filteredData.lastUpdated
+      ).toLocaleDateString("en-GB");
+      ratesArray.push({
+        date: newDate,
+        value: parseFloat(filteredData.newRate),
+      });
+    }
+
+    return ratesArray.sort((a, b) => {
+      const da = new Date(a.date.split("/").reverse().join("-"));
+      const db = new Date(b.date.split("/").reverse().join("-"));
+      return da - db;
     });
+  }, [filteredData]);
 
-    return { labels, rates, colors };
-  }, [oldRatesFiltered, filteredData]);
+  const displayedRates = useMemo(() => {
+    const length = timeRange === "weekly" ? 7 : 30;
+    const padded = [...processedRates.slice(-length)];
+    while (padded.length < length) {
+      padded.unshift({ date: "", value: 0 });
+    }
+    return padded;
+  }, [processedRates, timeRange]);
 
-  const data = useMemo(
-    () => ({
-      labels,
-      datasets: [
-        {
-          label: "Rates",
-          data: rates,
-          backgroundColor: colors,
-          borderColor: "rgba(0, 0, 0, 0.1)",
-          borderWidth: 2,
-          borderRadius: 8,
-          hoverBackgroundColor: colors.map((color) =>
-            color.replace("0.9", "1")
-          ),
-          hoverBorderWidth: 3,
-        },
-      ],
-    }),
-    [labels, rates, colors]
+  const dateRangeLabel = useMemo(() => {
+    if (displayedRates.length === 0) return "";
+    const first = displayedRates[0].date;
+    const last = displayedRates[displayedRates.length - 1].date;
+    return `${first} → ${last}`;
+  }, [displayedRates]);
+
+  const labels = displayedRates.map((r) => r.date);
+  const rates = displayedRates.map((r) => r.value);
+  const colors = rates.map((rate, i) =>
+    i === 0
+      ? "rgba(100, 149, 237, 1)"
+      : rate >= rates[i - 1]
+      ? "rgba(46, 204, 113, 1)"
+      : "rgba(231, 76, 60, 1)"
   );
 
-  const options = useMemo(
-    () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "rgba(0, 0, 0, 0.8)",
-          titleColor: "#fff",
-          bodyColor: "#fff",
-          borderWidth: 1,
-          borderColor: "#fff",
-          padding: 12,
-          titleFont: {
-            size: 14,
-            weight: "bold",
-          },
-          bodyFont: {
-            size: 13,
-          },
-        },
+  // Base Y-axis value (5–10 units below the lowest rate)
+  const minRate = Math.min(...rates.filter((r) => r > 0));
+  const baseY = Math.floor(minRate - 5);
+
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: "Rate",
+        data: rates,
+        backgroundColor: colors,
+        borderRadius: 10,
+        borderSkipped: false,
+        barThickness: 14,
       },
-      scales: {
-        y: {
-          beginAtZero: false,
-          suggestedMin: Math.max(0, Math.min(...rates) * 0.8),
-          suggestedMax: Math.max(...rates) * 1.2,
-          title: {
-            display: true,
-            text: "Rate",
-            color: "#333",
-            font: { size: 14, weight: "bold" },
-            padding: { top: 10, bottom: 10 },
-          },
-          grid: {
-            color: "rgba(0, 0, 0, 0.05)",
-            drawBorder: false,
-          },
-          ticks: {
-            font: { size: 12 },
-            padding: 8,
-          },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      datalabels: {
+        anchor: "end",
+        align: "end",
+        color: "#333",
+        font: {
+          weight: "bold",
+          size: 10,
         },
-        x: {
-          title: {
-            display: true,
-            text: "Date",
-            color: "#333",
-            font: { size: 14, weight: "bold" },
-            padding: { top: 10, bottom: 10 },
-          },
-          grid: { display: false },
-          ticks: {
-            font: { size: 12 },
-            padding: 8,
-          },
-        },
+        formatter: (value) => (value > 0 ? `₹${value}` : ""),
       },
-    }),
-    [rates]
-  );
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `₹${ctx.raw} on ${ctx.label}`,
+        },
+        backgroundColor: "#000",
+        titleColor: "#fff",
+        bodyColor: "#fff",
+        padding: 12,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: false,
+        min: baseY > 0 ? baseY : 0,
+        title: {
+          display: true,
+          text: "Rate",
+          color: "#333",
+          font: { size: 14, weight: "bold" },
+        },
+        ticks: { font: { size: 12 }, padding: 8 },
+        grid: { color: "rgba(0, 0, 0, 0.05)", drawBorder: false },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Date",
+          color: "#333",
+          font: { size: 14, weight: "bold" },
+        },
+        ticks: { font: { size: 12 }, padding: 8 },
+        grid: { display: false },
+      },
+    },
+  };
 
   return (
     <Suspense fallback={<Loading />}>
@@ -160,11 +171,11 @@ export default function RateGraph({ rateData, company, location }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full min-w-0"
+        className="w-full"
       >
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100">
+            <div className="p-2 rounded-lg bg-blue-100 shadow-inner">
               <TrendingUp className="w-5 h-5 text-blue-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-800">Rate Trends</h3>
@@ -172,7 +183,7 @@ export default function RateGraph({ rateData, company, location }) {
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-500" />
             <select
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
+              className="px-4 py-2 border border-gray-200 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
             >
@@ -181,7 +192,12 @@ export default function RateGraph({ rateData, company, location }) {
             </select>
           </div>
         </div>
-        <div className="w-full overflow-x-auto bg-white rounded-xl p-4 min-h-[250px] md:min-h-[300px] lg:min-h-[400px]">
+
+        <p className="text-sm text-gray-600 mb-2 text-center">
+          Showing data from <strong>{dateRangeLabel}</strong>
+        </p>
+
+        <div className="w-full overflow-x-auto bg-white rounded-xl p-4 shadow-2xl shadow-blue-200 min-h-[250px] md:min-h-[300px] lg:min-h-[400px]">
           <Bar data={data} options={options} />
         </div>
       </motion.div>

@@ -58,48 +58,53 @@ export default function RateCalendar() {
 
   const getRatesForDate = useCallback(
     (calendarDate, company, location) => {
-      const formattedDate = calendarDate.toLocaleDateString("en-GB");
+      const formattedCalendarDate = calendarDate.toLocaleDateString("en-GB"); // "dd/mm/yyyy"
+  
       const data = rateData.find(
         (item) => item.company === company && item.location === location
       );
-
+  
       if (!data) return { rate: "No Rate", rateType: "none" };
-
-      const newRateDate = new Date(
-        data.newRateDate || data.updatedAt || 0
-      ).toLocaleDateString("en-GB");
-
-      if (data.newRate && formattedDate === newRateDate) {
+  
+      if (Array.isArray(data.oldRates)) {
+        const oldMatch = data.oldRates.find((rateStr) => {
+          const match = rateStr.match(/^(\d+)\s+\((\d{2}\/\d{2}\/\d{4})\)$/);
+          if (!match) return false;
+  
+          const [, , date] = match;
+          return date === formattedCalendarDate;
+        });
+  
+        if (oldMatch) {
+          const match = oldMatch.match(/^(\d+)\s+\((\d{2}\/\d{2}\/\d{4})\)$/);
+          if (match) {
+            const [_, rate] = match;
+            return {
+              rate: `₹${rate}`,
+              rateType: "old",
+            };
+          }
+        }
+      }
+  
+      // Check if there's a newRate for today
+      if (
+        data.newRate &&
+        data.lastUpdated &&
+        new Date(data.lastUpdated).toLocaleDateString("en-GB") ===
+          formattedCalendarDate
+      ) {
         return {
           rate: `₹${data.newRate}`,
           rateType: "new",
         };
       }
-
-      if (Array.isArray(data.oldRates)) {
-        const oldMatch = data.oldRates.find((rateObj) => {
-          const rateDate = new Date(rateObj.date || 0).toLocaleDateString(
-            "en-GB"
-          );
-          return formattedDate === rateDate;
-        });
-
-        if (oldMatch) {
-          return {
-            rate: `₹${oldMatch.rate}`,
-            rateType: "old",
-          };
-        }
-      }
-
-      return {
-        rate: "No Rate",
-        rateType: "none",
-      };
+  
+      return { rate: "No Rate", rateType: "none" };
     },
     [rateData]
   );
-
+  
   return (
     <Suspense fallback={<Loading />}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
