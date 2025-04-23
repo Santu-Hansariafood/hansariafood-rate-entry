@@ -2,7 +2,7 @@
 import { useState, useMemo, Suspense } from "react";
 import { CheckCircle, Info, List, Copy } from "lucide-react";
 import { toast } from "react-toastify";
-import Loading from "../common/Loading/Loading";
+import Loading from "@/components/common/Loading/Loading";
 
 export default function NotificationList({ notifications }) {
   const [filter, setFilter] = useState("all");
@@ -95,34 +95,39 @@ export default function NotificationList({ notifications }) {
             const time = `${datePart}, ${n.updateTime || "N/A"}`;
 
             return (
-              <div
-                key={idx}
-                className={`p-4 border-b flex flex-col gap-1 ${alignment}`}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon
-                    className={`w-5 h-5 ${
-                      isRead ? "text-green-500" : "text-blue-500"
-                    }`}
-                  />
-                  <div>
-                    <div className="font-medium">
-                      {n.company} ({n.location})
+              <Suspense fallback={<Loading />}>
+                <div
+                  key={idx}
+                  className={`p-4 border-b flex flex-col gap-1 ${alignment}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon
+                      className={`w-5 h-5 ${
+                        isRead ? "text-green-500" : "text-blue-500"
+                      }`}
+                    />
+                    <div>
+                      <div className="font-medium">
+                        {n.company} ({n.location})
+                      </div>
+                      <div className="text-sm text-gray-600 flex items-center gap-1">
+                        <span className="font-medium">Maize -</span> ₹
+                        {n.newRate}
+                        <button
+                          onClick={() => handleCopy(n)}
+                          className="hover:text-blue-600"
+                          aria-label="Copy notification"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Updated: {time}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600 flex items-center gap-1">
-                      <span className="font-medium">Maize -</span> ₹{n.newRate}
-                      <button
-                        onClick={() => handleCopy(n)}
-                        className="hover:text-blue-600"
-                        aria-label="Copy notification"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="text-xs text-gray-400">Updated: {time}</div>
                   </div>
                 </div>
-              </div>
+              </Suspense>
             );
           })
         )}

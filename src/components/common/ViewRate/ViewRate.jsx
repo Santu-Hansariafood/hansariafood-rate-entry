@@ -17,7 +17,7 @@ import { Bar, Line } from "react-chartjs-2";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
-import Loading from "../Loading/Loading";
+import Loading from "@/components/common/Loading/Loading";
 
 ChartJS.register(
   BarElement,

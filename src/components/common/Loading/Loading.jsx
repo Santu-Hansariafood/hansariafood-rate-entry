@@ -35,7 +35,7 @@ const Loading = () => {
           transition={{ delay: 0.2 }}
           className="text-center"
         >
-          <h3 className="text-lg font-semibold text-gray-800">Loading</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Loading...</h3>
           <p className="text-sm text-gray-600">
             Please wait while we process your request
           </p>
