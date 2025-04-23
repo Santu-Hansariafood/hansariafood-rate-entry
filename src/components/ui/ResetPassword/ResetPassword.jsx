@@ -2,8 +2,8 @@
 
 import { Suspense, useState } from "react";
 import dynamic from "next/dynamic";
-import useMobileFromStorage from "@/hooks/useMobileFromStorage";
-import useResetPassword from "@/hooks/useResetPassword";
+import useMobileFromStorage from "@/hooks/ResetPassword/useMobileFromStorage";
+import useResetPassword from "@/hooks/ResetPassword/useResetPassword";
 import Loading from "@/components/common/Loading/Loading";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
