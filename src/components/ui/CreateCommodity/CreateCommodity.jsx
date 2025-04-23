@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useCallback, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { ToastContainer, toast } from "react-toastify";
+import { Suspense, useMemo } from "react";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
+import { useCreateCommodity } from "@/hooks/Commodity/useCreateCommodity";
 
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  {
-    loading: () => <Loading />,
-  }
-);
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  loading: () => <Loading />,
+});
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
 });
@@ -21,71 +18,36 @@ const Button = dynamic(() => import("@/components/common/Button/Button"), {
 });
 
 export default function CreateCommodity() {
-  const [commodity, setCommodity] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { commodity, loading, handleChange, handleSave } = useCreateCommodity();
 
-  const handleChange = useCallback((e) => {
-    setCommodity(e.target.value);
-  }, []);
+  const memoizedInput = useMemo(() => (
+    <InputBox
+      label="Commodity"
+      type="text"
+      value={commodity}
+      onChange={handleChange}
+      placeholder="Enter commodity name"
+    />
+  ), [commodity, handleChange]);
 
-  const handleSave = useCallback(async () => {
-    if (!commodity.trim()) {
-      toast.error("Commodity name cannot be empty");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await axiosInstance.post("/commodity", {
-        name: commodity,
-      });
-      if (response.status === 201) {
-        toast.success("Commodity saved successfully");
-        setCommodity("");
-      }
-    } catch (error) {
-      const errorMessage =
-        error.response?.data?.error || "Failed to save commodity";
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [commodity]);
-
-  const memoizedInput = useMemo(
-    () => (
-      <InputBox
-        label="Commodity"
-        type="text"
-        value={commodity}
-        onChange={handleChange}
-        placeholder="Enter commodity name"
-      />
-    ),
-    [commodity, handleChange]
-  );
-
-  const memoizedButton = useMemo(
-    () => (
-      <Button
-        onClick={handleSave}
-        text={loading ? "Saving..." : "Save"}
-        disabled={loading}
-      />
-    ),
-    [handleSave, loading]
-  );
+  const memoizedButton = useMemo(() => (
+    <Button
+      onClick={handleSave}
+      text={loading ? "Saving..." : "Save"}
+      disabled={loading}
+    />
+  ), [handleSave, loading]);
 
   return (
-    <Suspense fallback={<Loading/>}>
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-6">
-      <ToastContainer position="top-right" autoClose={3000} />
-      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-6">
-        <Title text="Create Commodity" />
-        {memoizedInput}
-        {memoizedButton}
+    <Suspense fallback={<Loading />}>
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-6">
+        <ToastContainer position="top-right" autoClose={3000} />
+        <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-6">
+          <Title text="Create Commodity" />
+          {memoizedInput}
+          {memoizedButton}
+        </div>
       </div>
-    </div>
     </Suspense>
   );
 }

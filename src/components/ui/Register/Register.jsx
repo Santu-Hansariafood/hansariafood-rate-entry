@@ -1,68 +1,15 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import Loading from "@/components/common/Loading/Loading";
+import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { User, Phone, Lock } from "lucide-react";
+import "react-toastify/dist/ReactToastify.css";
+
+import useRegisterForm from "@/hooks/Register/useRegisterForm";
+import Loading from "@/components/common/Loading/Loading";
 
 export default function Register() {
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-
-  const validate = () => {
-    let newErrors = {};
-    if (!name) newErrors.name = "Name is required";
-    if (!mobile) {
-      newErrors.mobile = "Mobile number is required";
-    } else if (!/^[0-9]{10}$/.test(mobile)) {
-      newErrors.mobile = "Enter a valid 10-digit mobile number";
-    }
-    if (!password) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters long";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    setLoading(true);
-    try {
-      const res = await axiosInstance.post("/auth/register", {
-        name,
-        mobile,
-        password,
-      });
-
-      toast.success(res.data.message);
-      setName("");
-      setMobile("");
-      setPassword("");
-      setErrors({});
-    } catch (error) {
-      console.error("Registration Error:", error);
-
-      if (error.response) {
-        toast.error(error.response.data.message || "Something went wrong!");
-      } else if (error.request) {
-        toast.error("No response from server. Please try again later.");
-      } else {
-        toast.error("An unexpected error occurred.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { form, errors, loading, handleChange, handleSubmit } = useRegisterForm();
 
   return (
     <Suspense fallback={<Loading />}>
@@ -74,31 +21,27 @@ export default function Register() {
           className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl w-full max-w-md"
         >
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              Create Account
-            </h2>
-            <p className="text-gray-600">
-              Join us and get started with your journey
-            </p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
+            <p className="text-gray-600">Join us and get started with your journey</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Full Name */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  name="name"
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={form.name}
+                  onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
                     errors.name ? "border-red-500" : "border-gray-300"
                   }`}
@@ -116,22 +59,22 @@ export default function Register() {
               )}
             </motion.div>
 
+            {/* Mobile Number */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
             >
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mobile Number
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Phone className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  name="mobile"
                   type="tel"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
+                  value={form.mobile}
+                  onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
                     errors.mobile ? "border-red-500" : "border-gray-300"
                   }`}
@@ -149,22 +92,22 @@ export default function Register() {
               )}
             </motion.div>
 
+            {/* Password */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
+                  name="password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={form.password}
+                  onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
                     errors.password ? "border-red-500" : "border-gray-300"
                   }`}
@@ -182,6 +125,7 @@ export default function Register() {
               )}
             </motion.div>
 
+            {/* Submit Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

@@ -1,94 +1,32 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
 import { Building2, PlusCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import Loading from "@/components/common/Loading/Loading";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  {
-    loading: () => <Loading />,
-  }
-);
-const Title = dynamic(() => import("@/components/common/Title/Title"), {
-  loading: () => <Loading />,
-});
-const Button = dynamic(() => import("@/components/common/Button/Button"), {
-  loading: () => <Loading />,
-});
-const Dropdown = dynamic(
-  () => import("@/components/common/Dropdown/Dropdown"),
-  {
-    loading: () => <Loading />,
-  }
-);
+import useCategories from "@/hooks/ManageCompany/useCategories";
+import useCreateCompany from "@/hooks/ManageCompany/useCreateCompany";
+
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), { loading: () => <Loading /> });
+const Title = dynamic(() => import("@/components/common/Title/Title"), { loading: () => <Loading /> });
+const Button = dynamic(() => import("@/components/common/Button/Button"), { loading: () => <Loading /> });
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"), { loading: () => <Loading /> });
 
 export default function CreateCompany() {
-  const [company, setCompany] = useState("");
-  const [category, setCategory] = useState("");
-  const [categories, setCategories] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchAllCategories = async () => {
-      let allCategories = [];
-      let page = 1;
-      let hasMore = true;
-
-      try {
-        while (hasMore) {
-          const response = await axiosInstance.get(`/categories?page=${page}`);
-          const data = Array.isArray(response.data)
-            ? response.data
-            : response.data.categories || [];
-
-          if (data.length > 0) {
-            allCategories = [...allCategories, ...data];
-            page++;
-          } else {
-            hasMore = false;
-          }
-        }
-
-        setCategories(allCategories);
-      } catch (error) {
-        console.error("Error fetching paginated categories:", error);
-        toast.error("Failed to fetch categories");
-      }
-    };
-
-    fetchAllCategories();
-  }, []);
-
-  const handleSave = useCallback(async () => {
-    if (!company.trim() || !category.trim()) {
-      toast.error("All fields are required");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const { status } = await axiosInstance.post("/companies", {
-        name: company,
-        category,
-      });
-      if (status === 201) {
-        toast.success("Company saved successfully");
-        setCompany("");
-        setCategory("");
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to save company");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [company, category]);
+  const categories = useCategories();
+  const {
+    company,
+    setCompany,
+    category,
+    setCategory,
+    isLoading,
+    handleSave,
+  } = useCreateCompany();
 
   return (
     <Suspense fallback={<Loading />}>
@@ -173,17 +111,7 @@ export default function CreateCompany() {
           </motion.div>
         </div>
 
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-        />
+        <ToastContainer position="top-right" autoClose={3000} />
       </div>
     </Suspense>
   );

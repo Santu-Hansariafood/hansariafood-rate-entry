@@ -1,73 +1,38 @@
 "use client";
 
-import { Suspense, useState, useMemo, useCallback } from "react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import Loading from "@/components/common/Loading/Loading";
+import { ToastContainer } from "react-toastify";
 import { motion } from "framer-motion";
 import { MapPin, Building2, ChevronDown } from "lucide-react";
-import stateCityData from "@/data/state-city.json";
+import { useCreateLocationForm } from "@/hooks/Location/useCreateLocationForm";
 
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  {
-    loading: () => <Loading />,
-  }
-);
+import "react-toastify/dist/ReactToastify.css";
+
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  loading: () => <p>Loading...</p>,
+});
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
-  loading: () => <Loading />,
+  loading: () => <p>Loading...</p>,
 });
 const Button = dynamic(() => import("@/components/common/Button/Button"), {
-  loading: () => <Loading />,
+  loading: () => <p>Loading...</p>,
 });
+const Loading = dynamic(() => import("@/components/common/Loading/Loading"));
 
 export default function CreateLocation() {
-  const [state, setState] = useState("");
-  const [location, setLocation] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
-
-  const filteredStates = useMemo(() => {
-    if (!state.trim()) return stateCityData;
-    return stateCityData.filter((item) =>
-      item.state.toLowerCase().includes(state.toLowerCase())
-    );
-  }, [state]);
-
-  const handleStateChange = (e) => {
-    setState(e.target.value);
-    setDropdownOpen(true);
-  };
-
-  const handleStateSelect = (selectedState) => {
-    setState(selectedState);
-    setDropdownOpen(false);
-  };
-
-  const handleSave = useCallback(async () => {
-    if (!state.trim()) return toast.error("Please select a state");
-    if (!location.trim()) return toast.error("Location name cannot be empty");
-
-    try {
-      setLoading(true);
-      const { status } = await axiosInstance.post("/location", {
-        state,
-        name: location,
-      });
-
-      if (status === 201) {
-        toast.success("Location saved successfully");
-        setState("");
-        setLocation("");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to save location");
-    } finally {
-      setLoading(false);
-    }
-  }, [state, location]);
+  const {
+    state,
+    location,
+    loading,
+    isDropdownOpen,
+    filteredStates,
+    handleStateChange,
+    handleStateSelect,
+    handleSave,
+    setLocation,
+    setDropdownOpen,
+  } = useCreateLocationForm();
 
   const renderDropdown = () =>
     isDropdownOpen && (
@@ -130,7 +95,6 @@ export default function CreateLocation() {
               icon={<MapPin className="w-5 h-5 text-gray-400" />}
             />
           </div>
-
           <Button
             text="Save Location"
             onClick={handleSave}

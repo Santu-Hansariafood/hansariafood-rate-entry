@@ -1,89 +1,28 @@
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  Suspense,
-} from "react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import React, { useState, useMemo, useCallback, Suspense } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+import useCategories from "@/hooks/Category/useCategories";
 
-const Title = dynamic(() => import("@/components/common/Title/Title"), {
-  loading: () => <Loading />,
-});
-const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
-  loading: () => <Loading />,
-});
-const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
-  loading: () => <Loading />,
-});
-const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
-  loading: () => <Loading />,
-});
-const Pagination = dynamic(
-  () => import("@/components/common/Pagination/Pagination"),
-  {
-    loading: () => <Loading />,
-  }
-);
+const Title = dynamic(() => import("@/components/common/Title/Title"), { loading: () => <Loading /> });
+const Table = dynamic(() => import("@/components/common/Tables/Tables"), { loading: () => <Loading /> });
+const Actions = dynamic(() => import("@/components/common/Actions/Actions"), { loading: () => <Loading /> });
+const Modal = dynamic(() => import("@/components/common/Modal/Modal"), { loading: () => <Loading /> });
+const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"), { loading: () => <Loading /> });
 
 const CategoryList = () => {
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [modal, setModal] = useState({ open: false, type: "", data: null });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalEntries, setTotalEntries] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
-  const fetchCategories = useCallback(async (page = 1) => {
-    try {
-      const response = await axiosInstance.get(
-        `/categories?page=${page}&limit=10`
-      );
-      setCategories(response.data.categories || []);
-      setTotalEntries(response.data.total);
-    } catch (error) {
-      console.error("Error fetching categories");
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCategories(currentPage);
-  }, [fetchCategories, currentPage]);
-
-  const handleEdit = useCallback(
-    (index, newName) => {
-      const id = categories[index]._id;
-      axiosInstance
-        .put(`/categories/${id}`, { name: newName })
-        .then((res) => {
-          const updated = [...categories];
-          updated[index].name = res.data.category.name;
-          setCategories(updated);
-          closeModal();
-        })
-        .catch(() => console.error("Error updating category"));
-    },
-    [categories]
-  );
-
-  const handleDelete = useCallback(
-    (index) => {
-      const id = categories[index]._id;
-      axiosInstance
-        .delete(`/categories/${id}`)
-        .then(() => {
-          const updated = [...categories];
-          updated.splice(index, 1);
-          setCategories(updated);
-          closeModal();
-        })
-        .catch(() => console.error("Error deleting category"));
-    },
-    [categories]
-  );
+  const {
+    categories,
+    totalEntries,
+    currentPage,
+    setCurrentPage,
+    updateCategory,
+    deleteCategory,
+  } = useCategories();
 
   const openModal = useCallback((type, data = null) => {
     setModal({ open: true, type, data });
@@ -96,6 +35,20 @@ const CategoryList = () => {
   const handleView = useCallback((category) => {
     setSelectedCategory(category);
   }, []);
+
+  const handleEdit = useCallback(
+    (index, newName) => {
+      updateCategory(index, newName).then(closeModal);
+    },
+    [updateCategory, closeModal]
+  );
+
+  const handleDelete = useCallback(
+    (index) => {
+      deleteCategory(index).then(closeModal);
+    },
+    [deleteCategory, closeModal]
+  );
 
   const columns = useMemo(
     () => [

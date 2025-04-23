@@ -1,18 +1,15 @@
 "use client";
 
-import { useState, useCallback, useMemo, Suspense } from "react";
+import { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
+import { useCategory } from "@/hooks/Category/useCategory";
 
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  {
-    loading: () => <Loading />,
-  }
-);
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  loading: () => <Loading />,
+});
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
 });
@@ -21,36 +18,7 @@ const Button = dynamic(() => import("@/components/common/Button/Button"), {
 });
 
 export default function CreateCategory() {
-  const [category, setCategory] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = useCallback((e) => {
-    setCategory(e.target.value);
-  }, []);
-
-  const handleSave = useCallback(async () => {
-    if (!category.trim()) {
-      toast.error("Category name cannot be empty");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await axiosInstance.post("/categories", {
-        name: category,
-      });
-      if (response.status === 201) {
-        toast.success("Category saved successfully");
-        setCategory("");
-      }
-    } catch (error) {
-      const errorMessage =
-        error.response?.data?.error || "Failed to save category";
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [category]);
+  const { category, loading, handleChange, handleSave } = useCategory();
 
   const memoizedInput = useMemo(
     () => (

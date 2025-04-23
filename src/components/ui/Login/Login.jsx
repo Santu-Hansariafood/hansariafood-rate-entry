@@ -1,58 +1,26 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { Suspense, useState } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
+import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
-import { useUser } from "@/context/UserContext";
+import useLoginForm from "@/hooks/Login/useLoginForm";
 import Loading from "@/components/common/Loading/Loading";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 export default function Login() {
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [mobileError, setMobileError] = useState("");
-  const router = useRouter();
-  const { setMobile: setGlobalMobile } = useUser();
-
-  const validateMobile = (value) => /^[6-9]\d{9}$/.test(value);
-
-  const handleMobileChange = (e) => {
-    const value = e.target.value;
-    if (/^\d{0,10}$/.test(value)) {
-      setMobile(value);
-      setMobileError("");
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateMobile(mobile)) {
-      setMobileError("Enter a valid 10-digit mobile number");
-      return;
-    }
-
-    const result = await signIn("credentials", {
-      mobile,
-      password,
-      apiKey: process.env.NEXT_PUBLIC_API_KEY,
-      redirect: false,
-    });
-
-    if (result.error) {
-      setError("Invalid credentials");
-    } else {
-      localStorage.setItem("user", JSON.stringify({ mobile }));
-      setGlobalMobile(mobile);
-      router.push("/dashboard");
-    }
-  };
+  const {
+    mobile,
+    password,
+    showPassword,
+    error,
+    mobileError,
+    setPassword,
+    setShowPassword,
+    handleSubmit,
+    handleMobileChange,
+  } = useLoginForm();
 
   return (
     <Suspense fallback={<Loading />}>
@@ -74,10 +42,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-6" aria-describedby="form-errors">
             <div>
-              <label
-                htmlFor="mobile"
-                className="block text-sm font-semibold text-gray-700 mb-2"
-              >
+              <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700 mb-2">
                 Mobile Number
               </label>
               <input
@@ -107,10 +72,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-semibold text-gray-700 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">

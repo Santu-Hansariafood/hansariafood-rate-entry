@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import {
@@ -12,47 +12,23 @@ import {
   CheckSquare,
   Square,
 } from "lucide-react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import useUsers from "@/hooks/Register/useUsers";
+import useCompanies from "@/hooks/Register/useCompanies";
+import Loading from "@/components/common/Loading/Loading";
+
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 
 export default function RegisterList() {
-  const [users, setUsers] = useState([]);
-  const [companies, setCompanies] = useState([]);
+  const { users, fetchUsers, loadingUsers } = useUsers();
+  const { companies, loadingCompanies } = useCompanies();
+
   const [selectedCompanies, setSelectedCompanies] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
-  useEffect(() => {
-    fetchUsers();
-    fetchCompanies();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setIsLoading(true);
-      const { data } = await axiosInstance.get("/auth/register");
-      setUsers(data);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch users");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchCompanies = async () => {
-    try {
-      const { data } = await axiosInstance.get("/managecompany?limit=1000");
-      setCompanies(data.companies);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch companies");
-    }
-  };
 
   const handleOpenPopup = (user) => {
     setSelectedUser(user);
@@ -79,6 +55,14 @@ export default function RegisterList() {
         const company = companies.find((c) => c._id === companyId);
         return !company?.location.includes(loc);
       })
+    );
+  };
+
+  const handleLocationToggle = (location) => {
+    setSelectedLocations((prev) =>
+      prev.includes(location)
+        ? prev.filter((loc) => loc !== location)
+        : [...prev, location]
     );
   };
 
@@ -115,17 +99,13 @@ export default function RegisterList() {
     }
 
     try {
-      setIsLoading(true);
+      setSaving(true);
       const companiesData = selectedCompanies.map((companyId) => {
         const company = companies.find((c) => c._id === companyId);
-        if (!company) {
-          throw new Error(`Company with ID ${companyId} not found`);
-        }
-
         return {
           companyId,
           locations: selectedLocations.filter((loc) =>
-            company.location.includes(loc)
+            company?.location.includes(loc)
           ),
         };
       });
@@ -144,13 +124,13 @@ export default function RegisterList() {
       handleClosePopup();
       fetchUsers();
     } catch (error) {
-      console.error("Save error:", error);
+      console.error(error);
       toast.error(
         error.response?.data?.error ||
           "Failed to assign companies and locations"
       );
     } finally {
-      setIsLoading(false);
+      setSaving(false);
     }
   };
 
@@ -180,166 +160,130 @@ export default function RegisterList() {
       <div className="p-4 m-4 w-full max-w-6xl mx-auto bg-white shadow-lg rounded-xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Registered Users</h2>
-          {isLoading && <Loading />}
+          {(loadingUsers || loadingCompanies) && <Loading />}
         </div>
         <Table data={usersWithActions} columns={columns} />
-
         <AnimatePresence>
           {open && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+              className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                className="bg-white p-6 rounded-xl w-[500px] shadow-2xl max-h-[90vh] overflow-y-auto"
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -50, opacity: 0 }}
+                className="bg-white p-6 rounded-xl w-[90%] max-w-3xl relative"
               >
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    Assign Companies and Locations
-                  </h3>
-                  <button
-                    onClick={handleClosePopup}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
+                <button
+                  onClick={handleClosePopup}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-red-600 transition-colors"
+                >
+                  <X />
+                </button>
+                <h3 className="text-xl font-semibold mb-4">
+                  Assign Companies & Locations to{" "}
+                  <span className="text-blue-600">
+                    {selectedUser?.name || ""}
+                  </span>
+                </h3>
+                <div className="flex flex-col gap-4 max-h-[60vh] overflow-auto">
+                  {companies.map((company) => (
+                    <div key={company._id} className="border rounded-xl p-4">
+                      <div className="flex justify-between items-center">
+                        <div
+                          className="font-medium text-lg text-gray-800 truncate max-w-[75%]"
+                          title={company.name}
+                        >
+                          {company.name || "Unnamed Company"}
+                        </div>
 
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Company
-                    </label>
-                    <select
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      onChange={(e) => handleCompanyChange(e.target.value)}
-                      value=""
-                    >
-                      <option value="" disabled>
-                        Choose a company
-                      </option>
-                      {companies
-                        .filter(
-                          (company) => !selectedCompanies.includes(company._id)
-                        )
-                        .map((company) => (
-                          <option key={company._id} value={company._id}>
-                            {company.name}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-
-                  {selectedCompanies.map((companyId) => {
-                    const company = companies.find((c) => c._id === companyId);
-                    return company ? (
-                      <div
-                        key={companyId}
-                        className="bg-gray-50 p-4 rounded-lg"
-                      >
-                        <div className="flex justify-between items-center mb-3">
-                          <h4 className="font-semibold text-gray-800">
-                            {company.name}
-                          </h4>
-                          <div className="flex items-center gap-2">
+                        {selectedCompanies.includes(company._id) ? (
+                          <div className="flex gap-2">
                             <button
                               onClick={() =>
-                                isAllLocationsSelected(companyId)
-                                  ? handleDeselectAllLocations(companyId)
-                                  : handleSelectAllLocations(companyId)
+                                isAllLocationsSelected(company._id)
+                                  ? handleDeselectAllLocations(company._id)
+                                  : handleSelectAllLocations(company._id)
                               }
-                              className="text-blue-500 hover:text-blue-700 transition-colors"
-                              title={
-                                isAllLocationsSelected(companyId)
-                                  ? "Deselect All"
-                                  : "Select All"
-                              }
+                              className="text-sm text-blue-600 hover:underline"
                             >
-                              {isAllLocationsSelected(companyId) ? (
-                                <CheckSquare size={16} />
-                              ) : (
-                                <Square size={16} />
-                              )}
+                              {isAllLocationsSelected(company._id)
+                                ? "Deselect All"
+                                : "Select All"}
                             </button>
-                            <button
-                              onClick={() => handleRemoveCompany(companyId)}
-                              className="text-red-500 hover:text-red-700 transition-colors"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            <Trash2
+                              onClick={() => handleRemoveCompany(company._id)}
+                              className="text-red-500 cursor-pointer"
+                            />
                           </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {company.location.map((loc) => (
-                            <label
-                              key={loc}
-                              className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-colors cursor-pointer"
-                            >
-                              <input
-                                type="checkbox"
-                                value={loc}
-                                checked={selectedLocations.includes(loc)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedLocations([
-                                      ...selectedLocations,
-                                      loc,
-                                    ]);
-                                  } else {
-                                    setSelectedLocations(
-                                      selectedLocations.filter((l) => l !== loc)
-                                    );
-                                  }
-                                }}
-                                className="rounded text-blue-500 focus:ring-blue-500"
-                              />
-                              <span className="text-sm text-gray-700">
-                                {loc}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
+                        ) : (
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleCompanyChange(company._id)}
+                            className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600"
+                          >
+                            Select Company
+                          </motion.button>
+                        )}
                       </div>
-                    ) : null;
-                  })}
+
+                      {selectedCompanies.includes(company._id) && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {company.location.map((loc) => {
+                            const isSelected = selectedLocations.includes(loc);
+                            return (
+                              <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                key={loc}
+                                onClick={() => handleLocationToggle(loc)}
+                                className={`flex items-center gap-2 border px-3 py-1 rounded-md text-sm ${
+                                  isSelected
+                                    ? "bg-green-100 border-green-500 text-green-700"
+                                    : "bg-white border-gray-300 text-gray-600"
+                                }`}
+                              >
+                                {isSelected ? (
+                                  <CheckSquare size={16} />
+                                ) : (
+                                  <Square size={16} />
+                                )}
+                                {loc}
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
 
-                <div className="mt-6 flex justify-end space-x-3">
+                <div className="mt-6 flex justify-end gap-4">
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={handleClosePopup}
-                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
                   >
                     Cancel
                   </motion.button>
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={handleSave}
-                    disabled={
-                      isLoading ||
-                      !selectedCompanies.length ||
-                      !selectedLocations.length
-                    }
-                    className="px-4 py-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    disabled={saving}
+                    className={`px-4 py-2 rounded-lg text-white flex items-center gap-2 ${
+                      saving
+                        ? "bg-blue-300 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
                   >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="animate-spin" size={16} />
-                        Saving...
-                      </>
+                    {saving ? (
+                      <Loader2 size={16} className="animate-spin" />
                     ) : (
-                      <>
-                        <Check size={16} />
-                        Save Changes
-                      </>
+                      <Check size={16} />
                     )}
+                    Save
                   </motion.button>
                 </div>
               </motion.div>

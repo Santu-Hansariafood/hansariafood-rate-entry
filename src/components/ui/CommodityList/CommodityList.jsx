@@ -1,15 +1,9 @@
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  Suspense,
-} from "react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+import { useCommodityList } from "@/hooks/Commodity/useCommodityList";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
@@ -23,79 +17,24 @@ const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
-const Pagination = dynamic(
-  () => import("@/components/common/Pagination/Pagination"),
-  {
-    loading: () => <Loading />,
-  }
-);
+const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"), {
+  loading: () => <Loading />,
+});
 
 const CommodityList = () => {
-  const [commodities, setCommodities] = useState([]);
-  const [selectedCommodity, setSelectedCommodity] = useState(null);
-  const [modal, setModal] = useState({ open: false, type: "", data: null });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalEntries, setTotalEntries] = useState(0);
-
-  const fetchCommodities = useCallback(async (page = 1) => {
-    try {
-      const response = await axiosInstance.get(
-        `/commodity?page=${page}&limit=10`
-      );
-      setCommodities(response.data.commodities || []);
-      setTotalEntries(response.data.total);
-    } catch (error) {
-      console.error("Error fetching commodities");
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCommodities(currentPage);
-  }, [fetchCommodities, currentPage]);
-
-  const handleEdit = useCallback(
-    (index, newName) => {
-      const id = commodities[index]._id;
-      axiosInstance
-        .put(`/commodity/${id}`, { name: newName })
-        .then((res) => {
-          const updated = [...commodities];
-          updated[index].name = res.data.commodity.name;
-          setCommodities(updated);
-          closeModal();
-        })
-        .catch(() => console.error("Error updating commodity"));
-    },
-    [commodities]
-  );
-
-  const handleDelete = useCallback(
-    (index) => {
-      const id = commodities[index]._id;
-      axiosInstance
-        .delete(`/commodity/${id}`)
-        .then(() => {
-          const updated = [...commodities];
-          updated.splice(index, 1);
-          setCommodities(updated);
-          closeModal();
-        })
-        .catch(() => console.error("Error deleting commodity"));
-    },
-    [commodities]
-  );
-
-  const openModal = useCallback((type, data = null) => {
-    setModal({ open: true, type, data });
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setModal({ open: false, type: "", data: null });
-  }, []);
-
-  const handleView = useCallback((commodity) => {
-    setSelectedCommodity(commodity);
-  }, []);
+  const {
+    commodities,
+    selectedCommodity,
+    modal,
+    currentPage,
+    totalEntries,
+    setCurrentPage,
+    handleEdit,
+    handleDelete,
+    openModal,
+    closeModal,
+    handleView,
+  } = useCommodityList();
 
   const columns = useMemo(
     () => [
@@ -174,10 +113,7 @@ const CommodityList = () => {
                 <h2 className="text-lg font-semibold mb-4">Delete Commodity</h2>
                 <p>Are you sure you want to delete {modal.data.name}?</p>
                 <div className="flex justify-end space-x-2 mt-4">
-                  <button
-                    className="px-4 py-2 bg-gray-300 rounded"
-                    onClick={closeModal}
-                  >
+                  <button className="px-4 py-2 bg-gray-300 rounded" onClick={closeModal}>
                     Cancel
                   </button>
                   <button

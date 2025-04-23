@@ -1,17 +1,9 @@
 "use client";
 
-import React, {
-  Suspense,
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-} from "react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import React, { Suspense, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-import { toast } from "react-toastify";
-import stateData from "@/data/state-city.json";
+import useLocationList from "@/hooks/Location/useLocationList";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
@@ -24,90 +16,30 @@ const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
 });
 const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
-  {
-    loading: () => <Loading />,
-  }
+  { loading: () => <Loading /> }
 );
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
 
-const LocationList = () => {
-  const [locations, setLocations] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState({ name: "", state: "" });
-  const [totalEntries, setTotalEntries] = useState(0);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const states = useMemo(() => stateData.map((item) => item.state), []);
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await axiosInstance.get(
-          `/location?page=${currentPage}&limit=${itemsPerPage}`
-        );
-        const sorted = response.data.locations?.sort((a, b) =>
-          a.name.localeCompare(b.name)
-        );
-        setLocations(sorted || []);
-        setTotalEntries(response.data.total || 0);
-      } catch (error) {
-        toast.error("Error fetching locations");
-      }
-    };
-
-    fetchLocations();
-  }, [currentPage]);
-
-  const handleDelete = useCallback(async (id) => {
-    try {
-      await axiosInstance.delete(`/location/${id}`);
-      setLocations((prev) => prev.filter((loc) => loc._id !== id));
-      toast.success("Location deleted successfully");
-      setShowModal(false);
-    } catch (error) {
-      toast.error("Failed to delete location");
-    }
-  }, []);
-
-  const handleEdit = useCallback(async () => {
-    try {
-      const { _id } = selectedLocation;
-      const { data } = await axiosInstance.put(`/location/${_id}`, formData);
-      setLocations((prev) =>
-        prev
-          .map((loc) => (loc._id === _id ? data.location : loc))
-          .sort((a, b) => a.name.localeCompare(b.name))
-      );
-      toast.success("Location updated successfully");
-      setShowModal(false);
-    } catch (error) {
-      toast.error("Failed to update location");
-    }
-  }, [formData, selectedLocation]);
-
-  const handleView = useCallback((location) => {
-    setSelectedLocation(location);
-    setShowModal(true);
-    setEditMode(false);
-  }, []);
-
-  const handleEditClick = useCallback((location) => {
-    setSelectedLocation(location);
-    setFormData({ name: location.name, state: location.state });
-    setEditMode(true);
-    setShowModal(true);
-  }, []);
-
-  const handleInputChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  }, []);
+export default function LocationList() {
+  const {
+    states,
+    showModal,
+    setShowModal,
+    editMode,
+    selectedLocation,
+    formData,
+    handleEdit,
+    handleDelete,
+    handleEditClick,
+    handleView,
+    handleInputChange,
+    currentPage,
+    setCurrentPage,
+    totalEntries,
+    paginatedLocations,
+  } = useLocationList();
 
   const columns = useMemo(
     () => [
@@ -118,14 +50,9 @@ const LocationList = () => {
     []
   );
 
-  const paginatedLocations = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return locations.slice(start, start + itemsPerPage);
-  }, [locations, currentPage]);
-
   const data = useMemo(
     () =>
-      locations.map((location) => ({
+      paginatedLocations.map((location) => ({
         name: location.name,
         state: location.state,
         actions: (
@@ -140,11 +67,8 @@ const LocationList = () => {
           />
         ),
       })),
-    [locations, handleDelete, handleEditClick, handleView]
+    [paginatedLocations, handleDelete, handleEditClick, handleView]
   );
-
-  const startEntry = (currentPage - 1) * itemsPerPage + 1;
-  const endEntry = Math.min(startEntry + itemsPerPage - 1, totalEntries);
 
   return (
     <Suspense fallback={<Loading />}>
@@ -154,8 +78,8 @@ const LocationList = () => {
         <Pagination
           currentPage={currentPage}
           totalItems={totalEntries}
-          itemsPerPage={itemsPerPage}
-          onPageChange={(page) => setCurrentPage(page)}
+          itemsPerPage={10}
+          onPageChange={setCurrentPage}
         />
 
         {showModal && (
@@ -178,7 +102,6 @@ const LocationList = () => {
                     placeholder="Enter location name"
                   />
                 </label>
-
                 <label className="block">
                   <span className="text-gray-700 font-semibold">State</span>
                   <select
@@ -197,8 +120,7 @@ const LocationList = () => {
                     ))}
                   </select>
                 </label>
-
-                <div className="flex justify-end space-x-2 mt-4">
+                <div className="flex justify-end gap-2">
                   <button
                     onClick={handleEdit}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -221,7 +143,7 @@ const LocationList = () => {
                 <p>
                   <strong>Name:</strong> {selectedLocation?.name}
                 </p>
-                <div className="flex justify-end space-x-2 mt-4">
+                <div className="flex justify-end gap-2 mt-4">
                   <button
                     onClick={() => handleDelete(selectedLocation._id)}
                     className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
@@ -242,6 +164,4 @@ const LocationList = () => {
       </div>
     </Suspense>
   );
-};
-
-export default LocationList;
+}
