@@ -2,6 +2,7 @@
 
 import React, { Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Building2, MapPin, IndianRupee, Clock4 } from "lucide-react";
 import useRateEntries from "@/hooks/RateEntries/useRateEntries";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
@@ -20,7 +21,7 @@ const RateEntryList = () => {
   return (
     <Suspense fallback={<Loading />}>
       <div className="p-4">
-        <Title text="Today Entries by User" />
+        <Title text="📊 Today Entries by User" />
         {Object.keys(groupedRates).length === 0 ? (
           <div className="text-center text-gray-500">
             No rate entries found.
@@ -60,27 +61,27 @@ const RateEntryList = () => {
                       {entries.map((entry, idx) => (
                         <motion.div
                           key={idx}
-                          className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm"
+                          className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: idx * 0.05 }}
                         >
-                          <div className="text-sm">
-                            <strong className="text-gray-600">Company:</strong>{" "}
-                            {entry.company}
+                          <div className="text-sm flex items-center gap-2 text-blue-700 font-medium">
+                            <Building2 size={16} /> 
+                            <strong>Company:</strong> {entry.company}
                           </div>
-                          <div className="text-sm">
-                            <strong className="text-gray-600">Location:</strong>{" "}
-                            {entry.location}
+                          <div className="text-sm flex items-center gap-2 text-purple-700">
+                            <MapPin size={16} /> 
+                            <strong>Location:</strong> {entry.location}
                           </div>
-                          <div className="text-sm text-green-600 font-semibold">
+                          <div className="text-sm flex items-center gap-2 text-green-600 font-semibold">
+                            <IndianRupee size={16} />
                             <strong>Rate:</strong> ₹{entry.newRate}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm flex items-center gap-2 text-gray-500">
+                            <Clock4 size={16} />
                             <strong>Updated:</strong>{" "}
-                            {new Date(entry.lastUpdated).toLocaleString(
-                              "en-GB"
-                            )}
+                            {new Date(entry.lastUpdated).toLocaleString("en-GB")}
                           </div>
                         </motion.div>
                       ))}
