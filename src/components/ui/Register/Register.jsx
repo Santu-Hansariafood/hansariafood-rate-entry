@@ -9,7 +9,8 @@ import useRegisterForm from "@/hooks/Register/useRegisterForm";
 import Loading from "@/components/common/Loading/Loading";
 
 export default function Register() {
-  const { form, errors, loading, handleChange, handleSubmit } = useRegisterForm();
+  const { form, errors, loading, handleChange, handleSubmit } =
+    useRegisterForm();
 
   return (
     <Suspense fallback={<Loading />}>
@@ -21,8 +22,12 @@ export default function Register() {
           className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl w-full max-w-md"
         >
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h2>
-            <p className="text-gray-600">Join us and get started with your journey</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">
+              Create Account
+            </h2>
+            <p className="text-gray-600">
+              Join us and get started with your journey
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -32,7 +37,9 @@ export default function Register() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-gray-400" />
@@ -65,7 +72,9 @@ export default function Register() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.1 }}
             >
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mobile Number
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Phone className="h-5 w-5 text-gray-400" />
@@ -98,7 +107,9 @@ export default function Register() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />

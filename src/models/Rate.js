@@ -13,6 +13,7 @@ const RateSchema = new mongoose.Schema({
   newRateDate: { type: Date, required: true },
   updatedAt: { type: Date, default: Date.now },
   updateTime: { type: String },
+  mobile: { type: String },
 });
 
 RateSchema.pre("save", function (next) {

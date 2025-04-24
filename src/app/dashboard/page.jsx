@@ -9,6 +9,10 @@ const ViewRate = dynamic(() => import("@/components/common/ViewRate/ViewRate"));
 const AuthWrapper = dynamic(() =>
   import("@/components/AuthWrapper/AuthWrapper")
 );
+const RateEntryList = dynamic(() =>
+  import("@/components/ui/RateEntryList/RateEntryList")
+);
+
 const RateCalendar = dynamic(() =>
   import("@/components/common/RateCalendar/RateCalendar")
 );
@@ -18,6 +22,7 @@ const Page = () => {
     import("@/components/ui/Welcome/Welcome");
     import("@/components/common/ViewRate/ViewRate");
     import("@/components/common/RateCalendar/RateCalendar");
+    import("@/components/ui/RateEntryList/RateEntryList");
   }, []);
 
   return (
@@ -28,6 +33,9 @@ const Page = () => {
         </Suspense>
         <Suspense fallback={<Loading />}>
           <ViewRate />
+        </Suspense>
+        <Suspense fallback={<Loading />}>
+          <RateEntryList />
         </Suspense>
         <Suspense fallback={<Loading />}>
           <RateCalendar />

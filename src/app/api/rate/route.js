@@ -11,7 +11,7 @@ export async function POST(req) {
   }
 
   try {
-    const { company, location, newRate } = await req.json();
+    const { company, location, newRate, mobile } = await req.json();
     if (!company || !location || newRate === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -39,6 +39,7 @@ export async function POST(req) {
 
       rateEntry.newRate = newRate;
       rateEntry.newRateDate = today;
+      rateEntry.mobile = mobile;
       await rateEntry.save();
 
       return NextResponse.json(
@@ -53,6 +54,7 @@ export async function POST(req) {
       newRate,
       newRateDate: today,
       oldRates: [],
+      mobile,
     });
     await rateEntry.save();
 
@@ -100,6 +102,7 @@ export async function GET(req) {
           ? rate.newRateDate
           : rate.oldRates.at(-1)?.date || null,
         updateTime: rate.updateTime || "",
+        mobile: rate.mobile || "",
       };
     });
 
@@ -119,7 +122,7 @@ export async function PUT(req) {
   }
 
   try {
-    const { company, location, newRate } = await req.json();
+    const { company, location, newRate, mobile } = await req.json();
     if (!company || !location || newRate === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -134,6 +137,7 @@ export async function PUT(req) {
 
     rateToUpdate.newRate = newRate;
     rateToUpdate.newRateDate = new Date();
+    rateToUpdate.mobile = mobile;
     await rateToUpdate.save();
 
     return NextResponse.json(

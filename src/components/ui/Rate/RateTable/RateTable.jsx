@@ -11,6 +11,7 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
+import { useUser } from "@/context/UserContext";
 
 const RateTableModal = dynamic(
   () => import("./RateTableModal/RateTableModal"),
@@ -18,6 +19,7 @@ const RateTableModal = dynamic(
 );
 
 export default function RateTable({ selectedCompany, onClose }) {
+  const { mobile } = useUser();
   const [rates, setRates] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
   const [isPending, startTransition] = useTransition();
@@ -120,6 +122,7 @@ export default function RateTable({ selectedCompany, onClose }) {
         location: rateToSave.location,
         newRate: parsedRate,
         oldRates: [newOldRate],
+        mobile,
       });
 
       toast.success("Rate updated successfully!");

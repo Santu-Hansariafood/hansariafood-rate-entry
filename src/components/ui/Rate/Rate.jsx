@@ -8,6 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
 import { Building2, ArrowLeft } from "lucide-react";
+import { useUser } from "@/context/UserContext";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
   loading: () => <Loading />,
@@ -32,6 +33,8 @@ const Pagination = dynamic(
 );
 
 export default function Rate() {
+  const { mobile } = useUser();
+
   const [allCompanies, setAllCompanies] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -54,6 +57,14 @@ export default function Rate() {
       selectedCategories.includes(company.category)
     );
   }, [allCompanies, filters]);
+
+  useEffect(() => {
+    if (mobile) {
+      console.log("Mobile number from context:", mobile);
+    } else {
+      console.log("Mobile number not available");
+    }
+  }, [mobile]);
 
   useEffect(() => {
     const fetchCompanies = async () => {
