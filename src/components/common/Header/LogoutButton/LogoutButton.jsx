@@ -7,7 +7,9 @@ export default function LogoutButton() {
   const baseUrl = "https://hansariafood.site";
   const handleLogout = () => {
     localStorage.clear();
-    signOut({ callbackUrl: baseUrl });
+    signOut({ 
+      redirect: true,
+      callbackUrl: baseUrl });
   };
 
   return (

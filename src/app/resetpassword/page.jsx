@@ -1,29 +1,29 @@
 "use client";
+
 import dynamic from "next/dynamic";
-import React, { Suspense, useEffect } from "react";
 import Loading from "@/components/common/Loading/Loading";
-const AuthWrapper = dynamic(() =>
-  import("@/components/AuthWrapper/AuthWrapper")
+
+const AuthWrapper = dynamic(
+  () => import("@/components/AuthWrapper/AuthWrapper"),
+  {
+    loading: () => <Loading />,
+  }
 );
-const ResetPassword = dynamic(() =>
-  import("@/components/ui/ResetPassword/ResetPassword")
+const ResetPassword = dynamic(
+  () => import("@/components/ui/ResetPassword/ResetPassword"),
+  {
+    loading: () => <Loading />,
+  }
 );
 
-const page = () => {
-  useEffect(() => {
-    import("@/components/AuthWrapper/AuthWrapper");
-    import("@/components/ui/ResetPassword/ResetPassword");
-  }, []);
-
+const Page = () => {
   return (
-    <Suspense fallback={<Loading />}>
-      <AuthWrapper>
-        <Suspense fallback={<Loading />}>
-          <ResetPassword />
-        </Suspense>
-      </AuthWrapper>
-    </Suspense>
+    <AuthWrapper>
+      <section role="region" aria-label="Reset Password Section">
+        <ResetPassword />
+      </section>
+    </AuthWrapper>
   );
 };
 
-export default page;
+export default Page;

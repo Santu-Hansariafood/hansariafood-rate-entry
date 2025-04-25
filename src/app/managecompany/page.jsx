@@ -1,35 +1,36 @@
 "use client";
 
-import React, { Suspense, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-const AuthWrapper = dynamic(() =>
-  import("@/components/AuthWrapper/AuthWrapper")
+
+// Dynamic imports with built-in loading fallback
+const AuthWrapper = dynamic(
+  () => import("@/components/AuthWrapper/AuthWrapper"),
+  {
+    loading: () => <Loading />,
+  }
 );
-const CreateCompany = dynamic(() => import("@/components/ui/Company/Company"));
-const ManageCompanyList = dynamic(() =>
-  import("@/components/ui/ManageCompanyList/ManageCompanyList")
+const CreateCompany = dynamic(() => import("@/components/ui/Company/Company"), {
+  loading: () => <Loading />,
+});
+const ManageCompanyList = dynamic(
+  () => import("@/components/ui/ManageCompanyList/ManageCompanyList"),
+  {
+    loading: () => <Loading />,
+  }
 );
 
-const page = () => {
-  useEffect(() => {
-    import("@/components/AuthWrapper/AuthWrapper");
-    import("@/components/ui/Company/Company");
-    import("@/components/ui/ManageCompanyList/ManageCompanyList");
-  }, []);
-
+const Page = () => {
   return (
-    <Suspense fallback={<Loading />}>
-      <AuthWrapper>
-        <Suspense fallback={<Loading />}>
-          <CreateCompany />
-        </Suspense>
-        <Suspense fallback={<Loading />}>
-          <ManageCompanyList />
-        </Suspense>
-      </AuthWrapper>
-    </Suspense>
+    <AuthWrapper>
+      <section role="region" aria-label="Create Company">
+        <CreateCompany />
+      </section>
+      <section role="region" aria-label="Manage Company List">
+        <ManageCompanyList />
+      </section>
+    </AuthWrapper>
   );
 };
 
-export default page;
+export default Page;

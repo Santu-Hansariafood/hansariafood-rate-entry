@@ -1,36 +1,39 @@
 "use client";
 
-import React, { Suspense, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-const AuthWrapper = dynamic(() =>
-  import("@/components/AuthWrapper/AuthWrapper")
+
+const AuthWrapper = dynamic(
+  () => import("@/components/AuthWrapper/AuthWrapper"),
+  {
+    loading: () => <Loading />,
+  }
 );
 
-const CreateCommodity = dynamic(() =>
-  import("@/components/ui/CreateCommodity/CreateCommodity")
+const CreateCommodity = dynamic(
+  () => import("@/components/ui/CreateCommodity/CreateCommodity"),
+  {
+    loading: () => <Loading />,
+  }
 );
-const CommodityList = dynamic(() =>
-  import("@/components/ui/CommodityList/CommodityList")
+
+const CommodityList = dynamic(
+  () => import("@/components/ui/CommodityList/CommodityList"),
+  {
+    loading: () => <Loading />,
+  }
 );
 
 const Page = () => {
-  useEffect(() => {
-    import("@/components/AuthWrapper/AuthWrapper");
-    import("@/components/ui/CreateCommodity/CreateCommodity");
-    import("@/components/ui/CommodityList/CommodityList");
-  }, []);
   return (
-    <Suspense fallback={<Loading />}>
-      <AuthWrapper>
-        <Suspense fallback={<Loading />}>
-          <CreateCommodity />
-        </Suspense>
-        <Suspense fallback={<Loading />}>
-          <CommodityList />
-        </Suspense>
-      </AuthWrapper>
-    </Suspense>
+    <AuthWrapper>
+      <section role="region" aria-label="Create new commodity">
+        <CreateCommodity />
+      </section>
+      <section role="region" aria-label="List of commodities">
+        <CommodityList />
+      </section>
+    </AuthWrapper>
   );
 };
 

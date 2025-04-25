@@ -1,27 +1,26 @@
 "use client";
 
-import React, { Suspense, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-const AuthWrapper = dynamic(() =>
-  import("@/components/AuthWrapper/AuthWrapper")
-);
 
-const RateManagement = dynamic(() => import("@/components/ui/Rate/Rate"));
+// Dynamic imports with loading fallback
+const AuthWrapper = dynamic(
+  () => import("@/components/AuthWrapper/AuthWrapper"),
+  {
+    loading: () => <Loading />,
+  }
+);
+const RateManagement = dynamic(() => import("@/components/ui/Rate/Rate"), {
+  loading: () => <Loading />,
+});
 
 const Page = () => {
-  useEffect(() => {
-    import("@/components/AuthWrapper/AuthWrapper");
-    import("@/components/ui/Rate/Rate");
-  }, []);
   return (
-    <Suspense fallback={<Loading />}>
-      <AuthWrapper>
-        <Suspense fallback={<Loading />}>
-          <RateManagement />
-        </Suspense>
-      </AuthWrapper>
-    </Suspense>
+    <AuthWrapper>
+      <section role="region" aria-label="Rate Management Section">
+        <RateManagement />
+      </section>
+    </AuthWrapper>
   );
 };
 

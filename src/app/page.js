@@ -1,14 +1,19 @@
-import React, { Suspense } from "react";
+"use client";
+
+import React from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-const Login = dynamic(() => import("@/components/ui/Login/Login"));
 
-const page = () => {
+const Login = dynamic(() => import("@/components/ui/Login/Login"), {
+  loading: () => <Loading />,
+});
+
+const Page = () => {
   return (
-    <Suspense fallback={<Loading />}>
+    <section role="region" aria-label="Login Section">
       <Login />
-    </Suspense>
+    </section>
   );
 };
 
-export default page;
+export default Page;

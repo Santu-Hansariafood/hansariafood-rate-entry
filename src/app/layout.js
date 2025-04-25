@@ -67,7 +67,7 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Corporation",
-              name: "Hansaria Food",
+              name: "Hansaria Food Private Limited",
               url: "https://www.hansariafood.site",
               logo: "/images/og-image.png",
               description:
@@ -89,7 +89,7 @@ export default function RootLayout({ children }) {
               },
               contactPoint: {
                 "@type": "ContactPoint",
-                email: "info@hansariafood.site",
+                email: "info@hansariafood.com",
                 contactType: "customer service",
                 telephone: "+91-XXXXXXXXXX",
                 location:
