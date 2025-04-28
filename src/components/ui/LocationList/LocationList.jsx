@@ -38,7 +38,7 @@ export default function LocationList() {
     currentPage,
     setCurrentPage,
     totalEntries,
-    paginatedLocations,
+    locations,
   } = useLocationList();
 
   const columns = useMemo(
@@ -52,7 +52,7 @@ export default function LocationList() {
 
   const data = useMemo(
     () =>
-      paginatedLocations.map((location) => ({
+      locations.map((location) => ({
         name: location.name,
         state: location.state,
         actions: (
@@ -67,7 +67,7 @@ export default function LocationList() {
           />
         ),
       })),
-    [paginatedLocations, handleDelete, handleEditClick, handleView]
+    [locations, handleDelete, handleEditClick, handleView]
   );
 
   return (

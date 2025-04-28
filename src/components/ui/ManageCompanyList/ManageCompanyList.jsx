@@ -48,7 +48,7 @@ const ManageCompanyList = () => {
         axiosInstance.get(
           `/managecompany?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
         ),
-        axiosInstance.get("/location"),
+        axiosInstance.get("/location?limit=1000"),
         axiosInstance.get("/categories"),
       ]);
 
@@ -102,19 +102,42 @@ const ManageCompanyList = () => {
     }
   };
 
-  const handleEdit = (id) => {
-    const company = companies.find((c) => c._id === id);
-    if (!company) return;
+  const handleEdit = async (id) => {
+    try {
+      setIsLoading(true);
+      const { data } = await axiosInstance.get(`/managecompany/${id}`);
 
-    setEditingCompany({
-      _id: company._id,
-      name: company.name,
-      location: company.location.map((loc) => ({
-        ...loc,
-        mobileNumbers: loc.mobileNumbers || [{ primary: "", secondary: "" }],
-      })),
-      category: company.category || "",
-    });
+      const company = data.company;
+      if (!company) {
+        toast.error("Company not found");
+        return;
+      }
+
+      setEditingCompany({
+        _id: company._id,
+        name: company.name,
+        location: (company.location || []).map((loc) => ({
+          name: typeof loc === "string" ? loc : loc.name,
+          state: typeof loc === "string" ? "" : loc.state,
+          mobileNumbers: company.mobileNumbers
+            ? company.mobileNumbers
+                .filter(
+                  (mob) =>
+                    mob.location === (typeof loc === "string" ? loc : loc.name)
+                )
+                .map((mob) => ({
+                  primary: mob.primaryMobile || "",
+                  secondary: mob.secondaryMobile || "",
+                }))
+            : [{ primary: "", secondary: "" }],
+        })),
+        category: company.category || "",
+      });
+    } catch (err) {
+      toast.error("Failed to fetch full company data");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleUpdate = async (e) => {
@@ -315,13 +338,23 @@ const ManageCompanyList = () => {
                   {editingCompany.location.map((loc, i) => (
                     <div key={i} className="bg-gray-50 p-4 rounded mb-4">
                       <div className="flex gap-4 mb-2">
-                        <InputBox
-                          placeholder="Location name"
+                        <select
+                          className="p-2 border rounded w-full"
                           value={loc.name}
                           onChange={(e) =>
                             handleLocationChange(i, "name", e.target.value)
                           }
-                        />
+                        >
+                          {!loc.name && (
+                            <option value="">Select Location</option>
+                          )}
+                          {locations.map((locationObj, idx) => (
+                            <option key={idx} value={locationObj.name}>
+                              {locationObj.name}
+                            </option>
+                          ))}
+                        </select>
+
                         <select
                           className="p-2 border rounded w-full"
                           value={loc.state}
@@ -338,6 +371,7 @@ const ManageCompanyList = () => {
                             )
                           )}
                         </select>
+
                         <button
                           type="button"
                           onClick={() =>

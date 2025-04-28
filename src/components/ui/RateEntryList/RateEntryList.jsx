@@ -45,7 +45,7 @@ const RateEntryList = () => {
                     {mobileToName[mobile] || mobile}
                   </span>
                   <span className="text-sm text-gray-600">
-                    {entries.length} entr{entries.length > 1 ? "ies" : "y"}
+                    {entries.length} Entr{entries.length > 1 ? "ies" : "y"}
                   </span>
                 </button>
 

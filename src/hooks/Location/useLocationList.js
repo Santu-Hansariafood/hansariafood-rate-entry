@@ -1,4 +1,5 @@
 "use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
@@ -79,11 +80,6 @@ export default function useLocationList(itemsPerPage = 10) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const paginatedLocations = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return locations.slice(start, start + itemsPerPage);
-  }, [locations, currentPage, itemsPerPage]);
-
   return {
     states,
     locations,
@@ -101,6 +97,5 @@ export default function useLocationList(itemsPerPage = 10) {
     handleView,
     handleEditClick,
     handleInputChange,
-    paginatedLocations,
   };
 }
