@@ -20,11 +20,14 @@
     "mongoose": "^8.12.1",
     "next": "15.2.2",
     "next-auth": "^4.24.11",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.10.1",
     "react": "^19.0.0",
     "react-calendar": "^5.1.0",
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
