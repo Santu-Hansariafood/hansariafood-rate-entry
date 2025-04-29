@@ -8,6 +8,7 @@ export default function RateTableRow({
   handleEdit,
   handleSave,
   setRates,
+  commodity,
 }) {
   return (
     <motion.tr
@@ -48,6 +49,12 @@ export default function RateTableRow({
       <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap align-middle">
         {rate.state}
       </td>
+      <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap align-middle">
+        {commodity
+          ? commodity.charAt(0).toUpperCase() + commodity.slice(1).toLowerCase()
+          : ""}
+      </td>
+
       <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap align-middle">
         {rate.oldRate}
       </td>

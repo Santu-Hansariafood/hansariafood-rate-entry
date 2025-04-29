@@ -15,6 +15,7 @@ export default function RateTableBody({
   handleSave,
   setRates,
   actualStartIndex,
+  commodity,
 }) {
   const [expandedStates, setExpandedStates] = useState({});
 
@@ -75,6 +76,9 @@ export default function RateTableBody({
                             State
                           </th>
                           <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                            Commodity
+                          </th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
                             Last Rate
                           </th>
                           <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
@@ -96,6 +100,7 @@ export default function RateTableBody({
                               handleEdit={handleEdit}
                               handleSave={handleSave}
                               setRates={setRates}
+                              commodity={commodity}
                             />
                           ))}
                         </AnimatePresence>

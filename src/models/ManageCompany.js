@@ -13,9 +13,11 @@ const ManageCompanySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, unique: true },
     location: { type: [String], required: true },
-    state: { type: String },
-    category: { type: String },
-    mobileNumbers: { type: [MobileNumberSchema] },
+    state: { type: String, default: "N.A" },
+    category: { type: String, default: "N.A" },
+    commodities: { type: [String], default: [] },
+
+    mobileNumbers: { type: [MobileNumberSchema], default: [] },
   },
   { timestamps: true }
 );

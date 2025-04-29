@@ -32,7 +32,7 @@ const Pagination = dynamic(
   }
 );
 
-export default function Rate() {
+export default function Rate({ commodity }) {
   const { mobile } = useUser();
 
   const [allCompanies, setAllCompanies] = useState([]);
@@ -65,6 +65,12 @@ export default function Rate() {
       console.log("Mobile number not available");
     }
   }, [mobile]);
+
+  useEffect(() => {
+    if (commodity) {
+      console.log("Commodity from route param:", commodity);
+    }
+  }, [commodity]);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -172,6 +178,7 @@ export default function Rate() {
                 selectedCompany={selectedCompany}
                 onClose={() => setSelectedCompany(null)}
                 onRateUpdate={async () => await checkAllCompanies(companies)}
+                commodity={commodity}
               />
             </motion.div>
           ) : (

@@ -11,7 +11,14 @@ export async function POST(req) {
   }
 
   try {
-    let { name, location, state, category, mobileNumbers } = await req.json();
+    let {
+      name,
+      location,
+      state,
+      category,
+      mobileNumbers,
+      commodities,
+    } = await req.json();
 
     if (!name || !location) {
       return NextResponse.json(
@@ -20,18 +27,15 @@ export async function POST(req) {
       );
     }
 
-    if (!Array.isArray(location)) {
-      location = [location];
-    }
-
-    if (!Array.isArray(mobileNumbers)) {
-      mobileNumbers = [];
-    }
+    if (!Array.isArray(location)) location = [location];
+    if (!Array.isArray(mobileNumbers)) mobileNumbers = [];
+    if (!Array.isArray(commodities)) commodities = [];
 
     state = state || "N.A";
     category = category || "N.A";
 
     let existingCompany = await ManageCompany.findOne({ name });
+
     if (existingCompany) {
       const locationExists = location.every((loc) =>
         existingCompany.location.includes(loc)
@@ -55,10 +59,17 @@ export async function POST(req) {
             (oldNum) => oldNum.location === newNum.location
           )
       );
-
       existingCompany.mobileNumbers = [
         ...existingMobileNumbers,
         ...newMobileNumbers,
+      ];
+
+      const existingCommodities = existingCompany.commodities || [];
+      const newCommodities = commodities.filter(
+        (cmd) => !existingCommodities.includes(cmd)
+      );
+      existingCompany.commodities = [
+        ...new Set([...existingCommodities, ...newCommodities]),
       ];
 
       existingCompany.state = state;
@@ -68,7 +79,7 @@ export async function POST(req) {
 
       return NextResponse.json(
         {
-          message: "Company location updated successfully",
+          message: "Company updated successfully",
           company: existingCompany,
         },
         { status: 200 }
@@ -81,6 +92,7 @@ export async function POST(req) {
       state,
       category,
       mobileNumbers,
+      commodities,
     });
 
     await newCompany.save();
