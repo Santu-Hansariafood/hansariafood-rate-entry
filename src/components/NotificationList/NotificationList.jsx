@@ -17,6 +17,9 @@ export default function NotificationList({ notifications }) {
     return (hours * 60 + minutes) * 60 * 1000;
   };
 
+  const capitalizeFirst = (str) =>
+    str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "N/A";
+
   const handleCopy = (notification) => {
     const { company, location, newRate, newRateDate, updateTime } =
       notification;
@@ -24,7 +27,8 @@ export default function NotificationList({ notifications }) {
       "en-IN"
     );
     const time = `${datePart}, ${updateTime || "N/A"}`;
-    const copyText = `${company} (${location}) - ₹${newRate} (Updated on: ${time})`;
+    const commodity = capitalizeFirst(notification.commodity || "N/A");
+    const copyText = `${company} (${location}) - ₹${newRate} (${commodity}) (Updated on: ${time})`;
 
     navigator.clipboard.writeText(copyText);
     toast.success("Details copied to clipboard!");
@@ -83,21 +87,21 @@ export default function NotificationList({ notifications }) {
         {filteredNotifications.length === 0 ? (
           <div className="text-center py-8 text-gray-500">No notifications</div>
         ) : (
-          filteredNotifications.map((n, idx) => {
-            const isRead = n.read;
-            const Icon = isRead ? CheckCircle : Info;
-            const alignment = isRead
-              ? "items-end text-right"
-              : "items-start text-left";
-            const datePart = new Date(
-              n.newRateDate || n.updatedAt || Date.now()
-            ).toLocaleDateString("en-IN");
-            const time = `${datePart}, ${n.updateTime || "N/A"}`;
+          <Suspense fallback={<Loading />}>
+            {filteredNotifications.map((n) => {
+              const isRead = n.read;
+              const Icon = isRead ? CheckCircle : Info;
+              const alignment = isRead
+                ? "items-end text-right"
+                : "items-start text-left";
+              const datePart = new Date(
+                n.newRateDate || n.updatedAt || Date.now()
+              ).toLocaleDateString("en-IN");
+              const time = `${datePart}, ${n.updateTime || "N/A"}`;
 
-            return (
-              <Suspense fallback={<Loading />}>
+              return (
                 <div
-                  key={idx}
+                  key={n.id || `${n.company}-${n.location}-${n.newRateDate}`}
                   className={`p-4 border-b flex flex-col gap-1 ${alignment}`}
                 >
                   <div className="flex items-center gap-2">
@@ -111,8 +115,10 @@ export default function NotificationList({ notifications }) {
                         {n.company} ({n.location})
                       </div>
                       <div className="text-sm text-gray-600 flex items-center gap-1">
-                        <span className="font-medium">Maize -</span> ₹
-                        {n.newRate}
+                        <span className="font-medium">
+                          {capitalizeFirst(n.commodity)} -
+                        </span>
+                        ₹{n.newRate}
                         <button
                           onClick={() => handleCopy(n)}
                           className="hover:text-blue-600"
@@ -121,15 +127,16 @@ export default function NotificationList({ notifications }) {
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
+
                       <div className="text-xs text-gray-400">
                         Updated: {time}
                       </div>
                     </div>
                   </div>
                 </div>
-              </Suspense>
-            );
-          })
+              );
+            })}
+          </Suspense>
         )}
       </div>
     </Suspense>

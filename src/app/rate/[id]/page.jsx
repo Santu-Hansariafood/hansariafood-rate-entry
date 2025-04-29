@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+import { useParams } from "next/navigation";
 
-// Dynamic imports with loading fallback
 const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
   {
@@ -15,10 +15,13 @@ const RateManagement = dynamic(() => import("@/components/ui/Rate/Rate"), {
 });
 
 const Page = () => {
+  const params = useParams();
+  const commodity = params?.id;
+
   return (
     <AuthWrapper>
       <section role="region" aria-label="Rate Management Section">
-        <RateManagement />
+        <RateManagement commodity={commodity} />
       </section>
     </AuthWrapper>
   );

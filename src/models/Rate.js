@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const RateSchema = new mongoose.Schema({
   company: { type: String, required: true },
   location: { type: String, required: true },
+  commodity: { type: String, required: true },
   oldRates: [
     {
       rate: { type: Number, required: true },

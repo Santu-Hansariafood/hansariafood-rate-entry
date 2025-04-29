@@ -18,7 +18,7 @@ const RateTableModal = dynamic(
   { loading: () => <Loading /> }
 );
 
-export default function RateTable({ selectedCompany, onClose }) {
+export default function RateTable({ selectedCompany, onClose, commodity }) {
   const { mobile } = useUser();
   const [rates, setRates] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
@@ -101,6 +101,12 @@ export default function RateTable({ selectedCompany, onClose }) {
     fetchRates();
   }, [fetchRates]);
 
+  useEffect(() => {
+    if (commodity) {
+      console.log("Commodity received in RateTable:", commodity);
+    }
+  }, [commodity]);
+
   const handleEdit = (index) => setEditIndex(index);
 
   const handleSave = async (index) => {
@@ -123,6 +129,7 @@ export default function RateTable({ selectedCompany, onClose }) {
         newRate: parsedRate,
         oldRates: [newOldRate],
         mobile,
+        commodity,
       });
 
       toast.success("Rate updated successfully!");
@@ -164,6 +171,7 @@ export default function RateTable({ selectedCompany, onClose }) {
         handleSave={handleSave}
         setRates={setRates}
         actualStartIndex={0}
+        commodity={commodity}
       />
     </Suspense>
   );

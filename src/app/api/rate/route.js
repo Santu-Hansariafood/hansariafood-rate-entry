@@ -11,8 +11,8 @@ export async function POST(req) {
   }
 
   try {
-    const { company, location, newRate, mobile } = await req.json();
-    if (!company || !location || newRate === undefined) {
+    const { company, location, newRate, mobile, commodity } = await req.json();
+    if (!company || !location || !commodity || newRate === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -22,7 +22,7 @@ export async function POST(req) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let rateEntry = await Rate.findOne({ company, location });
+    let rateEntry = await Rate.findOne({ company, location, commodity });
 
     if (rateEntry) {
       const lastUpdated = new Date(rateEntry.newRateDate);
@@ -51,6 +51,7 @@ export async function POST(req) {
     rateEntry = new Rate({
       company,
       location,
+      commodity,
       newRate,
       newRateDate: today,
       oldRates: [],
@@ -76,8 +77,13 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const company = searchParams.get("company");
+    const commodity = searchParams.get("commodity");
 
-    let rates = company ? await Rate.find({ company }) : await Rate.find();
+    let query = {};
+    if (company) query.company = company;
+    if (commodity) query.commodity = commodity;
+
+    const rates = await Rate.find(query);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -95,6 +101,7 @@ export async function GET(req) {
       return {
         company: rate.company,
         location: rate.location,
+        commodity: rate.commodity,
         oldRates: oldRatesFormatted,
         newRate: isToday ? rate.newRate : "",
         hasNewRateToday: isToday,
@@ -122,15 +129,15 @@ export async function PUT(req) {
   }
 
   try {
-    const { company, location, newRate, mobile } = await req.json();
-    if (!company || !location || newRate === undefined) {
+    const { company, location, newRate, mobile, commodity } = await req.json();
+    if (!company || !location || !commodity || newRate === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const rateToUpdate = await Rate.findOne({ company, location });
+    const rateToUpdate = await Rate.findOne({ company, location, commodity });
     if (!rateToUpdate) {
       return NextResponse.json({ error: "Rate not found" }, { status: 404 });
     }

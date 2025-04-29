@@ -10,7 +10,6 @@ async function sendMonthlyReport() {
   await connectDB();
   try {
     const today = new Date();
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
     const rates = await Rate.find({});
     if (rates.length === 0) return console.log("No rates found");
@@ -18,6 +17,7 @@ async function sendMonthlyReport() {
     const data = rates.map((rate) => ({
       Company: rate.company,
       Location: rate.location,
+      Commodity: rate.commodity || "",
       "New Rate": rate.newRate,
       "New Rate Date": rate.newRateDate
         ? new Date(rate.newRateDate).toLocaleDateString("en-GB")
@@ -77,22 +77,20 @@ Hansaria Food Private Limited
 (This is a system-generated email, please do not reply.)`,
       attachments: [
         {
-          filename: `rates-report-${today.getFullYear()}-${
-            today.getMonth() + 1
-          }.xlsx`,
+          filename: `rates-report-${today.getFullYear()}-${today.getMonth() + 1}.xlsx`,
           path: filePath,
         },
       ],
     });
 
     unlinkSync(filePath);
-
     console.log("Monthly rate report sent successfully!");
   } catch (error) {
     console.error("Error sending monthly report:", error);
   }
 }
 
+// Schedule to run at 8:00 AM on the 1st day of every month
 cron.schedule("0 8 1 * *", () => {
   console.log("Running scheduled task: Sending monthly report");
   sendMonthlyReport();

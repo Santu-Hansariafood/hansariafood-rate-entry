@@ -20,6 +20,7 @@ export default function RateTableModal({
   setRates,
   actualStartIndex,
   children,
+  commodity,
 }) {
   return (
     <Suspense fallback={<Loading />}>
@@ -56,6 +57,7 @@ export default function RateTableModal({
               handleSave={handleSave}
               setRates={setRates}
               actualStartIndex={actualStartIndex}
+              commodity={commodity}
             />
           </Suspense>
           <div className="p-4 border-t bg-white">{children}</div>
