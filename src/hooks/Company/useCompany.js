@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 export default function useCompany() {
   const [companies, setCompanies] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [commodities, setCommodities] = useState([]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -33,16 +34,18 @@ export default function useCompany() {
           return allData;
         };
 
-        const [companyList, locationList] = await Promise.all([
+        const [companyList, locationList, commodityList] = await Promise.all([
           fetchPaginated("/companies", "companies"),
           fetchPaginated("/location", "locations"),
+          fetchPaginated("/commodity", "commodities"),
         ]);
 
         setCompanies(companyList);
         setLocations(locationList);
+        setCommodities(commodityList);
       } catch (err) {
         console.error(err);
-        toast.error("Failed to fetch companies or locations");
+        toast.error("Failed to fetch companies, locations, or commodities");
       }
     };
 
@@ -50,27 +53,26 @@ export default function useCompany() {
   }, []);
 
   const companyOptions = useMemo(
-    () =>
-      companies.map((comp) => ({
-        label: comp.name,
-        value: comp.name,
-      })),
+    () => companies.map((comp) => ({ label: comp.name, value: comp.name })),
     [companies]
   );
 
   const locationOptions = useMemo(
-    () =>
-      locations.map((loc) => ({
-        label: loc.name,
-        value: loc.name,
-      })),
+    () => locations.map((loc) => ({ label: loc.name, value: loc.name })),
     [locations]
+  );
+
+  const commodityOptions = useMemo(
+    () => commodities.map((cmd) => ({ label: cmd.name, value: cmd.name })),
+    [commodities]
   );
 
   return {
     companies,
     locations,
+    commodities,
     companyOptions,
     locationOptions,
+    commodityOptions,
   };
 }

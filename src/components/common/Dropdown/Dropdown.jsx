@@ -1,8 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 
-const Dropdown = ({ label, options = [], value, onChange }) => {
+const Dropdown = ({
+  label,
+  options = [],
+  value,
+  onChange,
+  isMulti = false,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -22,9 +34,13 @@ const Dropdown = ({ label, options = [], value, onChange }) => {
   }, [searchTerm, normalizedOptions]);
 
   useEffect(() => {
-    const selected = normalizedOptions.find((opt) => opt.value === value);
-    if (selected) setSearchTerm(selected.label);
-  }, [value, normalizedOptions]);
+    if (isMulti && Array.isArray(value)) {
+      setSearchTerm("");
+    } else {
+      const selected = normalizedOptions.find((opt) => opt.value === value);
+      if (selected) setSearchTerm(selected.label);
+    }
+  }, [value, normalizedOptions, isMulti]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -41,11 +57,36 @@ const Dropdown = ({ label, options = [], value, onChange }) => {
     setIsOpen(true);
   }, []);
 
-  const handleSelect = useCallback((option) => {
-    onChange(option.value);
-    setSearchTerm(option.label);
-    setIsOpen(false);
-  }, [onChange]);
+  const handleSelect = useCallback(
+    (option) => {
+      if (isMulti) {
+        if (Array.isArray(value)) {
+          const alreadySelected = value.includes(option.value);
+          const updatedValues = alreadySelected
+            ? value.filter((v) => v !== option.value)
+            : [...value, option.value];
+          onChange(updatedValues);
+        } else {
+          onChange([option.value]);
+        }
+      } else {
+        onChange(option.value);
+        setSearchTerm(option.label);
+        setIsOpen(false);
+      }
+    },
+    [onChange, value, isMulti]
+  );
+
+  const isSelected = useCallback(
+    (optionValue) => {
+      if (isMulti && Array.isArray(value)) {
+        return value.includes(optionValue);
+      }
+      return value === optionValue;
+    },
+    [value, isMulti]
+  );
 
   return (
     <div
@@ -71,17 +112,44 @@ const Dropdown = ({ label, options = [], value, onChange }) => {
         className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
       />
 
+      {isMulti && Array.isArray(value) && value.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {value.map((val, idx) => {
+            const option = normalizedOptions.find((opt) => opt.value === val);
+            return (
+              <span
+                key={idx}
+                className="flex items-center bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-800 dark:text-green-100"
+              >
+                {option?.label || val}
+                <button
+                  onClick={() => onChange(value.filter((v) => v !== val))}
+                  className="ml-1 text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-500"
+                >
+                  &times;
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
       {isOpen && (
         <div
           id="dropdown-options"
-          className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10"
+          className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10 mt-1"
         >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => (
               <div
                 key={index}
                 role="option"
-                className="p-2 hover:bg-green-100 dark:hover:bg-green-700 cursor-pointer text-gray-800 dark:text-white"
+                aria-selected={isSelected(option.value)}
+                className={`p-2 cursor-pointer text-gray-800 dark:text-white ${
+                  isSelected(option.value)
+                    ? "bg-green-200 dark:bg-green-700"
+                    : "hover:bg-green-100 dark:hover:bg-green-700"
+                }`}
                 onClick={() => handleSelect(option)}
               >
                 {option.label}

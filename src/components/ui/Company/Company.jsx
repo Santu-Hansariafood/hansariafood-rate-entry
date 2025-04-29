@@ -9,18 +9,20 @@ import Loading from "@/components/common/Loading/Loading";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import useCompany from "@/hooks/Company/useCompany";
 
-const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"), {
-  loading: () => <Loading />,
-});
+const Dropdown = dynamic(
+  () => import("@/components/common/Dropdown/Dropdown"),
+  { loading: () => <Loading /> }
+);
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
 });
 const Button = dynamic(() => import("@/components/common/Button/Button"), {
   loading: () => <Loading />,
 });
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
-  loading: () => <Loading />,
-});
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  { loading: () => <Loading /> }
+);
 
 export default function CreateCompany() {
   const {
@@ -28,6 +30,7 @@ export default function CreateCompany() {
     locations,
     companyOptions,
     locationOptions,
+    commodityOptions,
   } = useCompany();
 
   const [companyName, setCompanyName] = useState("");
@@ -36,6 +39,7 @@ export default function CreateCompany() {
   const [category, setCategory] = useState("");
   const [primaryNumber, setPrimaryNumber] = useState("");
   const [secondaryNumber, setSecondaryNumber] = useState("");
+  const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleLocationChange = useCallback(
@@ -56,6 +60,16 @@ export default function CreateCompany() {
     [companies]
   );
 
+  const resetForm = () => {
+    setCompanyName("");
+    setLocation("");
+    setState("");
+    setCategory("");
+    setPrimaryNumber("");
+    setSecondaryNumber("");
+    setSelectedCommodities([]);
+  };
+
   const handleSubmit = async () => {
     if (!companyName.trim() || !location || !primaryNumber.trim()) {
       toast.error("Company name, location, and primary number are required!");
@@ -67,6 +81,11 @@ export default function CreateCompany() {
       return;
     }
 
+    if (selectedCommodities.length === 0) {
+      toast.error("Please select at least one commodity.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -75,6 +94,7 @@ export default function CreateCompany() {
         location,
         state: state || "N.A",
         category: category || "N.A",
+        commodities: selectedCommodities,
         mobileNumbers: [
           {
             location: location,
@@ -86,14 +106,9 @@ export default function CreateCompany() {
 
       if (response.status === 201) {
         toast.success("Company created successfully!");
-        setCompanyName("");
-        setLocation("");
-        setState("");
-        setCategory("");
-        setPrimaryNumber("");
-        setSecondaryNumber("");
+        resetForm();
       } else if (response.status === 200) {
-        toast.info(response.data.message);
+        toast.info(response.data.message || "Company already exists!");
       }
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to create company");
@@ -132,17 +147,31 @@ export default function CreateCompany() {
             <InputBox
               label="Enter Mobile Number"
               value={primaryNumber}
-              onChange={(e) => setPrimaryNumber(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                if (value.length <= 10) {
+                  setPrimaryNumber(value);
+                }
+              }}
               type="tel"
               placeholder="Enter Mobile Number"
+              maxLength={10}
             />
 
             <InputBox
-              label="Enter Contact Name"
+              label="Enter Contact Person Name"
               value={secondaryNumber}
               onChange={(e) => setSecondaryNumber(e.target.value)}
-              type="tel"
+              type="text"
               placeholder="Enter Contact Person Name"
+            />
+
+            <Dropdown
+              label="Select Commodities"
+              options={commodityOptions}
+              value={selectedCommodities}
+              onChange={(vals) => setSelectedCommodities(vals)}
+              isMulti={true}
             />
           </div>
 

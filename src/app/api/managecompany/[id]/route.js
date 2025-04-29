@@ -36,10 +36,9 @@ export async function PUT(req, context) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await connectDB();
-
   const id = context.params.id;
-  const { name, location, category, state, mobileNumbers } = await req.json();
+  const { name, location, category, state, mobileNumbers, commodities } =
+    await req.json();
 
   if (!id || !name || !location) {
     return NextResponse.json(
@@ -55,7 +54,9 @@ export async function PUT(req, context) {
     }
 
     const flatLocations = Array.isArray(location)
-      ? location.map((loc) => `${loc.name} ${loc.state}`.trim())
+      ? location.map((loc) =>
+          typeof loc === "object" ? `${loc.name} ${loc.state}`.trim() : loc
+        )
       : [];
 
     company.name = name;
@@ -77,6 +78,14 @@ export async function PUT(req, context) {
       }
 
       company.mobileNumbers = Array.from(updatedMobileMap.values());
+    }
+
+    if (Array.isArray(commodities)) {
+      const currentCommodities = company.commodities || [];
+      const merged = Array.from(
+        new Set([...currentCommodities, ...commodities])
+      );
+      company.commodities = merged;
     }
 
     await company.save();
