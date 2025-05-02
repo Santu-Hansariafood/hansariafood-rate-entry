@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
@@ -58,6 +58,7 @@ const ManageCompanyList = () => {
 
       const formattedCompanies = (companyRes.data.companies || []).map((c) => ({
         ...c,
+        subcommodity: c.subcommodity || "",
         location: Array.isArray(c.location)
           ? c.location.map((loc) => {
               const locationName = typeof loc === "string" ? loc : loc.name;
@@ -121,6 +122,7 @@ const ManageCompanyList = () => {
         _id: company._id,
         name: company.name,
         category: company.category || "",
+        subcommodity: company.subcommodity || "",
         commodities: company.commodities || [],
         location: (company.location || []).map((loc) => ({
           name: typeof loc === "string" ? loc : loc.name,
@@ -137,7 +139,7 @@ const ManageCompanyList = () => {
                 }))
             : [{ primary: "", secondary: "" }],
         })),
-        category: company.category || "",
+        commodity: company.commodity || "",
       });
     } catch (err) {
       toast.error("Failed to fetch full company data");
@@ -145,6 +147,18 @@ const ManageCompanyList = () => {
       setIsLoading(false);
     }
   };
+
+  const subcommodityOptions = useMemo(() => {
+    if (!editingCompany || !Array.isArray(commodities)) return [];
+
+    const selectedCommodityNames = editingCompany.commodities;
+
+    const matchedSubcategories = commodities
+      .filter((com) => selectedCommodityNames.includes(com.name))
+      .flatMap((com) => com.subcategories || []);
+
+    return Array.from(new Set(matchedSubcategories));
+  }, [editingCompany?.commodities, commodities]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -154,6 +168,7 @@ const ManageCompanyList = () => {
       const updatedData = {
         name: editingCompany.name,
         category: editingCompany.category,
+        subcommodity: editingCompany.subcommodity,
         commodities: editingCompany.commodities,
         location: editingCompany.location.map((loc) => ({
           name: loc.name,
@@ -242,6 +257,7 @@ const ManageCompanyList = () => {
     { header: "Locations", accessor: "locations" },
     { header: "Category", accessor: "category" },
     { header: "Commodities", accessor: "commodities" },
+    { header: "Sub Commodity", accessor: "subcommodity" },
     { header: "Primary Mobile", accessor: "primaryMobile" },
     { header: "Secondary Mobile", accessor: "secondaryMobile" },
     { header: "Actions", accessor: "actions" },
@@ -359,6 +375,28 @@ const ManageCompanyList = () => {
                     className="basic-multi-select"
                     classNamePrefix="select"
                   />
+                  <div className="my-4">
+                    <label className="block mb-2 font-semibold">
+                      Sub Commodity
+                    </label>
+                    <select
+                      className="w-full p-2 border rounded"
+                      value={editingCompany.subcommodity}
+                      onChange={(e) =>
+                        setEditingCompany({
+                          ...editingCompany,
+                          subcommodity: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">Select Subcommodity</option>
+                      {subcommodityOptions.map((sub, idx) => (
+                        <option key={idx} value={sub}>
+                          {sub}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="mb-4">

@@ -18,6 +18,7 @@ export async function POST(req) {
       category,
       mobileNumbers,
       commodities,
+      subCommodities,
     } = await req.json();
 
     if (!name || !location) {
@@ -30,6 +31,7 @@ export async function POST(req) {
     if (!Array.isArray(location)) location = [location];
     if (!Array.isArray(mobileNumbers)) mobileNumbers = [];
     if (!Array.isArray(commodities)) commodities = [];
+    if (!Array.isArray(subCommodities)) subCommodities = [];
 
     state = state || "N.A";
     category = category || "N.A";
@@ -72,6 +74,14 @@ export async function POST(req) {
         ...new Set([...existingCommodities, ...newCommodities]),
       ];
 
+      const existingSubCommodities = existingCompany.subCommodities || [];
+      const newSubCommodities = subCommodities.filter(
+        (sub) => !existingSubCommodities.includes(sub)
+      );
+      existingCompany.subCommodities = [
+        ...new Set([...existingSubCommodities, ...newSubCommodities]),
+      ];
+
       existingCompany.state = state;
       existingCompany.category = category;
 
@@ -93,6 +103,7 @@ export async function POST(req) {
       category,
       mobileNumbers,
       commodities,
+      subCommodities,
     });
 
     await newCompany.save();
@@ -121,9 +132,10 @@ export async function GET(req) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const query = searchParams.get("q")?.toLowerCase() || "";
     const categories = searchParams.getAll("category");
+    const subCommodities = searchParams.getAll("subCommodities");
     const skip = (page - 1) * limit;
 
-    let filter = {};
+    const filter = {};
 
     if (query) {
       filter.name = { $regex: query, $options: "i" };
@@ -131,6 +143,10 @@ export async function GET(req) {
 
     if (categories.length > 0) {
       filter.category = { $in: categories };
+    }
+
+    if (subCommodities.length > 0) {
+      filter.subCommodities = { $in: subCommodities };
     }
 
     const [companies, total] = await Promise.all([

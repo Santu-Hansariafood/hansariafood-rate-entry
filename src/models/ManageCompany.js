@@ -16,6 +16,7 @@ const ManageCompanySchema = new mongoose.Schema(
     state: { type: String, default: "N.A" },
     category: { type: String, default: "N.A" },
     commodities: { type: [String], default: [] },
+    subCommodities: { type: [String], default: [] },
 
     mobileNumbers: { type: [MobileNumberSchema], default: [] },
   },
