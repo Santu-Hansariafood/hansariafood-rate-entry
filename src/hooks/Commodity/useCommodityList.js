@@ -11,13 +11,11 @@ export function useCommodityList() {
 
   const fetchCommodities = useCallback(async (page = 1) => {
     try {
-      const response = await axiosInstance.get(
-        `/commodity?page=${page}&limit=10`
-      );
+      const response = await axiosInstance.get(`/commodity?page=${page}&limit=10`);
       setCommodities(response.data.commodities || []);
       setTotalEntries(response.data.total);
     } catch (error) {
-      console.error("Error fetching commodities");
+      console.error("Error fetching commodities", error);
     }
   }, []);
 
@@ -26,17 +24,20 @@ export function useCommodityList() {
   }, [fetchCommodities, currentPage]);
 
   const handleEdit = useCallback(
-    (index, newName) => {
+    (index, newName, newSubCategories) => {
       const id = commodities[index]._id;
       axiosInstance
-        .put(`/commodity/${id}`, { name: newName })
+        .put(`/commodity/${id}`, {
+          name: newName,
+          subCategories: newSubCategories,
+        })
         .then((res) => {
           const updated = [...commodities];
-          updated[index].name = res.data.commodity.name;
+          updated[index] = res.data.commodity;
           setCommodities(updated);
           closeModal();
         })
-        .catch(() => console.error("Error updating commodity"));
+        .catch((error) => console.error("Error updating commodity", error));
     },
     [commodities]
   );
@@ -52,7 +53,7 @@ export function useCommodityList() {
           setCommodities(updated);
           closeModal();
         })
-        .catch(() => console.error("Error deleting commodity"));
+        .catch((error) => console.error("Error deleting commodity", error));
     },
     [commodities]
   );
