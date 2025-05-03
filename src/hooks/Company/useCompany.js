@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
@@ -66,13 +64,7 @@ export default function useCompany() {
     () => commodities.map((cmd) => ({ label: cmd.name, value: cmd.name })),
     [commodities]
   );
-  
-  const subCommodityOptions = useMemo(() => {
-    const subCategories = commodities.flatMap(cmd => cmd.subCategories || []);
-    const unique = Array.from(new Set(subCategories));
-    return unique.map(sub => ({ label: sub, value: sub }));
-  }, [commodities]);
-  
+
   return {
     companies,
     locations,
@@ -80,5 +72,5 @@ export default function useCompany() {
     companyOptions,
     locationOptions,
     commodityOptions,
-  };    
+  };
 }

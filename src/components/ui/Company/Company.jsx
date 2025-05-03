@@ -41,8 +41,8 @@ export default function CreateCompany() {
   const [primaryNumber, setPrimaryNumber] = useState("");
   const [secondaryNumber, setSecondaryNumber] = useState("");
   const [selectedCommodities, setSelectedCommodities] = useState([]);
-const [selectedSubCommodities, setSelectedSubCommodities] = useState([]);
-const [loading, setLoading] = useState(false);
+  const [selectedSubCommodities, setSelectedSubCommodities] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const handleLocationChange = useCallback(
     (val) => {
@@ -106,8 +106,8 @@ const [loading, setLoading] = useState(false);
         location,
         state: state || "N.A",
         category: category || "N.A",
-        commodities: selectedCommodities,
-        subCommodities: selectedSubCommodities,
+        commodities: selectedCommodities.map((cmd) => cmd.value),
+        subCommodities: selectedSubCommodities.map((sub) => sub.value),
         mobileNumbers: [
           {
             location: location,
@@ -187,13 +187,12 @@ const [loading, setLoading] = useState(false);
               // isMulti={true}
             />
             <Dropdown
-  label="Select Sub Commodities"
-  options={subCommodityOptions}
-  value={selectedSubCommodities}
-  onChange={(vals) => setSelectedSubCommodities(vals)}
-  isMulti={true}
-/>
-
+              label="Select Sub Commodities"
+              options={subCommodityOptions}
+              value={selectedSubCommodities}
+              onChange={(vals) => setSelectedSubCommodities(vals)}
+              isMulti={true}
+            />
           </div>
 
           <div className="flex justify-center">
