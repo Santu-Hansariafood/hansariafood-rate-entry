@@ -28,7 +28,7 @@ export default function NotificationList({ notifications }) {
     );
     const time = `${datePart}, ${updateTime || "N/A"}`;
     const commodity = capitalizeFirst(notification.commodity || "N/A");
-    const copyText = `${company} (${location}) - ₹${newRate} (${commodity}) (Updated on: ${time})`;
+    const copyText = `${company} is offering ₹${newRate} for ${commodity} at the ${location} location Today (Updated on: ${time}).`;
 
     navigator.clipboard.writeText(copyText);
     toast.success("Details copied to clipboard!");
@@ -43,11 +43,7 @@ export default function NotificationList({ notifications }) {
 
         const aTime = a.updateTime ? parseUpdateTime(a.updateTime) : 0;
         const bTime = b.updateTime ? parseUpdateTime(b.updateTime) : 0;
-
-        const aFull = aDate.getTime() + aTime;
-        const bFull = bDate.getTime() + bTime;
-
-        return bFull - aFull;
+        return bDate.getTime() + bTime - (aDate.getTime() + aTime);
       })
       .filter((n) => {
         if (filter === "read") return n.read;
@@ -88,7 +84,7 @@ export default function NotificationList({ notifications }) {
           <div className="text-center py-8 text-gray-500">No notifications</div>
         ) : (
           <Suspense fallback={<Loading />}>
-            {filteredNotifications.map((n) => {
+            {filteredNotifications.map((n, index) => {
               const isRead = n.read;
               const Icon = isRead ? CheckCircle : Info;
               const alignment = isRead
@@ -101,7 +97,12 @@ export default function NotificationList({ notifications }) {
 
               return (
                 <div
-                  key={n.id || `${n.company}-${n.location}-${n.newRateDate}`}
+                  key={
+                    n.id ||
+                    `${n.company}-${n.location}-${
+                      n.newRateDate || "no-date"
+                    }-${index}`
+                  }
                   className={`p-4 border-b flex flex-col gap-1 ${alignment}`}
                 >
                   <div className="flex items-center gap-2">
@@ -127,7 +128,6 @@ export default function NotificationList({ notifications }) {
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
-
                       <div className="text-xs text-gray-400">
                         Updated: {time}
                       </div>

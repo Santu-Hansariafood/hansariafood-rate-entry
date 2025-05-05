@@ -62,26 +62,30 @@ export default function Welcome() {
         <div className="mt-4 text-left">
           <Title text="Assigned Companies:" />
           <div className="space-y-4">
-            {assignedCompanies.map((company) => (
-              <div
-                key={company.companyId._id}
-                className="bg-gray-50 p-4 rounded-lg shadow-md"
-              >
-                <h3 className="font-semibold text-lg text-blue-700">
-                  {company.companyId.name}
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
-                  {company.locations.map((loc, index) => (
-                    <span
-                      key={`${company.companyId._id}-${index}`}
-                      className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full text-center"
-                    >
-                      {loc}
-                    </span>
-                  ))}
+            {assignedCompanies.map((company) => {
+              if (!company?.companyId) return null;
+
+              return (
+                <div
+                  key={company.companyId._id}
+                  className="bg-gray-50 p-4 rounded-lg shadow-md"
+                >
+                  <h3 className="font-semibold text-lg text-blue-700">
+                    {company.companyId.name}
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
+                    {company.locations.map((loc, index) => (
+                      <span
+                        key={`${company.companyId._id}-${index}`}
+                        className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full text-center"
+                      >
+                        {loc}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       );

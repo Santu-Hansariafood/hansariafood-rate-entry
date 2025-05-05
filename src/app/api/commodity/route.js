@@ -9,8 +9,9 @@ export async function POST(req) {
   }
 
   try {
-    const { name } = await req.json();
-    if (!name) {
+    const { name, subCategories } = await req.json();
+
+    if (!name?.trim()) {
       return NextResponse.json(
         { error: "Commodity name is required" },
         { status: 400 }
@@ -19,15 +20,34 @@ export async function POST(req) {
 
     await connectDB();
 
-    const existing = await Commodity.findOne({ name });
+    const trimmedName = name.trim();
+    const trimmedSubCategories = Array.isArray(subCategories)
+      ? subCategories.map((s) => s.trim()).filter(Boolean)
+      : [];
+
+    let existing = await Commodity.findOne({ name: trimmedName });
+
     if (existing) {
+      // Merge and deduplicate sub-categories
+      const updatedSubCategories = Array.from(
+        new Set([...existing.subCategories, ...trimmedSubCategories])
+      );
+
+      existing.subCategories = updatedSubCategories;
+      await existing.save();
+
       return NextResponse.json(
-        { error: "Commodity already exists" },
-        { status: 409 }
+        { message: "Commodity updated with new sub-categories", commodity: existing },
+        { status: 200 }
       );
     }
 
-    const newCommodity = new Commodity({ name });
+    // Create new commodity if it doesn't exist
+    const newCommodity = new Commodity({
+      name: trimmedName,
+      subCategories: trimmedSubCategories,
+    });
+
     await newCommodity.save();
 
     return NextResponse.json(
@@ -35,8 +55,9 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (err) {
+    console.error("POST /commodity error:", err);
     return NextResponse.json(
-      { error: "Failed to create commodity" },
+      { error: "Failed to create or update commodity" },
       { status: 500 }
     );
   }
@@ -70,6 +91,7 @@ export async function GET(req) {
       { status: 200 }
     );
   } catch (err) {
+    console.error("GET /commodity error:", err);
     return NextResponse.json(
       { error: "Failed to fetch commodities" },
       { status: 500 }

@@ -35,7 +35,7 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
       ] = await Promise.all([
         axiosInstance.get("/managecompany?limit=100"),
         axiosInstance.get(
-          `/rate?company=${encodeURIComponent(selectedCompany.trim())}`
+          `/rate?company=${encodeURIComponent(selectedCompany.trim())}&commodity=${encodeURIComponent(commodity)}`
         ),
         axiosInstance.get("/location?limit=1000"),
       ]);
@@ -54,7 +54,9 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
           const cleanLocation = location.trim();
 
           const foundRate = existingRates.find(
-            (rate) => rate.location.trim() === cleanLocation
+            (rate) => 
+              rate.location.trim() === cleanLocation && 
+              rate.commodity === commodity
           );
 
           const matchedMobile = company.mobileNumbers?.find(
@@ -95,7 +97,7 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
       toast.error("Failed to fetch locations or rates");
       console.error("Error fetching rates:", error);
     }
-  }, [selectedCompany]);
+  }, [selectedCompany, commodity]);
 
   useEffect(() => {
     fetchRates();
@@ -112,17 +114,15 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
   const handleSave = async (index) => {
     const rateToSave = rates[index];
     const parsedRate = parseFloat(rateToSave.newRate);
-
+  
     if (!rateToSave.newRate || isNaN(parsedRate)) {
       toast.error("Please enter a valid numeric rate.");
       return;
     }
-
+  
     try {
-      const newOldRate = `${parsedRate} (${new Date().toLocaleDateString(
-        "en-GB"
-      )})`;
-
+      const newOldRate = `${parsedRate} (${new Date().toLocaleDateString("en-GB")})`;
+  
       await axiosInstance.post("/rate", {
         company: selectedCompany,
         location: rateToSave.location,
@@ -131,29 +131,12 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
         mobile,
         commodity,
       });
-
+  
       toast.success("Rate updated successfully!");
       setEditIndex(null);
-
-      setRates((prevRates) =>
-        prevRates
-          .map((rate, idx) =>
-            idx === index
-              ? {
-                  ...rate,
-                  oldRate: newOldRate,
-                  newRate: parsedRate,
-                  isUpdated: true,
-                  lastUpdated: new Date(),
-                }
-              : rate
-          )
-          .sort((a, b) => {
-            if (!a.isUpdated && b.isUpdated) return -1;
-            if (a.isUpdated && !b.isUpdated) return 1;
-            return b.lastUpdated - a.lastUpdated;
-          })
-      );
+  
+      // Refresh rates after save
+      await fetchRates();
     } catch (error) {
       toast.error("Error updating rate.");
     }

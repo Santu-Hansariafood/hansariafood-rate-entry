@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, Suspense } from "react";
+import { useState, useCallback, Suspense, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -28,6 +28,7 @@ export default function CreateCompany() {
   const {
     companies,
     locations,
+    commodities,
     companyOptions,
     locationOptions,
     commodityOptions,
@@ -40,6 +41,7 @@ export default function CreateCompany() {
   const [primaryNumber, setPrimaryNumber] = useState("");
   const [secondaryNumber, setSecondaryNumber] = useState("");
   const [selectedCommodities, setSelectedCommodities] = useState([]);
+  const [selectedSubCommodities, setSelectedSubCommodities] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleLocationChange = useCallback(
@@ -51,6 +53,16 @@ export default function CreateCompany() {
     [locations]
   );
 
+  const subCommodityOptions = useMemo(() => {
+    const selected = commodities.filter((cmd) =>
+      selectedCommodities.includes(cmd.name)
+    );
+  
+    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
+    const unique = Array.from(new Set(subCats));
+    return unique.map((sub) => ({ label: sub, value: sub }));
+  }, [commodities, selectedCommodities]);
+  
   const handleCompanyChange = useCallback(
     (val) => {
       setCompanyName(val);
@@ -94,7 +106,8 @@ export default function CreateCompany() {
         location,
         state: state || "N.A",
         category: category || "N.A",
-        commodities: selectedCommodities,
+        commodities: selectedCommodities.map((cmd) => cmd.value),
+        subCommodities: selectedSubCommodities.map((sub) => sub.value),
         mobileNumbers: [
           {
             location: location,
@@ -123,7 +136,7 @@ export default function CreateCompany() {
         <ToastContainer position="top-right" autoClose={3000} />
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl space-y-6">
           <Title
-            text="Create Company"
+            text="Manage Company"
             className="text-center text-2xl font-bold text-gray-800"
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -171,6 +184,13 @@ export default function CreateCompany() {
               options={commodityOptions}
               value={selectedCommodities}
               onChange={(vals) => setSelectedCommodities(vals)}
+              // isMulti={true}
+            />
+            <Dropdown
+              label="Select Sub Commodities"
+              options={subCommodityOptions}
+              value={selectedSubCommodities}
+              onChange={(vals) => setSelectedSubCommodities(vals)}
               isMulti={true}
             />
           </div>

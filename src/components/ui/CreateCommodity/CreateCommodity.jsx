@@ -18,17 +18,55 @@ const Button = dynamic(() => import("@/components/common/Button/Button"), {
 });
 
 export default function CreateCommodity() {
-  const { commodity, loading, handleChange, handleSave } = useCreateCommodity();
+  const {
+    commodity,
+    subCategory,
+    hasSubCategory,
+    loading,
+    suggestions,
+    handleChange,
+    handleSubCategoryChange,
+    handleToggleSubCategory,
+    handleSave,
+    setCommodity,
+  } = useCreateCommodity();
 
   const memoizedInput = useMemo(() => (
-    <InputBox
-      label="Commodity"
-      type="text"
-      value={commodity}
-      onChange={handleChange}
-      placeholder="Enter commodity name"
-    />
-  ), [commodity, handleChange]);
+    <div>
+      <InputBox
+        label="Commodity"
+        type="text"
+        value={commodity}
+        onChange={handleChange}
+        placeholder="Enter commodity name"
+      />
+      {suggestions.length > 0 && (
+        <ul className="mt-2 bg-gray-100 rounded p-2 text-sm">
+          {suggestions.map((s, index) => (
+            <li
+              key={index}
+              className="py-1 px-2 hover:bg-gray-200 cursor-pointer"
+              onClick={() => setCommodity(s)}
+            >
+              {s}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  ), [commodity, suggestions]);
+
+  const memoizedSubCategoryInput = useMemo(() => (
+    hasSubCategory && (
+      <InputBox
+        label="Sub Category"
+        type="text"
+        value={subCategory}
+        onChange={handleSubCategoryChange}
+        placeholder="Enter sub category name"
+      />
+    )
+  ), [hasSubCategory, subCategory]);
 
   const memoizedButton = useMemo(() => (
     <Button
@@ -45,6 +83,19 @@ export default function CreateCommodity() {
         <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-6">
           <Title text="Create Commodity" />
           {memoizedInput}
+          <div className="flex items-center space-x-2">
+            <input
+              id="hasSubCategory"
+              type="checkbox"
+              checked={hasSubCategory}
+              onChange={handleToggleSubCategory}
+              className="w-4 h-4"
+            />
+            <label htmlFor="hasSubCategory" className="text-sm">
+              Has Sub Category?
+            </label>
+          </div>
+          {memoizedSubCategoryInput}
           {memoizedButton}
         </div>
       </div>

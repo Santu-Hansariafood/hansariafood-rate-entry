@@ -31,14 +31,21 @@ export async function GET(req, { params }) {
   }
 }
 
-export async function PUT(req, context) {
+export async function PUT(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const id = context.params.id;
-  const { name, location, category, state, mobileNumbers, commodities } =
-    await req.json();
+  const { id } = params;
+  const {
+    name,
+    location,
+    category,
+    state,
+    mobileNumbers,
+    commodities,
+    subCommodities,
+  } = await req.json();
 
   if (!id || !name || !location) {
     return NextResponse.json(
@@ -82,16 +89,22 @@ export async function PUT(req, context) {
 
     if (Array.isArray(commodities)) {
       const currentCommodities = company.commodities || [];
-      const merged = Array.from(
+      company.commodities = Array.from(
         new Set([...currentCommodities, ...commodities])
       );
-      company.commodities = merged;
+    }
+
+    if (Array.isArray(subCommodities)) {
+      const currentSubs = company.subCommodities || [];
+      company.subCommodities = Array.from(
+        new Set([...currentSubs, ...subCommodities])
+      );
     }
 
     await company.save();
 
     return NextResponse.json(
-      { message: "Company updated", company },
+      { message: "Company updated successfully", company },
       { status: 200 }
     );
   } catch (error) {
