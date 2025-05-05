@@ -11,7 +11,9 @@ import useCompany from "@/hooks/Company/useCompany";
 
 const Dropdown = dynamic(
   () => import("@/components/common/Dropdown/Dropdown"),
-  { loading: () => <Loading /> }
+  {
+    loading: () => <Loading />,
+  }
 );
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
@@ -21,7 +23,9 @@ const Button = dynamic(() => import("@/components/common/Button/Button"), {
 });
 const InputBox = dynamic(
   () => import("@/components/common/InputBox/InputBox"),
-  { loading: () => <Loading /> }
+  {
+    loading: () => <Loading />,
+  }
 );
 
 export default function CreateCompany() {
@@ -38,11 +42,11 @@ export default function CreateCompany() {
   const [location, setLocation] = useState("");
   const [state, setState] = useState("");
   const [category, setCategory] = useState("");
-  const [primaryNumber, setPrimaryNumber] = useState("");
-  const [secondaryNumber, setSecondaryNumber] = useState("");
   const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [selectedSubCommodities, setSelectedSubCommodities] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [commodityContacts, setCommodityContacts] = useState([]);
 
   const handleLocationChange = useCallback(
     (val) => {
@@ -53,16 +57,6 @@ export default function CreateCompany() {
     [locations]
   );
 
-  const subCommodityOptions = useMemo(() => {
-    const selected = commodities.filter((cmd) =>
-      selectedCommodities.includes(cmd.name)
-    );
-  
-    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
-    const unique = Array.from(new Set(subCats));
-    return unique.map((sub) => ({ label: sub, value: sub }));
-  }, [commodities, selectedCommodities]);
-  
   const handleCompanyChange = useCallback(
     (val) => {
       setCompanyName(val);
@@ -72,19 +66,55 @@ export default function CreateCompany() {
     [companies]
   );
 
+  const handleCommodityChange = (vals) => {
+    setSelectedCommodities(vals);
+    setCommodityContacts((prev) => {
+      const newContacts = vals.map((commodity) => {
+        const existing = prev.find((c) => c.commodity === commodity.value);
+        return (
+          existing || {
+            commodity: commodity.value,
+            primaryMobile: "",
+            secondaryMobile: "",
+          }
+        );
+      });
+      return newContacts;
+    });
+  };
+
+  const handleContactChange = (commodityName, field, value) => {
+    setCommodityContacts((prev) =>
+      prev.map((contact) =>
+        contact.commodity === commodityName
+          ? { ...contact, [field]: value }
+          : contact
+      )
+    );
+  };
+
+  const subCommodityOptions = useMemo(() => {
+    const selected = commodities.filter((cmd) =>
+      selectedCommodities.some((sel) => sel.value === cmd.name)
+    );
+    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
+    const unique = Array.from(new Set(subCats));
+    return unique.map((sub) => ({ label: sub, value: sub }));
+  }, [commodities, selectedCommodities]);
+
   const resetForm = () => {
     setCompanyName("");
     setLocation("");
     setState("");
     setCategory("");
-    setPrimaryNumber("");
-    setSecondaryNumber("");
     setSelectedCommodities([]);
+    setSelectedSubCommodities([]);
+    setCommodityContacts([]);
   };
 
   const handleSubmit = async () => {
-    if (!companyName.trim() || !location || !primaryNumber.trim()) {
-      toast.error("Company name, location, and primary number are required!");
+    if (!companyName.trim() || !location) {
+      toast.error("Company name and location are required!");
       return;
     }
 
@@ -98,6 +128,14 @@ export default function CreateCompany() {
       return;
     }
 
+    const missingContacts = commodityContacts.find(
+      (contact) => !contact.primaryMobile.trim()
+    );
+    if (missingContacts) {
+      toast.error("Please enter primary mobile number for all commodities.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -108,13 +146,12 @@ export default function CreateCompany() {
         category: category || "N.A",
         commodities: selectedCommodities.map((cmd) => cmd.value),
         subCommodities: selectedSubCommodities.map((sub) => sub.value),
-        mobileNumbers: [
-          {
-            location: location,
-            primaryMobile: primaryNumber,
-            secondaryMobile: secondaryNumber || "",
-          },
-        ],
+        mobileNumbers: commodityContacts.map((contact) => ({
+          commodity: contact.commodity,
+          location: location,
+          primaryMobile: contact.primaryMobile,
+          secondaryMobile: contact.secondaryMobile || "",
+        })),
       });
 
       if (response.status === 201) {
@@ -139,6 +176,7 @@ export default function CreateCompany() {
             text="Manage Company"
             className="text-center text-2xl font-bold text-gray-800"
           />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Dropdown
               label="Company Name"
@@ -157,35 +195,14 @@ export default function CreateCompany() {
             <InputBox label="State" value={state} readOnly />
             <InputBox label="Category" value={category} readOnly />
 
-            <InputBox
-              label="Enter Mobile Number"
-              value={primaryNumber}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, "");
-                if (value.length <= 10) {
-                  setPrimaryNumber(value);
-                }
-              }}
-              type="tel"
-              placeholder="Enter Mobile Number"
-              maxLength={10}
-            />
-
-            <InputBox
-              label="Enter Contact Person Name"
-              value={secondaryNumber}
-              onChange={(e) => setSecondaryNumber(e.target.value)}
-              type="text"
-              placeholder="Enter Contact Person Name"
-            />
-
             <Dropdown
               label="Select Commodities"
               options={commodityOptions}
               value={selectedCommodities}
-              onChange={(vals) => setSelectedCommodities(vals)}
-              // isMulti={true}
+              onChange={handleCommodityChange}
+              isMulti={true}
             />
+
             <Dropdown
               label="Select Sub Commodities"
               options={subCommodityOptions}
@@ -195,7 +212,57 @@ export default function CreateCompany() {
             />
           </div>
 
-          <div className="flex justify-center">
+          {selectedCommodities.map((commodity) => {
+            const label = commodity.label || commodity.value;
+            const contact = commodityContacts.find(
+              (c) => c.commodity === commodity.value
+            );
+
+            return (
+              <div
+                key={commodity.value}
+                className="col-span-2 bg-gray-100 p-4 rounded-lg"
+              >
+                <h3 className="font-semibold mb-3 text-gray-800">
+                  {label} Phone Number
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <InputBox
+                    label={`${label} Mobile Number`}
+                    value={contact?.primaryMobile || ""}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      if (value.length <= 10) {
+                        handleContactChange(
+                          commodity.value,
+                          "primaryMobile",
+                          value
+                        );
+                      }
+                    }}
+                    type="tel"
+                    placeholder="Enter Mobile Number"
+                    maxLength={10}
+                  />
+                  <InputBox
+                    label={`${label} Contact Person`}
+                    value={contact?.secondaryMobile || ""}
+                    onChange={(e) =>
+                      handleContactChange(
+                        commodity.value,
+                        "secondaryMobile",
+                        e.target.value
+                      )
+                    }
+                    type="text"
+                    placeholder="Enter Contact Person Name"
+                  />
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="flex justify-center pt-4">
             <Button
               onClick={handleSubmit}
               text="Save"

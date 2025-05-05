@@ -11,79 +11,31 @@ export async function POST(req) {
   }
 
   try {
-    let {
+    const {
       name,
-      location,
-      state,
       category,
-      mobileNumbers,
       commodities,
-      subCommodities,
+      locations,
     } = await req.json();
 
-    if (!name || !location) {
+    if (!name || !locations || !locations.length) {
       return NextResponse.json(
-        { error: "Name and location are required" },
+        { error: "Name and at least one location are required" },
         { status: 400 }
       );
     }
 
-    if (!Array.isArray(location)) location = [location];
-    if (!Array.isArray(mobileNumbers)) mobileNumbers = [];
-    if (!Array.isArray(commodities)) commodities = [];
-    if (!Array.isArray(subCommodities)) subCommodities = [];
-
-    state = state || "N.A";
-    category = category || "N.A";
-
     let existingCompany = await ManageCompany.findOne({ name });
 
     if (existingCompany) {
-      const locationExists = location.every((loc) =>
-        existingCompany.location.includes(loc)
-      );
-
-      if (locationExists) {
-        return NextResponse.json(
-          { error: "Company with this location already exists" },
-          { status: 409 }
-        );
-      }
-
-      existingCompany.location = [
-        ...new Set([...existingCompany.location, ...location]),
-      ];
-
-      const existingMobileNumbers = existingCompany.mobileNumbers || [];
-      const newMobileNumbers = mobileNumbers.filter(
-        (newNum) =>
-          !existingMobileNumbers.some(
-            (oldNum) => oldNum.location === newNum.location
-          )
-      );
-      existingCompany.mobileNumbers = [
-        ...existingMobileNumbers,
-        ...newMobileNumbers,
-      ];
-
-      const existingCommodities = existingCompany.commodities || [];
-      const newCommodities = commodities.filter(
-        (cmd) => !existingCommodities.includes(cmd)
-      );
-      existingCompany.commodities = [
-        ...new Set([...existingCommodities, ...newCommodities]),
-      ];
-
-      const existingSubCommodities = existingCompany.subCommodities || [];
-      const newSubCommodities = subCommodities.filter(
-        (sub) => !existingSubCommodities.includes(sub)
-      );
-      existingCompany.subCommodities = [
-        ...new Set([...existingSubCommodities, ...newSubCommodities]),
-      ];
-
-      existingCompany.state = state;
-      existingCompany.category = category;
+      // Update existing company
+      existingCompany.category = category || existingCompany.category;
+      existingCompany.commodities = commodities;
+      
+      // Merge locations
+      const existingLocations = new Set(existingCompany.locations.map(loc => loc.location));
+      const newLocations = locations.filter(loc => !existingLocations.has(loc.location));
+      existingCompany.locations = [...existingCompany.locations, ...newLocations];
 
       await existingCompany.save();
 
@@ -98,12 +50,9 @@ export async function POST(req) {
 
     const newCompany = new ManageCompany({
       name,
-      location,
-      state,
-      category,
-      mobileNumbers,
+      category: category || "N.A",
       commodities,
-      subCommodities,
+      locations,
     });
 
     await newCompany.save();

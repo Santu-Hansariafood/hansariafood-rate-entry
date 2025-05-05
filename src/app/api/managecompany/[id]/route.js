@@ -39,15 +39,12 @@ export async function PUT(req, { params }) {
   const { id } = params;
   const {
     name,
-    location,
     category,
-    state,
-    mobileNumbers,
     commodities,
-    subCommodities,
+    locations,
   } = await req.json();
 
-  if (!id || !name || !location) {
+  if (!id || !name || !locations || !locations.length) {
     return NextResponse.json(
       { error: "Missing required fields" },
       { status: 400 }
@@ -60,46 +57,10 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    const flatLocations = Array.isArray(location)
-      ? location.map((loc) =>
-          typeof loc === "object" ? `${loc.name} ${loc.state}`.trim() : loc
-        )
-      : [];
-
     company.name = name;
-    company.location = flatLocations;
     company.category = category || company.category;
-    company.state = state || company.state;
-
-    if (Array.isArray(mobileNumbers)) {
-      const updatedMobileMap = new Map();
-
-      for (const entry of company.mobileNumbers || []) {
-        updatedMobileMap.set(entry.location, entry);
-      }
-
-      for (const entry of mobileNumbers) {
-        if (entry?.location) {
-          updatedMobileMap.set(entry.location, entry);
-        }
-      }
-
-      company.mobileNumbers = Array.from(updatedMobileMap.values());
-    }
-
-    if (Array.isArray(commodities)) {
-      const currentCommodities = company.commodities || [];
-      company.commodities = Array.from(
-        new Set([...currentCommodities, ...commodities])
-      );
-    }
-
-    if (Array.isArray(subCommodities)) {
-      const currentSubs = company.subCommodities || [];
-      company.subCommodities = Array.from(
-        new Set([...currentSubs, ...subCommodities])
-      );
-    }
+    company.commodities = commodities;
+    company.locations = locations;
 
     await company.save();
 
@@ -110,7 +71,7 @@ export async function PUT(req, { params }) {
   } catch (error) {
     console.error("PUT error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: error.message || "Internal Server Error" },
       { status: 500 }
     );
   }
