@@ -109,12 +109,14 @@ export default function Rate({ commodity }) {
         companyNames.map(async (company) => {
           try {
             const rateResponse = await axiosInstance.get(
-              `/rate?company=${company}`
+              `/rate?company=${company}&commodity=${encodeURIComponent(commodity)}`
             );
             return {
               [company]:
                 rateResponse.data.length > 0 &&
-                rateResponse.data.every((rate) => rate.hasNewRateToday),
+                rateResponse.data.every((rate) => 
+                  rate.hasNewRateToday && rate.commodity === commodity
+                ),
             };
           } catch {
             return { [company]: false };
@@ -126,7 +128,7 @@ export default function Rate({ commodity }) {
     } catch (error) {
       console.error("Error checking company completion status:", error);
     }
-  }, []);
+  }, [commodity]);
 
   return (
     <Suspense fallback={<Loading />}>
