@@ -5,7 +5,7 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import { toast } from "react-toastify";
-import Select from "react-select";
+import EditCompanyModal from "./EditCompanyModal";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
@@ -13,12 +13,6 @@ const Title = dynamic(() => import("@/components/common/Title/Title"), {
 const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
   loading: () => <Loading />,
 });
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  {
-    loading: () => <Loading />,
-  }
-);
 const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
   {
@@ -42,7 +36,9 @@ const ManageCompanyList = () => {
   const ITEMS_PER_PAGE = 10;
 
   const capitalizeWords = (str) =>
-    str ? str.replace(/\b\w/g, (char) => char.toUpperCase()).trim() : "";
+    typeof str === "string"
+      ? str.replace(/\b\w/g, (char) => char.toUpperCase()).trim()
+      : "";
 
   const fetchAllData = async () => {
     try {
@@ -94,6 +90,10 @@ const ManageCompanyList = () => {
     fetchAllData();
   }, [currentPage]);
 
+  const handleCloseModal = () => {
+    setEditingCompany(null);
+  };
+  
   const handleView = async (id) => {
     try {
       const { data } = await axiosInstance.get(`/managecompany/${id}`);
@@ -110,62 +110,70 @@ const ManageCompanyList = () => {
     try {
       setIsLoading(true);
       const { data } = await axiosInstance.get(`/managecompany/${id}`);
-      const company = data.company;
+      const company = data?.company;
 
       if (!company) {
         toast.error("Company not found");
         return;
       }
 
+      const formattedCommodities = Array.isArray(company?.commodities)
+        ? company.commodities
+            .filter((cmd) => cmd)
+            .map((cmd) => ({
+              value: typeof cmd === "string" ? cmd : cmd?.name || "",
+              label: typeof cmd === "string" ? cmd : cmd?.name || "",
+              key: `commodity-edit-${typeof cmd === "string" ? cmd : cmd?.name || ""}`,
+            }))
+        : [];
+
+      const formattedSubCommodities = Array.isArray(company?.commodities)
+        ? company.commodities
+            .flatMap((cmd) => cmd?.subcategories || [])
+            .filter(Boolean)
+            .map((sub) => ({
+              value: sub,
+              label: sub,
+              key: `subcommodity-edit-${sub}`,
+            }))
+        : [];
+
       setEditingCompany({
-        _id: company._id,
-        name: company.name,
-        category: company.category || "",
-        subCommodities: company.subCommodities || [],
-        commodities: company.commodities || [],
-        location: (company.location || []).map((loc) => ({
-          name: typeof loc === "string" ? loc : loc.name,
-          commodityContacts: (company.commodities || []).map((commodity) => {
-            const mobileInfo = company.mobileNumbers?.find(
-              (mob) =>
-                mob.location === (typeof loc === "string" ? loc : loc.name) &&
-                mob.commodity === commodity
-            );
-            return {
-              commodity,
-              primary: mobileInfo?.primaryMobile || "",
-              contactPerson: mobileInfo?.contactPerson || "",
-            };
-          }),
-        })),
+        _id: company?._id || "",
+        name: company?.name || "",
+        category: company?.category || "",
+        subCommodities: formattedSubCommodities,
+        commodities: formattedCommodities,
+        location: (company?.locations || [])
+          .filter((loc) => loc && typeof loc === "object")
+          .map((loc, index) => ({
+            name: loc?.location || "",
+            state: loc?.state || "",
+            commodityContacts: formattedCommodities.map((commodity, i) => {
+              const match = (loc.mobileNumbers || []).find(
+                (_, idx) => idx === i
+              );
+              return {
+                commodity: commodity.value,
+                primary: match || "",
+                contactPerson: (loc.contactPersons || [])[i] || "",
+                key: `contact-edit-${index}-${i}-${commodity.value}`,
+              };
+            }),
+          })),
       });
     } catch (err) {
+      console.error("Edit error:", err);
       toast.error("Failed to fetch full company data");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const subcommodityOptions = useMemo(() => {
-    if (!editingCompany || !Array.isArray(commodities)) return [];
-
-    const selectedCommodityNames = editingCompany.commodities;
-
-    const matchedSubcategories = commodities
-      .filter((com) => selectedCommodityNames.includes(com.name))
-      .flatMap((com) => com.subCategories || []);
-
-    return Array.from(new Set(matchedSubcategories)).map((subCat) => ({
-      value: subCat,
-      label: subCat,
-    }));
-  }, [editingCompany?.commodities, commodities]);
-
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
       setIsLoading(true);
-
       const mobileNumbers = editingCompany.location.flatMap((loc) =>
         loc.commodityContacts.map((contact) => ({
           location: loc.name,
@@ -178,16 +186,13 @@ const ManageCompanyList = () => {
       const updatedData = {
         name: editingCompany.name,
         category: editingCompany.category,
-        subCommodities: editingCompany.subCommodities,
-        commodities: editingCompany.commodities,
+        subCommodities: editingCompany.subCommodities.map((sub) => sub.value),
+        commodities: editingCompany.commodities.map((cmd) => cmd.value),
         location: editingCompany.location.map((loc) => loc.name),
         mobileNumbers,
       };
 
-      await axiosInstance.put(
-        `/managecompany/${editingCompany._id}`,
-        updatedData
-      );
+      await axiosInstance.put(`/managecompany/${editingCompany._id}`, updatedData);
       toast.success("Company updated");
       setEditingCompany(null);
       fetchAllData();
@@ -212,12 +217,21 @@ const ManageCompanyList = () => {
     }
   };
 
-  const handleLocationChange = (index, field, value) => {
-    const updated = editingCompany.location.map((loc, i) =>
-      i === index ? { ...loc, [field]: value } : loc
-    );
-    setEditingCompany({ ...editingCompany, location: updated });
-  };
+  const subcommodityOptions = useMemo(() => {
+    if (!editingCompany || !Array.isArray(commodities)) return [];
+
+    const selectedCommodityNames = editingCompany.commodities.map((cmd) => cmd.value || "");
+
+    const matchedSubcategories = commodities
+      .filter((com) => selectedCommodityNames.includes(com.name || ""))
+      .flatMap((com) => Array.isArray(com.subCategories) ? com.subCategories : []);
+
+    return Array.from(new Set(matchedSubcategories)).map((subCat) => ({
+      value: subCat || "",
+      label: subCat || "",
+      key: `subcommodity-option-${subCat || ""}`,
+    }));
+  }, [editingCompany?.commodities, commodities]);
 
   const columns = [
     { header: "Company Name", accessor: "name" },
@@ -230,32 +244,51 @@ const ManageCompanyList = () => {
   ];
 
   const data = companies
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .filter((company) => company && typeof company === "object")
+    .sort((a, b) => (a?.name || "").localeCompare(b?.name || ""))
     .map((company) => {
-      const capitalizedName = capitalizeWords(company.name);
-      const capitalizedCategory = capitalizeWords(company.category || "N.A");
+      const name = capitalizeWords(company?.name || "N.A");
+      const category = capitalizeWords(company?.category || "N.A");
 
-      const primaryNumbers = company.location
-        .map((loc) => loc.mobileNumbers?.[0]?.primary || "")
-        .join(", ");
+      const primaryMobile = (company?.location || [])
+        .flatMap((loc) =>
+          (loc.mobileNumbers || []).map((m) => m.primary).filter(Boolean)
+        )
+        .join(", ") || "N.A";
+
+      const commodities = (company?.commodities || [])
+        .map((c) =>
+          capitalizeWords(typeof c === "string" ? c : c?.name || "")
+        )
+        .filter(Boolean)
+        .join(", ") || "N.A";
+
+      const subCommodities = (company?.subCommodities || [])
+        .map((s) => capitalizeWords(typeof s === "string" ? s : s?.name || ""))
+        .filter(Boolean)
+        .join(", ") || "N.A";
+
+      const locations = (company?.location || [])
+        .map((l) => {
+          const name = typeof l === "string" ? l : l?.name || "";
+          const state = typeof l === "object" ? l?.state || "" : "";
+          return capitalizeWords(`${name}${state ? ` (${state})` : ""}`);
+        })
+        .filter(Boolean)
+        .join(", ") || "N.A";
 
       return {
-        name: capitalizedName,
-        locations:
-          company.location.map((l) => capitalizeWords(l.name)).join(", ") ||
-          "N.A",
-        category: capitalizedCategory,
-        commodities:
-          (company.commodities || []).map(capitalizeWords).join(", ") || "N.A",
-        subcommodity:
-          (company.subCommodities || []).map(capitalizeWords).join(", ") ||
-          "N.A",
-        primaryMobile: primaryNumbers || "N.A",
+        name,
+        locations,
+        category,
+        commodities,
+        subcommodity: subCommodities,
+        primaryMobile,
         actions: (
           <Actions
             item={{
               id: company._id,
-              title: capitalizedName,
+              title: name,
               onView: () => handleView(company._id),
               onEdit: () => handleEdit(company._id),
               onDelete: () => handleDelete(company._id),
@@ -266,269 +299,33 @@ const ManageCompanyList = () => {
     });
 
   return (
-    <Suspense fallback={<Loading />}>
-      <div className="p-4">
-        <Title text="Manage Company List" />
-        <Table data={data} columns={columns} />
-        <Pagination
-          currentPage={currentPage}
-          totalItems={totalItems}
-          itemsPerPage={ITEMS_PER_PAGE}
-          onPageChange={setCurrentPage}
+  <Suspense fallback={<Loading />}>
+    <div className="p-4">
+      <Title text="Manage Company List" />
+      <Table data={data} columns={columns} />
+      <Pagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        itemsPerPage={ITEMS_PER_PAGE}
+        onPageChange={setCurrentPage}
+      />
+      {editingCompany && (
+        <EditCompanyModal
+          editingCompany={editingCompany}
+          setEditingCompany={setEditingCompany}
+          categories={categories}
+          commodities={commodities}
+          subcommodityOptions={subcommodityOptions}
+          locations={locations}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+          onClose={handleCloseModal}
+          refreshCompanyList={fetchAllData}
         />
-
-        {editingCompany && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-3/4 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Edit Company</h2>
-              <form onSubmit={handleUpdate}>
-                <InputBox
-                  label="Company Name"
-                  value={editingCompany.name}
-                  onChange={(e) =>
-                    setEditingCompany({
-                      ...editingCompany,
-                      name: e.target.value,
-                    })
-                  }
-                />
-
-                <div className="my-4">
-                  <label className="block mb-2 font-semibold">Category</label>
-                  <select
-                    className="w-full p-2 border rounded"
-                    value={editingCompany.category}
-                    onChange={(e) =>
-                      setEditingCompany({
-                        ...editingCompany,
-                        category: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat.name}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="my-4">
-                  <label className="block mb-2 font-semibold">
-                    Commodities
-                  </label>
-                  <Select
-                    isMulti
-                    options={commodities.map((com) => ({
-                      value: com.name,
-                      label: com.name,
-                    }))}
-                    value={editingCompany.commodities.map((commodityName) => ({
-                      value: commodityName,
-                      label: commodityName,
-                    }))}
-                    onChange={(selectedOptions) =>
-                      setEditingCompany({
-                        ...editingCompany,
-                        commodities: selectedOptions.map(
-                          (option) => option.value
-                        ),
-                      })
-                    }
-                    className="basic-multi-select"
-                    classNamePrefix="select"
-                  />
-                  <div className="my-4">
-                    <label className="block mb-2 font-semibold">
-                      Sub Commodity
-                    </label>
-                    <Select
-                      isMulti
-                      options={subcommodityOptions}
-                      value={(editingCompany.subCommodities || []).map(
-                        (sub) => ({
-                          value: sub,
-                          label: sub,
-                        })
-                      )}
-                      onChange={(selectedOptions) =>
-                        setEditingCompany({
-                          ...editingCompany,
-                          subCommodities: selectedOptions.map(
-                            (option) => option.value
-                          ),
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Locations</h3>
-                  {editingCompany.location.map((loc, i) => (
-                    <div key={i} className="bg-gray-50 p-4 rounded mb-4">
-                      <div className="flex gap-4 mb-2">
-                        <select
-                          className="p-2 border rounded w-full"
-                          value={loc.name}
-                          onChange={(e) =>
-                            handleLocationChange(i, "name", e.target.value)
-                          }
-                        >
-                          {!loc.name && (
-                            <option value="">Select Location</option>
-                          )}
-                          {locations.map((locationObj) => (
-                            <option
-                              key={locationObj._id}
-                              value={locationObj.name}
-                            >
-                              {locationObj.name}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEditingCompany({
-                              ...editingCompany,
-                              location: editingCompany.location.filter(
-                                (_, index) => index !== i
-                              ),
-                            })
-                          }
-                          className="text-red-600 hover:bg-red-100 px-2 rounded"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <div className="w-full">
-                        <h4 className="text-sm font-medium mb-1">
-                          Commodity Contacts
-                        </h4>
-                        {loc.commodityContacts.map((contact, j) => (
-                          <div
-                            key={j}
-                            className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2"
-                          >
-                            <div>
-                              <label className="block text-sm font-medium">
-                                Commodity
-                              </label>
-                              <input
-                                className="p-2 border rounded w-full"
-                                value={contact.commodity}
-                                disabled
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium">
-                                Primary Mobile
-                              </label>
-                              <input
-                                type="text"
-                                className="p-2 border rounded w-full"
-                                value={contact.primary}
-                                onChange={(e) => {
-                                  const updatedContacts = [
-                                    ...loc.commodityContacts,
-                                  ];
-                                  updatedContacts[j].primary = e.target.value;
-                                  const updatedLocs = [
-                                    ...editingCompany.location,
-                                  ];
-                                  updatedLocs[i].commodityContacts =
-                                    updatedContacts;
-                                  setEditingCompany({
-                                    ...editingCompany,
-                                    location: updatedLocs,
-                                  });
-                                }}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium">
-                                Contact Person
-                              </label>
-                              <input
-                                type="text"
-                                className="p-2 border rounded w-full"
-                                value={contact.contactPerson}
-                                onChange={(e) => {
-                                  const updatedContacts = [
-                                    ...loc.commodityContacts,
-                                  ];
-                                  updatedContacts[j].contactPerson =
-                                    e.target.value;
-                                  const updatedLocs = [
-                                    ...editingCompany.location,
-                                  ];
-                                  updatedLocs[i].commodityContacts =
-                                    updatedContacts;
-                                  setEditingCompany({
-                                    ...editingCompany,
-                                    location: updatedLocs,
-                                  });
-                                }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
-                    onClick={() =>
-                      setEditingCompany({
-                        ...editingCompany,
-                        location: [
-                          ...editingCompany.location,
-                          {
-                            name: "",
-                            commodityContacts: (
-                              editingCompany.commodities || []
-                            ).map((commodity) => ({
-                              commodity,
-                              primary: "",
-                              contactPerson: "",
-                            })),
-                          },
-                        ],
-                      })
-                    }
-                  >
-                    Add Location
-                  </button>
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    className="px-4 py-2 bg-gray-300 rounded"
-                    onClick={() => setEditingCompany(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-green-500 text-white rounded"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Updating..." : "Update"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </div>
-    </Suspense>
-  );
-};
+      )}
+    </div>
+  </Suspense>
+);
+}
 
 export default ManageCompanyList;
