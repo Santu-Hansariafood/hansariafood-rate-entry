@@ -14,28 +14,35 @@ export async function POST(req) {
     const {
       name,
       category,
-      commodities,
-      locations,
+      commodities = [],
+      subCommodities = [],
+      locations = [],
     } = await req.json();
 
-    if (!name || !locations || !locations.length) {
+    if (!name || !locations.length) {
       return NextResponse.json(
         { error: "Name and at least one location are required" },
         { status: 400 }
       );
     }
 
+    // Format commodities to match schema (including subcategories)
+    const formattedCommodities = commodities.map((commodityName) => ({
+      name: commodityName,
+      subcategories: subCommodities,
+    }));
+
     let existingCompany = await ManageCompany.findOne({ name });
 
     if (existingCompany) {
-      // Update existing company
+      // Update existing fields
       existingCompany.category = category || existingCompany.category;
-      existingCompany.commodities = commodities;
-      
-      // Merge locations
-      const existingLocations = new Set(existingCompany.locations.map(loc => loc.location));
-      const newLocations = locations.filter(loc => !existingLocations.has(loc.location));
-      existingCompany.locations = [...existingCompany.locations, ...newLocations];
+      existingCompany.commodities = formattedCommodities;
+
+      // Merge new locations (avoid duplicates)
+      const existingLocationNames = new Set(existingCompany.locations.map(loc => loc.name));
+      const newUniqueLocations = locations.filter(loc => !existingLocationNames.has(loc.name));
+      existingCompany.locations = [...existingCompany.locations, ...newUniqueLocations];
 
       await existingCompany.save();
 
@@ -48,10 +55,11 @@ export async function POST(req) {
       );
     }
 
+    // Create new company
     const newCompany = new ManageCompany({
       name,
       category: category || "N.A",
-      commodities,
+      commodities: formattedCommodities,
       locations,
     });
 
@@ -62,7 +70,7 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error in POST /managecompany:", error);
+    console.error("POST /managecompany failed:", error.message);
     return NextResponse.json(
       { error: error.message || "Failed to create/update company" },
       { status: 500 }
@@ -95,7 +103,7 @@ export async function GET(req) {
     }
 
     if (subCommodities.length > 0) {
-      filter.subCommodities = { $in: subCommodities };
+      filter["commodities.subcategories"] = { $in: subCommodities };
     }
 
     const [companies, total] = await Promise.all([
@@ -105,7 +113,7 @@ export async function GET(req) {
 
     return NextResponse.json({ companies, total }, { status: 200 });
   } catch (error) {
-    console.error("Error in GET /managecompany:", error);
+    console.error("GET /managecompany failed:", error.message);
     return NextResponse.json(
       { error: "Failed to fetch companies" },
       { status: 500 }

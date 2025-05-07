@@ -9,24 +9,18 @@ import Loading from "@/components/common/Loading/Loading";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import useCompany from "@/hooks/Company/useCompany";
 
-const Dropdown = dynamic(
-  () => import("@/components/common/Dropdown/Dropdown"),
-  {
-    loading: () => <Loading />,
-  }
-);
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"), {
+  loading: () => <Loading />,
+});
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
 });
 const Button = dynamic(() => import("@/components/common/Button/Button"), {
   loading: () => <Loading />,
 });
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  {
-    loading: () => <Loading />,
-  }
-);
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  loading: () => <Loading />,
+});
 
 export default function CreateCompany() {
   const {
@@ -44,14 +38,22 @@ export default function CreateCompany() {
   const [category, setCategory] = useState("");
   const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [selectedSubCommodities, setSelectedSubCommodities] = useState([]);
+  const [commodityContacts, setCommodityContacts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [commodityContacts, setCommodityContacts] = useState([]);
+  const isDataReady = useMemo(
+    () =>
+      companyOptions.length > 0 &&
+      locationOptions.length > 0 &&
+      commodityOptions.length > 0,
+    [companyOptions, locationOptions, commodityOptions]
+  );
 
   const handleLocationChange = useCallback(
     (val) => {
-      setLocation(val);
-      const selectedLocation = locations.find((loc) => loc.name === val);
+      const value = typeof val === "object" ? val.value : val;
+      setLocation(value);
+      const selectedLocation = locations.find((loc) => loc.name === value);
       setState(selectedLocation?.state || "");
     },
     [locations]
@@ -59,17 +61,30 @@ export default function CreateCompany() {
 
   const handleCompanyChange = useCallback(
     (val) => {
-      setCompanyName(val);
-      const selectedCompany = companies.find((comp) => comp.name === val);
+      const value = typeof val === "object" ? val.value : val;
+      setCompanyName(value);
+      const selectedCompany = companies.find((comp) => comp.name === value);
       setCategory(selectedCompany?.category || "");
     },
     [companies]
   );
 
   const handleCommodityChange = (vals) => {
-    setSelectedCommodities(vals);
+    if (!vals) {
+      setSelectedCommodities([]);
+      setCommodityContacts([]);
+      return;
+    }
+
+    const validVals = vals.map((v) => ({
+      label: typeof v.label === "string" ? v.label : String(v.value),
+      value: v.value,
+    }));
+
+    setSelectedCommodities(validVals);
+
     setCommodityContacts((prev) => {
-      const newContacts = vals.map((commodity) => {
+      const newContacts = validVals.map((commodity) => {
         const existing = prev.find((c) => c.commodity === commodity.value);
         return (
           existing || {
@@ -140,18 +155,21 @@ export default function CreateCompany() {
 
     try {
       const response = await axiosInstance.post("/managecompany", {
-        name: companyName,
-        location,
-        state: state || "N.A",
+        name: companyName.trim(),
         category: category || "N.A",
-        commodities: selectedCommodities.map((cmd) => cmd.value),
-        subCommodities: selectedSubCommodities.map((sub) => sub.value),
-        mobileNumbers: commodityContacts.map((contact) => ({
-          commodity: contact.commodity,
-          location: location,
-          primaryMobile: contact.primaryMobile,
-          secondaryMobile: contact.secondaryMobile || "",
+        commodities: selectedCommodities.map((cmd) => ({
+          name: cmd.value,
         })),
+        subCommodities: selectedSubCommodities.map((sub) => sub.value),
+        locations: [
+          {
+            location: location.trim(),
+            state: state || "N.A",
+            mobileNumbers: commodityContacts.map(
+              (contact) => contact.primaryMobile
+            ),
+          },
+        ],
       });
 
       if (response.status === 201) {
@@ -181,15 +199,21 @@ export default function CreateCompany() {
             <Dropdown
               label="Company Name"
               options={companyOptions}
-              value={companyName}
+              value={
+                typeof companyName === "object"
+                  ? companyName.value
+                  : companyName
+              }
               onChange={handleCompanyChange}
+              isDisabled={!isDataReady}
             />
 
             <Dropdown
               label="Location"
               options={locationOptions}
-              value={location}
+              value={typeof location === "object" ? location.value : location}
               onChange={handleLocationChange}
+              isDisabled={!isDataReady}
             />
 
             <InputBox label="State" value={state} readOnly />
@@ -201,43 +225,49 @@ export default function CreateCompany() {
               value={selectedCommodities}
               onChange={handleCommodityChange}
               isMulti={true}
+              isDisabled={!isDataReady}
+              placeholder="Select commodities..."
+              isClearable={true}
             />
 
             <Dropdown
               label="Select Sub Commodities"
               options={subCommodityOptions}
               value={selectedSubCommodities}
-              onChange={(vals) => setSelectedSubCommodities(vals)}
+              onChange={(vals) => setSelectedSubCommodities(vals || [])}
               isMulti={true}
+              isDisabled={!isDataReady || selectedCommodities.length === 0}
+              placeholder="Select sub-commodities..."
+              isClearable={true}
             />
           </div>
 
           {selectedCommodities.map((commodity) => {
-            const label = commodity.label || commodity.value;
-            const contact = commodityContacts.find(
-              (c) => c.commodity === commodity.value
-            );
+            const value = typeof commodity === "object" ? commodity.value : commodity;
+            const label =
+              typeof commodity === "object"
+                ? typeof commodity.label === "string"
+                  ? commodity.label
+                  : String(commodity.value)
+                : String(commodity);
+            const contact = commodityContacts.find((c) => c.commodity === value);
 
             return (
               <div
-                key={commodity.value}
+                key={`commodity-${value}`}
                 className="col-span-2 bg-gray-100 p-4 rounded-lg"
               >
                 <h3 className="font-semibold mb-3 text-gray-800">
-                  {label} Phone Number
+                  {label} Contact Details
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InputBox
                     label={`${label} Mobile Number`}
                     value={contact?.primaryMobile || ""}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, "");
-                      if (value.length <= 10) {
-                        handleContactChange(
-                          commodity.value,
-                          "primaryMobile",
-                          value
-                        );
+                      const mobile = e.target.value.replace(/\D/g, "");
+                      if (mobile.length <= 10) {
+                        handleContactChange(value, "primaryMobile", mobile);
                       }
                     }}
                     type="tel"
@@ -248,11 +278,7 @@ export default function CreateCompany() {
                     label={`${label} Contact Person`}
                     value={contact?.secondaryMobile || ""}
                     onChange={(e) =>
-                      handleContactChange(
-                        commodity.value,
-                        "secondaryMobile",
-                        e.target.value
-                      )
+                      handleContactChange(value, "secondaryMobile", e.target.value)
                     }
                     type="text"
                     placeholder="Enter Contact Person Name"
