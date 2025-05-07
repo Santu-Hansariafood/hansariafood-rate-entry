@@ -1,553 +1,235 @@
 "use client";
 
-import React, { useEffect, useState, Suspense, useMemo } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import Table from "@/components/common/Tables/Tables";
+import Actions from "@/components/common/Actions/Actions";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-import { toast } from "react-toastify";
-import Select from "react-select";
-
-const Title = dynamic(() => import("@/components/common/Title/Title"), {
-  loading: () => <Loading />,
-});
-const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
-  loading: () => <Loading />,
-});
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  {
-    loading: () => <Loading />,
-  }
-);
-const Pagination = dynamic(
-  () => import("@/components/common/Pagination/Pagination"),
-  {
-    loading: () => <Loading />,
-  }
-);
-const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
-  loading: () => <Loading />,
-});
+import EditCompanyForm from "./EditCompanyForm";
 
 const ManageCompanyList = () => {
   const [companies, setCompanies] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [commodities, setCommodities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCompany, setSelectedCompany] = useState(null);
   const [editingCompany, setEditingCompany] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [showModal, setShowModal] = useState(false);
 
-  const ITEMS_PER_PAGE = 10;
-
-  const capitalizeWords = (str) =>
-    str ? str.replace(/\b\w/g, (char) => char.toUpperCase()).trim() : "";
-
-  const fetchAllData = async () => {
+  const fetchCompanies = useCallback(async () => {
+    setLoading(true);
     try {
-      const [companyRes, locationRes, categoryRes, commodityRes] =
-        await Promise.all([
-          axiosInstance.get(
-            `/managecompany?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
-          ),
-          axiosInstance.get("/location?limit=1000"),
-          axiosInstance.get("/categories"),
-          axiosInstance.get("/commodity"),
-        ]);
-
-      const formattedCompanies = (companyRes.data.companies || []).map((c) => ({
-        ...c,
-        subCommodities: c.subCommodities || [],
-        location: Array.isArray(c.location)
-          ? c.location.map((loc) => {
-              const locationName = typeof loc === "string" ? loc : loc.name;
-              const matchingMobile = c.mobileNumbers?.find(
-                (mob) => mob.location === locationName
-              );
-              return {
-                name: locationName,
-                state: typeof loc === "string" ? "" : loc.state,
-                mobileNumbers: matchingMobile
-                  ? [
-                      {
-                        primary: matchingMobile.primaryMobile || "",
-                        secondary: matchingMobile.secondaryMobile || "",
-                      },
-                    ]
-                  : [{ primary: "", secondary: "" }],
-              };
-            })
-          : [],
+      const response = await axiosInstance.get("/managecompany");
+      const transformedCompanies = (response.data.companies || []).map((company) => ({
+        ...company,
+        location: Array.isArray(company.location) ? company.location : [],
+        commodities: Array.isArray(company.commodities) ? company.commodities : [],
+        subCommodities: Array.isArray(company.subCommodities) ? company.subCommodities : [],
+        mobileNumbers: Array.isArray(company.mobileNumbers) ? company.mobileNumbers : [],
       }));
-
-      setCompanies(formattedCompanies);
-      setTotalItems(companyRes.data.total || 0);
-      setLocations(locationRes.data.locations || []);
-      setCategories(categoryRes.data.categories || []);
-      setCommodities(commodityRes.data.commodities || []);
-    } catch (err) {
-      toast.error("Failed to fetch initial data");
+      setCompanies(transformedCompanies);
+    } catch (error) {
+      toast.error("❌ Failed to fetch companies");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchAllData();
-  }, [currentPage]);
+    fetchCompanies();
+  }, [fetchCompanies]);
 
-  const handleView = async (id) => {
-    try {
-      const { data } = await axiosInstance.get(`/managecompany/${id}`);
-      const locations = (data.company.location || [])
-        .map((l) => (typeof l === "string" ? l : `${l.name} (${l.state})`))
-        .join(", ");
-      alert(`Company: ${data.company.name}\nLocation(s): ${locations}`);
-    } catch {
-      toast.error("Failed to fetch company details");
-    }
+  const handleView = (company) => {
+    setSelectedCompany(company);
+    setEditingCompany(null);
+    setShowModal(true);
   };
 
-  const handleEdit = async (id) => {
-    try {
-      setIsLoading(true);
-      const { data } = await axiosInstance.get(`/managecompany/${id}`);
-      const company = data.company;
-
-      if (!company) {
-        toast.error("Company not found");
-        return;
-      }
-
-      setEditingCompany({
-        _id: company._id,
-        name: company.name,
-        category: company.category || "",
-        subCommodities: company.subCommodities || [],
-        commodities: company.commodities || [],
-        location: (company.location || []).map((loc) => ({
-          name: typeof loc === "string" ? loc : loc.name,
-          state: typeof loc === "string" ? "" : loc.state,
-          mobileNumbers: company.mobileNumbers
-            ? company.mobileNumbers
-                .filter(
-                  (mob) =>
-                    mob.location === (typeof loc === "string" ? loc : loc.name)
-                )
-                .map((mob) => ({
-                  primary: mob.primaryMobile || "",
-                  secondary: mob.secondaryMobile || "",
-                }))
-            : [{ primary: "", secondary: "" }],
-        })),
-        commodity: company.commodity || "",
-      });
-    } catch (err) {
-      toast.error("Failed to fetch full company data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const subcommodityOptions = useMemo(() => {
-    if (!editingCompany || !Array.isArray(commodities)) return [];
-
-    const selectedCommodityNames = editingCompany.commodities;
-
-    const matchedSubcategories = commodities
-      .filter((com) => selectedCommodityNames.includes(com.name))
-      .flatMap((com) => com.subCategories || []); // Changed from subcategories to subCategories
-
-    return Array.from(new Set(matchedSubcategories)).map((subCat) => ({
-      value: subCat,
-      label: subCat,
-    }));
-  }, [editingCompany?.commodities, commodities]);
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      setIsLoading(true);
-
-      const updatedData = {
-        name: editingCompany.name,
-        category: editingCompany.category,
-        subCommodities: editingCompany.subCommodities,
-        commodities: editingCompany.commodities,
-        location: editingCompany.location.map((loc) => ({
-          name: loc.name,
-          state: loc.state,
-        })),
-        mobileNumbers: editingCompany.location.map((loc) => ({
-          location: loc.name,
-          primaryMobile: loc.mobileNumbers?.[0]?.primary || "",
-          secondaryMobile: loc.mobileNumbers?.[0]?.secondary || "",
-        })),
-      };
-
-      await axiosInstance.put(
-        `/managecompany/${editingCompany._id}`,
-        updatedData
-      );
-      toast.success("Company updated");
-      setEditingCompany(null);
-      fetchAllData();
-    } catch (err) {
-      toast.error("Update failed");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleEdit = (company) => {
+    setEditingCompany(company);
+    setSelectedCompany(null);
+    setShowModal(true);
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this company?")) return;
+    if (!window.confirm("Are you sure you want to delete this company?")) return;
     try {
-      setIsLoading(true);
       await axiosInstance.delete(`/managecompany/${id}`);
-      toast.success("Deleted successfully");
-      fetchAllData();
-    } catch {
-      toast.error("Delete failed");
-    } finally {
-      setIsLoading(false);
+      toast.success("✅ Company deleted");
+      fetchCompanies();
+    } catch (error) {
+      toast.error("❌ Failed to delete company");
     }
   };
 
-  const handleLocationChange = (index, field, value) => {
-    const updated = editingCompany.location.map((loc, i) =>
-      i === index ? { ...loc, [field]: value } : loc
-    );
-    setEditingCompany({ ...editingCompany, location: updated });
+  const formatMobileNumber = (mobile) => {
+    if (!mobile) return null;
+    const parts = [];
+    if (mobile.primaryMobile) parts.push(`📱 ${mobile.primaryMobile}`);
+    if (mobile.secondaryMobile) parts.push(`📞 ${mobile.secondaryMobile}`);
+    if (mobile.contactPerson) parts.push(`👤 ${mobile.contactPerson}`);
+    return parts.join(" | ");
   };
 
-  const handleLocationMobileChange = (locIndex, mobileIndex, field, value) => {
-    const updatedLocations = editingCompany.location.map((loc, i) => {
-      if (i !== locIndex) return loc;
-      const updatedMobiles = loc.mobileNumbers.map((mob, j) =>
-        j === mobileIndex ? { ...mob, [field]: value } : mob
-      );
-      return { ...loc, mobileNumbers: updatedMobiles };
-    });
-    setEditingCompany({ ...editingCompany, location: updatedLocations });
-  };
+  const tableRows = companies.map((row) => {
+    return {
+      ...row,
 
-  const addLocationMobile = (locIndex) => {
-    const updatedLocations = editingCompany.location.map((loc, i) => {
-      if (i !== locIndex) return loc;
-      return {
-        ...loc,
-        mobileNumbers: [
-          ...(loc.mobileNumbers || []),
-          { primary: "", secondary: "" },
-        ],
-      };
-    });
-    setEditingCompany({ ...editingCompany, location: updatedLocations });
-  };
+      name: <span className="font-semibold">{row.name || "N/A"}</span>,
 
-  const removeLocationMobile = (locIndex, mobileIndex) => {
-    const updatedLocations = editingCompany.location.map((loc, i) => {
-      if (i !== locIndex) return loc;
-      const updatedMobiles = loc.mobileNumbers.filter(
-        (_, j) => j !== mobileIndex
-      );
-      return { ...loc, mobileNumbers: updatedMobiles };
-    });
-    setEditingCompany({ ...editingCompany, location: updatedLocations });
-  };
+      locationDisplay: (
+        <ul className="list-disc list-inside">
+          {row.location.map((loc, idx) => (
+            <li key={idx} className="text-sm">{loc || "N/A"}</li>
+          ))}
+        </ul>
+      ),
+
+      categoryDisplay: <span className="text-gray-600">{row.category || "N/A"}</span>,
+      stateDisplay: <span className="text-gray-600">{row.state || "N/A"}</span>,
+
+      commoditiesDisplay: (
+        <ul className="list-disc list-inside">
+          {row.commodities.map((cmd, idx) => (
+            <li key={idx} className="text-sm">
+              {cmd || "N/A"}
+              {row.subCommodities[idx] && (
+                <span className="text-gray-500 ml-2">({row.subCommodities[idx]})</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      ),
+
+      mobileNumbersDisplay: (
+        <ul className="list-disc list-inside">
+          {row.mobileNumbers.map((mobile, idx) => {
+            const formatted = formatMobileNumber(mobile);
+            return formatted ? (
+              <li key={idx} className="text-sm">
+                {mobile.location && (
+                  <span className="font-medium">{mobile.location}: </span>
+                )}
+                {formatted}
+              </li>
+            ) : null;
+          })}
+        </ul>
+      ),
+
+      actions: (
+        <Actions
+          item={{
+            id: row._id,
+            title: row.name,
+            onView: () => handleView(row),
+            onEdit: () => handleEdit(row),
+            onDelete: () => handleDelete(row._id),
+          }}
+        />
+      ),
+    };
+  });
 
   const columns = [
     { header: "Company Name", accessor: "name" },
-    { header: "Locations", accessor: "locations" },
-    { header: "Category", accessor: "category" },
-    { header: "Commodities", accessor: "commodities" },
-    { header: "Sub Commodity", accessor: "subcommodity" },
-    { header: "Primary Mobile", accessor: "primaryMobile" },
-    { header: "Secondary Mobile", accessor: "secondaryMobile" },
+    { header: "Locations", accessor: "locationDisplay" },
+    { header: "Category", accessor: "categoryDisplay" },
+    { header: "State", accessor: "stateDisplay" },
+    { header: "Commodities", accessor: "commoditiesDisplay" },
+    { header: "Mobile Numbers", accessor: "mobileNumbersDisplay" },
     { header: "Actions", accessor: "actions" },
   ];
 
-  const data = companies
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map((company) => {
-      const capitalizedName = capitalizeWords(company.name);
-      const capitalizedCategory = capitalizeWords(company.category || "N.A");
-  
-      const primaryNumbers = company.location
-        .map((loc) => loc.mobileNumbers?.[0]?.primary || "")
-        .join(", ");
-  
-      const secondaryNumbers = company.location
-        .map((loc) => loc.mobileNumbers?.[0]?.secondary || "")
-        .join(", ");
-  
-      return {
-        name: capitalizedName,
-        locations:
-          company.location.map((l) => capitalizeWords(l.name)).join(", ") ||
-          "N.A",
-        category: capitalizedCategory,
-        commodities:
-          (company.commodities || []).map(capitalizeWords).join(", ") || "N.A",
-        subcommodity: (company.subCommodities || []).map(capitalizeWords).join(", ") || "N.A",
-        primaryMobile: primaryNumbers || "N.A",
-        secondaryMobile: secondaryNumbers || "N.A",
-        actions: (
-          <Actions
-            item={{
-              id: company._id,
-              title: capitalizedName,
-              onView: () => handleView(company._id),
-              onEdit: () => handleEdit(company._id),
-              onDelete: () => handleDelete(company._id),
-            }}
-          />
-        ),
-      };
-    });
+  if (loading) return <Loading />;
 
   return (
-    <Suspense fallback={<Loading />}>
-      <div className="p-4">
-        <Title text="Manage Company List" />
-        <Table data={data} columns={columns} />
-        <Pagination
-          currentPage={currentPage}
-          totalItems={totalItems}
-          itemsPerPage={ITEMS_PER_PAGE}
-          onPageChange={setCurrentPage}
-        />
+    <div className="p-4">
+      <ToastContainer position="top-right" autoClose={3000} />
+      <h1 className="text-2xl font-bold mb-4">Manage Company List</h1>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <Table data={tableRows} columns={columns} />
+      </div>
 
-        {editingCompany && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-3/4 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-bold mb-4">Edit Company</h2>
-              <form onSubmit={handleUpdate}>
-                <InputBox
-                  label="Company Name"
-                  value={editingCompany.name}
-                  onChange={(e) =>
-                    setEditingCompany({
-                      ...editingCompany,
-                      name: e.target.value,
-                    })
-                  }
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 w-full max-w-3xl overflow-y-auto max-h-[90vh]">
+            {editingCompany ? (
+              <>
+                <h2 className="text-xl font-bold mb-4">Edit Company</h2>
+                <EditCompanyForm
+                  company={editingCompany}
+                  onClose={() => {
+                    setShowModal(false);
+                    setEditingCompany(null);
+                  }}
+                  onSuccess={() => {
+                    fetchCompanies();
+                    toast.success("✅ Company updated");
+                    setShowModal(false);
+                    setEditingCompany(null);
+                  }}
                 />
+              </>
+            ) : selectedCompany ? (
+              <>
+                <h2 className="text-xl font-bold mb-4">Company Details</h2>
+                <div className="space-y-2">
+                  <p><strong>Name:</strong> {selectedCompany.name}</p>
+                  <p><strong>Category:</strong> {selectedCompany.category}</p>
+                  <p><strong>State:</strong> {selectedCompany.state}</p>
 
-                <div className="my-4">
-                  <label className="block mb-2 font-semibold">Category</label>
-                  <select
-                    className="w-full p-2 border rounded"
-                    value={editingCompany.category}
-                    onChange={(e) =>
-                      setEditingCompany({
-                        ...editingCompany,
-                        category: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat.name}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <strong>Locations:</strong>
+                    <ul className="list-disc ml-5">
+                      {selectedCompany.location.map((loc, i) => (
+                        <li key={i}>{loc}</li>
+                      ))}
+                    </ul>
+                  </div>
 
-                <div className="my-4">
-                  <label className="block mb-2 font-semibold">
-                    Commodities
-                  </label>
-                  <Select
-                    isMulti
-                    options={commodities.map((com) => ({
-                      value: com.name,
-                      label: com.name,
-                    }))}
-                    value={editingCompany.commodities.map((commodityName) => ({
-                      value: commodityName,
-                      label: commodityName,
-                    }))}
-                    onChange={(selectedOptions) =>
-                      setEditingCompany({
-                        ...editingCompany,
-                        commodities: selectedOptions.map(
-                          (option) => option.value
-                        ),
-                      })
-                    }
-                    className="basic-multi-select"
-                    classNamePrefix="select"
-                  />
-                  <div className="my-4">
-                    <label className="block mb-2 font-semibold">
-                      Sub Commodity
-                    </label>
-                    <Select
-                      isMulti
-                      options={subcommodityOptions}
-                      value={(editingCompany.subCommodities || []).map(
-                        (sub) => ({
-                          value: sub,
-                          label: sub,
-                        })
-                      )}
-                      onChange={(selectedOptions) =>
-                        setEditingCompany({
-                          ...editingCompany,
-                          subCommodities: selectedOptions.map(
-                            (option) => option.value
-                          ),
-                        })
-                      }
-                    />
+                  <div>
+                    <strong>Commodities:</strong>
+                    <ul className="list-disc ml-5">
+                      {selectedCompany.commodities.map((c, i) => (
+                        <li key={i}>
+                          {c}
+                          {selectedCompany.subCommodities[i] && ` (${selectedCompany.subCommodities[i]})`}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div>
+                    <strong>Mobile Numbers:</strong>
+                    <ul className="list-disc ml-5">
+                      {selectedCompany.mobileNumbers.map((m, i) => (
+                        <li key={i}>
+                          {m.location && <span className="font-medium">{m.location}: </span>}
+                          {m.primaryMobile && `📱 ${m.primaryMobile} `}
+                          {m.secondaryMobile && `| 📞 ${m.secondaryMobile} `}
+                          {m.contactPerson && `| 👤 ${m.contactPerson}`}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <h3 className="font-semibold mb-2">Locations</h3>
-                  {editingCompany.location.map((loc, i) => (
-                    <div key={i} className="bg-gray-50 p-4 rounded mb-4">
-                      <div className="flex gap-4 mb-2">
-                        <select
-                          className="p-2 border rounded w-full"
-                          value={loc.name}
-                          onChange={(e) =>
-                            handleLocationChange(i, "name", e.target.value)
-                          }
-                        >
-                          {!loc.name && (
-                            <option value="">Select Location</option>
-                          )}
-                          {locations.map((locationObj, idx) => (
-                            <option key={idx} value={locationObj.name}>
-                              {locationObj.name}
-                            </option>
-                          ))}
-                        </select>
-
-                        <select
-                          className="p-2 border rounded w-full"
-                          value={loc.state}
-                          onChange={(e) =>
-                            handleLocationChange(i, "state", e.target.value)
-                          }
-                        >
-                          <option value="">Select State</option>
-                          {[...new Set(locations.map((loc) => loc.state))].map(
-                            (state, idx) => (
-                              <option key={idx} value={state}>
-                                {state}
-                              </option>
-                            )
-                          )}
-                        </select>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEditingCompany({
-                              ...editingCompany,
-                              location: editingCompany.location.filter(
-                                (_, index) => index !== i
-                              ),
-                            })
-                          }
-                          className="text-red-600 hover:bg-red-100 px-2 rounded"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <div className="w-full">
-                        <h4 className="text-sm font-medium mb-1">
-                          Mobile Numbers
-                        </h4>
-                        {loc.mobileNumbers?.map((num, j) => (
-                          <div key={j} className="flex gap-2 mb-2">
-                            <InputBox
-                              placeholder="Primary Mobile"
-                              value={num.primary}
-                              onChange={(e) =>
-                                handleLocationMobileChange(
-                                  i,
-                                  j,
-                                  "primary",
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <InputBox
-                              placeholder="Secondary Mobile"
-                              value={num.secondary}
-                              onChange={(e) =>
-                                handleLocationMobileChange(
-                                  i,
-                                  j,
-                                  "secondary",
-                                  e.target.value
-                                )
-                              }
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeLocationMobile(i, j)}
-                              className="text-red-600 hover:bg-red-100 px-2 rounded"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => addLocationMobile(i)}
-                          className="text-xs mt-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                          + Add Mobile
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setEditingCompany({
-                        ...editingCompany,
-                        location: [
-                          ...editingCompany.location,
-                          { name: "", state: "", mobileNumbers: [] },
-                        ],
-                      })
-                    }
-                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    + Add Location
-                  </button>
-                </div>
-
-                <div className="flex justify-end gap-2 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setEditingCompany(null)}
-                    className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Updating..." : "Update"}
-                  </button>
-                </div>
-              </form>
-            </div>
+                <button
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+                  onClick={() => {
+                    setShowModal(false);
+                    setSelectedCompany(null);
+                  }}
+                >
+                  Close
+                </button>
+              </>
+            ) : null}
           </div>
-        )}
-      </div>
-    </Suspense>
+        </div>
+      )}
+    </div>
   );
 };
 

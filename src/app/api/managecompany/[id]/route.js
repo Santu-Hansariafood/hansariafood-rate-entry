@@ -5,6 +5,7 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
+// GET /api/managecompany/[id] – View company by ID
 export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,7 +24,7 @@ export async function GET(req, { params }) {
 
     return NextResponse.json({ company }, { status: 200 });
   } catch (error) {
-    console.error("Error in GET /managecompany/[id]:", error);
+    console.error("GET /managecompany/[id] error:", error);
     return NextResponse.json(
       { error: "Failed to fetch company" },
       { status: 500 }
@@ -31,75 +32,68 @@ export async function GET(req, { params }) {
   }
 }
 
+// PUT /api/managecompany/[id] – Update company
 export async function PUT(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = params;
-  const {
-    name,
-    location,
-    category,
-    state,
-    mobileNumbers,
-    commodities,
-    subCommodities,
-  } = await req.json();
-
-  if (!id || !name || !location) {
-    return NextResponse.json(
-      { error: "Missing required fields" },
-      { status: 400 }
-    );
-  }
 
   try {
+    const {
+      name,
+      location,
+      category,
+      state,
+      mobileNumbers = [],
+      commodities = [],
+      subCommodities = [],
+    } = await req.json();
+
+    if (!id || !name || !location) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
     const company = await ManageCompany.findById(id);
     if (!company) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    const flatLocations = Array.isArray(location)
-      ? location.map((loc) =>
-          typeof loc === "object" ? `${loc.name} ${loc.state}`.trim() : loc
-        )
-      : [];
+    // Prepare transformed commodities
+    const transformedCommodities = commodities.map((cmd) => ({
+      name: cmd,
+      subCommodities: subCommodities.filter((sub) =>
+        typeof sub === "string" && sub.trim() !== ""
+      ),
+    }));
 
+    // Update basic fields
     company.name = name;
-    company.location = flatLocations;
+    company.location = location;
     company.category = category || company.category;
     company.state = state || company.state;
 
-    if (Array.isArray(mobileNumbers)) {
-      const updatedMobileMap = new Map();
+    // Update mobile numbers (merge by location)
+    const existingMobileMap = new Map(
+      company.mobileNumbers.map((num) => [num.location, num])
+    );
+    mobileNumbers.forEach((num) => {
+      existingMobileMap.set(num.location, num);
+    });
+    company.mobileNumbers = Array.from(existingMobileMap.values());
 
-      for (const entry of company.mobileNumbers || []) {
-        updatedMobileMap.set(entry.location, entry);
-      }
-
-      for (const entry of mobileNumbers) {
-        if (entry?.location) {
-          updatedMobileMap.set(entry.location, entry);
-        }
-      }
-
-      company.mobileNumbers = Array.from(updatedMobileMap.values());
-    }
-
-    if (Array.isArray(commodities)) {
-      const currentCommodities = company.commodities || [];
-      company.commodities = Array.from(
-        new Set([...currentCommodities, ...commodities])
-      );
-    }
-
-    if (Array.isArray(subCommodities)) {
-      const currentSubs = company.subCommodities || [];
-      company.subCommodities = Array.from(
-        new Set([...currentSubs, ...subCommodities])
-      );
-    }
+    // Update commodities (merge by commodity name)
+    const commodityMap = new Map(
+      company.commodities.map((cmd) => [cmd.name, cmd])
+    );
+    transformedCommodities.forEach((cmd) => {
+      commodityMap.set(cmd.name, cmd);
+    });
+    company.commodities = Array.from(commodityMap.values());
 
     await company.save();
 
@@ -108,7 +102,7 @@ export async function PUT(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("PUT error:", error);
+    console.error("PUT /managecompany/[id] error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -116,6 +110,7 @@ export async function PUT(req, { params }) {
   }
 }
 
+// DELETE /api/managecompany/[id] – Delete company
 export async function DELETE(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -137,7 +132,7 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error in DELETE /managecompany/[id]:", error);
+    console.error("DELETE /managecompany/[id] error:", error);
     return NextResponse.json(
       { error: "Failed to delete company" },
       { status: 500 }

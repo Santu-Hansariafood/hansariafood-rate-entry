@@ -21,9 +21,9 @@ export async function POST(req) {
       subCommodities,
     } = await req.json();
 
-    if (!name || !location) {
+    if (!name || !location || !mobileNumbers?.length) {
       return NextResponse.json(
-        { error: "Name and location are required" },
+        { error: "Name, location, and mobile contact info are required" },
         { status: 400 }
       );
     }

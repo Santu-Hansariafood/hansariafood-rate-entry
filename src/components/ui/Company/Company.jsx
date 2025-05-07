@@ -9,20 +9,18 @@ import Loading from "@/components/common/Loading/Loading";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import useCompany from "@/hooks/Company/useCompany";
 
-const Dropdown = dynamic(
-  () => import("@/components/common/Dropdown/Dropdown"),
-  { loading: () => <Loading /> }
-);
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"), {
+  loading: () => <Loading />,
+});
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
 });
 const Button = dynamic(() => import("@/components/common/Button/Button"), {
   loading: () => <Loading />,
 });
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  { loading: () => <Loading /> }
-);
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  loading: () => <Loading />,
+});
 
 export default function CreateCompany() {
   const {
@@ -53,16 +51,6 @@ export default function CreateCompany() {
     [locations]
   );
 
-  const subCommodityOptions = useMemo(() => {
-    const selected = commodities.filter((cmd) =>
-      selectedCommodities.includes(cmd.name)
-    );
-  
-    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
-    const unique = Array.from(new Set(subCats));
-    return unique.map((sub) => ({ label: sub, value: sub }));
-  }, [commodities, selectedCommodities]);
-  
   const handleCompanyChange = useCallback(
     (val) => {
       setCompanyName(val);
@@ -72,6 +60,17 @@ export default function CreateCompany() {
     [companies]
   );
 
+  const subCommodityOptions = useMemo(() => {
+    const selected = commodities.filter((cmd) =>
+      selectedCommodities.map((c) => c.value || c).includes(cmd.name)
+    );
+    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
+    const unique = Array.from(new Set(subCats));
+    return unique.map((sub) => ({ label: sub, value: sub }));
+  }, [commodities, selectedCommodities]);
+
+  const showSubCommodities = subCommodityOptions.length > 0;
+
   const resetForm = () => {
     setCompanyName("");
     setLocation("");
@@ -80,6 +79,7 @@ export default function CreateCompany() {
     setPrimaryNumber("");
     setSecondaryNumber("");
     setSelectedCommodities([]);
+    setSelectedSubCommodities([]);
   };
 
   const handleSubmit = async () => {
@@ -104,13 +104,13 @@ export default function CreateCompany() {
       const response = await axiosInstance.post("/managecompany", {
         name: companyName,
         location,
-        state: state || "N.A",
-        category: category || "N.A",
-        commodities: selectedCommodities.map((cmd) => cmd.value),
-        subCommodities: selectedSubCommodities.map((sub) => sub.value),
+        state,
+        category,
+        commodities: selectedCommodities.map((cmd) => cmd.value || cmd),
+        subCommodities: selectedSubCommodities.map((sub) => sub.value || sub),
         mobileNumbers: [
           {
-            location: location,
+            location,
             primaryMobile: primaryNumber,
             secondaryMobile: secondaryNumber || "",
           },
@@ -134,11 +134,9 @@ export default function CreateCompany() {
     <Suspense fallback={<Loading />}>
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
         <ToastContainer position="top-right" autoClose={3000} />
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl space-y-6">
-          <Title
-            text="Manage Company"
-            className="text-center text-2xl font-bold text-gray-800"
-          />
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-3xl space-y-6">
+          <Title text="Manage Company" className="text-center text-2xl font-bold text-gray-800" />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Dropdown
               label="Company Name"
@@ -154,11 +152,37 @@ export default function CreateCompany() {
               onChange={handleLocationChange}
             />
 
-            <InputBox label="State" value={state} readOnly />
             <InputBox label="Category" value={category} readOnly />
+            <InputBox label="State" value={state} readOnly />
 
+            <Dropdown
+              label="Select Commodities"
+              options={commodityOptions}
+              value={selectedCommodities}
+              onChange={setSelectedCommodities}
+              isMulti
+            />
+
+            {showSubCommodities && (
+              <Dropdown
+                label="Select Sub Commodities"
+                options={subCommodityOptions}
+                value={selectedSubCommodities}
+                onChange={setSelectedSubCommodities}
+                isMulti
+              />
+            )}
+          </div>
+
+          {/* Contact Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <InputBox
-              label="Enter Mobile Number"
+              label="Location"
+              value={location}
+              readOnly
+            />
+            <InputBox
+              label="Primary Mobile"
               value={primaryNumber}
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, "");
@@ -170,28 +194,12 @@ export default function CreateCompany() {
               placeholder="Enter Mobile Number"
               maxLength={10}
             />
-
             <InputBox
-              label="Enter Contact Person Name"
+              label="Contact Person Name"
               value={secondaryNumber}
               onChange={(e) => setSecondaryNumber(e.target.value)}
               type="text"
               placeholder="Enter Contact Person Name"
-            />
-
-            <Dropdown
-              label="Select Commodities"
-              options={commodityOptions}
-              value={selectedCommodities}
-              onChange={(vals) => setSelectedCommodities(vals)}
-              // isMulti={true}
-            />
-            <Dropdown
-              label="Select Sub Commodities"
-              options={subCommodityOptions}
-              value={selectedSubCommodities}
-              onChange={(vals) => setSelectedSubCommodities(vals)}
-              isMulti={true}
             />
           </div>
 
