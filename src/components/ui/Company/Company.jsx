@@ -1,30 +1,18 @@
 "use client";
 
-import { useState, useCallback, Suspense, useMemo } from "react";
+import { useState, useCallback, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-import Loading from "@/components/common/Loading/Loading";
+import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import useCompany from "@/hooks/Company/useCompany";
+import Loading from "@/components/common/Loading/Loading";
 
-const Dropdown = dynamic(
-  () => import("@/components/common/Dropdown/Dropdown"),
-  { loading: () => <Loading /> }
-);
-const Title = dynamic(() => import("@/components/common/Title/Title"), {
-  loading: () => <Loading />,
-});
-const Button = dynamic(() => import("@/components/common/Button/Button"), {
-  loading: () => <Loading />,
-});
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  { loading: () => <Loading /> }
-);
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
+const Button = dynamic(() => import("@/components/common/Button/Button"));
+const Title = dynamic(() => import("@/components/common/Title/Title"));
 
-export default function CreateCompany() {
+export default function CreateCompanyForm({ onClose, onCreated }) {
   const {
     companies,
     locations,
@@ -35,34 +23,32 @@ export default function CreateCompany() {
   } = useCompany();
 
   const [companyName, setCompanyName] = useState("");
-  const [location, setLocation] = useState("");
-  const [state, setState] = useState("");
   const [category, setCategory] = useState("");
-  const [primaryNumber, setPrimaryNumber] = useState("");
-  const [secondaryNumber, setSecondaryNumber] = useState("");
+  const [state, setState] = useState("");
+  const [selectedLocations, setSelectedLocations] = useState([]);
   const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [selectedSubCommodities, setSelectedSubCommodities] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  const handleLocationChange = useCallback(
-    (val) => {
-      setLocation(val);
-      const selectedLocation = locations.find((loc) => loc.name === val);
-      setState(selectedLocation?.state || "");
-    },
-    [locations]
+  const updateLocationCommodityContacts = (locs, cmds, prevData = {}) => {
+    const updated = {};
+    locs.forEach((loc) => {
+      updated[loc] = {};
+      cmds.forEach((cmd) => {
+        updated[loc][cmd.value] = prevData?.[loc]?.[cmd.value] || {
+          primaryMobile: "",
+          contactPerson: "",
+        };
+      });
+    });
+    return updated;
+  };
+
+  const [locationCommodityContacts, setLocationCommodityContacts] = useState(
+    {}
   );
 
-  const subCommodityOptions = useMemo(() => {
-    const selected = commodities.filter((cmd) =>
-      selectedCommodities.includes(cmd.name)
-    );
-  
-    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
-    const unique = Array.from(new Set(subCats));
-    return unique.map((sub) => ({ label: sub, value: sub }));
-  }, [commodities, selectedCommodities]);
-  
+  const [loading, setLoading] = useState(false);
+
   const handleCompanyChange = useCallback(
     (val) => {
       setCompanyName(val);
@@ -72,59 +58,100 @@ export default function CreateCompany() {
     [companies]
   );
 
-  const resetForm = () => {
-    setCompanyName("");
-    setLocation("");
-    setState("");
-    setCategory("");
-    setPrimaryNumber("");
-    setSecondaryNumber("");
-    setSelectedCommodities([]);
+  const handleLocationChange = (vals) => {
+    const newLocations = vals.map((val) => val);
+    setSelectedLocations(newLocations);
+
+    const firstLoc = locations.find((loc) => loc.name === newLocations[0]);
+    setState(firstLoc?.state || "N.A");
+
+    const updated = updateLocationCommodityContacts(
+      newLocations,
+      selectedCommodities,
+      locationCommodityContacts
+    );
+    setLocationCommodityContacts(updated);
   };
 
+  const handleCommodityChange = (vals) => {
+    const newCommodities = vals.map((val) => ({ label: val, value: val }));
+    setSelectedCommodities(newCommodities);
+
+    const updated = updateLocationCommodityContacts(
+      selectedLocations,
+      newCommodities,
+      locationCommodityContacts
+    );
+    setLocationCommodityContacts(updated);
+    setSelectedSubCommodities([]);
+  };
+
+  const handleContactChange = (location, commodity, field, value) => {
+    setLocationCommodityContacts((prev) => ({
+      ...prev,
+      [location]: {
+        ...prev[location],
+        [commodity]: {
+          ...prev[location][commodity],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
+  const subCommodityOptions = useMemo(() => {
+    const selected = commodities.filter((cmd) =>
+      selectedCommodities.map((c) => c.value).includes(cmd.name)
+    );
+    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
+    const unique = Array.from(new Set(subCats));
+    return unique.map((sub) => ({ label: sub, value: sub }));
+  }, [commodities, selectedCommodities]);
+
   const handleSubmit = async () => {
-    if (!companyName.trim() || !location || !primaryNumber.trim()) {
-      toast.error("Company name, location, and primary number are required!");
+    if (
+      !companyName ||
+      selectedLocations.length === 0 ||
+      selectedCommodities.length === 0
+    ) {
+      toast.error("❌ Please fill required fields.");
       return;
     }
 
-    if (!state) {
-      toast.error("State is missing. Please select a valid location.");
-      return;
-    }
-
-    if (selectedCommodities.length === 0) {
-      toast.error("Please select at least one commodity.");
-      return;
-    }
+    const mobileNumbers = [];
+    Object.entries(locationCommodityContacts).forEach(
+      ([location, commodityMap]) => {
+        Object.entries(commodityMap).forEach(([commodity, info]) => {
+          if (info.primaryMobile || info.contactPerson) {
+            mobileNumbers.push({
+              location,
+              commodity,
+              primaryMobile: info.primaryMobile,
+              contactPerson: info.contactPerson,
+            });
+          }
+        });
+      }
+    );
 
     setLoading(true);
-
     try {
-      const response = await axiosInstance.post("/managecompany", {
+      const payload = {
         name: companyName,
-        location,
-        state: state || "N.A",
-        category: category || "N.A",
-        commodities: selectedCommodities.map((cmd) => cmd.value),
-        subCommodities: selectedSubCommodities.map((sub) => sub.value),
-        mobileNumbers: [
-          {
-            location: location,
-            primaryMobile: primaryNumber,
-            secondaryMobile: secondaryNumber || "",
-          },
-        ],
-      });
+        location: selectedLocations,
+        state,
+        category,
+        commodities: selectedCommodities.map((c) => c.value),
+        subCommodities: selectedSubCommodities.map((s) => s.value),
+        mobileNumbers,
+      };
 
-      if (response.status === 201) {
-        toast.success("Company created successfully!");
-        resetForm();
-      } else if (response.status === 200) {
-        toast.info(response.data.message || "Company already exists!");
-      }
+      await axiosInstance.post("/managecompany", payload);
+      toast.success("Company created successfully");
+      onCreated?.();
+      onClose();
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to create company");
+      // toast.error("❌ Failed to create company");
     } finally {
       setLoading(false);
     }
@@ -132,77 +159,120 @@ export default function CreateCompany() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
-        <ToastContainer position="top-right" autoClose={3000} />
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl space-y-6">
-          <Title
-            text="Manage Company"
-            className="text-center text-2xl font-bold text-gray-800"
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white p-6 rounded shadow-md w-full max-w-4xl">
+        <Title
+          text="Create Company"
+          className="text-xl font-bold mb-4 text-center"
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Dropdown
+            label="Company Name *"
+            options={companyOptions}
+            value={companyName}
+            onChange={handleCompanyChange}
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Dropdown
+            label="Locations *"
+            options={locationOptions}
+            value={selectedLocations}
+            onChange={handleLocationChange}
+            isMulti
+          />
+          <InputBox label="Category" value={category} readOnly />
+          <InputBox label="State" value={state} readOnly />
+          <Dropdown
+            label="Commodities *"
+            options={commodityOptions}
+            value={selectedCommodities.map((c) => c.value)}
+            onChange={handleCommodityChange}
+            isMulti
+          />
+          {subCommodityOptions.length > 0 && (
             <Dropdown
-              label="Company Name"
-              options={companyOptions}
-              value={companyName}
-              onChange={handleCompanyChange}
-            />
-
-            <Dropdown
-              label="Location"
-              options={locationOptions}
-              value={location}
-              onChange={handleLocationChange}
-            />
-
-            <InputBox label="State" value={state} readOnly />
-            <InputBox label="Category" value={category} readOnly />
-
-            <InputBox
-              label="Enter Mobile Number"
-              value={primaryNumber}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, "");
-                if (value.length <= 10) {
-                  setPrimaryNumber(value);
-                }
-              }}
-              type="tel"
-              placeholder="Enter Mobile Number"
-              maxLength={10}
-            />
-
-            <InputBox
-              label="Enter Contact Person Name"
-              value={secondaryNumber}
-              onChange={(e) => setSecondaryNumber(e.target.value)}
-              type="text"
-              placeholder="Enter Contact Person Name"
-            />
-
-            <Dropdown
-              label="Select Commodities"
-              options={commodityOptions}
-              value={selectedCommodities}
-              onChange={(vals) => setSelectedCommodities(vals)}
-              // isMulti={true}
-            />
-            <Dropdown
-              label="Select Sub Commodities"
+              label="Sub-Commodities"
               options={subCommodityOptions}
-              value={selectedSubCommodities}
-              onChange={(vals) => setSelectedSubCommodities(vals)}
-              isMulti={true}
+              value={selectedSubCommodities.map((s) => s.value)}
+              onChange={(vals) =>
+                setSelectedSubCommodities(
+                  vals.map((val) => ({ label: val, value: val }))
+                )
+              }
+              isMulti
             />
-          </div>
+          )}
+        </div>
 
-          <div className="flex justify-center">
-            <Button
-              onClick={handleSubmit}
-              text="Save"
-              isLoading={loading}
-              className="w-40 py-3 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-md transition duration-300"
-            />
+        <div className="mt-6">
+          <Title
+            text="Location-wise Contact Details"
+            className="text-lg font-semibold mb-2"
+          />
+          <div className="space-y-6">
+            {selectedLocations.map((loc) => (
+              <div key={loc} className="bg-gray-50 p-4 rounded border">
+                <h3 className="text-md font-semibold text-blue-700 mb-2">
+                  {loc}
+                </h3>
+                <div className="space-y-3">
+                  {selectedCommodities.map((cmd) => (
+                    <div
+                      key={`${loc}-${cmd.value}`}
+                      className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
+                    >
+                      <InputBox label="Commodity" value={cmd.value} readOnly />
+                      <InputBox
+                        label="Primary Mobile"
+                        value={
+                          locationCommodityContacts?.[loc]?.[cmd.value]
+                            ?.primaryMobile || ""
+                        }
+                        onChange={(e) =>
+                          handleContactChange(
+                            loc,
+                            cmd.value,
+                            "primaryMobile",
+                            e.target.value
+                          )
+                        }
+                      />
+                      <InputBox
+                        label="Contact Person"
+                        value={
+                          locationCommodityContacts?.[loc]?.[cmd.value]
+                            ?.contactPerson || ""
+                        }
+                        onChange={(e) =>
+                          handleContactChange(
+                            loc,
+                            cmd.value,
+                            "contactPerson",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
+        </div>
+
+        <div className="flex justify-center mt-6 gap-4">
+          <Button
+            onClick={handleSubmit}
+            text="Create"
+            isLoading={loading}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          />
+          <Button
+            onClick={onClose}
+            text="Cancel"
+            className="bg-gray-300 hover:bg-gray-400 text-black"
+          />
+        </div>
         </div>
       </div>
     </Suspense>

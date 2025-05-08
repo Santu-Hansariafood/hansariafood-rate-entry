@@ -21,17 +21,18 @@ export async function POST(req) {
       subCommodities,
     } = await req.json();
 
-    if (!name || !location) {
+    if (!name || !location || !mobileNumbers?.length) {
       return NextResponse.json(
-        { error: "Name and location are required" },
+        { error: "Name, location, and mobile contact info are required" },
         { status: 400 }
       );
     }
 
-    if (!Array.isArray(location)) location = [location];
-    if (!Array.isArray(mobileNumbers)) mobileNumbers = [];
-    if (!Array.isArray(commodities)) commodities = [];
-    if (!Array.isArray(subCommodities)) subCommodities = [];
+    // Normalize inputs
+    location = Array.isArray(location) ? location : [location];
+    mobileNumbers = Array.isArray(mobileNumbers) ? mobileNumbers : [];
+    commodities = Array.isArray(commodities) ? commodities : [];
+    subCommodities = Array.isArray(subCommodities) ? subCommodities : [];
 
     state = state || "N.A";
     category = category || "N.A";
@@ -50,6 +51,7 @@ export async function POST(req) {
         );
       }
 
+      // Merge and update fields
       existingCompany.location = [
         ...new Set([...existingCompany.location, ...location]),
       ];
@@ -58,7 +60,9 @@ export async function POST(req) {
       const newMobileNumbers = mobileNumbers.filter(
         (newNum) =>
           !existingMobileNumbers.some(
-            (oldNum) => oldNum.location === newNum.location
+            (oldNum) =>
+              oldNum.location === newNum.location &&
+              oldNum.commodity === newNum.commodity
           )
       );
       existingCompany.mobileNumbers = [
@@ -66,22 +70,12 @@ export async function POST(req) {
         ...newMobileNumbers,
       ];
 
-      const existingCommodities = existingCompany.commodities || [];
-      const newCommodities = commodities.filter(
-        (cmd) => !existingCommodities.includes(cmd)
-      );
       existingCompany.commodities = [
-        ...new Set([...existingCommodities, ...newCommodities]),
+        ...new Set([...existingCompany.commodities, ...commodities]),
       ];
-
-      const existingSubCommodities = existingCompany.subCommodities || [];
-      const newSubCommodities = subCommodities.filter(
-        (sub) => !existingSubCommodities.includes(sub)
-      );
       existingCompany.subCommodities = [
-        ...new Set([...existingSubCommodities, ...newSubCommodities]),
+        ...new Set([...existingCompany.subCommodities, ...subCommodities]),
       ];
-
       existingCompany.state = state;
       existingCompany.category = category;
 
@@ -96,6 +90,7 @@ export async function POST(req) {
       );
     }
 
+    // Create new company
     const newCompany = new ManageCompany({
       name,
       location,

@@ -7,7 +7,6 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
-import { Building2, ArrowLeft } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
@@ -21,23 +20,21 @@ const Title = dynamic(() => import("@/components/common/Title/Title"), {
 });
 const CategoryCard = dynamic(
   () => import("@/components/ui/Rate/CategoryCard/CategoryCard"),
-  {
-    loading: () => <Loading />,
-  }
+  { loading: () => <Loading /> }
 );
 const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
-  {
-    loading: () => <Loading />,
-  }
+  { loading: () => <Loading /> }
 );
 
-export default function Rate({ commodity }) {
+export default function Rate() {
   const { mobile } = useUser();
 
   const [allCompanies, setAllCompanies] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
+  const [selectedCommodity, setSelectedCommodity] = useState(null);
+  const [showRateModal, setShowRateModal] = useState(false);
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -49,165 +46,183 @@ export default function Rate({ commodity }) {
     setFilters(newFilters);
   }, []);
 
-  const filteredCompanies = useMemo(() => {
-    const selectedCategories = Object.values(filters);
-    if (selectedCategories.length === 0) return allCompanies;
+  const selectedCompanyObj = useMemo(() => {
+    return allCompanies.find((c) => c.name === selectedCompany);
+  }, [allCompanies, selectedCompany]);
 
-    return allCompanies.filter((company) =>
-      selectedCategories.includes(company.category)
-    );
-  }, [allCompanies, filters]);
+  const fetchCompanies = useCallback(async () => {
+    setLoading(true);
+    try {
+      const categoryParams = Object.values(filters)
+        .map((cat) => `category=${encodeURIComponent(cat)}`)
+        .join("&");
 
-  useEffect(() => {
-    if (mobile) {
-      console.log("Mobile number from context:", mobile);
-    } else {
-      console.log("Mobile number not available");
-    }
-  }, [mobile]);
+      const { data } = await axiosInstance.get(
+        `/managecompany?page=${currentPage}&limit=${itemsPerPage}&${categoryParams}`
+      );
+      setAllCompanies(data.companies);
+      setTotalItems(data.total);
 
-  useEffect(() => {
-    if (commodity) {
-      console.log("Commodity from route param:", commodity);
-    }
-  }, [commodity]);
+      const names = data.companies.map((c) => c.name);
+      setCompanies(names);
 
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      setLoading(true);
-      try {
-        const categoryParams = Object.values(filters)
-          .map((cat) => `category=${encodeURIComponent(cat)}`)
-          .join("&");
-
-        const response = await axiosInstance.get(
-          `/managecompany?page=${currentPage}&limit=${itemsPerPage}&${categoryParams}`
-        );
-
-        const { companies: companyList, total } = response.data;
-
-        setAllCompanies(companyList);
-        setTotalItems(total);
-
-        const filteredNames = companyList.map((c) => c.name);
-
-        setCompanies(filteredNames);
-        await checkAllCompanies(filteredNames);
-      } catch (error) {
-        toast.error("Failed to fetch companies");
-      } finally {
-        setLoading(false);
+      if (names.length > 0) {
+        const allCmds = data.companies.flatMap((c) => c.commodities || []);
+        const first = [...new Set(allCmds)][0];
+        await checkAllCompanies(names, first);
       }
-    };
-
-    fetchCompanies();
+    } catch {
+      toast.error("Failed to fetch companies");
+    } finally {
+      setLoading(false);
+    }
   }, [filters, currentPage]);
 
-  const checkAllCompanies = useCallback(async (companyNames) => {
+  const checkAllCompanies = useCallback(async (companyNames, commodity) => {
+    if (!commodity) return;
     try {
-      const statusMap = await Promise.all(
-        companyNames.map(async (company) => {
+      const statusArr = await Promise.all(
+        companyNames.map(async (name) => {
           try {
-            const rateResponse = await axiosInstance.get(
-              `/rate?company=${company}&commodity=${encodeURIComponent(commodity)}`
+            const { data } = await axiosInstance.get(
+              `/rate?company=${name}&commodity=${encodeURIComponent(commodity)}`
             );
             return {
-              [company]:
-                rateResponse.data.length > 0 &&
-                rateResponse.data.every((rate) => 
-                  rate.hasNewRateToday && rate.commodity === commodity
+              [name]:
+                data.length > 0 &&
+                data.every(
+                  (r) => r.hasNewRateToday && r.commodity === commodity
                 ),
             };
           } catch {
-            return { [company]: false };
+            return { [name]: false };
           }
         })
       );
-
-      setCompletedCompanies(Object.assign({}, ...statusMap));
-    } catch (error) {
-      console.error("Error checking company completion status:", error);
+      setCompletedCompanies(Object.assign({}, ...statusArr));
+    } catch (e) {
+      console.error(e);
     }
-  }, [commodity]);
+  }, []);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
+
+  useEffect(() => {
+    setSelectedCommodity(null);
+  }, [selectedCompany]);
+
+  useEffect(() => {
+    if (selectedCompany) {
+      setShowRateModal(true);
+    }
+  }, [selectedCompany]);
+
+  useEffect(() => {
+    document.body.style.overflow = showRateModal ? "hidden" : "auto";
+  }, [showRateModal]);
+
+  const handleCloseRateModal = () => {
+    setShowRateModal(false);
+    setSelectedCommodity(null);
+  };
+
+  const handleConfirmCommodity = () => {
+    if (selectedCommodity) {
+      setShowRateModal(false);
+    }
+  };
+
+  const renderCompanySelector = (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <CompanyList
+        companies={companies}
+        completedCompanies={completedCompanies}
+        loading={loading}
+        onCompanySelect={setSelectedCompany}
+      />
+      <Pagination
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
+    </motion.div>
+  );
+
+  const renderRateModal = (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
+        <button
+          onClick={handleCloseRateModal}
+          className="absolute top-2 right-2"
+        >
+          ✕
+        </button>
+        <Title text="Select a Commodity" />
+        <select
+          value={selectedCommodity || ""}
+          onChange={(e) => setSelectedCommodity(e.target.value)}
+          className="w-full mb-4 p-2 border rounded"
+        >
+          <option value="" disabled>
+            -- Choose Commodity --
+          </option>
+          {selectedCompanyObj?.commodities.map((cmd) => (
+            <option key={cmd} value={cmd}>
+              {cmd}
+            </option>
+          ))}
+        </select>
+        <button
+          disabled={!selectedCommodity}
+          onClick={handleConfirmCommodity}
+          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+        >
+          Confirm & View Rate
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderRateTable = (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded shadow-lg w-full max-w-3xl relative">
+        <button
+          onClick={() => {
+            setSelectedCompany(null);
+            setSelectedCommodity(null);
+          }}
+          className="absolute top-2 right-2"
+        >
+          ✕
+        </button>
+        <RateTable
+          selectedCompany={selectedCompany}
+          commodity={selectedCommodity}
+          onClose={() => {
+            setSelectedCompany(null);
+            setSelectedCommodity(null);
+          }}
+        />
+      </div>
+    </div>
+  );
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-        />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
-          >
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
-              <Building2 className="w-8 h-8 text-green-600" />
-            </div>
-            <Title text="Rate Management" />
-            <div className="mb-8">
-              <CategoryCard onFilterChange={handleFilterChange} />
-            </div>
-          </motion.div>
-
-          {selectedCompany ? (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="relative"
-            >
-              <button
-                onClick={() => setSelectedCompany(null)}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Companies</span>
-              </button>
-              <RateTable
-                selectedCompany={selectedCompany}
-                onClose={() => setSelectedCompany(null)}
-                onRateUpdate={async () => await checkAllCompanies(companies)}
-                commodity={commodity}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
-                <CompanyList
-                  companies={companies}
-                  completedCompanies={completedCompanies}
-                  loading={loading}
-                  onCompanySelect={setSelectedCompany}
-                  currentPage={currentPage}
-                  itemsPerPage={itemsPerPage}
-                />
-              </div>
-            </motion.div>
-          )}
-        </div>
-        <Pagination
-          currentPage={currentPage}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageChange={(page) => setCurrentPage(page)}
-        />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+        <ToastContainer position="top-right" />
+        <Title text="Rate Management" />
+        <CategoryCard onFilterChange={handleFilterChange} />
+        {!selectedCompany && renderCompanySelector}
+        {showRateModal && selectedCompany && renderRateModal}
+        {selectedCompany && selectedCommodity && renderRateTable}
       </div>
     </Suspense>
   );

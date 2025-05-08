@@ -77,7 +77,7 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
                 )
               : null,
             primaryMobile: matchedMobile?.primaryMobile || "N/A",
-            secondaryMobile: matchedMobile?.secondaryMobile || "N/A",
+            contactPerson: matchedMobile?.contactPerson || "N/A",
           };
         });
 

@@ -33,14 +33,14 @@ export default function RateTableRow({
               </a>
             </div>
           )}
-          {rate.secondaryMobile && (
+          {rate.contactPerson && (
             <div className="flex items-center gap-2 flex-wrap">
               <UserCircle className="w-4 h-4 text-gray-600" />
               {/* <a
-                href={`tel:${rate.secondaryMobile}`}
+                href={`tel:${rate.contactPerson}`}
                 className="text-blue-600 hover:underline"
               > */}
-              {rate.secondaryMobile}
+              {rate.contactPerson}
               {/* </a> */}
             </div>
           )}
