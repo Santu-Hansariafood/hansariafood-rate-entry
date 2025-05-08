@@ -25,21 +25,40 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
   const [category, setCategory] = useState(company.category || "");
   const [state, setState] = useState(company.state || "");
   const [selectedLocations, setSelectedLocations] = useState(company.location || []);
-  const [mobileNumbers, setMobileNumbers] = useState(
-    company.mobileNumbers?.length
-      ? company.mobileNumbers
-      : selectedLocations.map((loc) => ({
-          location: loc,
-          primaryMobile: "",
-          contactPerson: "",
-        }))
-  );
   const [selectedCommodities, setSelectedCommodities] = useState(
     (company.commodities || []).map((cmd) => ({ label: cmd, value: cmd }))
   );
   const [selectedSubCommodities, setSelectedSubCommodities] = useState(
     (company.subCommodities || []).map((sub) => ({ label: sub, value: sub }))
   );
+
+  const [locationCommodityContacts, setLocationCommodityContacts] = useState(() => {
+    const data = {};
+
+    selectedLocations.forEach((loc) => {
+      data[loc] = {};
+      selectedCommodities.forEach((cmd) => {
+        data[loc][cmd.value] = {
+          primaryMobile: "",
+          contactPerson: "",
+        };
+      });
+    });
+
+    // Pre-fill existing data
+    if (company.mobileNumbers?.length) {
+      company.mobileNumbers.forEach((item) => {
+        if (!data[item.location]) data[item.location] = {};
+        data[item.location][item.commodity] = {
+          primaryMobile: item.primaryMobile,
+          contactPerson: item.contactPerson,
+        };
+      });
+    }
+
+    return data;
+  });
+
   const [loading, setLoading] = useState(false);
 
   const handleCompanyChange = useCallback(
@@ -55,27 +74,64 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     const newLocations = vals.map((val) => val);
     setSelectedLocations(newLocations);
 
-    // Update state based on first location (optional logic)
     const firstLoc = locations.find((loc) => loc.name === newLocations[0]);
     setState(firstLoc?.state || "N.A");
 
-    const updatedMobileNumbers = newLocations.map((loc) => {
-      const existing = mobileNumbers.find((m) => m.location === loc);
-      return (
-        existing || {
-          location: loc,
-          primaryMobile: "",
-          contactPerson: "",
+    const updated = { ...locationCommodityContacts };
+    newLocations.forEach((loc) => {
+      if (!updated[loc]) updated[loc] = {};
+      selectedCommodities.forEach((cmd) => {
+        if (!updated[loc][cmd.value]) {
+          updated[loc][cmd.value] = { primaryMobile: "", contactPerson: "" };
         }
-      );
+      });
     });
-    setMobileNumbers(updatedMobileNumbers);
+
+    // Remove deselected locations
+    Object.keys(updated).forEach((loc) => {
+      if (!newLocations.includes(loc)) delete updated[loc];
+    });
+
+    setLocationCommodityContacts(updated);
   };
 
-  const handleMobileChange = (index, field, value) => {
-    const updated = [...mobileNumbers];
-    updated[index][field] = value;
-    setMobileNumbers(updated);
+  const handleCommodityChange = (vals) => {
+    const newCommodities = vals.map((val) => ({ label: val, value: val }));
+    setSelectedCommodities(newCommodities);
+
+    const updated = { ...locationCommodityContacts };
+
+    selectedLocations.forEach((loc) => {
+      if (!updated[loc]) updated[loc] = {};
+      newCommodities.forEach((cmd) => {
+        if (!updated[loc][cmd.value]) {
+          updated[loc][cmd.value] = { primaryMobile: "", contactPerson: "" };
+        }
+      });
+
+      // Remove deselected commodities
+      Object.keys(updated[loc]).forEach((cmd) => {
+        if (!newCommodities.find((c) => c.value === cmd)) {
+          delete updated[loc][cmd];
+        }
+      });
+    });
+
+    setLocationCommodityContacts(updated);
+    setSelectedSubCommodities([]); // Reset sub-commodities
+  };
+
+  const handleContactChange = (location, commodity, field, value) => {
+    setLocationCommodityContacts((prev) => ({
+      ...prev,
+      [location]: {
+        ...prev[location],
+        [commodity]: {
+          ...prev[location][commodity],
+          [field]: value,
+        },
+      },
+    }));
   };
 
   const subCommodityOptions = useMemo(() => {
@@ -87,16 +143,26 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     return unique.map((sub) => ({ label: sub, value: sub }));
   }, [commodities, selectedCommodities]);
 
-  const handleCommodityChange = (val) => {
-    setSelectedCommodities(val);
-    setSelectedSubCommodities([]); // Reset sub-commodities
-  };
-
   const handleSubmit = async () => {
     if (!companyName || selectedLocations.length === 0) {
       toast.error("Please fill required fields.");
       return;
     }
+
+    const mobileNumbers = [];
+
+    Object.entries(locationCommodityContacts).forEach(([location, commodityMap]) => {
+      Object.entries(commodityMap).forEach(([commodity, info]) => {
+        if (info.primaryMobile) {
+          mobileNumbers.push({
+            location,
+            commodity,
+            primaryMobile: info.primaryMobile,
+            contactPerson: info.contactPerson,
+          });
+        }
+      });
+    });
 
     setLoading(true);
     try {
@@ -107,7 +173,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
         category,
         commodities: selectedCommodities.map((c) => c.value),
         subCommodities: selectedSubCommodities.map((s) => s.value),
-        mobileNumbers: mobileNumbers.filter((m) => m.location && m.primaryMobile),
+        mobileNumbers,
       };
 
       await axiosInstance.put(`/managecompany/${company._id}`, payload);
@@ -122,7 +188,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow-md w-full max-w-3xl">
+    <div className="bg-white p-6 rounded shadow-md w-full max-w-4xl">
       <Title text="Edit Company" className="text-xl font-bold mb-4 text-center" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,7 +202,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
           label="Locations"
           options={locationOptions}
           value={selectedLocations}
-          onChange={(vals) => handleLocationChange(vals)}
+          onChange={handleLocationChange}
           isMulti
         />
         <InputBox label="Category" value={category} readOnly />
@@ -145,9 +211,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
           label="Commodities"
           options={commodityOptions}
           value={selectedCommodities.map((c) => c.value)}
-          onChange={(vals) =>
-            setSelectedCommodities(vals.map((val) => ({ label: val, value: val })))
-          }
+          onChange={(vals) => handleCommodityChange(vals)}
           isMulti
         />
         {subCommodityOptions.length > 0 && (
@@ -165,23 +229,38 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
 
       <div className="mt-6">
         <Title text="Location-wise Contact Details" className="text-lg font-semibold mb-2" />
-        <div className="space-y-4">
-          {mobileNumbers.map((m, idx) => (
-            <div
-              key={m.location}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 p-3 rounded"
-            >
-              <InputBox label="Location" value={m.location} readOnly />
-              <InputBox
-                label="Primary Mobile"
-                value={m.primaryMobile}
-                onChange={(e) => handleMobileChange(idx, "primaryMobile", e.target.value)}
-              />
-              <InputBox
-                label="Contact Person"
-                value={m.contactPerson}
-                onChange={(e) => handleMobileChange(idx, "contactPerson", e.target.value)}
-              />
+        <div className="space-y-6">
+          {selectedLocations.map((loc) => (
+            <div key={loc} className="bg-gray-50 p-4 rounded border">
+              <h3 className="text-md font-semibold text-blue-700 mb-2">{loc}</h3>
+              <div className="space-y-3">
+                {selectedCommodities.map((cmd) => (
+                  <div
+                    key={`${loc}-${cmd.value}`}
+                    className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
+                  >
+                    <InputBox label="Commodity" value={cmd.value} readOnly />
+                    <InputBox
+                      label="Primary Mobile"
+                      value={
+                        locationCommodityContacts?.[loc]?.[cmd.value]?.primaryMobile || ""
+                      }
+                      onChange={(e) =>
+                        handleContactChange(loc, cmd.value, "primaryMobile", e.target.value)
+                      }
+                    />
+                    <InputBox
+                      label="Contact Person"
+                      value={
+                        locationCommodityContacts?.[loc]?.[cmd.value]?.contactPerson || ""
+                      }
+                      onChange={(e) =>
+                        handleContactChange(loc, cmd.value, "contactPerson", e.target.value)
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
