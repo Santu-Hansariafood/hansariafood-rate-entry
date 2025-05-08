@@ -174,7 +174,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
       onUpdated();
       onClose();
     } catch (error) {
-      toast.error("❌ Failed to update company");
+      // toast.error("❌ Failed to update company");
     } finally {
       setLoading(false);
     }

@@ -32,12 +32,14 @@ const Pagination = dynamic(
   }
 );
 
-export default function Rate({ commodity }) {
+export default function Rate() {
   const { mobile } = useUser();
 
   const [allCompanies, setAllCompanies] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
+  const [selectedCommodity, setSelectedCommodity] = useState(null);
+  const [showRateModal, setShowRateModal] = useState(false);
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -52,25 +54,14 @@ export default function Rate({ commodity }) {
   const filteredCompanies = useMemo(() => {
     const selectedCategories = Object.values(filters);
     if (selectedCategories.length === 0) return allCompanies;
-
     return allCompanies.filter((company) =>
       selectedCategories.includes(company.category)
     );
   }, [allCompanies, filters]);
 
   useEffect(() => {
-    if (mobile) {
-      console.log("Mobile number from context:", mobile);
-    } else {
-      console.log("Mobile number not available");
-    }
-  }, [mobile]);
-
-  useEffect(() => {
-    if (commodity) {
-      console.log("Commodity from route param:", commodity);
-    }
-  }, [commodity]);
+    setSelectedCommodity(null);
+  }, [selectedCompany]);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -90,32 +81,40 @@ export default function Rate({ commodity }) {
         setTotalItems(total);
 
         const filteredNames = companyList.map((c) => c.name);
-
         setCompanies(filteredNames);
-        await checkAllCompanies(filteredNames);
+
+        if (companyList.length > 0) {
+          const allCommodities = companyList.flatMap(
+            (c) => c.commodities || []
+          );
+          const uniqueCommodities = [...new Set(allCommodities)];
+          await checkAllCompanies(filteredNames, uniqueCommodities[0]);
+        }
       } catch (error) {
         toast.error("Failed to fetch companies");
       } finally {
         setLoading(false);
       }
     };
-
     fetchCompanies();
   }, [filters, currentPage]);
 
-  const checkAllCompanies = useCallback(async (companyNames) => {
+  const checkAllCompanies = useCallback(async (companyNames, commodity) => {
+    if (!commodity) return;
     try {
       const statusMap = await Promise.all(
         companyNames.map(async (company) => {
           try {
             const rateResponse = await axiosInstance.get(
-              `/rate?company=${company}&commodity=${encodeURIComponent(commodity)}`
+              `/rate?company=${company}&commodity=${encodeURIComponent(
+                commodity
+              )}`
             );
             return {
               [company]:
                 rateResponse.data.length > 0 &&
-                rateResponse.data.every((rate) => 
-                  rate.hasNewRateToday && rate.commodity === commodity
+                rateResponse.data.every(
+                  (rate) => rate.hasNewRateToday && rate.commodity === commodity
                 ),
             };
           } catch {
@@ -123,12 +122,24 @@ export default function Rate({ commodity }) {
           }
         })
       );
-
       setCompletedCompanies(Object.assign({}, ...statusMap));
     } catch (error) {
       console.error("Error checking company completion status:", error);
     }
-  }, [commodity]);
+  }, []);
+
+  // Prevent scrolling when modal is open
+  useEffect(() => {
+    if (showRateModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [showRateModal]);
+
+  const selectedCompanyObj = allCompanies.find(
+    (c) => c.name === selectedCompany
+  );
 
   return (
     <Suspense fallback={<Loading />}>
@@ -176,38 +187,127 @@ export default function Rate({ commodity }) {
                 <ArrowLeft className="w-5 h-5" />
                 <span>Back to Companies</span>
               </button>
-              <RateTable
-                selectedCompany={selectedCompany}
-                onClose={() => setSelectedCompany(null)}
-                onRateUpdate={async () => await checkAllCompanies(companies)}
-                commodity={commodity}
-              />
+
+              <div className="mb-4">
+  <button
+    onClick={() => setShowRateModal(true)}
+    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+  >
+    Select Commodity
+  </button>
+</div>
+
+{showRateModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+      <button
+        onClick={() => {
+          setShowRateModal(false);
+          setSelectedCommodity(null);
+        }}
+        className="absolute top-2 right-2 text-gray-600 hover:text-black"
+      >
+        ✕
+      </button>
+
+      <h2 className="text-lg font-semibold mb-4">Select a Commodity</h2>
+      <select
+        value={selectedCommodity || ""}
+        onChange={(e) => setSelectedCommodity(e.target.value)}
+        className="border w-full px-3 py-2 rounded-lg mb-4"
+      >
+        <option value="" disabled>
+          -- Choose Commodity --
+        </option>
+        {(selectedCompanyObj?.commodities || []).map((cmd) => (
+          <option key={cmd} value={cmd}>
+            {cmd}
+          </option>
+        ))}
+      </select>
+
+      <button
+        disabled={!selectedCommodity}
+        onClick={() => {
+          if (selectedCommodity) {
+            setShowRateModal(false);
+          }
+        }}
+        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+      >
+        Confirm & View Rate
+      </button>
+    </div>
+  </div>
+)}
+
+{selectedCommodity && !showRateModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-3xl relative">
+      <button
+        onClick={() => {
+          setSelectedCommodity(null);
+          setSelectedCompany(null);
+        }}
+        className="absolute top-2 right-2 text-gray-600 hover:text-black"
+      >
+        ✕
+      </button>
+      <RateTable
+        selectedCompany={selectedCompany}
+        onClose={() => {
+          setSelectedCommodity(null);
+          setSelectedCompany(null);
+        }}
+        commodity={selectedCommodity}
+      />
+    </div>
+  </div>
+)}
+
+              {/* Modal popup for RateTable */}
+              {showRateModal && selectedCommodity && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-3xl relative">
+                    <button
+                      onClick={() => setShowRateModal(false)}
+                      className="absolute top-2 right-2 text-gray-600 hover:text-black"
+                    >
+                      ✕
+                    </button>
+                    <RateTable
+                      selectedCompany={selectedCompany}
+                      onClose={() => {
+                        setShowRateModal(false);
+                        setSelectedCompany(null);
+                      }}
+                      commodity={selectedCommodity}
+                    />
+                  </div>
+                </div>
+              )}
             </motion.div>
           ) : (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5 }}
             >
-              <div className="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
-                <CompanyList
-                  companies={companies}
-                  completedCompanies={completedCompanies}
-                  loading={loading}
-                  onCompanySelect={setSelectedCompany}
-                  currentPage={currentPage}
-                  itemsPerPage={itemsPerPage}
-                />
-              </div>
+              <CompanyList
+                companies={companies}
+                completedCompanies={completedCompanies}
+                loading={loading}
+                onCompanySelect={setSelectedCompany}
+              />
+              <Pagination
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
             </motion.div>
           )}
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageChange={(page) => setCurrentPage(page)}
-        />
       </div>
     </Suspense>
   );
