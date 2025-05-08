@@ -47,9 +47,9 @@ const ManageCompanyList = () => {
           : [],
       }));
       setCompanies(transformed);
-      setCurrentPage(1); // Reset to first page
+      setCurrentPage(1);
     } catch (error) {
-      toast.error("❌ Failed to fetch companies");
+      toast.error("Failed to fetch companies");
     } finally {
       setLoading(false);
     }
@@ -76,10 +76,10 @@ const ManageCompanyList = () => {
       return;
     try {
       await axiosInstance.delete(`/managecompany/${id}`);
-      toast.success("✅ Company deleted");
+      toast.success("Company deleted");
       fetchCompanies();
     } catch (error) {
-      toast.error("❌ Failed to delete company");
+      toast.error("Failed to delete company");
     }
   };
 
