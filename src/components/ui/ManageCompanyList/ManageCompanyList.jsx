@@ -20,13 +20,21 @@ const ManageCompanyList = () => {
     setLoading(true);
     try {
       const response = await axiosInstance.get("/managecompany");
-      const transformedCompanies = (response.data.companies || []).map((company) => ({
-        ...company,
-        location: Array.isArray(company.location) ? company.location : [],
-        commodities: Array.isArray(company.commodities) ? company.commodities : [],
-        subCommodities: Array.isArray(company.subCommodities) ? company.subCommodities : [],
-        mobileNumbers: Array.isArray(company.mobileNumbers) ? company.mobileNumbers : [],
-      }));
+      const transformedCompanies = (response.data.companies || []).map(
+        (company) => ({
+          ...company,
+          location: Array.isArray(company.location) ? company.location : [],
+          commodities: Array.isArray(company.commodities)
+            ? company.commodities
+            : [],
+          subCommodities: Array.isArray(company.subCommodities)
+            ? company.subCommodities
+            : [],
+          mobileNumbers: Array.isArray(company.mobileNumbers)
+            ? company.mobileNumbers
+            : [],
+        })
+      );
       setCompanies(transformedCompanies);
     } catch (error) {
       toast.error("❌ Failed to fetch companies");
@@ -52,7 +60,8 @@ const ManageCompanyList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this company?")) return;
+    if (!window.confirm("Are you sure you want to delete this company?"))
+      return;
     try {
       await axiosInstance.delete(`/managecompany/${id}`);
       toast.success("✅ Company deleted");
@@ -80,12 +89,16 @@ const ManageCompanyList = () => {
       locationDisplay: (
         <ul className="list-disc list-inside">
           {row.location.map((loc, idx) => (
-            <li key={idx} className="text-sm">{loc || "N/A"}</li>
+            <li key={idx} className="text-sm">
+              {loc || "N/A"}
+            </li>
           ))}
         </ul>
       ),
 
-      categoryDisplay: <span className="text-gray-600">{row.category || "N/A"}</span>,
+      categoryDisplay: (
+        <span className="text-gray-600">{row.category || "N/A"}</span>
+      ),
       stateDisplay: <span className="text-gray-600">{row.state || "N/A"}</span>,
 
       commoditiesDisplay: (
@@ -94,7 +107,9 @@ const ManageCompanyList = () => {
             <li key={idx} className="text-sm">
               {cmd || "N/A"}
               {row.subCommodities[idx] && (
-                <span className="text-gray-500 ml-2">({row.subCommodities[idx]})</span>
+                <span className="text-gray-500 ml-2">
+                  ({row.subCommodities[idx]})
+                </span>
               )}
             </li>
           ))}
@@ -175,9 +190,15 @@ const ManageCompanyList = () => {
               <>
                 <h2 className="text-xl font-bold mb-4">Company Details</h2>
                 <div className="space-y-2">
-                  <p><strong>Name:</strong> {selectedCompany.name}</p>
-                  <p><strong>Category:</strong> {selectedCompany.category}</p>
-                  <p><strong>State:</strong> {selectedCompany.state}</p>
+                  <p>
+                    <strong>Name:</strong> {selectedCompany.name}
+                  </p>
+                  <p>
+                    <strong>Category:</strong> {selectedCompany.category}
+                  </p>
+                  <p>
+                    <strong>State:</strong> {selectedCompany.state}
+                  </p>
 
                   <div>
                     <strong>Locations:</strong>
@@ -194,7 +215,8 @@ const ManageCompanyList = () => {
                       {selectedCompany.commodities.map((c, i) => (
                         <li key={i}>
                           {c}
-                          {selectedCompany.subCommodities[i] && ` (${selectedCompany.subCommodities[i]})`}
+                          {selectedCompany.subCommodities[i] &&
+                            ` (${selectedCompany.subCommodities[i]})`}
                         </li>
                       ))}
                     </ul>
@@ -205,7 +227,9 @@ const ManageCompanyList = () => {
                     <ul className="list-disc ml-5">
                       {selectedCompany.mobileNumbers.map((m, i) => (
                         <li key={i}>
-                          {m.location && <span className="font-medium">{m.location}: </span>}
+                          {m.location && (
+                            <span className="font-medium">{m.location}: </span>
+                          )}
                           {m.primaryMobile && `📱 ${m.primaryMobile} `}
                           {m.secondaryMobile && `| 📞 ${m.secondaryMobile} `}
                           {m.contactPerson && `| 👤 ${m.contactPerson}`}

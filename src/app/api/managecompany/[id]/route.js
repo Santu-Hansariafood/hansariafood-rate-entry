@@ -3,57 +3,20 @@ import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
-
-// GET /api/managecompany/[id] – View company by ID
+// GET /api/managecompany/[id] – Fetch company by ID
 export async function GET(req, { params }) {
+  await connectDB();
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const { id } = params;
+
     if (!id) {
-      return NextResponse.json({ error: "ID is required" }, { status: 400 });
-    }
-
-    const company = await ManageCompany.findById(id);
-    if (!company) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ company }, { status: 200 });
-  } catch (error) {
-    console.error("GET /managecompany/[id] error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch company" },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT /api/managecompany/[id] – Update company
-export async function PUT(req, { params }) {
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { id } = params;
-
-  try {
-    const {
-      name,
-      location,
-      category,
-      state,
-      mobileNumbers = [],
-      commodities = [],
-      subCommodities = [],
-    } = await req.json();
-
-    if (!id || !name || !location) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Company ID is required" },
         { status: 400 }
       );
     }
@@ -63,37 +26,83 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    // Prepare transformed commodities
-    const transformedCommodities = commodities.map((cmd) => ({
-      name: cmd,
-      subCommodities: subCommodities.filter((sub) =>
-        typeof sub === "string" && sub.trim() !== ""
-      ),
-    }));
+    return NextResponse.json({ company }, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching company by ID:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch company" },
+      { status: 500 }
+    );
+  }
+}
 
-    // Update basic fields
+// PUT /api/managecompany/[id] – Update company by ID
+export async function PUT(req, { params }) {
+  await connectDB();
+
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { id } = params;
+    if (!id) {
+      return NextResponse.json(
+        { error: "Company ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const {
+      name,
+      location,
+      state,
+      category,
+      mobileNumbers = [],
+      commodities = [],
+      subCommodities = [],
+    } = await req.json();
+
+    if (!name || !Array.isArray(location) || !location.length) {
+      return NextResponse.json(
+        { error: "Name and location are required" },
+        { status: 400 }
+      );
+    }
+
+    const company = await ManageCompany.findById(id);
+    if (!company) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    // Basic field updates
     company.name = name;
     company.location = location;
-    company.category = category || company.category;
     company.state = state || company.state;
+    company.category = category || company.category;
 
-    // Update mobile numbers (merge by location)
+    // Update mobile numbers (per location + commodity)
     const existingMobileMap = new Map(
-      company.mobileNumbers.map((num) => [num.location, num])
+      (company.mobileNumbers || []).map((item) => [
+        `${item.location}-${item.commodity}`,
+        item,
+      ])
     );
     mobileNumbers.forEach((num) => {
-      existingMobileMap.set(num.location, num);
+      const key = `${num.location}-${num.commodity}`;
+      existingMobileMap.set(key, num);
     });
     company.mobileNumbers = Array.from(existingMobileMap.values());
 
-    // Update commodities (merge by commodity name)
-    const commodityMap = new Map(
-      company.commodities.map((cmd) => [cmd.name, cmd])
-    );
-    transformedCommodities.forEach((cmd) => {
-      commodityMap.set(cmd.name, cmd);
-    });
-    company.commodities = Array.from(commodityMap.values());
+    // Update commodities and subCommodities with de-duplication
+    const combinedCommodities = [
+      ...new Set([...company.commodities, ...commodities]),
+    ];
+    const combinedSubCommodities = [
+      ...new Set([...company.subCommodities, ...subCommodities]),
+    ];
+    company.commodities = combinedCommodities;
+    company.subCommodities = combinedSubCommodities;
 
     await company.save();
 
@@ -102,16 +111,18 @@ export async function PUT(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("PUT /managecompany/[id] error:", error);
+    console.error("Error updating company:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Failed to update company", details: error.message },
       { status: 500 }
     );
   }
 }
 
-// DELETE /api/managecompany/[id] – Delete company
+// DELETE /api/managecompany/[id] – Delete company by ID
 export async function DELETE(req, { params }) {
+  await connectDB();
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -119,11 +130,14 @@ export async function DELETE(req, { params }) {
   try {
     const { id } = params;
     if (!id) {
-      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Company ID is required" },
+        { status: 400 }
+      );
     }
 
-    const deletedCompany = await ManageCompany.findByIdAndDelete(id);
-    if (!deletedCompany) {
+    const deleted = await ManageCompany.findByIdAndDelete(id);
+    if (!deleted) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
@@ -132,7 +146,7 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("DELETE /managecompany/[id] error:", error);
+    console.error("Error deleting company:", error);
     return NextResponse.json(
       { error: "Failed to delete company" },
       { status: 500 }
