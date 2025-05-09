@@ -17,10 +17,11 @@ import dynamic from "next/dynamic";
 const EditCompanyForm = dynamic(() => import("./EditCompanyForm"));
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
-const Pagination = dynamic(()=> import("@/components/common/Pagination/Pagination"));
+const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"));
 
 const ManageCompanyList = () => {
   const [companies, setCompanies] = useState([]);
+  const [totalCompanies, setTotalCompanies] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [editingCompany, setEditingCompany] = useState(null);
@@ -29,10 +30,13 @@ const ManageCompanyList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const fetchCompanies = useCallback(async () => {
+  const fetchCompanies = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get("/managecompany");
+      const response = await axiosInstance.get(
+        `/managecompany?page=${page}&limit=${itemsPerPage}`
+      );
+
       const transformed = (response.data.companies || []).map((company) => ({
         ...company,
         location: Array.isArray(company.location) ? company.location : [],
@@ -46,8 +50,10 @@ const ManageCompanyList = () => {
           ? company.mobileNumbers
           : [],
       }));
+
       setCompanies(transformed);
-      setCurrentPage(1);
+      setTotalCompanies(response.data.total || 0);
+      setCurrentPage(page);
     } catch (error) {
       toast.error("Failed to fetch companies");
     } finally {
@@ -56,8 +62,8 @@ const ManageCompanyList = () => {
   }, []);
 
   useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
+    fetchCompanies(currentPage);
+  }, [fetchCompanies, currentPage]);
 
   const handleView = (company) => {
     setSelectedCompany(company);
@@ -72,12 +78,11 @@ const ManageCompanyList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this company?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this company?")) return;
     try {
       await axiosInstance.delete(`/managecompany/${id}`);
       toast.success("Company deleted");
-      fetchCompanies();
+      fetchCompanies(currentPage);
     } catch (error) {
       toast.error("Failed to delete company");
     }
@@ -95,7 +100,7 @@ const ManageCompanyList = () => {
   const tableRows = useMemo(() => {
     return companies.map((row, index) => ({
       ...row,
-      serial: <span>{index + 1}</span>,
+      serial: <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>,
       name: <span className="font-semibold">{row.name || "N/A"}</span>,
       locationDisplay: (
         <ul className="list-disc list-inside">
@@ -153,13 +158,7 @@ const ManageCompanyList = () => {
         />
       ),
     }));
-  }, [companies]);
-
-  const paginatedRows = useMemo(() => {
-    const startIdx = (currentPage - 1) * itemsPerPage;
-    const endIdx = startIdx + itemsPerPage;
-    return tableRows.slice(startIdx, endIdx);
-  }, [tableRows, currentPage]);
+  }, [companies, currentPage]);
 
   const columns = useMemo(
     () => [
@@ -183,12 +182,12 @@ const ManageCompanyList = () => {
         <ToastContainer position="top-right" autoClose={3000} />
         <Title text="Manage Company List" />
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <Table data={paginatedRows} columns={columns} />
+          <Table data={tableRows} columns={columns} />
           <Pagination
             currentPage={currentPage}
-            totalItems={companies.length}
+            totalItems={totalCompanies}
             itemsPerPage={itemsPerPage}
-            onPageChange={(page) => setCurrentPage(page)}
+            onPageChange={(page) => fetchCompanies(page)}
           />
         </div>
 
@@ -205,7 +204,7 @@ const ManageCompanyList = () => {
                       setEditingCompany(null);
                     }}
                     onSuccess={() => {
-                      fetchCompanies();
+                      fetchCompanies(currentPage);
                       toast.success("✅ Company updated");
                       setShowModal(false);
                       setEditingCompany(null);
@@ -251,9 +250,7 @@ const ManageCompanyList = () => {
                         {selectedCompany.mobileNumbers.map((m, i) => (
                           <li key={i}>
                             {m.location && (
-                              <span className="font-medium">
-                                {m.location}:{" "}
-                              </span>
+                              <span className="font-medium">{m.location}: </span>
                             )}
                             {m.primaryMobile && `📱 ${m.primaryMobile} `}
                             {m.secondaryMobile && `| 📞 ${m.secondaryMobile} `}
