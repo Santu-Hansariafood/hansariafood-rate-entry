@@ -60,7 +60,9 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
           );
 
           const matchedMobile = company.mobileNumbers?.find(
-            (entry) => entry.location.trim() === cleanLocation
+            (entry) =>
+              entry.location.trim() === cleanLocation &&
+              entry.commodity === commodity
           );
 
           return {
