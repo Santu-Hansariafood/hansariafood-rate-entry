@@ -156,62 +156,66 @@ export default function Rate() {
   );
 
   const renderRateModal = (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
-        <button
-          onClick={handleCloseRateModal}
-          className="absolute top-2 right-2"
-        >
-          ✕
-        </button>
-        <Title text="Select a Commodity" />
-        <select
-          value={selectedCommodity || ""}
-          onChange={(e) => setSelectedCommodity(e.target.value)}
-          className="w-full mb-4 p-2 border rounded"
-        >
-          <option value="" disabled>
-            -- Choose Commodity --
-          </option>
-          {selectedCompanyObj?.commodities.map((cmd) => (
-            <option key={cmd} value={cmd}>
-              {cmd}
+    <Suspense fallback={<Loading />}>
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
+          <button
+            onClick={handleCloseRateModal}
+            className="absolute top-2 right-2"
+          >
+            ✕
+          </button>
+          <Title text="Select a Commodity" />
+          <select
+            value={selectedCommodity || ""}
+            onChange={(e) => setSelectedCommodity(e.target.value)}
+            className="w-full mb-4 p-2 border rounded"
+          >
+            <option value="" disabled>
+              -- Choose Commodity --
             </option>
-          ))}
-        </select>
-        <button
-          disabled={!selectedCommodity}
-          onClick={handleConfirmCommodity}
-          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-        >
-          Confirm & View Rate
-        </button>
+            {selectedCompanyObj?.commodities.map((cmd) => (
+              <option key={cmd} value={cmd}>
+                {cmd}
+              </option>
+            ))}
+          </select>
+          <button
+            disabled={!selectedCommodity}
+            onClick={handleConfirmCommodity}
+            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+          >
+            Confirm & View Rate
+          </button>
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 
   const renderRateTable = (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded shadow-lg w-full max-w-3xl relative">
-        <button
-          onClick={() => {
-            setSelectedCompany(null);
-            setSelectedCommodity(null);
-          }}
-          className="absolute top-2 right-2"
-        >
-          ✕
-        </button>
-        <RateTable
-          selectedCompany={selectedCompany}
-          commodity={selectedCommodity}
-          onClose={() => {
-            setSelectedCompany(null);
-            setSelectedCommodity(null);
-          }}
-        />
+    <Suspense fallback={<Loading />}>
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded shadow-lg w-full max-w-3xl relative">
+          <button
+            onClick={() => {
+              setSelectedCompany(null);
+              setSelectedCommodity(null);
+            }}
+            className="absolute top-2 right-2"
+          >
+            ✕
+          </button>
+          <RateTable
+            selectedCompany={selectedCompany}
+            commodity={selectedCommodity}
+            onClose={() => {
+              setSelectedCompany(null);
+              setSelectedCommodity(null);
+            }}
+          />
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 
   return (

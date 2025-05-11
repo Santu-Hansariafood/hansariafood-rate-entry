@@ -145,7 +145,10 @@ export async function GET(req) {
     }
 
     const [companies, total] = await Promise.all([
-      ManageCompany.find(filter).skip(skip).limit(limit),
+      ManageCompany.find(filter)
+        .sort({ name: 1 })
+        .skip(skip)
+        .limit(limit),
       ManageCompany.countDocuments(filter),
     ]);
 
