@@ -50,37 +50,34 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
       );
 
       if (company) {
-        const initialRates = company.location.map((location) => {
-          const cleanLocation = location.trim();
-
-          const foundRate = existingRates.find(
-            (rate) => 
-              rate.location.trim() === cleanLocation && 
-              rate.commodity === commodity
-          );
-
-          const matchedMobile = company.mobileNumbers?.find(
-            (entry) =>
-              entry.location.trim() === cleanLocation &&
-              entry.commodity === commodity
-          );
-
-          return {
-            location: cleanLocation,
-            state: locationMap[cleanLocation.toUpperCase()] || "Unknown",
-            oldRate: foundRate?.oldRates?.at(-1) || "—",
-            newRate: foundRate?.newRate ?? "",
-            isUpdated: !!foundRate?.newRate,
-            lastUpdated: foundRate?.oldRates?.at(-1)
-              ? new Date(
-                  foundRate.oldRates[foundRate.oldRates.length - 1]
-                    .split("(")[1]
-                    .split(")")[0]
-                )
-              : null,
-            primaryMobile: matchedMobile?.primaryMobile || "N/A",
-            contactPerson: matchedMobile?.contactPerson || "N/A",
-          };
+        const initialRates = [];
+        company.commodities.forEach((cmd) => {
+          company.location.forEach((location) => {
+            const cleanLocation = location.trim();
+            const foundRate = existingRates.find(
+              (rate) => rate.location.trim() === cleanLocation && rate.commodity === cmd
+            );
+            const matchedMobile = company.mobileNumbers?.find(
+              (entry) => entry.location.trim() === cleanLocation && entry.commodity === cmd
+            );
+            initialRates.push({
+              location: cleanLocation,
+              commodity: cmd,
+              state: locationMap[cleanLocation.toUpperCase()] || "Unknown",
+              oldRate: foundRate?.oldRates?.at(-1) || "—",
+              newRate: foundRate?.newRate ?? "",
+              isUpdated: !!foundRate?.newRate,
+              lastUpdated: foundRate?.oldRates?.at(-1)
+                ? new Date(
+                    foundRate.oldRates[foundRate.oldRates.length - 1]
+                      .split("(")[1]
+                      .split(")")[0]
+                  )
+                : null,
+              primaryMobile: matchedMobile?.primaryMobile || "N/A",
+              contactPerson: matchedMobile?.contactPerson || "N/A",
+            });
+          });
         });
 
         const sortedRates = initialRates.sort((a, b) => {
