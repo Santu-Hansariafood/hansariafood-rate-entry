@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import useCompany from "@/hooks/Company/useCompany";
+import Loading from "@/components/common/Loading/Loading";
 
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
@@ -24,7 +25,9 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
   const [companyName, setCompanyName] = useState(company.name || "");
   const [category, setCategory] = useState(company.category || "");
   const [state, setState] = useState(company.state || "");
-  const [selectedLocations, setSelectedLocations] = useState(company.location || []);
+  const [selectedLocations, setSelectedLocations] = useState(
+    company.location || []
+  );
   const [selectedCommodities, setSelectedCommodities] = useState(
     (company.commodities || []).map((cmd) => ({ label: cmd, value: cmd }))
   );
@@ -35,7 +38,9 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
   // Fix: Fallback for category
   useEffect(() => {
     if (!category && company.name) {
-      const selectedCompany = companies.find((comp) => comp.name === company.name);
+      const selectedCompany = companies.find(
+        (comp) => comp.name === company.name
+      );
       setCategory(selectedCompany?.category || "");
     }
   }, [companies, company.name, category]);
@@ -55,22 +60,24 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     return updated;
   };
 
-  const [locationCommodityContacts, setLocationCommodityContacts] = useState(() => {
-    const data = updateLocationCommodityContacts(
-      company.location || [],
-      (company.commodities || []).map((cmd) => ({ label: cmd, value: cmd }))
-    );
+  const [locationCommodityContacts, setLocationCommodityContacts] = useState(
+    () => {
+      const data = updateLocationCommodityContacts(
+        company.location || [],
+        (company.commodities || []).map((cmd) => ({ label: cmd, value: cmd }))
+      );
 
-    company.mobileNumbers?.forEach((item) => {
-      if (!data[item.location]) data[item.location] = {};
-      data[item.location][item.commodity] = {
-        primaryMobile: item.primaryMobile,
-        contactPerson: item.contactPerson,
-      };
-    });
+      company.mobileNumbers?.forEach((item) => {
+        if (!data[item.location]) data[item.location] = {};
+        data[item.location][item.commodity] = {
+          primaryMobile: item.primaryMobile,
+          contactPerson: item.contactPerson,
+        };
+      });
 
-    return data;
-  });
+      return data;
+    }
+  );
 
   const [loading, setLoading] = useState(false);
 
@@ -135,27 +142,36 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
 
   const memoCompanyOptions = useMemo(() => companyOptions, [companyOptions]);
   const memoLocationOptions = useMemo(() => locationOptions, [locationOptions]);
-  const memoCommodityOptions = useMemo(() => commodityOptions, [commodityOptions]);
+  const memoCommodityOptions = useMemo(
+    () => commodityOptions,
+    [commodityOptions]
+  );
 
   const handleSubmit = async () => {
-    if (!companyName || selectedLocations.length === 0 || selectedCommodities.length === 0) {
-      toast.error("❌ Please fill required fields.");
+    if (
+      !companyName ||
+      selectedLocations.length === 0 ||
+      selectedCommodities.length === 0
+    ) {
+      toast.error("Please fill required fields.");
       return;
     }
 
     const mobileNumbers = [];
-    Object.entries(locationCommodityContacts).forEach(([location, commodityMap]) => {
-      Object.entries(commodityMap).forEach(([commodity, info]) => {
-        if (info.primaryMobile || info.contactPerson) {
-          mobileNumbers.push({
-            location,
-            commodity,
-            primaryMobile: info.primaryMobile,
-            contactPerson: info.contactPerson,
-          });
-        }
-      });
-    });
+    Object.entries(locationCommodityContacts).forEach(
+      ([location, commodityMap]) => {
+        Object.entries(commodityMap).forEach(([commodity, info]) => {
+          if (info.primaryMobile || info.contactPerson) {
+            mobileNumbers.push({
+              location,
+              commodity,
+              primaryMobile: info.primaryMobile,
+              contactPerson: info.contactPerson,
+            });
+          }
+        });
+      }
+    );
 
     setLoading(true);
     try {
@@ -170,108 +186,131 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
       };
 
       await axiosInstance.put(`/managecompany/${company._id}`, payload);
-      toast.success("✅ Company updated successfully");
+      toast.success("Company updated successfully");
       onUpdated();
       onClose();
     } catch (error) {
-      // toast.error("❌ Failed to update company");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow-md w-full max-w-4xl">
-      <Title text="Edit Company" className="text-xl font-bold mb-4 text-center" />
+    <Suspense fallback={<Loading />}>
+      <div className="bg-white p-6 rounded shadow-md w-full max-w-4xl">
+        <Title
+          text="Edit Company"
+          className="text-xl font-bold mb-4 text-center"
+        />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Dropdown
-          label="Company Name *"
-          options={memoCompanyOptions}
-          value={companyName}
-          onChange={handleCompanyChange}
-        />
-        <Dropdown
-          label="Locations *"
-          options={memoLocationOptions}
-          value={selectedLocations}
-          onChange={handleLocationChange}
-          isMulti
-        />
-        <InputBox label="Category" value={category} readOnly />
-        <InputBox label="State" value={state} readOnly />
-        <Dropdown
-          label="Commodities *"
-          options={memoCommodityOptions}
-          value={selectedCommodities.map((c) => c.value)}
-          onChange={(vals) => handleCommodityChange(vals)}
-          isMulti
-        />
-        {subCommodityOptions.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Dropdown
-            label="Sub-Commodities"
-            options={subCommodityOptions}
-            value={selectedSubCommodities.map((s) => s.value)}
-            onChange={(vals) =>
-              setSelectedSubCommodities(vals.map((val) => ({ label: val, value: val })))
-            }
+            label="Company Name *"
+            options={memoCompanyOptions}
+            value={companyName}
+            onChange={handleCompanyChange}
+          />
+          <Dropdown
+            label="Locations *"
+            options={memoLocationOptions}
+            value={selectedLocations}
+            onChange={handleLocationChange}
             isMulti
           />
-        )}
-      </div>
+          <InputBox label="Category" value={category} readOnly />
+          <InputBox label="State" value={state} readOnly />
+          <Dropdown
+            label="Commodities *"
+            options={memoCommodityOptions}
+            value={selectedCommodities.map((c) => c.value)}
+            onChange={(vals) => handleCommodityChange(vals)}
+            isMulti
+          />
+          {subCommodityOptions.length > 0 && (
+            <Dropdown
+              label="Sub-Commodities"
+              options={subCommodityOptions}
+              value={selectedSubCommodities.map((s) => s.value)}
+              onChange={(vals) =>
+                setSelectedSubCommodities(
+                  vals.map((val) => ({ label: val, value: val }))
+                )
+              }
+              isMulti
+            />
+          )}
+        </div>
 
-      <div className="mt-6">
-        <Title text="Location-wise Contact Details" className="text-lg font-semibold mb-2" />
-        <div className="space-y-6">
-          {selectedLocations.map((loc) => (
-            <div key={loc} className="bg-gray-50 p-4 rounded border">
-              <h3 className="text-md font-semibold text-blue-700 mb-2">{loc}</h3>
-              <div className="space-y-3">
-                {selectedCommodities.map((cmd) => (
-                  <div
-                    key={`${loc}-${cmd.value}`}
-                    className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
-                  >
-                    <InputBox label="Commodity" value={cmd.value} readOnly />
-                    <InputBox
-                      label="Primary Mobile"
-                      value={
-                        locationCommodityContacts?.[loc]?.[cmd.value]?.primaryMobile || ""
-                      }
-                      onChange={(e) =>
-                        handleContactChange(loc, cmd.value, "primaryMobile", e.target.value)
-                      }
-                    />
-                    <InputBox
-                      label="Contact Person"
-                      value={
-                        locationCommodityContacts?.[loc]?.[cmd.value]?.contactPerson || ""
-                      }
-                      onChange={(e) =>
-                        handleContactChange(loc, cmd.value, "contactPerson", e.target.value)
-                      }
-                    />
-                  </div>
-                ))}
+        <div className="mt-6">
+          <Title
+            text="Location-wise Contact Details"
+            className="text-lg font-semibold mb-2"
+          />
+          <div className="space-y-6">
+            {selectedLocations.map((loc) => (
+              <div key={loc} className="bg-gray-50 p-4 rounded border">
+                <h3 className="text-md font-semibold text-blue-700 mb-2">
+                  {loc}
+                </h3>
+                <div className="space-y-3">
+                  {selectedCommodities.map((cmd) => (
+                    <div
+                      key={`${loc}-${cmd.value}`}
+                      className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
+                    >
+                      <InputBox label="Commodity" value={cmd.value} readOnly />
+                      <InputBox
+                        label="Primary Mobile"
+                        value={
+                          locationCommodityContacts?.[loc]?.[cmd.value]
+                            ?.primaryMobile || ""
+                        }
+                        onChange={(e) =>
+                          handleContactChange(
+                            loc,
+                            cmd.value,
+                            "primaryMobile",
+                            e.target.value
+                          )
+                        }
+                      />
+                      <InputBox
+                        label="Contact Person"
+                        value={
+                          locationCommodityContacts?.[loc]?.[cmd.value]
+                            ?.contactPerson || ""
+                        }
+                        onChange={(e) =>
+                          handleContactChange(
+                            loc,
+                            cmd.value,
+                            "contactPerson",
+                            e.target.value
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-center mt-6 gap-4">
+          <Button
+            onClick={handleSubmit}
+            text="Update"
+            isLoading={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          />
+          <Button
+            onClick={onClose}
+            text="Cancel"
+            className="bg-gray-300 hover:bg-gray-400 text-black"
+          />
         </div>
       </div>
-
-      <div className="flex justify-center mt-6 gap-4">
-        <Button
-          onClick={handleSubmit}
-          text="Update"
-          isLoading={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        />
-        <Button
-          onClick={onClose}
-          text="Cancel"
-          className="bg-gray-300 hover:bg-gray-400 text-black"
-        />
-      </div>
-    </div>
+    </Suspense>
   );
 }
