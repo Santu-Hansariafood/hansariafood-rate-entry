@@ -58,22 +58,26 @@ export default function RateTableRow({
           {rate.oldRate}
         </td>
         <td className="px-6 py-4 border-b whitespace-nowrap align-middle">
-          <input
-            type="number"
-            value={rate.newRate}
-            onChange={(e) =>
-              setRates((prev) =>
-                prev.map((r, idx) =>
-                  idx === index ? { ...r, newRate: e.target.value } : r
+          {rate.newRate && editIndex !== index ? (
+            <span className="font-semibold text-green-700">{rate.newRate}</span>
+          ) : (
+            <input
+              type="number"
+              value={rate.newRate}
+              onChange={(e) =>
+                setRates((prev) =>
+                  prev.map((r, idx) =>
+                    idx === index ? { ...r, newRate: e.target.value } : r
+                  )
                 )
-              )
-            }
-            className={`w-full min-w-[120px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
-              editIndex === index ? "border-green-500" : "border-gray-300"
-            }`}
-            disabled={editIndex !== index}
-            placeholder="Enter new rate"
-          />
+              }
+              className={`w-full min-w-[120px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
+                editIndex === index ? "border-green-500" : "border-gray-300"
+              }`}
+              disabled={editIndex !== index}
+              placeholder="Enter new rate"
+            />
+          )}
         </td>
 
         <td className="px-6 py-4 border-b text-center whitespace-nowrap align-middle">

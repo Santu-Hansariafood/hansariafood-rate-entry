@@ -128,7 +128,7 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
         newRate: parsedRate,
         oldRates: [newOldRate],
         mobile,
-        commodity,
+        commodity: rateToSave.commodity, // <-- use the commodity from the rate row
       });
   
       toast.success("Rate updated successfully!");
