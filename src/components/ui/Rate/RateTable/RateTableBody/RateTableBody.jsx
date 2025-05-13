@@ -100,7 +100,7 @@ export default function RateTableBody({
                               handleEdit={handleEdit}
                               handleSave={handleSave}
                               setRates={setRates}
-                              commodity={commodity}
+                              commodity={rate.commodity} // <-- pass the commodity from the rate object
                             />
                           ))}
                         </AnimatePresence>
