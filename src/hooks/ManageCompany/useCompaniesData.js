@@ -15,7 +15,9 @@ export const useCompaniesData = (currentPage) => {
   const fetchAllData = useCallback(async () => {
     try {
       const [companyRes, locationRes, categoryRes] = await Promise.all([
-        axiosInstance.get(`/managecompany?page=${currentPage}&limit=${ITEMS_PER_PAGE}`),
+        axiosInstance.get(
+          `/managecompany?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
+        ),
         axiosInstance.get("/location"),
         axiosInstance.get("/categories"),
       ]);
@@ -52,11 +54,11 @@ export const useCompaniesData = (currentPage) => {
     } catch (err) {
       toast.error("Failed to fetch initial data");
     }
-  }, [currentPage]); // ✅ Memoized with currentPage as dependency
+  }, [currentPage]);
 
   useEffect(() => {
     fetchAllData();
-  }, [fetchAllData]); // ✅ No ESLint warning now
+  }, [fetchAllData]);
 
   return {
     companies,

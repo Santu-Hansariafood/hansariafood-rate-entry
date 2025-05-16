@@ -35,7 +35,6 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     (company.subCommodities || []).map((sub) => ({ label: sub, value: sub }))
   );
 
-  // Fix: Fallback for category
   useEffect(() => {
     if (!category && company.name) {
       const selectedCompany = companies.find(
@@ -45,7 +44,6 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     }
   }, [companies, company.name, category]);
 
-  // Utility: Update location-commodity contact map
   const updateLocationCommodityContacts = (locs, cmds, prevData) => {
     const updated = {};
     locs.forEach((loc) => {
