@@ -45,7 +45,10 @@ export default function Rate() {
   }, []);
 
   const selectedCompanyObj = useMemo(() => {
-    return allCompanies.find((c) => c.name === selectedCompany);
+    return allCompanies.find(
+      (c) =>
+        c.name.trim().toLowerCase() === selectedCompany?.trim().toLowerCase()
+    );
   }, [allCompanies, selectedCompany]);
 
   const fetchCompanies = useCallback(async () => {
@@ -150,7 +153,7 @@ export default function Rate() {
           </button>
           <RateTable
             selectedCompany={selectedCompany}
-            commodity={selectedCompanyObj?.commodities?.[0]}
+            commodity={selectedCompanyObj?.commodities?.[0] || ""}
             onClose={() => {
               setSelectedCompany(null);
             }}
