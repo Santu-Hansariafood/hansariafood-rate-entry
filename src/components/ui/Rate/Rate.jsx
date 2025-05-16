@@ -33,8 +33,6 @@ export default function Rate() {
   const [allCompanies, setAllCompanies] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [selectedCommodity, setSelectedCommodity] = useState(null);
-  const [showRateModal, setShowRateModal] = useState(false);
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -110,29 +108,12 @@ export default function Rate() {
   }, [fetchCompanies]);
 
   useEffect(() => {
-    setSelectedCommodity(null);
-  }, [selectedCompany]);
-
-  useEffect(() => {
-    if (selectedCompany) {
-      setShowRateModal(true);
+    if (!selectedCompany) {
+      document.body.style.overflow = "auto";
+    } else {
+      document.body.style.overflow = "hidden";
     }
   }, [selectedCompany]);
-
-  useEffect(() => {
-    document.body.style.overflow = showRateModal ? "hidden" : "auto";
-  }, [showRateModal]);
-
-  const handleCloseRateModal = () => {
-    setShowRateModal(false);
-    setSelectedCommodity(null);
-  };
-
-  const handleConfirmCommodity = () => {
-    if (selectedCommodity) {
-      setShowRateModal(false);
-    }
-  };
 
   const renderCompanySelector = (
     <motion.div
@@ -155,43 +136,6 @@ export default function Rate() {
     </motion.div>
   );
 
-  const renderRateModal = (
-    <Suspense fallback={<Loading />}>
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
-          <button
-            onClick={handleCloseRateModal}
-            className="absolute top-2 right-2"
-          >
-            ✕
-          </button>
-          <Title text="Select a Commodity" />
-          <select
-            value={selectedCommodity || ""}
-            onChange={(e) => setSelectedCommodity(e.target.value)}
-            className="w-full mb-4 p-2 border rounded"
-          >
-            <option value="" disabled>
-              -- Choose Commodity --
-            </option>
-            {selectedCompanyObj?.commodities.map((cmd) => (
-              <option key={cmd} value={cmd}>
-                {cmd}
-              </option>
-            ))}
-          </select>
-          <button
-            disabled={!selectedCommodity}
-            onClick={handleConfirmCommodity}
-            className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-          >
-            Confirm & View Rate
-          </button>
-        </div>
-      </div>
-    </Suspense>
-  );
-
   const renderRateTable = (
     <Suspense fallback={<Loading />}>
       <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -199,7 +143,6 @@ export default function Rate() {
           <button
             onClick={() => {
               setSelectedCompany(null);
-              setSelectedCommodity(null);
             }}
             className="absolute top-2 right-2"
           >
@@ -207,10 +150,9 @@ export default function Rate() {
           </button>
           <RateTable
             selectedCompany={selectedCompany}
-            commodity={selectedCommodity}
+            commodity={selectedCompanyObj?.commodities?.[0]}
             onClose={() => {
               setSelectedCompany(null);
-              setSelectedCommodity(null);
             }}
           />
         </div>
@@ -225,8 +167,7 @@ export default function Rate() {
         <Title text="Rate Management" />
         <CategoryCard onFilterChange={handleFilterChange} />
         {!selectedCompany && renderCompanySelector}
-        {showRateModal && selectedCompany && renderRateModal}
-        {selectedCompany && selectedCommodity && renderRateTable}
+        {selectedCompany && renderRateTable}
       </div>
     </Suspense>
   );
