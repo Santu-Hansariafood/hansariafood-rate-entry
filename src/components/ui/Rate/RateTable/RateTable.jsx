@@ -35,7 +35,9 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
       ] = await Promise.all([
         axiosInstance.get("/managecompany?limit=100"),
         axiosInstance.get(
-          `/rate?company=${encodeURIComponent(selectedCompany.trim())}&commodity=${encodeURIComponent(commodity)}`
+          `/rate?company=${encodeURIComponent(
+            selectedCompany.trim()
+          )}&commodity=${encodeURIComponent(commodity)}`
         ),
         axiosInstance.get("/location?limit=1000"),
       ]);
@@ -50,34 +52,37 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
       );
 
       if (company) {
-        const initialRates = [];
-        company.commodities.forEach((cmd) => {
-          company.location.forEach((location) => {
-            const cleanLocation = location.trim();
-            const foundRate = existingRates.find(
-              (rate) => rate.location.trim() === cleanLocation && rate.commodity === cmd
-            );
-            const matchedMobile = company.mobileNumbers?.find(
-              (entry) => entry.location.trim() === cleanLocation && entry.commodity === cmd
-            );
-            initialRates.push({
-              location: cleanLocation,
-              commodity: cmd,
-              state: locationMap[cleanLocation.toUpperCase()] || "Unknown",
-              oldRate: foundRate?.oldRates?.at(-1) || "—",
-              newRate: foundRate?.newRate ?? "",
-              isUpdated: !!foundRate?.newRate,
-              lastUpdated: foundRate?.oldRates?.at(-1)
-                ? new Date(
-                    foundRate.oldRates[foundRate.oldRates.length - 1]
-                      .split("(")[1]
-                      .split(")")[0]
-                  )
-                : null,
-              primaryMobile: matchedMobile?.primaryMobile || "N/A",
-              contactPerson: matchedMobile?.contactPerson || "N/A",
-            });
-          });
+        const initialRates = company.location.map((location) => {
+          const cleanLocation = location.trim();
+
+          const foundRate = existingRates.find(
+            (rate) => 
+              rate.location.trim() === cleanLocation && 
+              rate.commodity === commodity
+          );
+
+          const matchedMobile = company.mobileNumbers?.find(
+            (entry) =>
+              entry.location.trim() === cleanLocation &&
+              entry.commodity === commodity
+          );
+
+          return {
+            location: cleanLocation,
+            state: locationMap[cleanLocation.toUpperCase()] || "Unknown",
+            oldRate: foundRate?.oldRates?.at(-1) || "—",
+            newRate: foundRate?.newRate ?? "",
+            isUpdated: !!foundRate?.newRate,
+            lastUpdated: foundRate?.oldRates?.at(-1)
+              ? new Date(
+                  foundRate.oldRates[foundRate.oldRates.length - 1]
+                    .split("(")[1]
+                    .split(")")[0]
+                )
+              : null,
+            primaryMobile: matchedMobile?.primaryMobile || "N/A",
+            contactPerson: matchedMobile?.contactPerson || "N/A",
+          };
         });
 
         const sortedRates = initialRates.sort((a, b) => {
@@ -113,28 +118,29 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
   const handleSave = async (index) => {
     const rateToSave = rates[index];
     const parsedRate = parseFloat(rateToSave.newRate);
-  
+
     if (!rateToSave.newRate || isNaN(parsedRate)) {
       toast.error("Please enter a valid numeric rate.");
       return;
     }
-  
+
     try {
-      const newOldRate = `${parsedRate} (${new Date().toLocaleDateString("en-GB")})`;
-  
+      const newOldRate = `${parsedRate} (${new Date().toLocaleDateString(
+        "en-GB"
+      )})`;
+
       await axiosInstance.post("/rate", {
         company: selectedCompany,
         location: rateToSave.location,
         newRate: parsedRate,
         oldRates: [newOldRate],
         mobile,
-        commodity: rateToSave.commodity, // <-- use the commodity from the rate row
+        commodity,
       });
-  
+
       toast.success("Rate updated successfully!");
       setEditIndex(null);
-  
-      // Refresh rates after save
+
       await fetchRates();
     } catch (error) {
       toast.error("Error updating rate.");

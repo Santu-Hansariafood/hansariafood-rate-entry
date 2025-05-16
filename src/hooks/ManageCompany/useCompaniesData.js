@@ -12,7 +12,7 @@ export const useCompaniesData = (currentPage) => {
   const [categories, setCategories] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     try {
       const [companyRes, locationRes, categoryRes] = await Promise.all([
         axiosInstance.get(
@@ -54,11 +54,11 @@ export const useCompaniesData = (currentPage) => {
     } catch (err) {
       toast.error("Failed to fetch initial data");
     }
-  };
+  }, [currentPage]);
 
   useEffect(() => {
     fetchAllData();
-  }, [currentPage]);
+  }, [fetchAllData]);
 
   return {
     companies,

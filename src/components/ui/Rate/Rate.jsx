@@ -67,6 +67,14 @@ export default function Rate() {
     fetchCompanies();
   }, [fetchCompanies]);
 
+  useEffect(() => {
+    if (!selectedCompany) {
+      document.body.style.overflow = "auto";
+    } else {
+      document.body.style.overflow = "hidden";
+    }
+  }, [selectedCompany]);
+
   const renderCompanySelector = (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
       <CompanyList
@@ -84,6 +92,30 @@ export default function Rate() {
     </motion.div>
   );
 
+  const renderRateTable = (
+    <Suspense fallback={<Loading />}>
+      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded shadow-lg w-full max-w-3xl relative">
+          <button
+            onClick={() => {
+              setSelectedCompany(null);
+            }}
+            className="absolute top-2 right-2"
+          >
+            ✕
+          </button>
+          <RateTable
+            selectedCompany={selectedCompany}
+            commodity={selectedCompanyObj?.commodities?.[0]}
+            onClose={() => {
+              setSelectedCompany(null);
+            }}
+          />
+        </div>
+      </div>
+    </Suspense>
+  );
+
   return (
     <Suspense fallback={<Loading />}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
@@ -91,6 +123,7 @@ export default function Rate() {
         <Title text="Rate Management" />
         <CategoryCard onFilterChange={handleFilterChange} />
         {!selectedCompany && renderCompanySelector}
+        {selectedCompany && renderRateTable}
         {selectedCompany && (
           <RateTable
             selectedCompany={selectedCompany}

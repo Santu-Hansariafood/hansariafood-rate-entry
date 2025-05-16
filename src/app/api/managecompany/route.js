@@ -28,7 +28,6 @@ export async function POST(req) {
       );
     }
 
-    // Normalize inputs
     location = Array.isArray(location) ? location : [location];
     mobileNumbers = Array.isArray(mobileNumbers) ? mobileNumbers : [];
     commodities = Array.isArray(commodities) ? commodities : [];
@@ -51,7 +50,6 @@ export async function POST(req) {
         );
       }
 
-      // Merge and update fields
       existingCompany.location = [
         ...new Set([...existingCompany.location, ...location]),
       ];
@@ -90,7 +88,6 @@ export async function POST(req) {
       );
     }
 
-    // Create new company
     const newCompany = new ManageCompany({
       name,
       location,
@@ -145,10 +142,7 @@ export async function GET(req) {
     }
 
     const [companies, total] = await Promise.all([
-      ManageCompany.find(filter)
-        .sort({ name: 1 })
-        .skip(skip)
-        .limit(limit),
+      ManageCompany.find(filter).skip(skip).limit(limit),
       ManageCompany.countDocuments(filter),
     ]);
 
