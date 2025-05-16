@@ -1,48 +1,111 @@
-import cron from "node-cron";
-import { connectDB } from "@/lib/mongodb";
-import Rate from "@/models/Rate";
-import nodemailer from "nodemailer";
-import * as XLSX from "xlsx";
-import { writeFileSync, unlinkSync } from "fs";
-import path from "path";
+const cron = require("node-cron");
+const { connectDB } = require("@/lib/mongodb");
+const Rate = require("@/models/Rate");
+const nodemailer = require("nodemailer");
+const ExcelJS = require("exceljs");
+const fs = require("fs");
+const path = require("path");
+
+function capitalizeWords(str) {
+  return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 async function sendMonthlyReport() {
   await connectDB();
+
   try {
     const today = new Date();
-
     const rates = await Rate.find({});
-    if (rates.length === 0) return console.log("No rates found");
 
-    const data = rates.map((rate) => ({
-      Company: rate.company,
-      Location: rate.location,
-      Commodity: rate.commodity || "",
-      "New Rate": rate.newRate,
-      "New Rate Date": rate.newRateDate
-        ? new Date(rate.newRateDate).toLocaleDateString("en-GB")
-        : "",
-      "Old Rates": rate.oldRates
-        .map(
-          (old) =>
-            `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`
-        )
-        .join(", "),
-      Mobile: rate.mobile || "",
-    }));
+    if (!rates.length) {
+      console.log("No rates found");
+      return;
+    }
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Rates");
+    const allDatesSet = new Set();
+
+    rates.forEach((rate) => {
+      rate.oldRates.forEach((r) =>
+        allDatesSet.add(new Date(r.date).toLocaleDateString("en-GB"))
+      );
+      if (rate.newRateDate) {
+        allDatesSet.add(new Date(rate.newRateDate).toLocaleDateString("en-GB"));
+      }
+    });
+
+    const sortedDates = Array.from(allDatesSet).sort((a, b) => {
+      const [d1, m1, y1] = a.split("/").map(Number);
+      const [d2, m2, y2] = b.split("/").map(Number);
+      return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2);
+    });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Monthly Rates");
+
+    const headers = [
+      { header: "Company", key: "Company", width: 25 },
+      { header: "Location", key: "Location", width: 20 },
+      { header: "Commodity", key: "Commodity", width: 20 },
+      { header: "Mobile", key: "Mobile", width: 15 },
+      ...sortedDates.map((date) => ({ header: date, key: date, width: 15 })),
+    ];
+
+    worksheet.columns = headers;
+
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "4472C4" },
+      };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+    });
+
+    rates
+      .sort((a, b) => a.company.localeCompare(b.company))
+      .forEach((rate) => {
+        const row = {
+          Company: capitalizeWords(rate.company),
+          Location: rate.location,
+          Commodity: rate.commodity || "",
+          Mobile: rate.mobile || "",
+        };
+
+        if (rate.newRate && rate.newRateDate) {
+          const date = new Date(rate.newRateDate).toLocaleDateString("en-GB");
+          row[date] = rate.newRate;
+        }
+
+        rate.oldRates.forEach((old) => {
+          const date = new Date(old.date).toLocaleDateString("en-GB");
+          row[date] = old.rate;
+        });
+
+        worksheet.addRow(row);
+      });
+
+    worksheet.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.alignment = {
+          vertical: "middle",
+          horizontal: "center",
+          wrapText: true,
+        };
+      });
+    });
 
     const filePath = path.join(
       "/tmp",
       `rates-report-${today.getFullYear()}-${today.getMonth() + 1}.xlsx`
     );
-    writeFileSync(
-      filePath,
-      XLSX.write(workbook, { type: "buffer", bookType: "xlsx" })
-    );
+    await workbook.xlsx.writeFile(filePath);
 
     const transporter = nodemailer.createTransport({
       service: "Gmail",
@@ -77,20 +140,21 @@ Hansaria Food Private Limited
 (This is a system-generated email, please do not reply.)`,
       attachments: [
         {
-          filename: `rates-report-${today.getFullYear()}-${today.getMonth() + 1}.xlsx`,
+          filename: `rates-report-${today.getFullYear()}-${
+            today.getMonth() + 1
+          }.xlsx`,
           path: filePath,
         },
       ],
     });
 
-    unlinkSync(filePath);
+    fs.unlinkSync(filePath);
     console.log("Monthly rate report sent successfully!");
-  } catch (error) {
-    console.error("Error sending monthly report:", error);
+  } catch (err) {
+    console.error("Error sending monthly report:", err);
   }
 }
 
-// Schedule to run at 8:00 AM on the 1st day of every month
 cron.schedule("0 8 1 * *", () => {
   console.log("Running scheduled task: Sending monthly report");
   sendMonthlyReport();
