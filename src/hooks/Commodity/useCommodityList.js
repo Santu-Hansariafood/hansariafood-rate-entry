@@ -9,11 +9,17 @@ export function useCommodityList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalEntries, setTotalEntries] = useState(0);
 
+  const openModal = useCallback((type, data = null) => {
+    setModal({ open: true, type, data });
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setModal({ open: false, type: "", data: null });
+  }, []);
+
   const fetchCommodities = useCallback(async (page = 1) => {
     try {
-      const response = await axiosInstance.get(
-        `/commodity?page=${page}&limit=10`
-      );
+      const response = await axiosInstance.get(`/commodity?page=${page}&limit=10`);
       setCommodities(response.data.commodities || []);
       setTotalEntries(response.data.total);
     } catch (error) {
@@ -59,14 +65,6 @@ export function useCommodityList() {
     },
     [commodities, closeModal]
   );
-
-  const openModal = useCallback((type, data = null) => {
-    setModal({ open: true, type, data });
-  }, []);
-
-  const closeModal = useCallback(() => {
-    setModal({ open: false, type: "", data: null });
-  }, []);
 
   const handleView = useCallback((commodity) => {
     setSelectedCommodity(commodity);
