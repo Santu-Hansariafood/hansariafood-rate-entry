@@ -2,16 +2,18 @@
 
 import React, { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import SaudaSharePopup from "@/components/ui/Sauda/SaudaSharePopup/SaudaSharePopup";
 import { toast } from "react-toastify";
 
 const ManageCompanyPopup = ({ name, onClose }) => {
   const [companyData, setCompanyData] = useState(null);
   const [rateData, setRateData] = useState([]);
   const [saudaEntries, setSaudaEntries] = useState({});
+  const [showSharePopup, setShowSharePopup] = useState(false);
 
   const getCurrentDate = () => {
     const today = new Date();
-    return today.toLocaleDateString("en-GB").replace(/\//g, "-"); // DD-MM-YYYY
+    return today.toLocaleDateString("en-GB").replace(/\//g, "-");
   };
 
   const fetchSaudaData = async (companyName, currentDate) => {
@@ -105,6 +107,14 @@ const ManageCompanyPopup = ({ name, onClose }) => {
     setSaudaEntries((prev) => ({ ...prev, [unit]: updated }));
   };
 
+const handleShare = () => {
+  if (!companyData || !rateData.length || !Object.keys(saudaEntries).length) {
+    toast.warn("Data still loading. Please wait a moment.");
+    return;
+  }
+  setShowSharePopup(true);
+};
+
   const getTotalTons = (unit) => {
     const entries = saudaEntries[unit] || [];
     return entries.reduce(
@@ -122,8 +132,10 @@ const ManageCompanyPopup = ({ name, onClose }) => {
 
         {companyData ? (
           <>
-            <h2 className="text-xl font-bold mb-2">{companyData.name}</h2>
-            <p className="mb-4 text-gray-600">Date: {getCurrentDate()}</p>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">{companyData.name}</h2>
+              <p className="text-gray-600">Date: {getCurrentDate()}</p>
+            </div>
 
             <table className="w-full border">
               <thead>
@@ -222,13 +234,31 @@ const ManageCompanyPopup = ({ name, onClose }) => {
                 })}
               </tbody>
             </table>
+            {showSharePopup && (
+              <SaudaSharePopup
+                company={companyData.name}
+                date={getCurrentDate()}
+                saudaEntries={saudaEntries}
+                rateData={rateData}
+                onClose={() => setShowSharePopup(false)}
+              />
+            )}
 
-            <button
-              onClick={handleSave}
-              className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-            >
-              Save
-            </button>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleSave}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Save
+              </button>
+              <button
+  onClick={handleShare}
+  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+>
+  Share
+</button>
+
+            </div>
           </>
         ) : (
           <p>No Unit Added</p>
