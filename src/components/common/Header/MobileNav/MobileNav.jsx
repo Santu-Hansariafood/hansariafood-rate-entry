@@ -23,6 +23,7 @@ export default function MobileNav({
     "Category",
     "Commodity",
     "Rate",
+    "Sauda",
     "Register",
   ];
 

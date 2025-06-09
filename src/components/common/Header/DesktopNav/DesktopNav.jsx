@@ -23,6 +23,7 @@ export default function DesktopNav({
     "Category",
     "Commodity",
     "Rate",
+    "Sauda",
     "Register",
   ];
 
