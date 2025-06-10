@@ -36,8 +36,9 @@ const Sauda = () => {
   };
 
   useEffect(() => {
-    fetchCompanies(currentPage, searchTerm);
-  }, [currentPage, searchTerm]);
+  const isSearching = searchTerm.trim() !== "";
+  fetchCompanies(isSearching ? 1 : currentPage, searchTerm);
+}, [currentPage, searchTerm]);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= Math.ceil(totalItems / itemsPerPage)) {
