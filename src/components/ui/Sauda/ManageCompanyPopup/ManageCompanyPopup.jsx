@@ -84,7 +84,7 @@ const ManageCompanyPopup = ({ name, onClose }) => {
     try {
       const res = await axiosInstance.post("/save-sauda", payload);
       if (res.status === 201 && res.data.entry) {
-        toast.success("Sauda data saved successfully!");
+        toast.success("Updated successfully");
         onClose();
       } else {
         toast.error(res.data.message || "Failed to save data");
@@ -163,6 +163,10 @@ const ManageCompanyPopup = ({ name, onClose }) => {
 
                     const saudaKey = `${unit}-${commodity}`;
                     const saudaList = saudaEntries[saudaKey] || [];
+
+                    // Skip this row if rate is 0 or undefined/null
+                    if (!rateInfo || !rateInfo.newRate || rateInfo.newRate === 0)
+                      return null;
 
                     return (
                       <tr
