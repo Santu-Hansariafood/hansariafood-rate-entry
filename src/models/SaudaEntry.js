@@ -5,6 +5,8 @@ const saudaEntrySubSchema = new mongoose.Schema(
     tons: { type: Number, required: true },
     description: { type: String, default: "" },
     saudaNo: { type: String, default: "" },
+    unit: { type: String, required: true },
+    commodity: { type: String, required: true },
   },
   { _id: false }
 );

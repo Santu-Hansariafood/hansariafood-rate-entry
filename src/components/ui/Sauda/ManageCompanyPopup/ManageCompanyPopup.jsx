@@ -75,10 +75,21 @@ const ManageCompanyPopup = ({ name, onClose }) => {
   const handleSave = async () => {
     if (!companyData) return;
 
+    const structuredEntries = {};
+    Object.entries(saudaEntries).forEach(([key, entries]) => {
+      const [unit, commodity] = key.split("-");
+      structuredEntries[key] = entries.map((entry) => ({
+        ...entry,
+        tons: Number(entry.tons) || 0, // Ensure tons is a number
+        unit,
+        commodity,
+      }));
+    });
+
     const payload = {
       company: companyData.name,
       date: getCurrentDate(),
-      saudaEntries,
+      saudaEntries: structuredEntries,
     };
 
     try {
@@ -165,7 +176,11 @@ const ManageCompanyPopup = ({ name, onClose }) => {
                     const saudaList = saudaEntries[saudaKey] || [];
 
                     // Skip this row if rate is 0 or undefined/null
-                    if (!rateInfo || !rateInfo.newRate || rateInfo.newRate === 0)
+                    if (
+                      !rateInfo ||
+                      !rateInfo.newRate ||
+                      rateInfo.newRate === 0
+                    )
                       return null;
 
                     return (

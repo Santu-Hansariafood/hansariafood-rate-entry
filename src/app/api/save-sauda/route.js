@@ -40,9 +40,9 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error in POST /save-sauda:", error);
+    console.error("Error in POST /save-sauda:", error.message, error.stack);
     return NextResponse.json(
-      { error: "Error saving sauda entry" },
+      { error: error.message },
       { status: 500 }
     );
   }

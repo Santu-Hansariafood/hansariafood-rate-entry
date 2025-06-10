@@ -21,7 +21,12 @@ export const exportWithWatermarkToPDF = async (containerId, watermarkUrl) => {
 
   sanitizeOKLCH(container);
 
-  // Create watermark layer
+  // Clone container and force layout preservation
+  const clone = container.cloneNode(true);
+  clone.style.padding = "20px"; // optional to match original
+  clone.style.backgroundColor = "white";
+
+  // Watermark
   const watermarkDiv = document.createElement("div");
   watermarkDiv.style.position = "absolute";
   watermarkDiv.style.top = "50%";
@@ -36,16 +41,21 @@ export const exportWithWatermarkToPDF = async (containerId, watermarkUrl) => {
   watermarkDiv.style.pointerEvents = "none";
   watermarkDiv.style.zIndex = "0";
 
-  // Wrap the container temporarily for rendering
+  // Wrapper
   const wrapper = document.createElement("div");
-  wrapper.style.position = "relative";
+  wrapper.style.position = "absolute";
+  wrapper.style.top = "-9999px"; // hide offscreen
+  wrapper.style.left = "-9999px";
   wrapper.style.width = container.offsetWidth + "px";
-  wrapper.style.background = "white";
+  wrapper.style.backgroundColor = "white";
   wrapper.appendChild(watermarkDiv);
-  wrapper.appendChild(container.cloneNode(true));
-
+  wrapper.appendChild(clone);
   document.body.appendChild(wrapper);
 
+  // Wait for layout/render
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  // Render to canvas
   const canvas = await html2canvas(wrapper, {
     scale: 2,
     useCORS: true,
