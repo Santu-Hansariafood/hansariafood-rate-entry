@@ -31,8 +31,7 @@ const Sauda = () => {
       );
       setRateData(rateRes.data || []);
     } catch (error) {
-      console.error("Error fetching companies or rate:", error);
-      toast.error("Failed to load company or rate data");
+      toast.error("Failed to load company or rate data", error);
     }
   };
 

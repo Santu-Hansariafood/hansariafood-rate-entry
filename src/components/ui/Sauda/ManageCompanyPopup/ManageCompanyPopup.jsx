@@ -50,12 +50,14 @@ const ManageCompanyPopup = ({ name, onClose }) => {
           const today = getCurrentDate();
           await fetchSaudaData(data.name, today);
 
-          // If no saved sauda found, initialize empty structure
           setSaudaEntries((prev) => {
             if (Object.keys(prev || {}).length > 0) return prev;
             const saudaInit = {};
             data.location.forEach((loc) => {
-              saudaInit[loc] = [{ tons: "", description: "", saudaNo: "" }];
+              data.commodities.forEach((comm) => {
+                const key = `${loc}-${comm}`;
+                saudaInit[key] = [{ tons: "", description: "", saudaNo: "" }];
+              });
             });
             return saudaInit;
           });
@@ -107,13 +109,13 @@ const ManageCompanyPopup = ({ name, onClose }) => {
     setSaudaEntries((prev) => ({ ...prev, [unit]: updated }));
   };
 
-const handleShare = () => {
-  if (!companyData || !rateData.length || !Object.keys(saudaEntries).length) {
-    toast.warn("Data still loading. Please wait a moment.");
-    return;
-  }
-  setShowSharePopup(true);
-};
+  const handleShare = () => {
+    if (!companyData || !rateData.length || !Object.keys(saudaEntries).length) {
+      toast.warn("Data still loading. Please wait a moment.");
+      return;
+    }
+    setShowSharePopup(true);
+  };
 
   const getTotalTons = (unit) => {
     const entries = saudaEntries[unit] || [];
@@ -142,6 +144,7 @@ const handleShare = () => {
                 <tr className="bg-gray-200 text-sm">
                   <th className="py-1 px-2 text-left">Sl. No.</th>
                   <th className="py-1 px-2 text-left">Unit</th>
+                  <th className="py-1 px-2 text-left">Commodity</th>
                   <th className="py-1 px-2 text-left">Rate</th>
                   <th className="py-1 px-2 text-left">Sauda (Tons + Desc)</th>
                   <th className="py-1 px-2 text-left">Sauda No</th>
@@ -149,91 +152,106 @@ const handleShare = () => {
                 </tr>
               </thead>
               <tbody>
-                {companyData.location.map((unit, index) => {
-                  const rateInfo = rateData.find(
-                    (rate) =>
-                      rate.location === unit &&
-                      rate.company === companyData.name
-                  );
-                  const saudaList = saudaEntries[unit] || [];
+                {companyData.location.map((unit, locationIndex) =>
+                  companyData.commodities.map((commodity, commodityIndex) => {
+                    const rateInfo = rateData.find(
+                      (rate) =>
+                        rate.location === unit &&
+                        rate.company === companyData.name &&
+                        rate.commodity === commodity
+                    );
 
-                  return (
-                    <tr key={index} className="border-t align-top text-sm">
-                      <td className="py-1 px-2">{index + 1}</td>
-                      <td className="py-1 px-2 font-semibold">{unit}</td>
-                      <td className="py-1 px-2">
-                        {rateInfo?.newRate ?? "N/A"}
-                      </td>
-                      <td className="py-1 px-2">
-                        {saudaList.map((entry, i) => (
-                          <div key={i} className="flex items-center mb-1 gap-1">
-                            <span>{String.fromCharCode(97 + i)}.</span>
-                            <input
-                              type="number"
-                              value={entry.tons}
-                              onChange={(e) =>
-                                handleSaudaChange(
-                                  unit,
-                                  i,
-                                  "tons",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Tons"
-                              className="w-16 border px-1 py-0.5"
-                            />
-                            <span>Tons</span>
-                            <input
-                              type="text"
-                              value={entry.description}
-                              onChange={(e) =>
-                                handleSaudaChange(
-                                  unit,
-                                  i,
-                                  "description",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Desc"
-                              className="w-28 border px-1 py-0.5"
-                            />
-                          </div>
-                        ))}
-                        <button
-                          className="text-blue-600 mt-1 text-xs"
-                          onClick={() => addSaudaEntry(unit)}
-                        >
-                          + Add Sauda
-                        </button>
-                      </td>
-                      <td className="py-1 px-2">
-                        {saudaList.map((entry, i) => (
-                          <div key={i} className="mb-1">
-                            <input
-                              type="number"
-                              value={entry.saudaNo}
-                              onChange={(e) =>
-                                handleSaudaChange(
-                                  unit,
-                                  i,
-                                  "saudaNo",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="No"
-                              className="w-16 border px-1 py-0.5"
-                            />
-                          </div>
-                        ))}
-                      </td>
-                      <td className="py-1 px-2 font-semibold">
-                        {getTotalTons(unit)} Tons
-                      </td>
-                    </tr>
-                  );
-                })}
+                    const saudaKey = `${unit}-${commodity}`;
+                    const saudaList = saudaEntries[saudaKey] || [];
+
+                    return (
+                      <tr
+                        key={`${unit}-${commodity}`}
+                        className="border-t align-top text-sm"
+                      >
+                        <td className="py-1 px-2">{locationIndex + 1}</td>
+                        <td className="py-1 px-2 font-semibold">{unit}</td>
+                        <td className="py-1 px-2">{commodity}</td>
+                        <td className="py-1 px-2">
+                          {rateInfo?.newRate !== undefined
+                            ? rateInfo.newRate
+                            : "N/A"}
+                        </td>
+                        <td className="py-1 px-2">
+                          {saudaList.map((entry, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center mb-1 gap-1"
+                            >
+                              <span>{String.fromCharCode(97 + i)}.</span>
+                              <input
+                                type="number"
+                                value={entry.tons}
+                                onChange={(e) =>
+                                  handleSaudaChange(
+                                    saudaKey,
+                                    i,
+                                    "tons",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Tons"
+                                className="w-16 border px-1 py-0.5"
+                              />
+                              <span>Tons</span>
+                              <input
+                                type="text"
+                                value={entry.description}
+                                onChange={(e) =>
+                                  handleSaudaChange(
+                                    saudaKey,
+                                    i,
+                                    "description",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Desc"
+                                className="w-28 border px-1 py-0.5"
+                              />
+                            </div>
+                          ))}
+                          <button
+                            className="text-blue-600 mt-1 text-xs"
+                            onClick={() => addSaudaEntry(saudaKey)}
+                          >
+                            + Add Sauda
+                          </button>
+                        </td>
+                        <td className="py-1 px-2">
+                          {saudaList.map((entry, i) => (
+                            <div key={i} className="mb-1">
+                              <input
+                                type="number"
+                                value={entry.saudaNo}
+                                onChange={(e) =>
+                                  handleSaudaChange(
+                                    saudaKey,
+                                    i,
+                                    "saudaNo",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="No"
+                                className="w-16 border px-1 py-0.5"
+                              />
+                            </div>
+                          ))}
+                        </td>
+                        <td className="py-1 px-2 font-semibold">
+                          {getTotalTons(saudaKey)} Tons
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
+
             {showSharePopup && (
               <SaudaSharePopup
                 company={companyData.name}
@@ -252,12 +270,11 @@ const handleShare = () => {
                 Save
               </button>
               <button
-  onClick={handleShare}
-  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
->
-  Share
-</button>
-
+                onClick={handleShare}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Share
+              </button>
             </div>
           </>
         ) : (
