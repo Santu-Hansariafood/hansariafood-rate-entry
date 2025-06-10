@@ -78,7 +78,7 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
   doc.setTextColor(150);
   doc.setFont("helvetica", "italic");
   doc.text(
-    "For internal use only. This is not the final or valid document.",
+    "* For internal use only. This is not the final or valid document.",
     14,
     finalY + 20
   );
