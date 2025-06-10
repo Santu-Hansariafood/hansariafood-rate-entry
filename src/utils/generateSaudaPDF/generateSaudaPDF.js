@@ -22,16 +22,20 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
   const logoBase64 = await loadImage("/logo/watermark.png");
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  doc.addImage(logoBase64, "PNG", pageWidth / 2 - 50, pageHeight / 2 - 50, 100, 100, undefined, "FAST");
-  doc.setTextColor(0, 0, 0);
 
   doc.setFontSize(16);
-  doc.text(`Sauda Summary - ${company}`, 14, 20);
+  doc.setTextColor(39, 174, 96);
+  doc.setFont("helvetica", "bold");
+  doc.text(`${company}`, 14, 20);
+
+  const logoWidth = 30;
+  const logoHeight = 35;
+  doc.addImage(logoBase64, "PNG", pageWidth - logoWidth - 14, 10, logoWidth, logoHeight);
 
   doc.setFontSize(12);
-  doc.text(`Date: ${date}`, pageWidth - 60, 20);
+  doc.setTextColor(255, 0, 0);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Date: ${date}`, pageWidth - logoWidth - 14, 50);
 
   const tableData = [];
 
@@ -46,9 +50,11 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
 
     if (!rateInfo || !rateInfo.newRate || rateInfo.newRate === 0) return;
 
-    entries.forEach((entry, i) => {
+    entries.forEach((entry) => {
+      if (!entry.tons || parseFloat(entry.tons) === 0) return;
+
       tableData.push([
-        index + 1,
+        tableData.length + 1,
         location,
         commodity,
         rateInfo.newRate,
@@ -59,13 +65,23 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
   });
 
   autoTable(doc, {
-    startY: 35,
+    startY: 60,
     head: [["Sl No.", "Unit", "Commodity", "Rate", "Sauda (Tons + Desc)", "Sauda No"]],
     body: tableData,
     theme: "striped",
     styles: { fontSize: 10 },
     headStyles: { fillColor: [41, 128, 185] },
   });
+
+  const finalY = doc.lastAutoTable.finalY || 80;
+  doc.setFontSize(10);
+  doc.setTextColor(150);
+  doc.setFont("helvetica", "italic");
+  doc.text(
+    "For internal use only. This is not the final or valid document.",
+    14,
+    finalY + 20
+  );
 
   doc.save(`${company}_${date.replace(/\//g, "-")}_sauda.pdf`);
 };
