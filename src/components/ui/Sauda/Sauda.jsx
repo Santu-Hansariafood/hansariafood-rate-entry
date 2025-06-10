@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Pagination from "@/components/common/Pagination/Pagination";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import ManageCompanyPopup from "@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup";
@@ -10,58 +9,49 @@ import Title from "@/components/common/Title/Title";
 const Sauda = () => {
   const [companies, setCompanies] = useState([]);
   const [rateData, setRateData] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const itemsPerPage = 10;
 
-  const fetchCompanies = async (page = 1, search = "") => {
+  const fetchCompanies = async (search = "") => {
     try {
       const res = await axiosInstance.get(
-        `/companies?page=${page}&limit=${itemsPerPage}&search=${search}`
+        `/companies?search=${search}&limit=1000` // Increase limit to load all
       );
-      const fetchedCompanies = res.data.companies;
+      const fetchedCompanies = res.data.companies || [];
       setCompanies(fetchedCompanies);
-      setTotalItems(res.data.total);
 
       const companyNames = fetchedCompanies.map((c) => c.name);
-      const rateRes = await axiosInstance.get(
-        `/rate?companies=${companyNames.join(",")}`
-      );
-      setRateData(rateRes.data || []);
+      if (companyNames.length > 0) {
+        const rateRes = await axiosInstance.get(
+          `/rate?companies=${companyNames.join(",")}`
+        );
+        setRateData(rateRes.data || []);
+      } else {
+        setRateData([]);
+      }
     } catch (error) {
-      toast.error("Failed to load company or rate data", error);
+      toast.error("Failed to load company or rate data");
     }
   };
 
   useEffect(() => {
-  const isSearching = searchTerm.trim() !== "";
-  fetchCompanies(isSearching ? 1 : currentPage, searchTerm);
-}, [currentPage, searchTerm]);
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= Math.ceil(totalItems / itemsPerPage)) {
-      setCurrentPage(page);
-    }
-  };
+    fetchCompanies(searchTerm);
+  }, [searchTerm]);
 
   const hasRate = (companyName) => {
-  return rateData.some(
-    (rate) =>
-      rate.company === companyName &&
-      rate.hasNewRateToday === true &&
-      rate.newRate !== null &&
-      rate.newRate !== undefined &&
-      rate.newRate !== "" &&
-      !isNaN(rate.newRate)
-  );
-};
-
+    return rateData.some(
+      (rate) =>
+        rate.company === companyName &&
+        rate.hasNewRateToday === true &&
+        rate.newRate !== null &&
+        rate.newRate !== undefined &&
+        rate.newRate !== "" &&
+        !isNaN(rate.newRate)
+    );
+  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
   };
 
   return (
@@ -77,35 +67,24 @@ const Sauda = () => {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-        {companies.map((company) => {
-          const isAvailable = hasRate(company.name);
-          return (
+        {companies
+          .filter((company) => hasRate(company.name))
+          .map((company) => (
             <div
               key={company._id}
               onClick={() => setSelectedCompany(company.name)}
-              className={`p-4 rounded-xl shadow-lg cursor-pointer transition-transform transform hover:scale-105
-                ${isAvailable ? "bg-green-50 border border-green-400" : "bg-red-50 border border-red-400"}`}
+              className="p-4 rounded-xl shadow-lg cursor-pointer transition-transform transform hover:scale-105 bg-green-50 border border-green-400"
             >
               <h2
-                title={isAvailable ? "Rate available" : "Rate missing"}
-                className={`text-lg font-bold ${
-                  isAvailable ? "text-green-700" : "text-red-700"
-                }`}
+                title="Rate available"
+                className="text-lg font-bold text-green-700"
               >
                 {company.name}
               </h2>
               <p className="text-sm text-gray-600">{company.category}</p>
             </div>
-          );
-        })}
+          ))}
       </div>
-
-      <Pagination
-        currentPage={currentPage}
-        totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
-        onPageChange={handlePageChange}
-      />
 
       {selectedCompany && (
         <ManageCompanyPopup
