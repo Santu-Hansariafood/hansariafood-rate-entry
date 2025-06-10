@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import SaudaSharePopup from "@/components/ui/Sauda/SaudaSharePopup/SaudaSharePopup";
+import { generateSaudaPDF } from "@/utils/generateSaudaPDF/generateSaudaPDF";
 import { toast } from "react-toastify";
 
 const ManageCompanyPopup = ({ name, onClose }) => {
@@ -80,7 +81,7 @@ const ManageCompanyPopup = ({ name, onClose }) => {
       const [unit, commodity] = key.split("-");
       structuredEntries[key] = entries.map((entry) => ({
         ...entry,
-        tons: Number(entry.tons) || 0, // Ensure tons is a number
+        tons: Number(entry.tons) || 0,
         unit,
         commodity,
       }));
@@ -121,12 +122,20 @@ const ManageCompanyPopup = ({ name, onClose }) => {
   };
 
   const handleShare = () => {
-    if (!companyData || !rateData.length || !Object.keys(saudaEntries).length) {
-      toast.warn("Data still loading. Please wait a moment.");
-      return;
-    }
-    setShowSharePopup(true);
-  };
+  if (!companyData || !rateData.length || !Object.keys(saudaEntries).length) {
+    toast.warn("Data still loading. Please wait a moment.");
+    return;
+  }
+
+  generateSaudaPDF({
+    company: companyData.name,
+    date: getCurrentDate(),
+    rateData,
+    saudaEntries,
+  });
+
+  setShowSharePopup(true);
+};
 
   const getTotalTons = (unit) => {
     const entries = saudaEntries[unit] || [];
@@ -175,7 +184,6 @@ const ManageCompanyPopup = ({ name, onClose }) => {
                     const saudaKey = `${unit}-${commodity}`;
                     const saudaList = saudaEntries[saudaKey] || [];
 
-                    // Skip this row if rate is 0 or undefined/null
                     if (
                       !rateInfo ||
                       !rateInfo.newRate ||
@@ -272,14 +280,14 @@ const ManageCompanyPopup = ({ name, onClose }) => {
             </table>
 
             {showSharePopup && (
-              <SaudaSharePopup
-                company={companyData.name}
-                date={getCurrentDate()}
-                saudaEntries={saudaEntries}
-                rateData={rateData}
-                onClose={() => setShowSharePopup(false)}
-              />
-            )}
+  <SaudaSharePopup
+    company={companyData.name}
+    date={getCurrentDate()}
+    saudaEntries={saudaEntries}
+    rateData={rateData}
+    onClose={() => setShowSharePopup(false)}
+  />
+)}
 
             <div className="flex gap-3 mt-4">
               <button
