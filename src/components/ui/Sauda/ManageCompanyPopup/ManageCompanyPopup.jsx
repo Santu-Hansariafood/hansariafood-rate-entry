@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import SaudaSharePopup from "@/components/ui/Sauda/SaudaSharePopup/SaudaSharePopup";
 import { generateSaudaPDF } from "@/utils/generateSaudaPDF/generateSaudaPDF";
 import { toast } from "react-toastify";
+import { X, Save, Share2 } from "lucide-react";
+import Loading from "@/components/common/Loading/Loading";
+import Title from "@/components/common/Title/Title";
 
 const ManageCompanyPopup = ({ name, onClose }) => {
   const [companyData, setCompanyData] = useState(null);
@@ -163,177 +166,184 @@ const ManageCompanyPopup = ({ name, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-5xl p-6 relative overflow-y-auto max-h-[90vh]">
-        <button className="absolute top-2 right-3 text-xl" onClick={onClose}>
-          ×
-        </button>
+    <Suspense fallback={<Loading />}>
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center">
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-5xl p-6 relative overflow-y-auto max-h-[90vh]">
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-3 text-gray-500 hover:text-red-500 p-1 rounded-full"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
 
-        {companyData ? (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">{companyData.name}</h2>
-              <p className="text-gray-600">Date: {getCurrentDate()}</p>
-            </div>
+          {companyData ? (
+            <>
+              <div className="flex justify-between items-center mb-4">
+                <Title text={`${companyData.name}`} />
+                <p className="text-red-600">Date: {getCurrentDate()}</p>
+              </div>
 
-            <table className="w-full border">
-              <thead>
-                <tr className="bg-gray-200 text-sm">
-                  <th className="py-1 px-2 text-left">Sl. No.</th>
-                  <th className="py-1 px-2 text-left">Unit</th>
-                  <th className="py-1 px-2 text-left">Commodity</th>
-                  <th className="py-1 px-2 text-left">Rate</th>
-                  <th className="py-1 px-2 text-left">Sauda (Tons + Desc)</th>
-                  <th className="py-1 px-2 text-left">Sauda No</th>
-                  <th className="py-1 px-2 text-left">Total Tons</th>
-                </tr>
-              </thead>
-              <tbody>
-                {companyData.location.map((unit, locationIndex) =>
-                  companyData.commodities.map((commodity, commodityIndex) => {
-                    const rateInfo = rateData.find(
-                      (rate) =>
-                        rate.location === unit &&
-                        rate.company === companyData.name &&
-                        rate.commodity === commodity
-                    );
+              <table className="w-full text-sm border border-gray-300 shadow-sm rounded-lg overflow-hidden">
+                <thead>
+                  <tr className="bg-green-500 text-gray-100 font-semibold text-left">
+                    <th className="py-2 px-3 border-b">Sl. No.</th>
+                    <th className="py-2 px-3 border-b">Unit</th>
+                    <th className="py-2 px-3 border-b">Commodity</th>
+                    <th className="py-2 px-3 border-b">Rate</th>
+                    <th className="py-2 px-3 border-b">Sauda (Tons + Desc)</th>
+                    <th className="py-2 px-3 border-b">Sauda No</th>
+                    <th className="py-2 px-3 border-b">Total Tons</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {companyData.location.map((unit, locationIndex) =>
+                    companyData.commodities.map((commodity, commodityIndex) => {
+                      const rateInfo = rateData.find(
+                        (rate) =>
+                          rate.location === unit &&
+                          rate.company === companyData.name &&
+                          rate.commodity === commodity
+                      );
 
-                    const saudaKey = `${unit}-${commodity}`;
-                    const saudaList = saudaEntries[saudaKey] || [];
+                      const saudaKey = `${unit}-${commodity}`;
+                      const saudaList = saudaEntries[saudaKey] || [];
 
-                    if (
-                      !rateInfo ||
-                      !rateInfo.newRate ||
-                      rateInfo.newRate === 0
-                    )
-                      return null;
+                      if (!rateInfo?.newRate || rateInfo.newRate === 0)
+                        return null;
 
-                    return (
-                      <tr
-                        key={`${unit}-${commodity}`}
-                        className="border-t align-top text-sm"
-                      >
-                        <td className="py-1 px-2">{locationIndex + 1}</td>
-                        <td className="py-1 px-2 font-semibold">{unit}</td>
-                        <td className="py-1 px-2">{commodity}</td>
-                        <td className="py-1 px-2">
-                          {rateInfo?.newRate !== undefined
-                            ? rateInfo.newRate
-                            : "N/A"}
-                        </td>
-                        <td className="py-1 px-2">
-                          {saudaList.map((entry, i) => (
-                            <div
-                              key={i}
-                              className="flex items-center mb-1 gap-1"
+                      return (
+                        <tr
+                          key={`${unit}-${commodity}`}
+                          className="hover:bg-gray-50 transition-all"
+                        >
+                          <td className="py-2 px-3">{locationIndex + 1}</td>
+                          <td className="py-2 px-3 font-medium text-gray-800">
+                            {unit}
+                          </td>
+                          <td className="py-2 px-3">{commodity}</td>
+                          <td className="py-2 px-3 text-blue-700 font-semibold whitespace-nowrap">
+                            ₹ {rateInfo.newRate}
+                          </td>
+                          <td className="py-2 px-3 space-y-1">
+                            {saudaList.map((entry, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="text-gray-500 font-semibold">
+                                  {String.fromCharCode(97 + i)}.
+                                </span>
+                                <input
+                                  type="number"
+                                  value={entry.tons}
+                                  onChange={(e) =>
+                                    handleSaudaChange(
+                                      saudaKey,
+                                      i,
+                                      "tons",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Tons"
+                                  className="w-16 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                />
+                                <span className="text-sm text-gray-500">
+                                  Tons
+                                </span>
+                                <input
+                                  type="text"
+                                  value={entry.description || ""}
+                                  onChange={(e) =>
+                                    handleSaudaChange(
+                                      saudaKey,
+                                      i,
+                                      "description",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Desc"
+                                  className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                  style={{
+                                    width: `${Math.max(
+                                      (entry.description || "").length * 8 + 20,
+                                      100
+                                    )}px`,
+                                    minWidth: "100px",
+                                  }}
+                                />
+                              </div>
+                            ))}
+                            <button
+                              className="text-xs text-blue-600 hover:underline"
+                              onClick={() => addSaudaEntry(saudaKey)}
                             >
-                              <span>{String.fromCharCode(97 + i)}.</span>
-                              <input
-                                type="number"
-                                value={entry.tons}
-                                onChange={(e) =>
-                                  handleSaudaChange(
-                                    saudaKey,
-                                    i,
-                                    "tons",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="Tons"
-                                className="w-16 border px-1 py-0.5"
-                              />
-                              <span>Tons</span>
-                              <input
-                                type="text"
-                                value={entry.description || ""}
-                                onChange={(e) =>
-                                  handleSaudaChange(
-                                    saudaKey,
-                                    i,
-                                    "description",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="Desc"
-                                className="border px-1 py-0.5"
-                                style={{
-                                  width: `${Math.max(
-                                    (entry.description || "").length * 8 + 20,
-                                    80
-                                  )}px`,
-                                  minWidth: "80px",
-                                  maxWidth: "100%",
-                                }}
-                              />
+                              + Add Sauda
+                            </button>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="flex flex-col gap-2">
+                              {saudaList.map((entry, i) => (
+                                <input
+                                  key={i}
+                                  type="number"
+                                  value={entry.saudaNo}
+                                  onChange={(e) =>
+                                    handleSaudaChange(
+                                      saudaKey,
+                                      i,
+                                      "saudaNo",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="No"
+                                  className="w-20 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                />
+                              ))}
                             </div>
-                          ))}
-                          <button
-                            className="text-blue-600 mt-1 text-xs"
-                            onClick={() => addSaudaEntry(saudaKey)}
-                          >
-                            + Add Sauda
-                          </button>
-                        </td>
-                        <td className="py-1 px-2">
-                          {saudaList.map((entry, i) => (
-                            <div key={i} className="mb-1">
-                              <input
-                                type="number"
-                                value={entry.saudaNo}
-                                onChange={(e) =>
-                                  handleSaudaChange(
-                                    saudaKey,
-                                    i,
-                                    "saudaNo",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="No"
-                                className="w-16 border px-1 py-0.5"
-                              />
-                            </div>
-                          ))}
-                        </td>
-                        <td className="py-1 px-2 font-semibold">
-                          {getTotalTons(saudaKey)} Tons
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                          </td>
 
-            {showSharePopup && (
-              <SaudaSharePopup
-                company={companyData.name}
-                date={getCurrentDate()}
-                saudaEntries={saudaEntries}
-                rateData={rateData}
-                onClose={() => setShowSharePopup(false)}
-              />
-            )}
+                          <td className="py-2 px-3 font-bold text-green-700 whitespace-nowrap">
+                            {getTotalTons(saudaKey)} Tons
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
 
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={handleSave}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                Save
-              </button>
-              <button
-                onClick={handleShare}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Share
-              </button>
-            </div>
-          </>
-        ) : (
-          <p>No Unit Added</p>
-        )}
+              {showSharePopup && (
+                <SaudaSharePopup
+                  company={companyData.name}
+                  date={getCurrentDate()}
+                  saudaEntries={saudaEntries}
+                  rateData={rateData}
+                  onClose={() => setShowSharePopup(false)}
+                />
+              )}
+
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={handleSave}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+
+                <button
+                  onClick={handleShare}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+              </div>
+            </>
+          ) : (
+            <p>No Unit Added</p>
+          )}
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 };
 

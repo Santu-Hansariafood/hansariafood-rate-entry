@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+
 const ManageCompanyPopup = dynamic(() =>
   import("@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup")
 );
@@ -25,11 +26,62 @@ const Sauda = () => {
         setCompanies(fetchedCompanies);
 
         const companyNames = fetchedCompanies.map((c) => c.name);
+
         if (companyNames.length > 0) {
           const rateRes = await axiosInstance.get(
             `/rate?companies=${companyNames.join(",")}`
           );
           setRateData(rateRes.data || []);
+
+          const saudaStatuses = {};
+
+          const today = new Date()
+            .toLocaleDateString("en-GB")
+            .replace(/\//g, "-");
+
+          for (const company of companyNames) {
+            try {
+              const saudaRes = await axiosInstance.get(
+                `/save-sauda?company=${company}&date=${today}`
+              );
+
+              const entry = saudaRes.data?.entry?.saudaEntries;
+
+              let status = "green";
+
+              if (entry) {
+                const values = Object.values(entry);
+
+                const hasSauda = values.some((entries) =>
+                  entries.some((e) => {
+                    const hasTons = e.tons && Number(e.tons) > 0;
+                    const hasDescription =
+                      e.description && e.description.trim() !== "";
+                    return hasTons || hasDescription;
+                  })
+                );
+
+                const allSaudaNosFilled = values.every((entries) =>
+                  entries.every(
+                    (e) =>
+                      e.saudaNo !== null &&
+                      e.saudaNo !== undefined &&
+                      String(e.saudaNo).trim() !== ""
+                  )
+                );
+
+                if (hasSauda && allSaudaNosFilled) {
+                  status = "blue";
+                } else if (hasSauda) {
+                  status = "yellow";
+                }
+              }
+
+              saudaStatuses[company] = status;
+            } catch (_) {}
+          }
+
+          setSaudaStatusMap(saudaStatuses);
         } else {
           setRateData([]);
         }
@@ -86,7 +138,7 @@ const Sauda = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredCompanies.map((company) => {
-            const statusColor = saudaStatusMap[company.name];
+            const statusColor = saudaStatusMap[company.name] || "green";
             const bgColor =
               statusColor === "blue"
                 ? "bg-blue-50 border-blue-400"

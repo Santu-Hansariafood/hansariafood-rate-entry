@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 
-// Dynamic imports with loading fallback
 const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
   {
