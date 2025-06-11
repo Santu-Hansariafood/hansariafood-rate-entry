@@ -18,15 +18,13 @@ const loadImage = (src) =>
 
 export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }) => {
   const doc = new jsPDF();
-
+  const pageWidth = doc.internal.pageSize.getWidth();
   const logoBase64 = await loadImage("/logo/watermark.png");
 
-  const pageWidth = doc.internal.pageSize.getWidth();
-
-  doc.setFontSize(16);
-  doc.setTextColor(39, 174, 96);
+  doc.setFontSize(22);
+  doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
-  doc.text(`${company}`, 14, 20);
+  doc.text(company.toUpperCase(), 14, 20);
 
   const logoWidth = 30;
   const logoHeight = 35;
@@ -38,27 +36,30 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
   doc.text(`Date: ${date}`, pageWidth - logoWidth - 14, 50);
 
   const tableData = [];
+  let totalTons = 0;
 
-  Object.entries(saudaEntries).forEach(([key, entries], index) => {
+  Object.entries(saudaEntries).forEach(([key, entries]) => {
     const [location, commodity] = key.split("-");
+    if (commodity !== "Maize") return;
+
     const rateInfo = rateData.find(
-      (r) =>
-        r.company === company &&
-        r.location === location &&
-        r.commodity === commodity
+      (r) => r.company === company && r.location === location && r.commodity === commodity
     );
 
     if (!rateInfo || !rateInfo.newRate || rateInfo.newRate === 0) return;
 
     entries.forEach((entry) => {
-      if (!entry.tons || parseFloat(entry.tons) === 0) return;
+      const tons = parseFloat(entry.tons);
+      if (!tons || tons === 0) return;
+
+      totalTons += tons;
 
       tableData.push([
         tableData.length + 1,
         location,
         commodity,
         rateInfo.newRate,
-        `${entry.tons} Tons - ${entry.description}`,
+        `${tons} Tons - ${entry.description}`,
         entry.saudaNo,
       ]);
     });
@@ -69,18 +70,43 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
     head: [["Sl No.", "Unit", "Commodity", "Rate", "Sauda (Tons + Desc)", "Sauda No"]],
     body: tableData,
     theme: "striped",
-    styles: { fontSize: 10 },
-    headStyles: { fillColor: [41, 128, 185] },
+    styles: {
+      fontSize: 10,
+      cellPadding: 2,
+      halign: "left",
+    },
+    headStyles: {
+      fillColor: [0, 128, 0],
+      textColor: [255, 255, 255],
+    },
+    alternateRowStyles: {
+      fillColor: [255, 255, 153],
+    },
+    margin: { left: 14, right: 14 },
   });
 
   const finalY = doc.lastAutoTable.finalY || 80;
+
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Total Sauda: ${totalTons.toFixed(2)} Tons`, 14, finalY + 10);
+
+  const bottomNoteY = finalY + 40;
+  doc.setFontSize(12);
+  doc.setTextColor(39, 174, 96);
+  doc.setFont("helvetica", "italic");
+  doc.text("Hansaria Food Private Limited", pageWidth - 80, bottomNoteY);
+  doc.text("Purchase Team", pageWidth - 55, bottomNoteY + 10);
+
   doc.setFontSize(10);
   doc.setTextColor(150);
   doc.setFont("helvetica", "italic");
   doc.text(
     "* For internal use only. This is not the final or valid document.",
-    14,
-    finalY + 20
+    pageWidth / 2,
+    doc.internal.pageSize.getHeight() - 10,
+    { align: "center" }
   );
 
   doc.save(`${company}_${date.replace(/\//g, "-")}_sauda.pdf`);
