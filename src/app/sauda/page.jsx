@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import React from "react";
+import Loading from "@/components/common/Loading/Loading";
 const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
   { loading: () => <Loading /> }
