@@ -1,42 +1,45 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, Suspense } from "react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import ManageCompanyPopup from "@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup";
-import Title from "@/components/common/Title/Title";
+import dynamic from "next/dynamic";
+import Loading from "@/components/common/Loading/Loading";
+const ManageCompanyPopup = dynamic(() =>
+  import("@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup")
+);
+const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 const Sauda = () => {
   const [companies, setCompanies] = useState([]);
   const [rateData, setRateData] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const fetchCompanies = async (search = "") => {
-    try {
-      const res = await axiosInstance.get(
-        `/companies?search=${search}&limit=1000` // Increase limit to load all
-      );
-      const fetchedCompanies = res.data.companies || [];
-      setCompanies(fetchedCompanies);
-
-      const companyNames = fetchedCompanies.map((c) => c.name);
-      if (companyNames.length > 0) {
-        const rateRes = await axiosInstance.get(
-          `/rate?companies=${companyNames.join(",")}`
-        );
-        setRateData(rateRes.data || []);
-      } else {
-        setRateData([]);
-      }
-    } catch (error) {
-      toast.error("Failed to load company or rate data");
-    }
-  };
+  const [saudaStatusMap, setSaudaStatusMap] = useState({});
 
   useEffect(() => {
-    fetchCompanies(searchTerm);
-  }, [searchTerm]);
+    const fetchCompanies = async () => {
+      try {
+        const res = await axiosInstance.get(`/companies?limit=1000`);
+        const fetchedCompanies = res.data.companies || [];
+        setCompanies(fetchedCompanies);
+
+        const companyNames = fetchedCompanies.map((c) => c.name);
+        if (companyNames.length > 0) {
+          const rateRes = await axiosInstance.get(
+            `/rate?companies=${companyNames.join(",")}`
+          );
+          setRateData(rateRes.data || []);
+        } else {
+          setRateData([]);
+        }
+      } catch (error) {
+        toast.error("Failed to load company or rate data");
+      }
+    };
+
+    fetchCompanies();
+  }, []);
 
   const hasRate = (companyName) => {
     return rateData.some(
@@ -50,49 +53,104 @@ const Sauda = () => {
     );
   };
 
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+  const filteredCompanies = useMemo(() => {
+    return companies
+      .filter((company) => hasRate(company.name))
+      .filter((company) =>
+        company.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [companies, rateData, searchTerm]);
+
+  const handlePopupClose = (companyName, status = null) => {
+    setSelectedCompany(null);
+    if (status) {
+      setSaudaStatusMap((prev) => ({
+        ...prev,
+        [companyName]: status,
+      }));
+    }
   };
 
   return (
-    <div className="p-4 space-y-4">
-      <Title text="Check Sauda List" />
+    <Suspense fallback={<Loading />}>
+      <div className="p-4 space-y-4">
+        <Title text="Check Sauda List" />
 
-      <input
-        type="text"
-        placeholder="Search by company name..."
-        value={searchTerm}
-        onChange={handleSearch}
-        className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-        {companies
-          .filter((company) => hasRate(company.name))
-          .map((company) => (
-            <div
-              key={company._id}
-              onClick={() => setSelectedCompany(company.name)}
-              className="p-4 rounded-xl shadow-lg cursor-pointer transition-transform transform hover:scale-105 bg-green-50 border border-green-400"
-            >
-              <h2
-                title="Rate available"
-                className="text-lg font-bold text-green-700"
-              >
-                {company.name}
-              </h2>
-              <p className="text-sm text-gray-600">{company.category}</p>
-            </div>
-          ))}
-      </div>
-
-      {selectedCompany && (
-        <ManageCompanyPopup
-          name={selectedCompany}
-          onClose={() => setSelectedCompany(null)}
+        <input
+          type="text"
+          placeholder="Search by company name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-      )}
-    </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredCompanies.map((company) => {
+            const statusColor = saudaStatusMap[company.name];
+            const bgColor =
+              statusColor === "blue"
+                ? "bg-blue-50 border-blue-400"
+                : statusColor === "yellow"
+                ? "bg-yellow-50 border-yellow-400"
+                : "bg-green-50 border-green-400";
+
+            const textColor =
+              statusColor === "blue"
+                ? "text-blue-700"
+                : statusColor === "yellow"
+                ? "text-yellow-700"
+                : "text-green-700";
+
+            return (
+              <div
+                key={company._id}
+                onClick={() => setSelectedCompany(company.name)}
+                className={`p-4 rounded-xl shadow-lg cursor-pointer transition-transform transform hover:scale-105 border ${bgColor}`}
+              >
+                <h2
+                  title="Rate available"
+                  className={`text-lg font-bold ${textColor}`}
+                >
+                  {company.name}
+                </h2>
+                <p className="text-sm text-gray-600">{company.category}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        {filteredCompanies.length === 0 && (
+          <div className="text-gray-500 text-center py-4">
+            No companies found.
+          </div>
+        )}
+
+        {selectedCompany && (
+          <ManageCompanyPopup
+            name={selectedCompany}
+            onClose={(status) => handlePopupClose(selectedCompany, status)}
+          />
+        )}
+
+        <div className="mt-6">
+          <h3 className="text-md font-semibold mb-2">Legend:</h3>
+          <div className="flex gap-4 flex-wrap text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-green-400 rounded"></div>
+              <span>Green: No Sauda entered yet</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-yellow-400 rounded"></div>
+              <span>Yellow: Partial Sauda filled</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-400 rounded"></div>
+              <span>Blue: Sauda + Sauda No filled</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Suspense>
   );
 };
 

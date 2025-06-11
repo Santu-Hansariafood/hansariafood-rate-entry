@@ -97,7 +97,24 @@ const ManageCompanyPopup = ({ name, onClose }) => {
       const res = await axiosInstance.post("/save-sauda", payload);
       if (res.status === 201 && res.data.entry) {
         toast.success("Updated successfully");
-        onClose();
+        let status = "green";
+
+        const hasSaudaFilled = Object.values(saudaEntries).some((entries) =>
+          entries.some((entry) => entry.tons || entry.description)
+        );
+
+        const allSaudaNosFilled = Object.values(saudaEntries).every((entries) =>
+          entries.every((entry) => entry.saudaNo)
+        );
+
+        if (hasSaudaFilled) {
+          status = "yellow";
+        }
+        if (hasSaudaFilled && allSaudaNosFilled) {
+          status = "blue";
+        }
+
+        onClose(status);
       } else {
         toast.error(res.data.message || "Failed to save data");
       }
@@ -122,20 +139,20 @@ const ManageCompanyPopup = ({ name, onClose }) => {
   };
 
   const handleShare = () => {
-  if (!companyData || !rateData.length || !Object.keys(saudaEntries).length) {
-    toast.warn("Data still loading. Please wait a moment.");
-    return;
-  }
+    if (!companyData || !rateData.length || !Object.keys(saudaEntries).length) {
+      toast.warn("Data still loading. Please wait a moment.");
+      return;
+    }
 
-  generateSaudaPDF({
-    company: companyData.name,
-    date: getCurrentDate(),
-    rateData,
-    saudaEntries,
-  });
+    generateSaudaPDF({
+      company: companyData.name,
+      date: getCurrentDate(),
+      rateData,
+      saudaEntries,
+    });
 
-  setShowSharePopup(true);
-};
+    setShowSharePopup(true);
+  };
 
   const getTotalTons = (unit) => {
     const entries = saudaEntries[unit] || [];
@@ -228,7 +245,7 @@ const ManageCompanyPopup = ({ name, onClose }) => {
                               <span>Tons</span>
                               <input
                                 type="text"
-                                value={entry.description}
+                                value={entry.description || ""}
                                 onChange={(e) =>
                                   handleSaudaChange(
                                     saudaKey,
@@ -238,7 +255,15 @@ const ManageCompanyPopup = ({ name, onClose }) => {
                                   )
                                 }
                                 placeholder="Desc"
-                                className="w-28 border px-1 py-0.5"
+                                className="border px-1 py-0.5"
+                                style={{
+                                  width: `${Math.max(
+                                    (entry.description || "").length * 8 + 20,
+                                    80
+                                  )}px`,
+                                  minWidth: "80px",
+                                  maxWidth: "100%",
+                                }}
                               />
                             </div>
                           ))}
@@ -280,14 +305,14 @@ const ManageCompanyPopup = ({ name, onClose }) => {
             </table>
 
             {showSharePopup && (
-  <SaudaSharePopup
-    company={companyData.name}
-    date={getCurrentDate()}
-    saudaEntries={saudaEntries}
-    rateData={rateData}
-    onClose={() => setShowSharePopup(false)}
-  />
-)}
+              <SaudaSharePopup
+                company={companyData.name}
+                date={getCurrentDate()}
+                saudaEntries={saudaEntries}
+                rateData={rateData}
+                onClose={() => setShowSharePopup(false)}
+              />
+            )}
 
             <div className="flex gap-3 mt-4">
               <button
