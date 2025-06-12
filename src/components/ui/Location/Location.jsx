@@ -6,19 +6,19 @@ import { ToastContainer } from "react-toastify";
 import { motion } from "framer-motion";
 import { MapPin, Building2, ChevronDown } from "lucide-react";
 import { useCreateLocationForm } from "@/hooks/Location/useCreateLocationForm";
+import Loading from "@/components/common/Loading/Loading";
 
 import "react-toastify/dist/ReactToastify.css";
 
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
-  loading: () => <p>Loading...</p>,
+  loading: () => <Loading/>,
 });
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
-  loading: () => <p>Loading...</p>,
+  loading: () => <Loading/>,
 });
 const Button = dynamic(() => import("@/components/common/Button/Button"), {
-  loading: () => <p>Loading...</p>,
+  loading: () => <Loading/>,
 });
-const Loading = dynamic(() => import("@/components/common/Loading/Loading"));
 
 export default function CreateLocation() {
   const {

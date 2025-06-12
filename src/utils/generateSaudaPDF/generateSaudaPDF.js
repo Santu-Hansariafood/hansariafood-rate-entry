@@ -16,7 +16,12 @@ const loadImage = (src) =>
     };
   });
 
-export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }) => {
+export const generateSaudaPDF = async ({
+  company,
+  date,
+  rateData,
+  saudaEntries,
+}) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const logoBase64 = await loadImage("/logo/watermark.png");
@@ -28,12 +33,27 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
 
   const logoWidth = 30;
   const logoHeight = 35;
-  doc.addImage(logoBase64, "PNG", pageWidth - logoWidth - 14, 10, logoWidth, logoHeight);
+  doc.addImage(
+    logoBase64,
+    "PNG",
+    pageWidth - logoWidth - 14,
+    10,
+    logoWidth,
+    logoHeight
+  );
+
+  const now = new Date();
+  const printTime = now.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   doc.setFontSize(12);
   doc.setTextColor(255, 0, 0);
   doc.setFont("helvetica", "normal");
   doc.text(`Date: ${date}`, pageWidth - logoWidth - 14, 50);
+  doc.text(`Time: ${printTime}`, pageWidth - logoWidth - 14, 56);
 
   const tableData = [];
   let totalTons = 0;
@@ -43,7 +63,10 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
     if (commodity !== "Maize") return;
 
     const rateInfo = rateData.find(
-      (r) => r.company === company && r.location === location && r.commodity === commodity
+      (r) =>
+        r.company === company &&
+        r.location === location &&
+        r.commodity === commodity
     );
 
     if (!rateInfo || !rateInfo.newRate || rateInfo.newRate === 0) return;
@@ -67,7 +90,16 @@ export const generateSaudaPDF = async ({ company, date, rateData, saudaEntries }
 
   autoTable(doc, {
     startY: 60,
-    head: [["Sl No.", "Unit", "Commodity", "Rate", "Sauda (Tons + Desc)", "Sauda No"]],
+    head: [
+      [
+        "Sl No.",
+        "Unit",
+        "Commodity",
+        "Rate",
+        "Sauda (Tons + Desc)",
+        "Sauda No",
+      ],
+    ],
     body: tableData,
     theme: "striped",
     styles: {
