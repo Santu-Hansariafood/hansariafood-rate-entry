@@ -6,8 +6,6 @@ import { toast } from "react-toastify";
 
 export function useCreateCommodity() {
   const [category, setCategory] = useState("");
-  const [subCategory, setSubCategory] = useState("");
-  const [hasSubCategory, setHasSubCategory] = useState(false);
   const [loading, setLoading] = useState(false);
   const [existingCategories, setExistingCategories] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -18,9 +16,9 @@ export function useCreateCommodity() {
       .then((res) => {
         if (res.data?.commodities && Array.isArray(res.data.commodities)) {
           const names = res.data.commodities
-          .map((item) => item.category)
-          .filter((name) => typeof name === "string" && name.trim() !== "");
-                  setExistingCategories(names);
+            .map((item) => item.category)
+            .filter((name) => typeof name === "string" && name.trim() !== "");
+          setExistingCategories(names);
         }
       })
       .catch(() => {
@@ -40,17 +38,9 @@ export function useCreateCommodity() {
       setSuggestions([]);
     }
   }, [category, existingCategories]);
-  
+
   const handleChange = useCallback((e) => {
     setCategory(e.target.value);
-  }, []);
-
-  const handleSubCategoryChange = useCallback((e) => {
-    setSubCategory(e.target.value);
-  }, []);
-
-  const handleToggleSubCategory = useCallback(() => {
-    setHasSubCategory((prev) => !prev);
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -69,15 +59,12 @@ export function useCreateCommodity() {
     setLoading(true);
     try {
       const response = await axiosInstance.post("/commodity", {
-        name: trimmedCategory,  // Changed from category to name
-        subCategories: hasSubCategory ? [subCategory.trim()] : []  // Changed to match schema
+        name: trimmedCategory,
       });
 
       if (response.status === 201) {
         toast.success("Commodity saved successfully");
         setCategory("");
-        setSubCategory("");
-        setHasSubCategory(false);
         setExistingCategories((prev) => [...prev, trimmedCategory]);
       }
     } catch (error) {
@@ -87,18 +74,14 @@ export function useCreateCommodity() {
     } finally {
       setLoading(false);
     }
-  }, [category, subCategory, hasSubCategory, existingCategories]);
+  }, [category, existingCategories]);
 
   return {
     commodity: category,
     setCommodity: setCategory,
-    subCategory,
-    hasSubCategory,
     loading,
     suggestions,
     handleChange,
-    handleSubCategoryChange,
-    handleToggleSubCategory,
     handleSave,
   };
 }

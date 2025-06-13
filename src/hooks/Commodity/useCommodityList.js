@@ -19,7 +19,9 @@ export function useCommodityList() {
 
   const fetchCommodities = useCallback(async (page = 1) => {
     try {
-      const response = await axiosInstance.get(`/commodity?page=${page}&limit=10`);
+      const response = await axiosInstance.get(
+        `/commodity?page=${page}&limit=10`
+      );
       setCommodities(response.data.commodities || []);
       setTotalEntries(response.data.total);
     } catch (error) {
@@ -32,12 +34,11 @@ export function useCommodityList() {
   }, [fetchCommodities, currentPage]);
 
   const handleEdit = useCallback(
-    (index, newName, newSubCategories) => {
+    (index, newName) => {
       const id = commodities[index]._id;
       axiosInstance
         .put(`/commodity/${id}`, {
           name: newName,
-          subCategories: newSubCategories,
         })
         .then((res) => {
           const updated = [...commodities];

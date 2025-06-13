@@ -9,7 +9,7 @@ export async function POST(req) {
   }
 
   try {
-    const { name, subCategories } = await req.json();
+    const { name } = await req.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -21,33 +21,17 @@ export async function POST(req) {
     await connectDB();
 
     const trimmedName = name.trim();
-    const trimmedSubCategories = Array.isArray(subCategories)
-      ? subCategories.map((s) => s.trim()).filter(Boolean)
-      : [];
 
-    let existing = await Commodity.findOne({ name: trimmedName });
+    const existing = await Commodity.findOne({ name: trimmedName });
 
     if (existing) {
-      // Merge and deduplicate sub-categories
-      const updatedSubCategories = Array.from(
-        new Set([...existing.subCategories, ...trimmedSubCategories])
-      );
-
-      existing.subCategories = updatedSubCategories;
-      await existing.save();
-
       return NextResponse.json(
-        { message: "Commodity updated with new sub-categories", commodity: existing },
-        { status: 200 }
+        { error: "Commodity already exists" },
+        { status: 409 }
       );
     }
 
-    // Create new commodity if it doesn't exist
-    const newCommodity = new Commodity({
-      name: trimmedName,
-      subCategories: trimmedSubCategories,
-    });
-
+    const newCommodity = new Commodity({ name: trimmedName });
     await newCommodity.save();
 
     return NextResponse.json(
@@ -57,7 +41,7 @@ export async function POST(req) {
   } catch (err) {
     console.error("POST /commodity error:", err);
     return NextResponse.json(
-      { error: "Failed to create or update commodity" },
+      { error: "Failed to create commodity" },
       { status: 500 }
     );
   }

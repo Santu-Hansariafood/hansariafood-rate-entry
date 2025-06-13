@@ -1,11 +1,13 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "../../Loading/Loading";
 
 const LogoutButton = dynamic(() => import("../LogoutButton/LogoutButton"));
@@ -16,6 +18,9 @@ export default function MobileNav({
   activeLink,
   setActiveLink,
 }) {
+  const [commodities, setCommodities] = useState([]);
+  const [openDropdown, setOpenDropdown] = useState(null); // "rate", "sauda", or null
+
   const navLinks = [
     "Manage Company",
     "Company",
@@ -26,6 +31,24 @@ export default function MobileNav({
     "Sauda",
     "Register",
   ];
+
+  useEffect(() => {
+    axiosInstance.get("/commodity?page=1&limit=100").then((res) => {
+      setCommodities(res.data.commodities || []);
+    });
+  }, []);
+
+  const handleDropdownToggle = (label) => {
+    setOpenDropdown((prev) =>
+      prev === label.toLowerCase() ? null : label.toLowerCase()
+    );
+  };
+
+  const handleCommodityClick = (parentPath, name) => {
+    const targetPath = `/${parentPath}/${name.toLowerCase()}`;
+    setActiveLink(targetPath);
+    setMenuOpen(false);
+  };
 
   return (
     <Suspense fallback={<Loading />}>
@@ -60,28 +83,76 @@ export default function MobileNav({
 
         {navLinks.map((label, index) => {
           const path = `/${label.toLowerCase().replace(/ /g, "")}`;
+          const isDropdown = label === "Rate" || label === "Sauda";
+          const isOpen = openDropdown === label.toLowerCase();
+
           return (
-            <motion.div
-              key={index}
-              whileHover={{ x: 10 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full"
-            >
-              <Link
-                href={path}
-                className={`block w-full px-4 py-2 rounded-lg ${
-                  activeLink === path
-                    ? "bg-green-500/20 text-green-400"
-                    : "text-white/90 hover:text-white hover:bg-white/10"
-                } transition-colors duration-200`}
-                onClick={() => {
-                  setActiveLink(path);
-                  setMenuOpen(false);
-                }}
+            <div key={index} className="w-full">
+              <motion.div
+                whileHover={{ x: 10 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full flex items-center justify-between"
               >
-                {label}
-              </Link>
-            </motion.div>
+                {isDropdown ? (
+                  <button
+                    onClick={() => handleDropdownToggle(label)}
+                    className={`w-full text-left flex justify-between items-center px-4 py-2 rounded-lg ${
+                      isOpen
+                        ? "bg-green-500/20 text-green-400"
+                        : "text-white/90 hover:text-white hover:bg-white/10"
+                    } transition-colors duration-200`}
+                  >
+                    {label}
+                    {isOpen ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    href={path}
+                    className={`block w-full px-4 py-2 rounded-lg ${
+                      activeLink === path
+                        ? "bg-green-500/20 text-green-400"
+                        : "text-white/90 hover:text-white hover:bg-white/10"
+                    } transition-colors duration-200`}
+                    onClick={() => {
+                      setActiveLink(path);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    {label}
+                  </Link>
+                )}
+              </motion.div>
+
+              {/* Dropdown items */}
+              {isDropdown && isOpen && commodities.length > 0 && (
+                <AnimatePresence>
+                  <motion.ul
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="ml-4 border-l border-white/10 mt-1 overflow-hidden"
+                  >
+                    {commodities.map((commodity) => (
+                      <li key={commodity._id}>
+                        <Link
+                          href={`/${label.toLowerCase()}/${commodity.name.toLowerCase()}`}
+                          className="block px-4 py-1 text-sm text-white/80 hover:text-white"
+                          onClick={() =>
+                            handleCommodityClick(label.toLowerCase(), commodity.name)
+                          }
+                        >
+                          {commodity.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </motion.ul>
+                </AnimatePresence>
+              )}
+            </div>
           );
         })}
 
