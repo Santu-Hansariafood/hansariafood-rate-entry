@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// Helper function to convert image to Base64
 const loadImage = (src) =>
   new Promise((resolve) => {
     const img = new Image();
@@ -26,11 +27,13 @@ export const generateSaudaPDF = async ({
   const pageWidth = doc.internal.pageSize.getWidth();
   const logoBase64 = await loadImage("/logo/watermark.png");
 
+  // Header Title
   doc.setFontSize(22);
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text(company.toUpperCase(), 14, 20);
 
+  // Logo
   const logoWidth = 30;
   const logoHeight = 35;
   doc.addImage(
@@ -42,6 +45,7 @@ export const generateSaudaPDF = async ({
     logoHeight
   );
 
+  // Date and Time
   const now = new Date();
   const printTime = now.toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -57,10 +61,13 @@ export const generateSaudaPDF = async ({
 
   const tableData = [];
   let totalTons = 0;
+  const allowedCommodities = ["Maize", "Maize Assam", "Maize MP", "Maize UP"];
 
   Object.entries(saudaEntries).forEach(([key, entries]) => {
     const [location, commodity] = key.split("-");
-    if (commodity !== "Maize") return;
+
+    // Skip if not allowed commodity
+    if (!allowedCommodities.includes(commodity)) return;
 
     const rateInfo = rateData.find(
       (r) =>
@@ -88,6 +95,7 @@ export const generateSaudaPDF = async ({
     });
   });
 
+  // AutoTable
   autoTable(doc, {
     startY: 60,
     head: [
@@ -119,11 +127,13 @@ export const generateSaudaPDF = async ({
 
   const finalY = doc.lastAutoTable.finalY || 80;
 
+  // Total
   doc.setFontSize(12);
   doc.setTextColor(0, 0, 0);
   doc.setFont("helvetica", "bold");
   doc.text(`Total Sauda: ${totalTons.toFixed(2)} Tons`, 14, finalY + 10);
 
+  // Footer Signature
   const bottomNoteY = finalY + 40;
   doc.setFontSize(12);
   doc.setTextColor(39, 174, 96);
@@ -131,6 +141,7 @@ export const generateSaudaPDF = async ({
   doc.text("Hansaria Food Private Limited", pageWidth - 80, bottomNoteY);
   doc.text("Purchase Team", pageWidth - 55, bottomNoteY + 10);
 
+  // Footer Note
   doc.setFontSize(10);
   doc.setTextColor(150);
   doc.setFont("helvetica", "italic");
@@ -141,5 +152,6 @@ export const generateSaudaPDF = async ({
     { align: "center" }
   );
 
+  // Save
   doc.save(`${company}_${date.replace(/\//g, "-")}_sauda.pdf`);
 };
