@@ -309,15 +309,14 @@ const ManageCompanyPopup = ({ name, onClose }) => {
                   className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                   onClick={handleShare}
                 >
-                  <Share2 className="h-4 w-4" /> Share
+                  <Share2 className="h-4 w-4" /> Share Sauda
                 </button>
 
-                {/* ✅ New Export Button */}
                 <button
                   className="flex items-center gap-2 rounded bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
                   onClick={handelDownload}
                 >
-                  <Share2 className="h-4 w-4" /> Export
+                  <Share2 className="h-4 w-4" /> Export Rate
                 </button>
               </div>
             </>
