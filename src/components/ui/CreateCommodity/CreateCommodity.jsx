@@ -20,13 +20,9 @@ const Button = dynamic(() => import("@/components/common/Button/Button"), {
 export default function CreateCommodity() {
   const {
     commodity,
-    subCategory,
-    hasSubCategory,
     loading,
     suggestions,
     handleChange,
-    handleSubCategoryChange,
-    handleToggleSubCategory,
     handleSave,
     setCommodity,
   } = useCreateCommodity();
@@ -56,18 +52,6 @@ export default function CreateCommodity() {
     </div>
   ), [commodity, suggestions]);
 
-  const memoizedSubCategoryInput = useMemo(() => (
-    hasSubCategory && (
-      <InputBox
-        label="Sub Category"
-        type="text"
-        value={subCategory}
-        onChange={handleSubCategoryChange}
-        placeholder="Enter sub category name"
-      />
-    )
-  ), [hasSubCategory, subCategory]);
-
   const memoizedButton = useMemo(() => (
     <Button
       onClick={handleSave}
@@ -83,19 +67,6 @@ export default function CreateCommodity() {
         <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-6">
           <Title text="Create Commodity" />
           {memoizedInput}
-          <div className="flex items-center space-x-2">
-            <input
-              id="hasSubCategory"
-              type="checkbox"
-              checked={hasSubCategory}
-              onChange={handleToggleSubCategory}
-              className="w-4 h-4"
-            />
-            <label htmlFor="hasSubCategory" className="text-sm">
-              Has Sub Category?
-            </label>
-          </div>
-          {memoizedSubCategoryInput}
           {memoizedButton}
         </div>
       </div>
