@@ -16,12 +16,7 @@ const loadImage = (src) =>
     };
   });
 
-export const generateSaudaPDF = async ({
-  company,
-  date,
-  rateData,
-  saudaEntries,
-}) => {
+export const generateRatePDF = async ({ company, date, rateData }) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const logoBase64 = await loadImage("/logo/watermark.png");
@@ -56,52 +51,24 @@ export const generateSaudaPDF = async ({
   doc.text(`Time: ${printTime}`, pageWidth - logoWidth - 14, 56);
 
   const tableData = [];
-  let totalTons = 0;
   const allowedCommodities = ["Maize", "Maize Assam", "Maize MP", "Maize UP"];
+  let serialNumber = 1;
 
-  Object.entries(saudaEntries).forEach(([key, entries]) => {
-    const [location, commodity] = key.split("-");
-
-    if (!allowedCommodities.includes(commodity)) return;
-
-    const rateInfo = rateData.find(
-      (r) =>
-        r.company === company &&
-        r.location === location &&
-        r.commodity === commodity
-    );
-
-    if (!rateInfo || !rateInfo.newRate || rateInfo.newRate === 0) return;
-
-    entries.forEach((entry) => {
-      const tons = parseFloat(entry.tons);
-      if (!tons || tons === 0) return;
-
-      totalTons += tons;
-
-      tableData.push([
-        tableData.length + 1,
-        location,
-        commodity,
-        rateInfo.newRate,
-        `${tons} Tons - ${entry.description}`,
-        entry.saudaNo,
-      ]);
-    });
+  rateData.forEach((rate) => {
+    const { location, commodity, newRate } = rate;
+    if (
+      rate.company === company &&
+      allowedCommodities.includes(commodity) &&
+      newRate &&
+      newRate !== 0
+    ) {
+      tableData.push([serialNumber++, location, commodity, newRate]);
+    }
   });
 
   autoTable(doc, {
     startY: 60,
-    head: [
-      [
-        "Sl No.",
-        "Unit",
-        "Commodity",
-        "Rate",
-        "Sauda (Tons + Desc)",
-        "Sauda No",
-      ],
-    ],
+    head: [["Sl No.", "Unit", "Commodity", "Rate"]],
     body: tableData,
     theme: "striped",
     styles: {
@@ -121,11 +88,6 @@ export const generateSaudaPDF = async ({
 
   const finalY = doc.lastAutoTable.finalY || 80;
 
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "bold");
-  doc.text(`Total Sauda: ${totalTons.toFixed(2)} Tons`, 14, finalY + 10);
-
   const bottomNoteY = finalY + 40;
   doc.setFontSize(12);
   doc.setTextColor(39, 174, 96);
@@ -137,11 +99,11 @@ export const generateSaudaPDF = async ({
   doc.setTextColor(150);
   doc.setFont("helvetica", "italic");
   doc.text(
-    "Confidential – compiled exclusively by the Hansaria Food Team for internal reference.",
+    "*Confidential – compiled exclusively by the Hansaria Food Team for internal reference.",
     pageWidth / 2,
     doc.internal.pageSize.getHeight() - 10,
     { align: "center" }
   );
 
-  doc.save(`${company}_${date.replace(/\//g, "-")}_sauda.pdf`);
+  doc.save(`${company}_${date.replace(/\//g, "-")}_Rate.pdf`);
 };

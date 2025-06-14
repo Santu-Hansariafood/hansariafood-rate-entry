@@ -2,12 +2,16 @@
 
 import React, { Suspense, useEffect, useMemo, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import SaudaSharePopup from "@/components/ui/Sauda/SaudaSharePopup/SaudaSharePopup";
 import { generateSaudaPDF } from "@/utils/generateSaudaPDF/generateSaudaPDF";
+import { generateRatePDF } from "@/utils/generateSaudaPDF/generateRatePDF";
 import { toast } from "react-toastify";
 import { X, Save, Share2 } from "lucide-react";
 import Loading from "@/components/common/Loading/Loading";
-import Title from "@/components/common/Title/Title";
+import dynamic from "next/dynamic";
+const Title = dynamic(() => import("@/components/common/Title/Title"));
+const SaudaSharePopup = dynamic(() =>
+  import("@/components/ui/Sauda/SaudaSharePopup/SaudaSharePopup")
+);
 
 const normalize = (s) => s?.trim().toLowerCase() || "";
 
@@ -117,6 +121,15 @@ const ManageCompanyPopup = ({ name, onClose }) => {
     } catch {
       toast.error("Error saving data");
     }
+  };
+
+  const handelDownload = () => {
+    generateRatePDF({
+      company: companyData.name,
+      date: today(),
+      rateData,
+      saudaEntries,
+    });
   };
 
   const handleShare = () => {
@@ -297,6 +310,14 @@ const ManageCompanyPopup = ({ name, onClose }) => {
                   onClick={handleShare}
                 >
                   <Share2 className="h-4 w-4" /> Share
+                </button>
+
+                {/* ✅ New Export Button */}
+                <button
+                  className="flex items-center gap-2 rounded bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
+                  onClick={handelDownload}
+                >
+                  <Share2 className="h-4 w-4" /> Export
                 </button>
               </div>
             </>
