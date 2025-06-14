@@ -113,7 +113,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
       locationCommodityContacts
     );
     setLocationCommodityContacts(updated);
-    setSelectedSubCommodities([]); // Reset sub-commodities
+    setSelectedSubCommodities([]);
   };
 
   const handleContactChange = (location, commodity, field, value) => {
@@ -127,6 +127,14 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
         },
       },
     }));
+  };
+
+  const handleRemoveCommodity = (location, commodity) => {
+    setLocationCommodityContacts((prev) => {
+      const updatedLoc = { ...prev[location] };
+      delete updatedLoc[commodity];
+      return { ...prev, [location]: updatedLoc };
+    });
   };
 
   const subCommodityOptions = useMemo(() => {
@@ -250,45 +258,72 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
                 <h3 className="text-md font-semibold text-blue-700 mb-2">
                   {loc}
                 </h3>
-                <div className="space-y-3">
-                  {selectedCommodities.map((cmd) => (
-                    <div
-                      key={`${loc}-${cmd.value}`}
-                      className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
-                    >
-                      <InputBox label="Commodity" value={cmd.value} readOnly />
-                      <InputBox
-                        label="Primary Mobile"
-                        value={
-                          locationCommodityContacts?.[loc]?.[cmd.value]
-                            ?.primaryMobile || ""
-                        }
-                        onChange={(e) =>
-                          handleContactChange(
-                            loc,
-                            cmd.value,
-                            "primaryMobile",
-                            e.target.value
-                          )
-                        }
-                      />
-                      <InputBox
-                        label="Contact Person"
-                        value={
-                          locationCommodityContacts?.[loc]?.[cmd.value]
-                            ?.contactPerson || ""
-                        }
-                        onChange={(e) =>
-                          handleContactChange(
-                            loc,
-                            cmd.value,
-                            "contactPerson",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                  ))}
+
+                <div className="space-y-3 mb-4">
+                  {Object.entries(locationCommodityContacts[loc] || {}).map(
+                    ([cmdName, contactInfo]) => (
+                      <div
+                        key={`${loc}-${cmdName}`}
+                        className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center"
+                      >
+                        <InputBox label="Commodity" value={cmdName} readOnly />
+                        <InputBox
+                          label="Primary Mobile"
+                          value={contactInfo.primaryMobile}
+                          onChange={(e) =>
+                            handleContactChange(
+                              loc,
+                              cmdName,
+                              "primaryMobile",
+                              e.target.value
+                            )
+                          }
+                        />
+                        <InputBox
+                          label="Contact Person"
+                          value={contactInfo.contactPerson}
+                          onChange={(e) =>
+                            handleContactChange(
+                              loc,
+                              cmdName,
+                              "contactPerson",
+                              e.target.value
+                            )
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCommodity(loc, cmdName)}
+                          className="text-red-600 hover:text-red-800 font-semibold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )
+                  )}
+                </div>
+
+                <div className="flex gap-4 items-end">
+                  <Dropdown
+                    label="Add Commodity"
+                    options={memoCommodityOptions.filter(
+                      (opt) => !locationCommodityContacts[loc]?.[opt.value]
+                    )}
+                    onChange={(val) => {
+                      if (!val) return;
+                      setLocationCommodityContacts((prev) => ({
+                        ...prev,
+                        [loc]: {
+                          ...prev[loc],
+                          [val]: {
+                            primaryMobile: "",
+                            contactPerson: "",
+                          },
+                        },
+                      }));
+                    }}
+                    placeholder="Select Commodity to Add"
+                  />
                 </div>
               </div>
             ))}

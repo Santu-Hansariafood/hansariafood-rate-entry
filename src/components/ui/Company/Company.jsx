@@ -114,7 +114,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
       selectedLocations.length === 0 ||
       selectedCommodities.length === 0
     ) {
-      toast.error("❌ Please fill required fields.");
+      toast.error("Please fill required fields.");
       return;
     }
 
@@ -151,7 +151,6 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
       onCreated?.();
       onClose();
     } catch (error) {
-      // toast.error("❌ Failed to create company");
     } finally {
       setLoading(false);
     }

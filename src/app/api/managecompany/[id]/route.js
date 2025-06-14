@@ -3,7 +3,6 @@ import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-// GET /api/managecompany/[id] – Fetch company by ID
 export async function GET(req, { params }) {
   await connectDB();
 
@@ -36,7 +35,6 @@ export async function GET(req, { params }) {
   }
 }
 
-// PUT /api/managecompany/[id] – Update company by ID
 export async function PUT(req, { params }) {
   await connectDB();
 
@@ -46,6 +44,7 @@ export async function PUT(req, { params }) {
 
   try {
     const { id } = params;
+
     if (!id) {
       return NextResponse.json(
         { error: "Company ID is required" },
@@ -63,7 +62,7 @@ export async function PUT(req, { params }) {
       subCommodities = [],
     } = await req.json();
 
-    if (!name || !Array.isArray(location) || !location.length) {
+    if (!name || !Array.isArray(location) || location.length === 0) {
       return NextResponse.json(
         { error: "Name and location are required" },
         { status: 400 }
@@ -75,34 +74,16 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    // Basic field updates
     company.name = name;
     company.location = location;
     company.state = state || company.state;
     company.category = category || company.category;
 
-    // Update mobile numbers (per location + commodity)
-    const existingMobileMap = new Map(
-      (company.mobileNumbers || []).map((item) => [
-        `${item.location}-${item.commodity}`,
-        item,
-      ])
+    company.mobileNumbers = mobileNumbers.filter(
+      (m) => m.primaryMobile || m.contactPerson
     );
-    mobileNumbers.forEach((num) => {
-      const key = `${num.location}-${num.commodity}`;
-      existingMobileMap.set(key, num);
-    });
-    company.mobileNumbers = Array.from(existingMobileMap.values());
-
-    // Update commodities and subCommodities with de-duplication
-    const combinedCommodities = [
-      ...new Set([...company.commodities, ...commodities]),
-    ];
-    const combinedSubCommodities = [
-      ...new Set([...company.subCommodities, ...subCommodities]),
-    ];
-    company.commodities = combinedCommodities;
-    company.subCommodities = combinedSubCommodities;
+    company.commodities = commodities;
+    company.subCommodities = subCommodities;
 
     await company.save();
 
@@ -119,7 +100,6 @@ export async function PUT(req, { params }) {
   }
 }
 
-// DELETE /api/managecompany/[id] – Delete company by ID
 export async function DELETE(req, { params }) {
   await connectDB();
 
@@ -129,6 +109,7 @@ export async function DELETE(req, { params }) {
 
   try {
     const { id } = params;
+
     if (!id) {
       return NextResponse.json(
         { error: "Company ID is required" },
