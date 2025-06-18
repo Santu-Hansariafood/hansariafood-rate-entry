@@ -8,9 +8,14 @@ import { toast } from "react-toastify";
 import { X, Save, Share2 } from "lucide-react";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
-const Title = dynamic(() => import("@/components/common/Title/Title"));
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  suspense: true,
+});
 const SaudaSharePopup = dynamic(() =>
   import("@/components/ui/Sauda/SaudaSharePopup/SaudaSharePopup")
+);
+const CommodityPickerPopup = dynamic(() =>
+  import("@/components/ui/Sauda/CommodityPickerPopup/CommodityPickerPopup")
 );
 
 const normalize = (s) => s?.trim().toLowerCase() || "";
@@ -19,8 +24,9 @@ const ManageCompanyPopup = ({ name, onClose }) => {
   const [companyData, setCompanyData] = useState(null);
   const [rateData, setRateData] = useState([]);
   const [saudaEntries, setSaudaEntries] = useState({});
+  const [showCommodityPicker, setShowCommodityPicker] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
-
+  const [showRatePicker, setShowRatePicker] = useState(false);
   const today = () =>
     new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
 
@@ -123,24 +129,37 @@ const ManageCompanyPopup = ({ name, onClose }) => {
     }
   };
 
-  const handelDownload = () => {
+  const handleExportRate = () => {
+    if (!companyData || !rateData.length)
+      return toast.warn("Data still loading.");
+    setShowRatePicker(true);
+  };
+
+  const handleRateDone = (selected) => {
     generateRatePDF({
       company: companyData.name,
       date: today(),
       rateData,
-      saudaEntries,
+      allowedCommodities: selected,
     });
+    setShowRatePicker(false);
   };
 
   const handleShare = () => {
     if (!companyData || !rateData.length || !Object.keys(saudaEntries).length)
       return toast.warn("Data still loading.");
+    setShowCommodityPicker(true);
+  };
+
+  const handleCommodityDone = (selected) => {
     generateSaudaPDF({
       company: companyData.name,
       date: today(),
       rateData,
       saudaEntries,
+      allowedCommodities: selected,
     });
+    setShowCommodityPicker(false);
     setShowSharePopup(true);
   };
   let sl = 0;
@@ -298,6 +317,22 @@ const ManageCompanyPopup = ({ name, onClose }) => {
                   onClose={() => setShowSharePopup(false)}
                 />
               )}
+
+              {showCommodityPicker && (
+                <CommodityPickerPopup
+                  options={companyData.commodities}
+                  onCancel={() => setShowCommodityPicker(false)}
+                  onDone={handleCommodityDone}
+                />
+              )}
+              {showRatePicker && (
+                <CommodityPickerPopup
+                  options={companyData.commodities}
+                  onCancel={() => setShowRatePicker(false)}
+                  onDone={handleRateDone}
+                />
+              )}
+
               <div className="mt-4 flex gap-3">
                 <button
                   className="flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
@@ -314,7 +349,7 @@ const ManageCompanyPopup = ({ name, onClose }) => {
 
                 <button
                   className="flex items-center gap-2 rounded bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
-                  onClick={handelDownload}
+                  onClick={handleExportRate}
                 >
                   <Share2 className="h-4 w-4" /> Export Rate
                 </button>

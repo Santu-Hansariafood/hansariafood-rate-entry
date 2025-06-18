@@ -25,12 +25,10 @@ export async function POST(req) {
     let entry;
 
     if (existing) {
-      // Update the existing entry
       existing.saudaEntries = saudaEntries;
       await existing.save();
       entry = existing;
     } else {
-      // Create a new entry
       entry = new SaudaEntry({ company, date, saudaEntries });
       await entry.save();
     }

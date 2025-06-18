@@ -16,7 +16,12 @@ const loadImage = (src) =>
     };
   });
 
-export const generateRatePDF = async ({ company, date, rateData }) => {
+export const generateRatePDF = async ({
+  company,
+  date,
+  rateData,
+  allowedCommodities = [],
+}) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const logoBase64 = await loadImage("/logo/watermark.png");
@@ -50,20 +55,17 @@ export const generateRatePDF = async ({ company, date, rateData }) => {
   doc.text(`Date: ${date}`, pageWidth - logoWidth - 14, 50);
   doc.text(`Time: ${printTime}`, pageWidth - logoWidth - 14, 56);
 
+  const wanted =
+    allowedCommodities.length > 0 ? new Set(allowedCommodities) : null;
+
   const tableData = [];
-  const allowedCommodities = ["Maize", "Maize Assam", "Maize MP", "Maize UP"];
   let serialNumber = 1;
 
-  rateData.forEach((rate) => {
-    const { location, commodity, newRate } = rate;
-    if (
-      rate.company === company &&
-      allowedCommodities.includes(commodity) &&
-      newRate &&
-      newRate !== 0
-    ) {
-      tableData.push([serialNumber++, location, commodity, newRate]);
-    }
+  rateData.forEach(({ company: c, location, commodity, newRate }) => {
+    if (c !== company || !newRate) return;
+    if (wanted && !wanted.has(commodity)) return;
+
+    tableData.push([serialNumber++, location, commodity, newRate]);
   });
 
   autoTable(doc, {

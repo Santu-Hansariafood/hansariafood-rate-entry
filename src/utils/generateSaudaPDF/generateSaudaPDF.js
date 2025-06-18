@@ -21,6 +21,7 @@ export const generateSaudaPDF = async ({
   date,
   rateData,
   saudaEntries,
+  allowedCommodities = [],
 }) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -55,14 +56,15 @@ export const generateSaudaPDF = async ({
   doc.text(`Date: ${date}`, pageWidth - logoWidth - 14, 50);
   doc.text(`Time: ${printTime}`, pageWidth - logoWidth - 14, 56);
 
+  const allowed = allowedCommodities.length
+    ? allowedCommodities
+    : [...new Set(Object.keys(saudaEntries).map((k) => k.split("-")[1]))];
   const tableData = [];
   let totalTons = 0;
-  const allowedCommodities = ["Maize", "Maize Assam", "Maize MP", "Maize UP"];
-
   Object.entries(saudaEntries).forEach(([key, entries]) => {
     const [location, commodity] = key.split("-");
 
-    if (!allowedCommodities.includes(commodity)) return;
+    if (!allowed.includes(commodity)) return;
 
     const rateInfo = rateData.find(
       (r) =>
