@@ -80,7 +80,7 @@ export async function generateSaudaPDF({
 
       body.push([
         body.length + 1,
-        unit,
+        `${unit}\n`,
         com,
         `${rate}`,
         `${tons} Tons\n${row.description}`,
