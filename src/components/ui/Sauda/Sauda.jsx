@@ -184,7 +184,7 @@ const Sauda = () => {
           />
         )}
 
-        <div className="mt-6">
+        <div className="mt-6 flex items-center justify-center">
           <h3 className="text-md font-semibold mb-2">Legend:</h3>
           <div className="flex gap-4 flex-wrap text-sm">
             <div className="flex items-center gap-2">

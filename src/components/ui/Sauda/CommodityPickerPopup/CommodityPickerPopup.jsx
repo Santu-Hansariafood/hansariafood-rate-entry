@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
-export default function CommodityPickerPopup({ options = [], onCancel, onDone }) {
+export default function CommodityPickerPopup({
+  options = [],
+  onCancel,
+  onDone,
+}) {
   const [checked, setChecked] = useState(() => new Set(options));
 
   const toggle = (c) => {
@@ -17,8 +21,11 @@ export default function CommodityPickerPopup({ options = [], onCancel, onDone })
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="relative w-[22rem] rounded-lg bg-white p-6 shadow-lg">
-        <button aria-label="Close" onClick={onCancel}
-                className="absolute right-3 top-2 rounded-full p-1 text-gray-500 hover:text-red-500">
+        <button
+          aria-label="Close"
+          onClick={onCancel}
+          className="absolute right-3 top-2 rounded-full p-1 text-gray-500 hover:text-red-500"
+        >
           <X className="h-5 w-5" />
         </button>
 
