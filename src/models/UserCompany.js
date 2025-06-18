@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import ManageCompany from "@/models/ManageCompany";  // Import your ManageCompany model
+import ManageCompany from "@/models/ManageCompany";
 
 const userCompanySchema = new mongoose.Schema(
   {
@@ -12,7 +12,7 @@ const userCompanySchema = new mongoose.Schema(
       {
         companyId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "ManageCompany", // Ensure you refer to the correct model name here
+          ref: "ManageCompany",
           required: true,
         },
         locations: [
@@ -29,6 +29,8 @@ const userCompanySchema = new mongoose.Schema(
   }
 );
 
-const UserCompany = mongoose.models.UserCompany || mongoose.model("UserCompany", userCompanySchema);
+const UserCompany =
+  mongoose.models.UserCompany ||
+  mongoose.model("UserCompany", userCompanySchema);
 
 export default UserCompany;

@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { X, Download } from "lucide-react";
-import { exportWithWatermarkToPDF } from "@/utils/exportWithWatermarkToPDF/exportWithWatermarkToPDF";
 import Loading from "@/components/common/Loading/Loading";
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 

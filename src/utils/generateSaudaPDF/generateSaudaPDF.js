@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import QRCode from "qrcode";
 
 const loadImage = (src) =>
   new Promise((resolve) => {
@@ -7,143 +8,172 @@ const loadImage = (src) =>
     img.crossOrigin = "anonymous";
     img.src = src;
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
+      const c = document.createElement("canvas");
+      c.width = img.width;
+      c.height = img.height;
+      c.getContext("2d").drawImage(img, 0, 0);
+      resolve(c.toDataURL("image/png"));
     };
   });
 
-export const generateSaudaPDF = async ({
+export async function generateSaudaPDF({
   company,
   date,
   rateData,
   saudaEntries,
   allowedCommodities = [],
-}) => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const logoBase64 = await loadImage("/logo/watermark.png");
+}) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 40;
+  const headerH = 80;
+  const blue = [30, 64, 175];
 
-  doc.setFontSize(22);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "bold");
-  doc.text(company.toUpperCase(), 14, 20);
+  const logo64 = await loadImage("/logo/watermark.png");
 
-  const logoWidth = 30;
-  const logoHeight = 35;
-  doc.addImage(
-    logoBase64,
-    "PNG",
-    pageWidth - logoWidth - 14,
-    10,
-    logoWidth,
-    logoHeight
-  );
+  doc.setFillColor(...blue).rect(0, 0, pageW, headerH, "F");
 
-  const now = new Date();
-  const printTime = now.toLocaleTimeString("en-US", {
+  doc.setFont("helvetica", "bold").setFontSize(28).setTextColor(255);
+  doc.text(company.toUpperCase(), pageW / 2, 50, { align: "center" });
+
+  doc.setFont("helvetica", "italic").setFontSize(12);
+  doc.text("Daily Sauda Report", pageW / 2, 66, { align: "center" });
+
+  doc.addImage(logo64, "PNG", pageW - 100, 8, 80, 80, undefined, "FAST");
+
+  const timeStr = new Date().toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
   });
 
-  doc.setFontSize(12);
-  doc.setTextColor(255, 0, 0);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Date: ${date}`, pageWidth - logoWidth - 14, 50);
-  doc.text(`Time: ${printTime}`, pageWidth - logoWidth - 14, 56);
+  doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(90);
+  doc.text(`Date: ${date}`, marginX, headerH + 20);
+  doc.text(`Time: ${timeStr}`, pageW - marginX, headerH + 20, {
+    align: "right",
+  });
+  doc.setDrawColor(...blue).setLineWidth(1);
+  doc.line(marginX, headerH + 32, pageW - marginX, headerH + 32);
 
   const allowed = allowedCommodities.length
     ? allowedCommodities
     : [...new Set(Object.keys(saudaEntries).map((k) => k.split("-")[1]))];
-  const tableData = [];
+
+  const body = [];
   let totalTons = 0;
-  Object.entries(saudaEntries).forEach(([key, entries]) => {
-    const [location, commodity] = key.split("-");
 
-    if (!allowed.includes(commodity)) return;
+  Object.entries(saudaEntries).forEach(([key, list]) => {
+    const [unit, com] = key.split("-");
 
-    const rateInfo = rateData.find(
-      (r) =>
-        r.company === company &&
-        r.location === location &&
-        r.commodity === commodity
-    );
+    if (!allowed.includes(com)) return;
 
-    if (!rateInfo || !rateInfo.newRate || rateInfo.newRate === 0) return;
+    const rate = rateData.find(
+      (r) => r.company === company && r.location === unit && r.commodity === com
+    )?.newRate;
+    if (!rate) return;
 
-    entries.forEach((entry) => {
-      const tons = parseFloat(entry.tons);
-      if (!tons || tons === 0) return;
-
+    list.forEach((row) => {
+      const tons = parseFloat(row.tons);
+      if (!tons) return;
       totalTons += tons;
 
-      tableData.push([
-        tableData.length + 1,
-        location,
-        commodity,
-        rateInfo.newRate,
-        `${tons} Tons - ${entry.description}`,
-        entry.saudaNo,
+      body.push([
+        body.length + 1,
+        unit,
+        com,
+        `${rate}`,
+        `${tons} Tons\n${row.description}`,
+        row.saudaNo,
       ]);
     });
   });
 
+  if (body.length === 0) {
+    alert("Nothing to print — no rows match your filter.");
+    return;
+  }
+
   autoTable(doc, {
-    startY: 60,
-    head: [
-      [
-        "Sl No.",
-        "Unit",
-        "Commodity",
-        "Rate",
-        "Sauda (Tons + Desc)",
-        "Sauda No",
-      ],
-    ],
-    body: tableData,
-    theme: "striped",
-    styles: {
-      fontSize: 10,
-      cellPadding: 2,
-      halign: "left",
+    startY: headerH + 42,
+    head: [["Sl", "Unit", "Commodity", "Rate", "Sauda (Tons + Desc)", "No"]],
+    body,
+    margin: { left: marginX, right: marginX },
+    styles: { fontSize: 10, cellPadding: 4 },
+    headStyles: { fillColor: [75, 85, 99], textColor: 255, halign: "center" },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+    columnStyles: {
+      0: { cellWidth: 28, halign: "center" },
+      1: { cellWidth: 72 },
+      2: { cellWidth: 90 },
+      3: { cellWidth: 50, halign: "right" },
+      4: { halign: "left" },
+      5: { cellWidth: 50, textColor: [220, 38, 38], halign: "center" },
     },
-    headStyles: {
-      fillColor: [0, 128, 0],
-      textColor: [255, 255, 255],
+
+    didParseCell: (data) => {
+      if (data.section === "body" && data.column.index === 4) {
+        data.cell.text = "";
+      }
     },
-    alternateRowStyles: {
-      fillColor: [255, 255, 153],
+
+    didDrawCell: (data) => {
+      if (data.section === "body" && data.column.index === 4) {
+        const cell = data.cell;
+        const [tonsLine, descLine] = body[data.row.index][4].split("\n");
+
+        const x = cell.x + 2;
+        const y = cell.y + 12;
+
+        doc
+          .setFont("helvetica", "bold")
+          .setFontSize(10)
+          .setTextColor(22, 163, 74);
+        doc.text(tonsLine, x, y);
+
+        doc.setFont("helvetica", "italic").setFontSize(10).setTextColor(55);
+        doc.text(descLine, x, y + 12);
+      }
     },
-    margin: { left: 14, right: 14 },
   });
 
-  const finalY = doc.lastAutoTable.finalY || 80;
+  const tableEndY = doc.lastAutoTable.finalY;
+  const footerY = tableEndY + 25;
 
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "bold");
-  doc.text(`Total Sauda: ${totalTons.toFixed(2)} Tons`, 14, finalY + 10);
-
-  const bottomNoteY = finalY + 40;
-  doc.setFontSize(12);
-  doc.setTextColor(39, 174, 96);
-  doc.setFont("helvetica", "italic");
-  doc.text("Hansaria Food Private Limited", pageWidth - 80, bottomNoteY);
-  doc.text("Purchase Team", pageWidth - 55, bottomNoteY + 10);
-
-  doc.setFontSize(10);
-  doc.setTextColor(150);
-  doc.setFont("helvetica", "italic");
+  doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(0);
   doc.text(
-    "Confidential – compiled exclusively by the Hansaria Food Team for internal reference.",
-    pageWidth / 2,
-    doc.internal.pageSize.getHeight() - 10,
+    `Total Sauda: ${totalTons.toFixed(2)} Tons`,
+    pageW - marginX,
+    footerY,
+    {
+      align: "right",
+    }
+  );
+
+  doc
+    .setFont("helvetica", "italic")
+    .setFontSize(11)
+    .setTextColor(...blue);
+  const lines = [
+    "Thanks and Regards,",
+    "Purchase Team",
+    "Hansaria Food Private Limited",
+  ];
+  lines.forEach((ln, idx) =>
+    doc.text(ln, pageW - marginX, footerY + 15 + idx * 14, { align: "right" })
+  );
+
+  const qrData = `https://hansariafood.site`;
+  const qr64 = await QRCode.toDataURL(qrData, { margin: 1, width: 100 });
+  doc.addImage(qr64, "PNG", pageW / 2 - 50, footerY + 15, 100, 100);
+
+  doc.setFont("helvetica", "italic").setFontSize(9).setTextColor(120);
+  doc.text(
+    "Confidential — compiled exclusively by the Hansaria Food Team for internal reference.",
+    pageW / 2,
+    pageH - 30,
     { align: "center" }
   );
 
   doc.save(`${company}_${date.replace(/\//g, "-")}_sauda.pdf`);
-};
+}
