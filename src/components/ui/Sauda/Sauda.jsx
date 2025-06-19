@@ -95,7 +95,7 @@ const Sauda = () => {
               </div>
             ) : (
               <div className="text-gray-500 text-center py-4">
-                No companies found.
+                No companies found Please Update Rate.
               </div>
             )}
           </>
@@ -108,9 +108,8 @@ const Sauda = () => {
           />
         )}
 
-        {/* Legend Section */}
         <div className="mt-10 w-full max-w-4xl px-4">
-          <h3 className="text-md font-semibold mb-4 text-center">Legend</h3>
+          <Title text="Legend"/>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-700">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-400 rounded-full"></div>
