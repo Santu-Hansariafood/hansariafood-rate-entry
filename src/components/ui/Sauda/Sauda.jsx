@@ -5,11 +5,21 @@ import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useSaudaData from "@/hooks/SaudaData/useSaudaData";
 
-const ManageCompanyPopup = dynamic(() =>
-  import("@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup")
+const ManageCompanyPopup = dynamic(
+  () => import("@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup"),
+  {
+    suspense: true,
+  }
 );
-const Title = dynamic(() => import("@/components/common/Title/Title"));
-
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  suspense: true,
+});
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  {
+    suspense: true,
+  }
+);
 const Sauda = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,13 +56,14 @@ const Sauda = () => {
       <div className="p-4 space-y-6 min-h-screen flex flex-col items-center">
         <Title text="Check Sauda List" />
 
-        <input
-          type="text"
-          placeholder="Search by company name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="w-full max-w-md">
+          <InputBox
+            name="company-search"
+            placeholder="Search by company name…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center w-full h-60">
@@ -109,7 +120,7 @@ const Sauda = () => {
         )}
 
         <div className="mt-10 w-full max-w-4xl px-4">
-          <Title text="Legend"/>
+          <Title text="Legend" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-700">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-400 rounded-full"></div>
