@@ -1,11 +1,10 @@
 "use client";
-import React from "react";
+import React, { memo } from "react";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
 
-const Loading = () => {
+const Loading = memo(() => {
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <div className="flex justify-center items-center min-h-[200px] bg-gradient-to-br from-green-50 to-green-100">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -16,16 +15,9 @@ const Loading = () => {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 rounded-full border-4 border-green-500/20"
+            className="w-12 h-12 rounded-full border-4 border-green-500/20"
           >
             <div className="absolute inset-0 rounded-full border-4 border-green-500 border-t-transparent animate-spin"></div>
-          </motion.div>
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <Loader2 className="w-8 h-8 text-green-500" />
           </motion.div>
         </div>
 
@@ -43,6 +35,8 @@ const Loading = () => {
       </motion.div>
     </div>
   );
-};
+});
+
+Loading.displayName = 'Loading';
 
 export default Loading;

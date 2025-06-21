@@ -4,6 +4,7 @@ import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
 import { UserProvider } from "@/context/UserContext";
+import ErrorBoundary from "@/components/common/ErrorBoundary/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,13 +56,28 @@ export const metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-      <meta name="google-site-verification" content="dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4" />
+        <meta name="google-site-verification" content="dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -110,13 +126,15 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        <AuthProvider>
-          <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
-          <main className="flex-1 pt-16">
-            <UserProvider>{children}</UserProvider>
-          </main>
-          <Footer className="mt-auto" />
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
+            <main className="flex-1 pt-16">
+              <UserProvider>{children}</UserProvider>
+            </main>
+            <Footer className="mt-auto" />
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

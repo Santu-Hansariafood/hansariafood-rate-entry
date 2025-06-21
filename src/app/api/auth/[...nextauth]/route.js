@@ -3,6 +3,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { rateLimit } from "@/middleware/rateLimit";
+
+const limiter = rateLimit(5, 15 * 60 * 1000); // 5 attempts per 15 minutes
 
 export const authOptions = {
   providers: [
@@ -14,6 +17,11 @@ export const authOptions = {
         apiKey: { label: "API Key", type: "text" },
       },
       async authorize(credentials, req) {
+        // Rate limiting
+        if (!limiter(req)) {
+          throw new Error("Too many login attempts. Please try again later.");
+        }
+
         const apiKey =
           credentials?.apiKey ||
           req?.headers?.get("x-api-key") ||
@@ -23,30 +31,53 @@ export const authOptions = {
           throw new Error("Unauthorized: Invalid API Key");
         }
 
-        await connectDB();
-        const user = await User.findOne({ mobile: credentials.mobile });
+        if (!credentials?.mobile || !credentials?.password) {
+          throw new Error("Mobile number and password are required");
+        }
 
-        if (!user) throw new Error("User not found");
+        try {
+          await connectDB();
+          const user = await User.findOne({ mobile: credentials.mobile }).lean();
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-        if (!isValid) throw new Error("Invalid credentials");
+          if (!user) throw new Error("User not found");
 
-        return { id: user._id, name: user.name, mobile: user.mobile };
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+          if (!isValid) throw new Error("Invalid credentials");
+
+          return { 
+            id: user._id.toString(), 
+            name: user.name, 
+            mobile: user.mobile.toString() 
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
+          throw new Error(error.message || "Authentication failed");
+        }
       },
     }),
   ],
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+        token.mobile = user.mobile;
+      }
+      return token;
+    },
     async session({ session, token }) {
       session.user.id = token.sub;
+      session.user.mobile = token.mobile;
       return session;
     },
   },
