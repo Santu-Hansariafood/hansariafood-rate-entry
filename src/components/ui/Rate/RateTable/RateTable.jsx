@@ -21,7 +21,10 @@ const RateTableModal = dynamic(
 export default function RateTable({ selectedCompany, onClose, commodity }) {
   const { mobile } = useUser();
   const [rates, setRates] = useState([]);
+  const [allRates, setAllRates] = useState([]); // ✅ Full unfiltered list
   const [editIndex, setEditIndex] = useState(null);
+  const [availableCommodities, setAvailableCommodities] = useState([]); // ✅ Checkbox list
+  const [selectedCommodities, setSelectedCommodities] = useState([]); // ✅ Checked items
   const [isPending, startTransition] = useTransition();
 
   const allRatesFilled = rates.every((rate) => rate.newRate.toString().trim());
@@ -53,7 +56,10 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
 
       if (company) {
         const initialRates = [];
+        const commoditySet = new Set();
+
         company.commodities.forEach((cmd) => {
+          commoditySet.add(cmd);
           company.location.forEach((location) => {
             const cleanLocation = location.trim();
             const foundRate = existingRates.find(
@@ -92,7 +98,9 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
         });
 
         startTransition(() => {
-          setRates(sortedRates);
+          setAllRates(sortedRates); // ✅ store full list
+          setRates(sortedRates); // ✅ default show all
+          setAvailableCommodities([...commoditySet]); // ✅ get unique commodities
         });
       } else {
         toast.error("Company not found in the database.");
@@ -108,10 +116,16 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
   }, [fetchRates]);
 
   useEffect(() => {
-    if (commodity) {
-      console.log("Commodity received in RateTable:", commodity);
+    // ✅ Filter rates based on selected commodities
+    if (selectedCommodities.length === 0) {
+      setRates(allRates); // no filters
+    } else {
+      const filtered = allRates.filter((rate) =>
+        selectedCommodities.includes(rate.commodity)
+      );
+      setRates(filtered);
     }
-  }, [commodity]);
+  }, [selectedCommodities, allRates]);
 
   const handleEdit = (index) => setEditIndex(index);
 
@@ -147,8 +161,32 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
     }
   };
 
+  const toggleCommodity = (cmd) => {
+    setSelectedCommodities((prev) =>
+      prev.includes(cmd) ? prev.filter((c) => c !== cmd) : [...prev, cmd]
+    );
+  };
+
   return (
     <Suspense fallback={<Loading />}>
+      <div className="px-4 py-2 bg-white rounded-t-md border-b">
+        <h4 className="font-semibold text-gray-700 mb-2">
+          Filter by Commodity:
+        </h4>
+        <div className="flex flex-wrap gap-3">
+          {availableCommodities.map((cmd) => (
+            <label key={cmd} className="flex items-center space-x-2 text-sm">
+              <input
+                type="checkbox"
+                checked={selectedCommodities.includes(cmd)}
+                onChange={() => toggleCommodity(cmd)}
+              />
+              <span>{cmd}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       <RateTableModal
         selectedCompany={selectedCompany}
         onClose={onClose}
@@ -160,6 +198,9 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
         setRates={setRates}
         actualStartIndex={0}
         commodity={commodity}
+        selectedCommodities={selectedCommodities}
+        availableCommodities={availableCommodities}
+        onCommodityToggle={toggleCommodity}
       />
     </Suspense>
   );
