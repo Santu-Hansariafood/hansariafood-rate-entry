@@ -61,10 +61,8 @@ export default function DesktopNav({
             );
           })}
 
-          {/* Notification Bell */}
           <NotificationBell notifications={notifications} />
 
-          {/* Logout Button */}
           <motion.li whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <LogoutButton />
           </motion.li>
