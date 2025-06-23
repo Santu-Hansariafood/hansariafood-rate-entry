@@ -89,12 +89,9 @@ const Dropdown = ({
   );
 
   return (
-    <div
-      className="flex flex-col gap-2 w-full max-w-xs relative"
-      ref={dropdownRef}
-    >
+    <div className="flex flex-col gap-2 w-full relative" ref={dropdownRef}>
       {label && (
-        <label className="text-gray-700 dark:text-gray-100 font-medium transition-colors duration-200">
+        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           {label}
         </label>
       )}
@@ -109,9 +106,10 @@ const Dropdown = ({
         value={searchTerm}
         onChange={handleChange}
         onFocus={() => setIsOpen(true)}
-        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+        className="w-full px-4 py-2 text-sm rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
       />
 
+      {/* Selected values (for multi-select) */}
       {isMulti && Array.isArray(value) && value.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-1">
           {value.map((val, idx) => {
@@ -119,14 +117,15 @@ const Dropdown = ({
             return (
               <span
                 key={idx}
-                className="flex items-center bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-green-800 dark:text-green-100"
+                className="flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-green-700 dark:text-white"
               >
                 {option?.label || val}
                 <button
                   onClick={() => onChange(value.filter((v) => v !== val))}
-                  className="ml-1 text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-500"
+                  className="ml-1 text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-500 font-bold"
+                  aria-label="Remove selection"
                 >
-                  &times;
+                  ×
                 </button>
               </span>
             );
@@ -134,10 +133,11 @@ const Dropdown = ({
         </div>
       )}
 
+      {/* Dropdown menu */}
       {isOpen && (
         <div
           id="dropdown-options"
-          className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-40 overflow-y-auto z-10 mt-1"
+          className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl shadow-xl max-h-48 overflow-y-auto z-20 mt-1"
         >
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option, index) => (
@@ -145,18 +145,19 @@ const Dropdown = ({
                 key={index}
                 role="option"
                 aria-selected={isSelected(option.value)}
-                className={`p-2 cursor-pointer text-gray-800 dark:text-white ${
-                  isSelected(option.value)
-                    ? "bg-green-200 dark:bg-green-700"
-                    : "hover:bg-green-100 dark:hover:bg-green-700"
-                }`}
                 onClick={() => handleSelect(option)}
+                className={`p-2 px-4 text-sm cursor-pointer transition-colors duration-150 
+                  ${
+                    isSelected(option.value)
+                      ? "bg-green-200 dark:bg-green-600 text-green-900 dark:text-white"
+                      : "hover:bg-green-100 dark:hover:bg-green-700 text-gray-800 dark:text-white"
+                  }`}
               >
                 {option.label}
               </div>
             ))
           ) : (
-            <div className="p-2 text-gray-500 dark:text-gray-400">
+            <div className="p-3 text-gray-500 dark:text-gray-400 text-sm">
               No options found
             </div>
           )}

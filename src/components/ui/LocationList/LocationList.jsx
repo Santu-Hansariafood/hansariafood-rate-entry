@@ -41,8 +41,11 @@ export default function LocationList() {
     locations,
   } = useLocationList();
 
+  const ITEMS_PER_PAGE = 10;
+
   const columns = useMemo(
     () => [
+      { header: "Sl No", accessor: "slno" },
       { header: "Location Name", accessor: "name" },
       { header: "State", accessor: "state" },
       { header: "Actions", accessor: "actions" },
@@ -52,7 +55,8 @@ export default function LocationList() {
 
   const data = useMemo(
     () =>
-      locations.map((location) => ({
+      locations.map((location, index) => ({
+        slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
         name: location.name,
         state: location.state,
         actions: (
@@ -67,7 +71,7 @@ export default function LocationList() {
           />
         ),
       })),
-    [locations, handleDelete, handleEditClick, handleView]
+    [locations, handleDelete, handleEditClick, handleView, currentPage]
   );
 
   return (
@@ -78,7 +82,7 @@ export default function LocationList() {
         <Pagination
           currentPage={currentPage}
           totalItems={totalEntries}
-          itemsPerPage={10}
+          itemsPerPage={ITEMS_PER_PAGE}
           onPageChange={setCurrentPage}
         />
 

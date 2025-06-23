@@ -163,7 +163,7 @@ export async function generateSaudaPDF({
     doc.text(ln, pageW - marginX, footerY + 15 + idx * 14, { align: "right" })
   );
 
-  const qrData = `https://hansariafood.site`;
+  const qrData = `https://www.justdial.com/Kolkata/Hansaria-Food-Pvt-Ltd-Near-Posta-Petrol-Pump-Posta/033PXX33-XX33-101031124816-Z1Y8_BZDET`;
   const qr64 = await QRCode.toDataURL(qrData, { margin: 1, width: 100 });
   doc.addImage(qr64, "PNG", pageW / 2 - 50, footerY + 15, 100, 100);
 

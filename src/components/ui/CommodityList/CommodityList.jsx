@@ -41,6 +41,7 @@ const CommodityList = () => {
 
   const columns = useMemo(
     () => [
+      { header: "Sl No", accessor: "slno" },
       { header: "Commodity Name", accessor: "name" },
       { header: "Actions", accessor: "actions" },
     ],
@@ -50,6 +51,7 @@ const CommodityList = () => {
   const data = useMemo(
     () =>
       commodities.map((commodity, index) => ({
+        slno: (currentPage - 1) * 10 + index + 1,
         name: commodity.name,
         actions: (
           <Actions
@@ -67,7 +69,7 @@ const CommodityList = () => {
           />
         ),
       })),
-    [commodities, openModal, handleView]
+    [commodities, openModal, handleView, currentPage]
   );
 
   return (

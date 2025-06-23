@@ -47,7 +47,9 @@ const CompanyList = () => {
     handleChange,
   } = useCompanyList();
 
+  // Add Sl No column
   const columns = [
+    { header: "Sl No", accessor: "slno" },
     { header: "Company Name", accessor: "name" },
     { header: "Category", accessor: "category" },
     { header: "Actions", accessor: "actions" },
@@ -58,8 +60,10 @@ const CompanyList = () => {
       <div className="p-4">
         <Title text="Company List" />
         <Table
-          data={paginatedData.map((item) => ({
-            ...item,
+          data={paginatedData.map((item, index) => ({
+            slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
+            name: item.name,
+            category: item.category,
             actions: <Actions item={item.actions} />,
           }))}
           columns={columns}

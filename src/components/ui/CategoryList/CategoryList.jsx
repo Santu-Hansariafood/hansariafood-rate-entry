@@ -52,6 +52,7 @@ const CategoryList = () => {
 
   const columns = useMemo(
     () => [
+      { header: "Sl No", accessor: "slno" },
       { header: "Category Name", accessor: "name" },
       { header: "Actions", accessor: "actions" },
     ],
@@ -61,6 +62,7 @@ const CategoryList = () => {
   const data = useMemo(
     () =>
       categories.map((category, index) => ({
+        slno: (currentPage - 1) * 10 + index + 1,
         name: category.name,
         actions: (
           <Actions
@@ -75,7 +77,7 @@ const CategoryList = () => {
           />
         ),
       })),
-    [categories, openModal, handleView]
+    [categories, openModal, handleView, currentPage]
   );
 
   return (
@@ -92,7 +94,7 @@ const CategoryList = () => {
         />
 
         {selectedCategory && (
-          <div className="mt-4 p-4 bg-gray-100 rounded">
+          <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-800 dark:text-white">
             <h3 className="text-lg font-semibold">Category Details</h3>
             <p>Name: {selectedCategory.name}</p>
           </div>
@@ -106,11 +108,11 @@ const CategoryList = () => {
                 <input
                   type="text"
                   defaultValue={modal.data.name}
-                  className="border p-2 w-full mb-4"
+                  className="border p-2 w-full mb-4 rounded"
                   id="editCategoryInput"
                 />
                 <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
                   onClick={() =>
                     handleEdit(
                       modal.data.index,
@@ -134,7 +136,7 @@ const CategoryList = () => {
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-2 bg-red-600 text-white rounded"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
                     onClick={() => handleDelete(modal.data.index)}
                   >
                     Confirm
