@@ -72,15 +72,19 @@ async function sendMonthlyReport() {
           Mobile: rate.mobile || "",
         };
 
-        if (rate.newRate && rate.newRateDate) {
-          const date = new Date(rate.newRateDate).toLocaleDateString("en-GB");
-          row[date] = rate.newRate;
-        }
+        sortedDates.forEach((date) => {
+          row[date] = "";
+        });
 
         rate.oldRates.forEach((old) => {
           const date = new Date(old.date).toLocaleDateString("en-GB");
           row[date] = old.rate;
         });
+
+        if (rate.newRate && rate.newRateDate) {
+          const date = new Date(rate.newRateDate).toLocaleDateString("en-GB");
+          row[date] = rate.newRate;
+        }
 
         worksheet.addRow(row);
       });
@@ -129,7 +133,7 @@ async function sendMonthlyReport() {
       })}`,
       text: `Hello,
 
-This is the report of this month in the attached Excel format.
+This is the monthly rate report in Excel format.
 
 Thanks,
 Santu De
