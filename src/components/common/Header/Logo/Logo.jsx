@@ -12,7 +12,7 @@ export default function Logo() {
       <Link href={session ? "/dashboard" : "/"}>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Image
-            src="/logo/logo.png"
+            src="/logo/logo1.png"
             alt="Company Logo"
             width={120}
             height={60}

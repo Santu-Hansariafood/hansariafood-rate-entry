@@ -54,9 +54,9 @@ export default function RateGraph({ rateData, company, location }) {
     }
 
     if (filteredData.newRate && filteredData.lastUpdated) {
-      const newDate = new Date(
-        filteredData.lastUpdated
-      ).toLocaleDateString("en-GB");
+      const newDate = new Date(filteredData.lastUpdated).toLocaleDateString(
+        "en-GB"
+      );
       ratesArray.push({
         date: newDate,
         value: parseFloat(filteredData.newRate),
@@ -88,15 +88,23 @@ export default function RateGraph({ rateData, company, location }) {
 
   const labels = displayedRates.map((r) => r.date);
   const rates = displayedRates.map((r) => r.value);
+
   const colors = rates.map((rate, i) =>
     i === 0
-      ? "rgba(100, 149, 237, 1)"
+      ? "rgba(46, 204, 113, 1)"
       : rate >= rates[i - 1]
       ? "rgba(46, 204, 113, 1)"
-      : "rgba(231, 76, 60, 1)"
+      : "rgba(241, 196, 15, 1)"
   );
 
-  // Base Y-axis value (5–10 units below the lowest rate)
+  const shadowColors = rates.map((rate, i) =>
+    i === 0
+      ? "rgba(39, 174, 96, 0.6)"
+      : rate >= rates[i - 1]
+      ? "rgba(39, 174, 96, 0.6)"
+      : "rgba(243, 156, 18, 0.6)"
+  );
+
   const minRate = Math.min(...rates.filter((r) => r > 0));
   const baseY = Math.floor(minRate - 5);
 
@@ -107,9 +115,13 @@ export default function RateGraph({ rateData, company, location }) {
         label: "Rate",
         data: rates,
         backgroundColor: colors,
+        borderColor: shadowColors,
+        borderWidth: 2,
         borderRadius: 10,
         borderSkipped: false,
         barThickness: 14,
+        hoverBackgroundColor: "rgba(241, 196, 15, 0.8)",
+        hoverBorderColor: "#f39c12",
       },
     ],
   };
@@ -121,7 +133,7 @@ export default function RateGraph({ rateData, company, location }) {
       datalabels: {
         anchor: "end",
         align: "end",
-        color: "#333",
+        color: "#2d3436",
         font: {
           weight: "bold",
           size: 10,
@@ -137,6 +149,8 @@ export default function RateGraph({ rateData, company, location }) {
         titleColor: "#fff",
         bodyColor: "#fff",
         padding: 12,
+        borderColor: "#f1c40f",
+        borderWidth: 1,
       },
     },
     scales: {
@@ -146,7 +160,7 @@ export default function RateGraph({ rateData, company, location }) {
         title: {
           display: true,
           text: "Rate",
-          color: "#333",
+          color: "#2d3436",
           font: { size: 14, weight: "bold" },
         },
         ticks: { font: { size: 12 }, padding: 8 },
@@ -156,7 +170,7 @@ export default function RateGraph({ rateData, company, location }) {
         title: {
           display: true,
           text: "Date",
-          color: "#333",
+          color: "#2d3436",
           font: { size: 14, weight: "bold" },
         },
         ticks: { font: { size: 12 }, padding: 8 },
@@ -168,22 +182,22 @@ export default function RateGraph({ rateData, company, location }) {
   return (
     <Suspense fallback={<Loading />}>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         className="w-full"
       >
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100 shadow-inner">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
+            <div className="p-2 rounded-lg bg-green-100 shadow-inner">
+              <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-800">Rate Trends</h3>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-500" />
             <select
-              className="px-4 py-2 border border-gray-200 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="px-4 py-2 border border-gray-200 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
             >
@@ -197,7 +211,7 @@ export default function RateGraph({ rateData, company, location }) {
           Showing data from <strong>{dateRangeLabel}</strong>
         </p>
 
-        <div className="w-full overflow-x-auto bg-white rounded-xl p-4 shadow-2xl shadow-blue-200 min-h-[250px] md:min-h-[300px] lg:min-h-[400px]">
+        <div className="w-full overflow-x-auto bg-white rounded-xl p-4 shadow-[0_20px_30px_rgba(0,128,0,0.15)] min-h-[250px] md:min-h-[300px] lg:min-h-[400px]">
           <Bar data={data} options={options} />
         </div>
       </motion.div>

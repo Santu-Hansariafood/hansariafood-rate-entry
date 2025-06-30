@@ -12,7 +12,7 @@ const SaudaSharePopup = ({
   onClose,
 }) => {
   const containerId = "sauda-summary-container";
-  const watermarkUrl = "/logo/logo.png";
+  const watermarkUrl = "/logo/logo1.png";
 
   const getRateForUnit = (unit) => {
     const match = rateData.find(

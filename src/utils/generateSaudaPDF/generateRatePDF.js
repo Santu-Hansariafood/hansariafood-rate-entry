@@ -29,7 +29,7 @@ export async function generateRatePDF({
   const headerH = 80;
   const blue = [30, 64, 175];
 
-  const logo64 = await loadImage("/logo/watermark.png");
+  const logo64 = await loadImage("/logo/watermark1.png");
 
   doc.setFillColor(...blue).rect(0, 0, pageW, headerH, "F");
   doc.setFont("helvetica", "bold").setFontSize(28).setTextColor(255);
