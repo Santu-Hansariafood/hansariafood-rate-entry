@@ -31,15 +31,11 @@ export async function generateSaudaPDF({
   const blue = [30, 64, 175];
 
   const logo64 = await loadImage("/logo/watermark1.png");
-
   doc.setFillColor(...blue).rect(0, 0, pageW, headerH, "F");
-
   doc.setFont("helvetica", "bold").setFontSize(28).setTextColor(255);
   doc.text(company.toUpperCase(), pageW / 2, 50, { align: "center" });
-
   doc.setFont("helvetica", "italic").setFontSize(12);
   doc.text("Daily Sauda Report", pageW / 2, 66, { align: "center" });
-
   doc.addImage(logo64, "PNG", pageW - 100, 8, 80, 80, undefined, "FAST");
 
   const timeStr = new Date().toLocaleTimeString("en-US", {
@@ -71,6 +67,7 @@ export async function generateSaudaPDF({
     const rate = rateData.find(
       (r) => r.company === company && r.location === unit && r.commodity === com
     )?.newRate;
+
     if (!rate) return;
 
     list.forEach((row) => {
@@ -83,8 +80,8 @@ export async function generateSaudaPDF({
         `${unit}\n`,
         com,
         `${rate}`,
-        `${tons} Tons\n${row.description}`,
-        row.saudaNo,
+        `${tons} Tons\n${row.description || ""}`,
+        row.saudaNo || "",
       ]);
     });
   });
@@ -119,8 +116,14 @@ export async function generateSaudaPDF({
 
     didDrawCell: (data) => {
       if (data.section === "body" && data.column.index === 4) {
+        const rowData = body[data?.row?.index];
+        if (!rowData || !rowData[4]) {
+          console.warn("Missing cell data at row", data?.row?.index);
+          return;
+        }
+
         const cell = data.cell;
-        const [tonsLine, descLine] = body[data.row.index][4].split("\n");
+        const [tonsLine = "", descLine = ""] = rowData[4].split("\n");
 
         const x = cell.x + 2;
         const y = cell.y + 12;
