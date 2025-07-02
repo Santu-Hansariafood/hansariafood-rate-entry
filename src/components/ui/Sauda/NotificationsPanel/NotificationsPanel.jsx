@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { X, Copy } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 
 const LOCAL_STORAGE_KEY = "sauda_notifications_cache";
 
@@ -18,43 +19,43 @@ const NotificationsPanel = ({ onClose }) => {
       setLoading(true);
       const res = await axiosInstance.get("/save-sauda/notifications");
       const all = res.data.notifications || [];
-
       const filtered = all.filter((item) => item.tons && item.tons > 0);
 
-      const ratePromises = filtered.map((item) =>
-        axiosInstance
-          .get("/rate", {
-            params: {
-              company: item.company,
-              location: item.location,
-              commodity: item.commodity,
-            },
-          })
-          .then((res) => {
+      setNotifications(filtered);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtered));
+      setLoading(false);
+
+      const enriched = await Promise.all(
+        filtered.map(async (item) => {
+          try {
+            const res = await axiosInstance.get("/rate", {
+              params: {
+                company: item.company,
+                location: item.location,
+                commodity: item.commodity,
+              },
+            });
             const match = res.data.find(
               (r) =>
                 r.company === item.company &&
                 r.location === item.location &&
                 r.commodity === item.commodity
             );
-            return match?.newRate ?? null;
-          })
-          .catch(() => null)
+            return {
+              ...item,
+              rate: item.rate ?? match?.newRate ?? null,
+            };
+          } catch {
+            return item;
+          }
+        })
       );
-
-      const rates = await Promise.all(ratePromises);
-
-      const enriched = filtered.map((item, idx) => ({
-        ...item,
-        rate: item.rate ?? rates[idx] ?? null,
-      }));
 
       setNotifications(enriched);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(enriched));
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
       toast.error("Error fetching notifications");
-    } finally {
       setLoading(false);
     }
   };
@@ -124,6 +125,17 @@ const NotificationsPanel = ({ onClose }) => {
           <X className="w-5 h-5" />
         </button>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
 
       <div className="p-2 border-b">
         <input
