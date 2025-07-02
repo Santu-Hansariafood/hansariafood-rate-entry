@@ -4,25 +4,32 @@ import React, { useState, useMemo, useCallback, Suspense } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useSaudaData from "@/hooks/SaudaData/useSaudaData";
+import { Bell } from "lucide-react";
 
 const ManageCompanyPopup = dynamic(
   () => import("@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup"),
+  { suspense: true }
+);
+const NotificationsPanel = dynamic(
+  () => import("@/components/ui/Sauda/NotificationsPanel/NotificationsPanel"),
   {
     suspense: true,
   }
 );
+
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   suspense: true,
 });
+
 const InputBox = dynamic(
   () => import("@/components/common/InputBox/InputBox"),
-  {
-    suspense: true,
-  }
+  { suspense: true }
 );
+
 const Sauda = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const {
     companies,
@@ -53,16 +60,28 @@ const Sauda = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 space-y-6 min-h-screen flex flex-col items-center">
+      <div className="p-4 space-y-6 min-h-screen flex flex-col items-center bg-gray-50">
         <Title text="Check Sauda List" />
 
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-md flex items-center gap-4 relative bg-white p-3 rounded-xl shadow-sm">
           <InputBox
             name="company-search"
             placeholder="Search by company name…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative p-2 rounded-full hover:bg-gray-100 transition"
+            aria-label="Notifications"
+          >
+            <Bell className="w-6 h-6 text-gray-700" />
+          </button>
+
+          {showNotifications && (
+            <NotificationsPanel onClose={() => setShowNotifications(false)} />
+          )}
         </div>
 
         {loading ? (
@@ -106,7 +125,7 @@ const Sauda = () => {
               </div>
             ) : (
               <div className="text-gray-500 text-center py-4">
-                No companies found Please Update Rate.
+                No companies found. Please Update Rate.
               </div>
             )}
           </>
