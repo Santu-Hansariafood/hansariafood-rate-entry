@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback, Suspense } from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useSaudaData from "@/hooks/SaudaData/useSaudaData";
-import { Bell } from "lucide-react";
+import { Handshake } from "lucide-react";
 
 const ManageCompanyPopup = dynamic(
   () => import("@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup"),
@@ -73,10 +73,10 @@ const Sauda = () => {
 
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-full hover:bg-gray-100 transition"
+            className="relative p-2 rounded-full bg-green-100 hover:bg-green-200 transition border border-green-300 group"
             aria-label="Notifications"
           >
-            <Bell className="w-6 h-6 text-gray-700" />
+            <Handshake className="w-6 h-6 text-green-700 transform transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
           </button>
 
           {showNotifications && (
