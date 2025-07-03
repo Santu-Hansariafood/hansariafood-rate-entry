@@ -21,7 +21,15 @@ export default function useSaudaNotifications() {
 
   const filterAndSortToday = (items) => {
     const todayString = getTodayString();
-    return items.filter((item) => item.tons > 0 && item.date === todayString);
+    return items
+      .filter((item) => item.tons > 0 && item.date === todayString)
+      .sort((a, b) => {
+        if (!a.time) return 1;
+        if (!b.time) return -1;
+        if (a.time < b.time) return 1;
+        if (a.time > b.time) return -1;
+        return 0;
+      });
   };
 
   const fetchNotifications = async () => {
@@ -80,7 +88,7 @@ export default function useSaudaNotifications() {
         const filteredCache = filterAndSortToday(cachedData);
         setNotifications(filteredCache);
       } catch (e) {
-        console.warn("Invalid cache:", e);
+        console.warn("Invalid cache format:", e);
       }
       setLoading(false);
     }

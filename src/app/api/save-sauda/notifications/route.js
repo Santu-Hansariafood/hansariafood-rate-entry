@@ -3,6 +3,13 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
+function getTodayString() {
+  const today = new Date();
+  return `${String(today.getDate()).padStart(2, "0")}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-${today.getFullYear()}`;
+}
+
 export async function GET(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -10,16 +17,17 @@ export async function GET(req) {
 
   try {
     await connectDB();
-    const entries = await SaudaEntry.find()
+
+    const todayString = getTodayString();
+
+    const entries = await SaudaEntry.find({ date: todayString })
       .sort({ createdAt: -1 })
-      .limit(50)
       .lean();
 
     const notifications = [];
 
     for (const entry of entries) {
-      const { company, date, saudaEntries } = entry;
-
+      const { company, date, time, saudaEntries } = entry;
       if (!saudaEntries) continue;
 
       for (const [location, items] of Object.entries(saudaEntries)) {
@@ -38,10 +46,17 @@ export async function GET(req) {
             saudaNo: item.saudaNo || "",
             description: item.description || "",
             unit: item.unit || "",
+            time: time || "00:00",
           });
         }
       }
     }
+
+    notifications.sort((a, b) => {
+      if (a.time < b.time) return 1;
+      if (a.time > b.time) return -1;
+      return 0;
+    });
 
     return NextResponse.json({ notifications });
   } catch (error) {

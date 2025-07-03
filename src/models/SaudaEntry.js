@@ -15,6 +15,7 @@ const SaudaEntrySchema = new mongoose.Schema(
   {
     company: { type: String, required: true },
     date: { type: String, required: true },
+    time: { type: String },
     saudaEntries: {
       type: Map,
       of: [saudaEntrySubSchema],

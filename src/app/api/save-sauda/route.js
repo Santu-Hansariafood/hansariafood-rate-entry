@@ -20,16 +20,27 @@ export async function POST(req) {
       );
     }
 
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes()
+    ).padStart(2, "0")}`;
+
     const existing = await SaudaEntry.findOne({ company, date });
 
     let entry;
 
     if (existing) {
       existing.saudaEntries = saudaEntries;
+      existing.time = currentTime;
       await existing.save();
       entry = existing;
     } else {
-      entry = new SaudaEntry({ company, date, saudaEntries });
+      entry = new SaudaEntry({
+        company,
+        date,
+        time: currentTime,
+        saudaEntries,
+      });
       await entry.save();
     }
 
@@ -39,10 +50,7 @@ export async function POST(req) {
     );
   } catch (error) {
     console.error("Error in POST /save-sauda:", error.message, error.stack);
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
