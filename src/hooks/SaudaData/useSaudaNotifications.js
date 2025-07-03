@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
@@ -10,42 +10,44 @@ export default function useSaudaNotifications() {
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const prevRawData = useRef("");
 
   const getTodayString = () => {
     const today = new Date();
-    return `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+    return `${String(today.getDate()).padStart(2, "0")}-${String(
+      today.getMonth() + 1
+    ).padStart(2, "0")}-${today.getFullYear()}`;
   };
 
   const filterAndSortToday = (items) => {
     const todayString = getTodayString();
-    return items
-      .filter((item) => item.tons && item.tons > 0 && item.date === todayString)
-      .reverse();
+    return items.filter((item) => item.tons > 0 && item.date === todayString);
   };
 
   const fetchNotifications = async () => {
     try {
-      setLoading(true);
       const res = await axiosInstance.get("/save-sauda/notifications");
       const all = res.data.notifications || [];
 
       const filtered = filterAndSortToday(all);
 
-      setNotifications(filtered);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtered));
-      setLoading(false);
+      const rawDataString = JSON.stringify(filtered);
+      if (rawDataString === prevRawData.current) return;
+
+      prevRawData.current = rawDataString;
+      localStorage.setItem(LOCAL_STORAGE_KEY, rawDataString);
 
       const enriched = await Promise.all(
         filtered.map(async (item) => {
           try {
-            const res = await axiosInstance.get("/rate", {
+            const rateRes = await axiosInstance.get("/rate", {
               params: {
                 company: item.company,
                 location: item.location,
                 commodity: item.commodity,
               },
             });
-            const match = res.data.find(
+            const match = rateRes.data.find(
               (r) =>
                 r.company === item.company &&
                 r.location === item.location &&
@@ -62,10 +64,10 @@ export default function useSaudaNotifications() {
       );
 
       setNotifications(enriched);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(enriched));
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+      console.error("Error fetching notifications:", error);
       toast.error("Error fetching notifications");
+    } finally {
       setLoading(false);
     }
   };
@@ -73,13 +75,17 @@ export default function useSaudaNotifications() {
   useEffect(() => {
     const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (cached) {
-      const cachedData = JSON.parse(cached);
-      const filteredCache = filterAndSortToday(cachedData);
-      setNotifications(filteredCache);
+      try {
+        const cachedData = JSON.parse(cached);
+        const filteredCache = filterAndSortToday(cachedData);
+        setNotifications(filteredCache);
+      } catch (e) {
+        console.warn("Invalid cache:", e);
+      }
       setLoading(false);
-    } else {
-      fetchNotifications();
     }
+
+    fetchNotifications();
 
     const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
     return () => clearInterval(interval);
