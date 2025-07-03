@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
@@ -9,12 +11,25 @@ export default function useSaudaNotifications() {
   const [notifications, setNotifications] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const getTodayString = () => {
+    const today = new Date();
+    return `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+  };
+
+  const filterAndSortToday = (items) => {
+    const todayString = getTodayString();
+    return items
+      .filter((item) => item.tons && item.tons > 0 && item.date === todayString)
+      .reverse();
+  };
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
       const res = await axiosInstance.get("/save-sauda/notifications");
       const all = res.data.notifications || [];
-      const filtered = all.filter((item) => item.tons && item.tons > 0);
+
+      const filtered = filterAndSortToday(all);
 
       setNotifications(filtered);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtered));
@@ -58,7 +73,9 @@ export default function useSaudaNotifications() {
   useEffect(() => {
     const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (cached) {
-      setNotifications(JSON.parse(cached));
+      const cachedData = JSON.parse(cached);
+      const filteredCache = filterAndSortToday(cachedData);
+      setNotifications(filteredCache);
       setLoading(false);
     } else {
       fetchNotifications();
