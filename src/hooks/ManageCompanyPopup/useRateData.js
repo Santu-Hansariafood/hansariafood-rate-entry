@@ -34,8 +34,10 @@ export function useRateData(companyName) {
   const rateMap = useMemo(() => {
     const map = {};
     rates.forEach((r) => {
-      map[`${normalize(r.location)}-${normalize(r.commodity)}`] =
-        r.newRate ?? 0;
+      map[`${normalize(r.location)}-${normalize(r.commodity)}`] = {
+        newRate: r.newRate ?? 0,
+        quantity: r.quantity ?? 0,
+      };
     });
     return map;
   }, [rates]);

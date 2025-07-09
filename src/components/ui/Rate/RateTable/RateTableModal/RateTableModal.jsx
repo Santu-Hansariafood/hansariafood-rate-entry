@@ -83,7 +83,7 @@ export default function RateTableModal({
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden"
+          className="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden"
         >
           <div className="p-6 border-b">
             <div className="flex justify-between items-start gap-4 flex-wrap">

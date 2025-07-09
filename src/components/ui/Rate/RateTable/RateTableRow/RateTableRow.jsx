@@ -11,6 +11,7 @@ export default function RateTableRow({
   handleSave,
   setRates,
   commodity,
+  quantity,
 }) {
   return (
     <Suspense fallback={<Loading />}>
@@ -57,6 +58,31 @@ export default function RateTableRow({
         <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap align-middle">
           {rate.oldRate}
         </td>
+        <td className="px-6 py-4 border-b whitespace-nowrap align-middle">
+          {editIndex === index ? (
+            <input
+              type="number"
+              min="0"
+              value={rate.quantity || ""}
+              onChange={(e) =>
+                setRates((prev) =>
+                  prev.map((r, idx) =>
+                    idx === index
+                      ? { ...r, quantity: Number(e.target.value) }
+                      : r
+                  )
+                )
+              }
+              className={`w-full min-w-[120px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
+                editIndex === index ? "border-green-500" : "border-gray-300"
+              }`}
+              placeholder="Enter quantity"
+            />
+          ) : (
+            <span className="text-gray-800">{rate.quantity || "-"}</span>
+          )}
+        </td>
+
         <td className="px-6 py-4 border-b whitespace-nowrap align-middle">
           {rate.newRate && editIndex !== index ? (
             <span className="font-semibold text-green-700">{rate.newRate}</span>

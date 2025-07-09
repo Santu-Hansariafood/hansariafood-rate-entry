@@ -82,6 +82,9 @@ export default function RateTableBody({
                             Last Rate
                           </th>
                           <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                            Quantity
+                          </th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
                             New Rate
                           </th>
                           <th className="px-6 py-4 text-center text-sm font-semibold text-gray-600 border-b">

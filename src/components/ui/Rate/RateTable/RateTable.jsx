@@ -21,10 +21,10 @@ const RateTableModal = dynamic(
 export default function RateTable({ selectedCompany, onClose, commodity }) {
   const { mobile } = useUser();
   const [rates, setRates] = useState([]);
-  const [allRates, setAllRates] = useState([]); // ✅ Full unfiltered list
+  const [allRates, setAllRates] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
-  const [availableCommodities, setAvailableCommodities] = useState([]); // ✅ Checkbox list
-  const [selectedCommodities, setSelectedCommodities] = useState([]); // ✅ Checked items
+  const [availableCommodities, setAvailableCommodities] = useState([]);
+  const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [isPending, startTransition] = useTransition();
 
   const allRatesFilled = rates.every((rate) => rate.newRate.toString().trim());
@@ -77,6 +77,7 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
               state: locationMap[cleanLocation.toUpperCase()] || "Unknown",
               oldRate: foundRate?.oldRates?.at(-1) || "—",
               newRate: foundRate?.newRate ?? "",
+              quantity: foundRate?.quantity ?? "",
               isUpdated: !!foundRate?.newRate,
               lastUpdated: foundRate?.oldRates?.at(-1)
                 ? new Date(
@@ -98,9 +99,9 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
         });
 
         startTransition(() => {
-          setAllRates(sortedRates); // ✅ store full list
-          setRates(sortedRates); // ✅ default show all
-          setAvailableCommodities([...commoditySet]); // ✅ get unique commodities
+          setAllRates(sortedRates);
+          setRates(sortedRates);
+          setAvailableCommodities([...commoditySet]);
         });
       } else {
         toast.error("Company not found in the database.");
@@ -116,9 +117,8 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
   }, [fetchRates]);
 
   useEffect(() => {
-    // ✅ Filter rates based on selected commodities
     if (selectedCommodities.length === 0) {
-      setRates(allRates); // no filters
+      setRates(allRates);
     } else {
       const filtered = allRates.filter((rate) =>
         selectedCommodities.includes(rate.commodity)
@@ -150,6 +150,7 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
         oldRates: [newOldRate],
         mobile,
         commodity: rateToSave.commodity,
+        quantity: rateToSave.quantity || 0,
       });
 
       toast.success("Rate updated successfully!");

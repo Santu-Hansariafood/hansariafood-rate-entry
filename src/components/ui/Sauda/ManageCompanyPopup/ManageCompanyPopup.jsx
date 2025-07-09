@@ -144,6 +144,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                 <th className="px-3 py-2">Sl.</th>
                 <th className="px-3 py-2">Unit</th>
                 <th className="px-3 py-2">Commodity</th>
+                <th className="px-3 py-2">Need Quantity</th>
                 <th className="px-3 py-2">Rate</th>
                 <th className="px-3 py-2">Sauda (Tons + Desc)</th>
                 <th className="px-3 py-2">Sauda No</th>
@@ -154,7 +155,9 @@ export default function ManageCompanyPopup({ name, onClose }) {
               {company.location.flatMap((unit) =>
                 company.commodities.map((commodity) => {
                   const keyNorm = `${normalize(unit)}-${normalize(commodity)}`;
-                  const newRate = rateMap[keyNorm] || 0;
+                  const rateObj = rateMap[keyNorm] || {};
+                  const newRate = rateObj.newRate || 0;
+                  const quantity = rateObj.quantity || "-";
                   if (newRate === 0) return null;
 
                   const key = `${unit}-${commodity}`;
@@ -168,6 +171,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                         {unit}
                       </td>
                       <td className="px-3 py-2">{commodity}</td>
+                      <td className="px-3 py-2">{quantity}</td>
                       <td className="whitespace-nowrap px-3 py-2 font-semibold text-blue-700">
                         ₹ {newRate}
                       </td>

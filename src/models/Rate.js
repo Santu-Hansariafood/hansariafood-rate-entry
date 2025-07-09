@@ -15,6 +15,7 @@ const RateSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
   updateTime: { type: String },
   mobile: { type: String },
+  quantity: { type: Number },
 });
 
 RateSchema.pre("save", function (next) {

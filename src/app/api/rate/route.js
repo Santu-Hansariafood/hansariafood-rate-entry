@@ -11,7 +11,8 @@ export async function POST(req) {
   }
 
   try {
-    const { company, location, newRate, mobile, commodity } = await req.json();
+    const { company, location, newRate, mobile, commodity, quantity } = await req.json();
+
     if (!company || !location || !commodity || newRate === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -40,10 +41,12 @@ export async function POST(req) {
       rateEntry.newRate = newRate;
       rateEntry.newRateDate = today;
       rateEntry.mobile = mobile;
+      rateEntry.quantity = quantity;
+
       await rateEntry.save();
 
       return NextResponse.json(
-        { message: "Rate updated successfully!", updatedRate: rateEntry },
+        { message: "Rate updated successfully!" },
         { status: 200 }
       );
     }
@@ -56,11 +59,12 @@ export async function POST(req) {
       newRateDate: today,
       oldRates: [],
       mobile,
+      quantity,
     });
     await rateEntry.save();
 
     return NextResponse.json(
-      { message: "Rate saved successfully!", newRate: rateEntry },
+      { message: "Rate saved successfully!" },
       { status: 201 }
     );
   } catch (error) {
@@ -104,6 +108,7 @@ export async function GET(req) {
         commodity: rate.commodity,
         oldRates: oldRatesFormatted,
         newRate: isToday ? rate.newRate : "",
+        quantity: isToday ? rate.quantity ?? "" : "",
         hasNewRateToday: isToday,
         lastUpdated: isToday
           ? rate.newRateDate
@@ -129,7 +134,8 @@ export async function PUT(req) {
   }
 
   try {
-    const { company, location, newRate, mobile, commodity } = await req.json();
+    const { company, location, newRate, mobile, commodity, quantity } = await req.json();
+
     if (!company || !location || !commodity || newRate === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -145,10 +151,12 @@ export async function PUT(req) {
     rateToUpdate.newRate = newRate;
     rateToUpdate.newRateDate = new Date();
     rateToUpdate.mobile = mobile;
+    rateToUpdate.quantity = quantity;
+
     await rateToUpdate.save();
 
     return NextResponse.json(
-      { message: "Rate updated successfully!", updatedRate: rateToUpdate },
+      { message: "Rate updated successfully!" },
       { status: 200 }
     );
   } catch (error) {
