@@ -157,11 +157,17 @@ export default function ManageCompanyPopup({ name, onClose }) {
                   const keyNorm = `${normalize(unit)}-${normalize(commodity)}`;
                   const rateObj = rateMap[keyNorm] || {};
                   const newRate = rateObj.newRate || 0;
-                  const quantity = rateObj.quantity || "-";
-                  if (newRate === 0) return null;
-
+                  const quantityNum = Number.isFinite(rateObj.quantity)
+                    ? rateObj.quantity
+                    : null;
                   const key = `${unit}-${commodity}`;
                   const list = entries[key] || [];
+                  const enteredTons = totalTons(key);
+                  const remaining =
+                    quantityNum != null ? quantityNum - enteredTons : "-";
+
+                  if (newRate === 0) return null;
+
                   sl += 1;
 
                   return (
@@ -171,11 +177,14 @@ export default function ManageCompanyPopup({ name, onClose }) {
                         {unit}
                       </td>
                       <td className="px-3 py-2">{commodity}</td>
-                      <td className="px-3 py-2">{quantity}</td>
+                      <td className="px-3 py-2">
+                        {quantityNum != null
+                          ? `${quantityNum} - ${enteredTons} = ${remaining}`
+                          : "-"}
+                      </td>
                       <td className="whitespace-nowrap px-3 py-2 font-semibold text-blue-700">
                         ₹ {newRate}
                       </td>
-
                       <td className="space-y-1 px-3 py-2">
                         {list.map((e, idx) => (
                           <div key={idx} className="flex items-center gap-2">
@@ -214,12 +223,20 @@ export default function ManageCompanyPopup({ name, onClose }) {
                             />
                           </div>
                         ))}
-                        <button
-                          className="text-xs text-blue-600 hover:underline"
-                          onClick={() => addRow(key)}
-                        >
-                          + Add Sauda
-                        </button>
+
+                        <div className="flex items-center gap-4 mt-1">
+                          <button
+                            className="text-xs text-blue-600 hover:underline"
+                            onClick={() => addRow(key)}
+                          >
+                            + Add Sauda
+                          </button>
+                          {quantityNum != null && (
+                            <div className="text-xs text-red-600">
+                              Required: {remaining}
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-3 py-2">
@@ -243,9 +260,8 @@ export default function ManageCompanyPopup({ name, onClose }) {
                           ))}
                         </div>
                       </td>
-
                       <td className="whitespace-nowrap px-3 py-2 font-bold text-green-700">
-                        {totalTons(key)} Tons
+                        {enteredTons} Tons
                       </td>
                     </tr>
                   );
