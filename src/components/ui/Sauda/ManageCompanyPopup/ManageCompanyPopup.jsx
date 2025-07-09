@@ -185,9 +185,12 @@ export default function ManageCompanyPopup({ name, onClose }) {
                       <td className="whitespace-nowrap px-3 py-2 font-semibold text-blue-700">
                         ₹ {newRate}
                       </td>
-                      <td className="space-y-1 px-3 py-2">
+                      <td colSpan={2} className="space-y-1 px-3 py-2">
                         {list.map((e, idx) => (
-                          <div key={idx} className="flex items-center gap-2">
+                          <div
+                            key={idx}
+                            className="flex flex-wrap items-center gap-2 border-b border-dashed border-gray-200 pb-1"
+                          >
                             <span className="font-semibold text-gray-500">
                               {String.fromCharCode(97 + idx)}.
                             </span>
@@ -195,6 +198,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                               className="w-16 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
                               placeholder="Tons"
                               type="number"
+                              min={0}
                               value={e.tons}
                               onChange={(ev) =>
                                 handleChange(key, idx, "tons", ev.target.value)
@@ -221,6 +225,21 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                 )
                               }
                             />
+                            <input
+                              className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
+                              placeholder="Sauda No"
+                              type="number"
+                              min={0}
+                              value={e.saudaNo}
+                              onChange={(ev) =>
+                                handleChange(
+                                  key,
+                                  idx,
+                                  "saudaNo",
+                                  ev.target.value
+                                )
+                              }
+                            />
                           </div>
                         ))}
 
@@ -236,28 +255,6 @@ export default function ManageCompanyPopup({ name, onClose }) {
                               Required: {remaining}
                             </div>
                           )}
-                        </div>
-                      </td>
-
-                      <td className="px-3 py-2">
-                        <div className="flex flex-col gap-2">
-                          {list.map((e, idx) => (
-                            <input
-                              key={idx}
-                              className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
-                              placeholder="No"
-                              type="number"
-                              value={e.saudaNo}
-                              onChange={(ev) =>
-                                handleChange(
-                                  key,
-                                  idx,
-                                  "saudaNo",
-                                  ev.target.value
-                                )
-                              }
-                            />
-                          ))}
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 font-bold text-green-700">
