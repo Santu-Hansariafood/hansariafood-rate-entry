@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+import SaudaTonsChart from "@/components/common/SaudaTonsChart/SaudaTonsChart";
 
 const Welcome = dynamic(() => import("@/components/ui/Welcome/Welcome"), {
   loading: () => <Loading />,
@@ -42,6 +43,9 @@ const Page = () => {
       </section>
       <section role="region" aria-label="Rate Entry List">
         <RateEntryList />
+      </section>
+      <section role="region" aria-label="Rate Entry List">
+        <SaudaTonsChart />
       </section>
       <section role="region" aria-label="Rate Calendar">
         <RateCalendar />
