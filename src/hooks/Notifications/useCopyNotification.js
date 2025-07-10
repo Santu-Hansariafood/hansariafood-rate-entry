@@ -16,7 +16,7 @@ export default function useCopyNotification() {
     const time = `${datePart}, ${updateTime || "N/A"}`;
     const commodity = capitalizeFirst(notification.commodity || "N/A");
 
-    const copyText = `_*New Offer - ${todayDate}*_\nToday *${company}* is offering *${commodity}*\n*${quantity}mt @${newRate}/-* \nfor the *${location}* location \n(Updated on: ${time}).\n\n _Thanks,_ \n _Purchase Team_\n _Hansaria Food Pvt Ltd_`;
+    const copyText = `*Today* ${todayDate} *${company}* is offering \n *${commodity}* - *${quantity}mt @${newRate}/-* \nfor the *${location}* location \n(Updated on: ${time}).\n\n _Thanks,_ \n _Purchase Team_\n _Hansaria Food Pvt Ltd_`;
 
     try {
       await navigator.clipboard.writeText(copyText);

@@ -31,7 +31,6 @@ export default function Register() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Full Name */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -65,8 +64,6 @@ export default function Register() {
                 </motion.p>
               )}
             </motion.div>
-
-            {/* Mobile Number */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -101,7 +98,6 @@ export default function Register() {
               )}
             </motion.div>
 
-            {/* Password */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -136,7 +132,6 @@ export default function Register() {
               )}
             </motion.div>
 
-            {/* Submit Button */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

@@ -23,7 +23,7 @@ export const ChartSection = ({
   return (
     <Suspense fallback={<Loading />}>
       <motion.div
-        className="p-4 max-w-7xl mx-auto"
+        className="p-4 w-full"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -73,7 +73,7 @@ export const ChartSection = ({
         </motion.div>
 
         <motion.div
-          className="w-full h-[400px] sm:h-[500px]"
+          className="w-full aspect-[2/1] max-h-[600px]"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.3 }}

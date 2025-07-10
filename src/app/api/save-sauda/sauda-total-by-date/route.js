@@ -13,7 +13,6 @@ export async function GET(req) {
   try {
     const allEntries = await SaudaEntry.find({});
 
-    // Map to hold date => totalTons
     const dateTotals = new Map();
 
     for (const entry of allEntries) {
@@ -25,7 +24,6 @@ export async function GET(req) {
         }
       }
 
-      // Add to running total for this date
       if (dateTotals.has(entry.date)) {
         dateTotals.set(entry.date, dateTotals.get(entry.date) + entryTotalTons);
       } else {
@@ -33,7 +31,6 @@ export async function GET(req) {
       }
     }
 
-    // Convert Map to array for JSON response
     const result = Array.from(dateTotals.entries()).map(([date, totalTons]) => ({
       date,
       totalTons,

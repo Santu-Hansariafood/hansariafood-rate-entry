@@ -3,6 +3,10 @@
 import { ChartSection } from "@/components/common/ChartSection/ChartSection";
 import { useSaudaTonsData } from "@/hooks/ChartSection/useSaudaTonsData";
 import { useChartFilters } from "@/hooks/ChartSection/useChartFilters";
+import { Suspense } from "react";
+import Loading from "../Loading/Loading";
+import dynamic from "next/dynamic";
+const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 const monthNames = [
   "January",
@@ -71,19 +75,22 @@ const SaudaTonsChart = () => {
   };
 
   return (
-    <ChartSection
-      title="Sauda Tons Statistics"
-      monthNames={monthNames}
-      selectedMonth={selectedMonth}
-      setSelectedMonth={setSelectedMonth}
-      selectedYear={selectedYear}
-      setSelectedYear={setSelectedYear}
-      chartType={chartType}
-      setChartType={setChartType}
-      chartData={chartData}
-      chartOptions={chartOptions}
-      noDataMessage="No sauda data for selected month"
-    />
+    <Suspense fallback={<Loading />}>
+      <Title text={`Total Sauda in this month = ${total}`} />
+      <ChartSection
+        title="Sauda Tons Statistics"
+        monthNames={monthNames}
+        selectedMonth={selectedMonth}
+        setSelectedMonth={setSelectedMonth}
+        selectedYear={selectedYear}
+        setSelectedYear={setSelectedYear}
+        chartType={chartType}
+        setChartType={setChartType}
+        chartData={chartData}
+        chartOptions={chartOptions}
+        noDataMessage="No sauda data for selected month"
+      />
+    </Suspense>
   );
 };
 
