@@ -20,18 +20,26 @@ export default function NotificationList({ notifications }) {
   const capitalizeFirst = (str) =>
     str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "N/A";
 
-  const handleCopy = (notification) => {
-    const { company, location, newRate, newRateDate, updateTime } =
+  const handleCopy = async (notification) => {
+    const { company, quantity, location, newRate, newRateDate, updateTime } =
       notification;
+
+    const todayDate = new Date().toLocaleDateString("en-IN");
     const datePart = new Date(newRateDate || Date.now()).toLocaleDateString(
       "en-IN"
     );
     const time = `${datePart}, ${updateTime || "N/A"}`;
     const commodity = capitalizeFirst(notification.commodity || "N/A");
-    const copyText = `${company} is offering ₹${newRate} for ${commodity} at the ${location} location Today (Updated on: ${time}).`;
 
-    navigator.clipboard.writeText(copyText);
-    toast.success("Details copied to clipboard!");
+    const copyText = `_*New Offer - ${todayDate}*_\nToday *${company}* is offering *${commodity}*\n*${quantity}mt @${newRate}/-* \nfor the *${location}* location \n(Updated on: ${time}).\n\n _Thanks,_ \n _Purchase Team_\n _Hansaria Food Pvt Ltd_`;
+
+    try {
+      await navigator.clipboard.writeText(copyText);
+      toast.success("Details copied to clipboard!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to copy text.");
+    }
   };
 
   const filteredNotifications = useMemo(() => {
@@ -120,6 +128,11 @@ export default function NotificationList({ notifications }) {
                           {capitalizeFirst(n.commodity)} -
                         </span>
                         ₹{n.newRate}
+                        {n.quantity !== undefined && (
+                          <span className="text-gray-500">
+                            Quantity: {n.quantity} Tons
+                          </span>
+                        )}
                         <button
                           onClick={() => handleCopy(n)}
                           className="hover:text-blue-600"
@@ -128,6 +141,7 @@ export default function NotificationList({ notifications }) {
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
+
                       <div className="text-xs text-gray-400">
                         Updated: {time}
                       </div>
