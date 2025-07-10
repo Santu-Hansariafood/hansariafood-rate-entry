@@ -56,10 +56,10 @@ export async function generateRatePDF({
 
   const body = [];
   let sl = 1;
-  rateData.forEach(({ company: c, location, commodity, newRate }) => {
+  rateData.forEach(({ company: c, location, commodity, quantity, newRate }) => {
     if (c !== company || !newRate) return;
     if (wanted && !wanted.has(commodity)) return;
-    body.push([sl++, location, commodity, newRate]);
+    body.push([sl++, location, commodity, quantity ?? "-", newRate]);
   });
 
   if (body.length === 0) {
@@ -68,8 +68,8 @@ export async function generateRatePDF({
   }
 
   autoTable(doc, {
-    startY: headerH + 42,
-    head: [["Sl", "Unit", "Commodity", "Rate"]],
+    startY: headerH + 36,
+    head: [["No", "Unit", "Commodity", "Target Quantity", "Rate"]],
     body,
     margin: { left: marginX, right: marginX },
     styles: {
@@ -88,12 +88,19 @@ export async function generateRatePDF({
       0: { halign: "center" },
       1: { halign: "left" },
       2: { halign: "left" },
-      3: { halign: "right" },
+      3: { halign: "center" },
+      4: { halign: "center" },
     },
     didParseCell: (data) => {
-      if (data.section === "body" && data.column.index === 3) {
-        data.cell.styles.textColor = [220, 38, 38];
-        data.cell.styles.fontStyle = "bold";
+      if (data.section === "body") {
+        if (data.column.index === 3) {
+          data.cell.styles.textColor = [34, 197, 94];
+          data.cell.styles.fontStyle = "bold";
+        }
+        if (data.column.index === 4) {
+          data.cell.styles.textColor = [220, 38, 38];
+          data.cell.styles.fontStyle = "bold";
+        }
       }
     },
   });

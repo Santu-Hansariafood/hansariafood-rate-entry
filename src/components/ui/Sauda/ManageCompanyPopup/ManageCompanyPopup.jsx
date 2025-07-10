@@ -151,7 +151,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                 <th className="px-3 py-2">Sl.</th>
                 <th className="px-3 py-2">Unit</th>
                 <th className="px-3 py-2">Commodity</th>
-                <th className="px-3 py-2">Need Quantity</th>
+                <th className="px-3 py-2">Target Quantity</th>
                 <th className="px-3 py-2">Rate</th>
                 <th className="px-3 py-2">Sauda (Tons + Desc)</th>
                 <th className="px-3 py-2">Sauda No</th>
@@ -259,7 +259,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                           </button>
                           {quantityNum != null && (
                             <div className="text-xs text-red-600">
-                              Required: {remaining}
+                              Balance: {remaining}
                             </div>
                           )}
                         </div>
