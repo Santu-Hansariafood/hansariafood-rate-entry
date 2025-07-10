@@ -1,12 +1,11 @@
 "use client";
-import { useState, useMemo, Suspense } from "react";
+import { Suspense } from "react";
 import { CheckCircle, Info, List, Copy } from "lucide-react";
-import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
+import useNotificationFilter from "@/hooks/Notifications/useNotificationFilter";
+import useCopyNotification from "@/hooks/Notifications/useCopyNotification";
 
-export default function NotificationList({ notifications }) {
-  const [filter, setFilter] = useState("all");
-
+export default function NotificationList({ notifications = [] }) {
   const parseUpdateTime = (timeStr) => {
     if (!timeStr) return 0;
     const [time, modifier] = timeStr.split(" ");
@@ -17,48 +16,11 @@ export default function NotificationList({ notifications }) {
     return (hours * 60 + minutes) * 60 * 1000;
   };
 
-  const capitalizeFirst = (str) =>
-    str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "N/A";
-
-  const handleCopy = async (notification) => {
-    const { company, quantity, location, newRate, newRateDate, updateTime } =
-      notification;
-
-    const todayDate = new Date().toLocaleDateString("en-IN");
-    const datePart = new Date(newRateDate || Date.now()).toLocaleDateString(
-      "en-IN"
-    );
-    const time = `${datePart}, ${updateTime || "N/A"}`;
-    const commodity = capitalizeFirst(notification.commodity || "N/A");
-
-    const copyText = `_*New Offer - ${todayDate}*_\nToday *${company}* is offering *${commodity}*\n*${quantity}mt @${newRate}/-* \nfor the *${location}* location \n(Updated on: ${time}).\n\n _Thanks,_ \n _Purchase Team_\n _Hansaria Food Pvt Ltd_`;
-
-    try {
-      await navigator.clipboard.writeText(copyText);
-      toast.success("Details copied to clipboard!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to copy text.");
-    }
-  };
-
-  const filteredNotifications = useMemo(() => {
-    return [...notifications]
-      .filter((n) => n.newRate)
-      .sort((a, b) => {
-        const aDate = new Date(a.newRateDate || a.updatedAt || 0);
-        const bDate = new Date(b.newRateDate || b.updatedAt || 0);
-
-        const aTime = a.updateTime ? parseUpdateTime(a.updateTime) : 0;
-        const bTime = b.updateTime ? parseUpdateTime(b.updateTime) : 0;
-        return bDate.getTime() + bTime - (aDate.getTime() + aTime);
-      })
-      .filter((n) => {
-        if (filter === "read") return n.read;
-        if (filter === "unread") return !n.read;
-        return true;
-      });
-  }, [notifications, filter]);
+  const { filter, setFilter, filteredNotifications } = useNotificationFilter(
+    notifications,
+    parseUpdateTime
+  );
+  const { handleCopy, capitalizeFirst } = useCopyNotification();
 
   const FilterButton = ({ title, icon: Icon, type }) => (
     <button
@@ -125,7 +87,7 @@ export default function NotificationList({ notifications }) {
                       </div>
                       <div className="text-sm text-gray-600 flex items-center gap-1">
                         <span className="font-medium">
-                          {capitalizeFirst(n.commodity)} -
+                          {capitalizeFirst(n.commodity || "N/A")} -
                         </span>
                         ₹{n.newRate}
                         {n.quantity !== undefined && (
