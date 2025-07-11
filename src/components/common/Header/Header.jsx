@@ -78,6 +78,7 @@ export default function Header() {
               activeLink={activeLink}
               setActiveLink={setActiveLink}
               notifications={notifications}
+              currentUserMobile={session?.user?.mobile}
             />
           ) : (
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -94,11 +95,12 @@ export default function Header() {
         <AnimatePresence>
           {menuOpen && session && (
             <MobileNav
-              menuOpen={menuOpen}
-              setMenuOpen={setMenuOpen}
+              isOpen={menuOpen}
+              setIsOpen={setMenuOpen}
               activeLink={activeLink}
               setActiveLink={setActiveLink}
               notifications={notifications}
+              currentUserMobile={session?.user?.mobile}
             />
           )}
         </AnimatePresence>

@@ -40,9 +40,16 @@ export default function Login() {
             <p className="text-gray-600">Please sign in to your account</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6" aria-describedby="form-errors">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-6"
+            aria-describedby="form-errors"
+          >
             <div>
-              <label htmlFor="mobile" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="mobile"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Mobile Number
               </label>
               <input
@@ -72,7 +79,10 @@ export default function Login() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Password
               </label>
               <div className="relative">

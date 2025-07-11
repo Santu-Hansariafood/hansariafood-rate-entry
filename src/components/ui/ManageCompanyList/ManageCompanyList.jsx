@@ -17,7 +17,9 @@ import dynamic from "next/dynamic";
 const EditCompanyForm = dynamic(() => import("./EditCompanyForm"));
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
-const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"));
+const Pagination = dynamic(() =>
+  import("@/components/common/Pagination/Pagination")
+);
 
 const ManageCompanyList = () => {
   const [companies, setCompanies] = useState([]);
@@ -78,7 +80,8 @@ const ManageCompanyList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this company?")) return;
+    if (!window.confirm("Are you sure you want to delete this company?"))
+      return;
     try {
       await axiosInstance.delete(`/managecompany/${id}`);
       toast.success("Company deleted");
@@ -114,9 +117,7 @@ const ManageCompanyList = () => {
       categoryDisplay: (
         <span className="text-gray-600">{row.category || "N/A"}</span>
       ),
-      stateDisplay: (
-        <span className="text-gray-600">{row.state || "N/A"}</span>
-      ),
+      stateDisplay: <span className="text-gray-600">{row.state || "N/A"}</span>,
       commoditiesDisplay: (
         <ul className="list-disc list-inside">
           {row.commodities.map((cmd, idx) => (
@@ -250,7 +251,9 @@ const ManageCompanyList = () => {
                         {selectedCompany.mobileNumbers.map((m, i) => (
                           <li key={i}>
                             {m.location && (
-                              <span className="font-medium">{m.location}: </span>
+                              <span className="font-medium">
+                                {m.location}:{" "}
+                              </span>
                             )}
                             {m.primaryMobile && `📱 ${m.primaryMobile} `}
                             {m.secondaryMobile && `| 📞 ${m.secondaryMobile} `}

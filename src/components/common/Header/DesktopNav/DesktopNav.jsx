@@ -15,8 +15,11 @@ export default function DesktopNav({
   activeLink,
   setActiveLink,
   notifications,
+  currentUserMobile,
 }) {
-  const navLinks = [
+  const allowedMobileNumbers = ["9830433535", "7029481930"];
+
+  let navLinks = [
     "Manage Company",
     "Company",
     "Location",
@@ -24,8 +27,11 @@ export default function DesktopNav({
     "Commodity",
     "Rate",
     "Sauda",
-    "Register",
   ];
+
+  if (allowedMobileNumbers.includes(currentUserMobile)) {
+    navLinks.push("Register");
+  }
 
   return (
     <Suspense fallback={<Loading />}>
