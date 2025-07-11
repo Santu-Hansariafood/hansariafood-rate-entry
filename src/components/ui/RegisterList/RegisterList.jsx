@@ -134,6 +134,28 @@ export default function RegisterList() {
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (!userId) return;
+
+    if (!confirm("Are you sure you want to delete this user?")) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await axiosInstance.delete("/auth/register", {
+        data: { id: userId },
+      });
+      toast.success("User deleted successfully");
+      fetchUsers();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to delete user");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const columns = [
     { header: "Name", accessor: "name" },
     { header: "Mobile", accessor: "mobile" },
@@ -143,15 +165,27 @@ export default function RegisterList() {
   const usersWithActions = users.map((user) => ({
     ...user,
     action: (
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => handleOpenPopup(user)}
-        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-      >
-        <Plus size={16} />
-        Add Company
-      </motion.button>
+      <div className="flex gap-2">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => handleOpenPopup(user)}
+          className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+        >
+          <Plus size={16} />
+          Add Company
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => handleDeleteUser(user._id)}
+          className="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+        >
+          <Trash2 size={16} />
+          Remove
+        </motion.button>
+      </div>
     ),
   }));
 
