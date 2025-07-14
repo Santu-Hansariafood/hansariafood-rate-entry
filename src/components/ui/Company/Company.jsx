@@ -11,6 +11,9 @@ const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 const Button = dynamic(() => import("@/components/common/Button/Button"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
+const SelectBox = dynamic(() =>
+  import("@/components/common/SelectBox/SelectBox")
+);
 
 export default function CreateCompanyForm({ onClose, onCreated }) {
   const {
@@ -28,6 +31,14 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [selectedSubCommodities, setSelectedSubCommodities] = useState([]);
+  const [buyerOrSeller, setBuyerOrSeller] = useState("Buyer");
+  const buyerSellerOptions = useMemo(
+    () => [
+      { label: "Buyer", value: "Buyer" },
+      { label: "Seller", value: "Seller" },
+    ],
+    []
+  );
 
   const updateLocationCommodityContacts = (locs, cmds, prevData = {}) => {
     const updated = {};
@@ -140,6 +151,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
         name: companyName,
         location: selectedLocations,
         state,
+        buyerOrSeller,
         category,
         commodities: selectedCommodities.map((c) => c.value),
         subCommodities: selectedSubCommodities.map((s) => s.value),
@@ -158,120 +170,132 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
 
   return (
     <Suspense fallback={<Loading />}>
-        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-4xl">
-        <Title
-          text="Create Company"
-          className="text-xl font-bold mb-4 text-center"
-        />
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div className="bg-white p-6 rounded shadow-md w-full max-w-4xl">
+          <Title
+            text="Create Company"
+            className="text-xl font-bold mb-4 text-center"
+          />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Dropdown
-            label="Company Name *"
-            options={companyOptions}
-            value={companyName}
-            onChange={handleCompanyChange}
-          />
-          <Dropdown
-            label="Locations *"
-            options={locationOptions}
-            value={selectedLocations}
-            onChange={handleLocationChange}
-            isMulti
-          />
-          <InputBox label="Category" value={category} readOnly />
-          <InputBox label="State" value={state} readOnly />
-          <Dropdown
-            label="Commodities *"
-            options={commodityOptions}
-            value={selectedCommodities.map((c) => c.value)}
-            onChange={handleCommodityChange}
-            isMulti
-          />
-          {subCommodityOptions.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Dropdown
-              label="Sub-Commodities"
-              options={subCommodityOptions}
-              value={selectedSubCommodities.map((s) => s.value)}
-              onChange={(vals) =>
-                setSelectedSubCommodities(
-                  vals.map((val) => ({ label: val, value: val }))
-                )
-              }
+              label="Company Name *"
+              options={companyOptions}
+              value={companyName}
+              onChange={handleCompanyChange}
+            />
+            <Dropdown
+              label="Locations *"
+              options={locationOptions}
+              value={selectedLocations}
+              onChange={handleLocationChange}
               isMulti
             />
-          )}
-        </div>
-
-        <div className="mt-6">
-          <Title
-            text="Location-wise Contact Details"
-            className="text-lg font-semibold mb-2"
-          />
-          <div className="space-y-6">
-            {selectedLocations.map((loc) => (
-              <div key={loc} className="bg-gray-50 p-4 rounded border">
-                <h3 className="text-md font-semibold text-blue-700 mb-2">
-                  {loc}
-                </h3>
-                <div className="space-y-3">
-                  {selectedCommodities.map((cmd) => (
-                    <div
-                      key={`${loc}-${cmd.value}`}
-                      className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
-                    >
-                      <InputBox label="Commodity" value={cmd.value} readOnly />
-                      <InputBox
-                        label="Primary Mobile"
-                        value={
-                          locationCommodityContacts?.[loc]?.[cmd.value]
-                            ?.primaryMobile || ""
-                        }
-                        onChange={(e) =>
-                          handleContactChange(
-                            loc,
-                            cmd.value,
-                            "primaryMobile",
-                            e.target.value
-                          )
-                        }
-                      />
-                      <InputBox
-                        label="Contact Person"
-                        value={
-                          locationCommodityContacts?.[loc]?.[cmd.value]
-                            ?.contactPerson || ""
-                        }
-                        onChange={(e) =>
-                          handleContactChange(
-                            loc,
-                            cmd.value,
-                            "contactPerson",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+            <InputBox label="Category" value={category} readOnly />
+            <InputBox label="State" value={state} readOnly />
+            <Dropdown
+              label="Commodities *"
+              options={commodityOptions}
+              value={selectedCommodities.map((c) => c.value)}
+              onChange={handleCommodityChange}
+              isMulti
+            />
+            {subCommodityOptions.length > 0 && (
+              <Dropdown
+                label="Sub-Commodities"
+                options={subCommodityOptions}
+                value={selectedSubCommodities.map((s) => s.value)}
+                onChange={(vals) =>
+                  setSelectedSubCommodities(
+                    vals.map((val) => ({ label: val, value: val }))
+                  )
+                }
+                isMulti
+              />
+            )}
           </div>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SelectBox
+              label="Company Type *"
+              name="buyerOrSeller"
+              options={buyerSellerOptions}
+              value={buyerOrSeller}
+              onChange={(e) => setBuyerOrSeller(e.target.value)}
+            />
+          </div>
+          <div className="mt-6">
+            <Title
+              text="Location-wise Contact Details"
+              className="text-lg font-semibold mb-2"
+            />
+            <div className="space-y-6">
+              {selectedLocations.map((loc) => (
+                <div key={loc} className="bg-gray-50 p-4 rounded border">
+                  <h3 className="text-md font-semibold text-blue-700 mb-2">
+                    {loc}
+                  </h3>
+                  <div className="space-y-3">
+                    {selectedCommodities.map((cmd) => (
+                      <div
+                        key={`${loc}-${cmd.value}`}
+                        className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
+                      >
+                        <InputBox
+                          label="Commodity"
+                          value={cmd.value}
+                          readOnly
+                        />
+                        <InputBox
+                          label="Primary Mobile"
+                          value={
+                            locationCommodityContacts?.[loc]?.[cmd.value]
+                              ?.primaryMobile || ""
+                          }
+                          onChange={(e) =>
+                            handleContactChange(
+                              loc,
+                              cmd.value,
+                              "primaryMobile",
+                              e.target.value
+                            )
+                          }
+                        />
+                        <InputBox
+                          label="Contact Person"
+                          value={
+                            locationCommodityContacts?.[loc]?.[cmd.value]
+                              ?.contactPerson || ""
+                          }
+                          onChange={(e) =>
+                            handleContactChange(
+                              loc,
+                              cmd.value,
+                              "contactPerson",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        <div className="flex justify-center mt-6 gap-4">
-          <Button
-            onClick={handleSubmit}
-            text="Create"
-            isLoading={loading}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          />
-          <Button
-            onClick={onClose}
-            text="Cancel"
-            className="bg-gray-300 hover:bg-gray-400 text-black"
-          />
-        </div>
+          <div className="flex justify-center mt-6 gap-4">
+            <Button
+              onClick={handleSubmit}
+              text="Create"
+              isLoading={loading}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            />
+            <Button
+              onClick={onClose}
+              text="Cancel"
+              className="bg-gray-300 hover:bg-gray-400 text-black"
+            />
+          </div>
         </div>
       </div>
     </Suspense>

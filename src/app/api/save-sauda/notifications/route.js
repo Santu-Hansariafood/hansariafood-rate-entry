@@ -40,7 +40,7 @@ export async function GET(req) {
             location: location.split("-")[0].trim(),
             commodity: item.commodity || "",
             tons: item.tons || 0,
-            rate: item.newRate || null,
+            rate: item.finalRate || 0,
             buyerName: item.buyerName || "",
             sellerName: item.sellerName || "",
             saudaNo: item.saudaNo || "",
@@ -52,11 +52,9 @@ export async function GET(req) {
       }
     }
 
-    notifications.sort((a, b) => {
-      if (a.time < b.time) return 1;
-      if (a.time > b.time) return -1;
-      return 0;
-    });
+    notifications.sort((a, b) =>
+      a.time < b.time ? 1 : a.time > b.time ? -1 : 0
+    );
 
     return NextResponse.json({ notifications });
   } catch (error) {

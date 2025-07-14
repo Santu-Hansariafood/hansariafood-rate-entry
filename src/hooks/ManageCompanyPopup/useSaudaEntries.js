@@ -5,7 +5,7 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import { useToday } from "./useToday";
 
-export function useSaudaEntries(company) {
+export function useSaudaEntries(company, rateMap) {
   const today = useToday();
   const [entries, setEntries] = useState({});
   const [loading, setLoading] = useState(false);
@@ -26,13 +26,30 @@ export function useSaudaEntries(company) {
           toast.info("No previous sauda data, starting fresh.");
         }
 
+        const normalize = (s) => s?.trim().toLowerCase() || "";
         const init = {};
         company.location.forEach((loc) =>
           company.commodities.forEach((comm) => {
             const k = `${loc}-${comm}`;
-            init[k] = saved[k] ?? [{ tons: "", description: "", saudaNo: "" }];
+            const keyNorm = `${normalize(loc)}-${normalize(comm)}`;
+            const newRate = rateMap?.[keyNorm]?.newRate ?? "";
+
+            init[k] = saved[k]?.map((entry) => ({
+              tons: entry.tons || "",
+              description: entry.description || "",
+              saudaNo: entry.saudaNo || "",
+              finalRate: entry.finalRate ?? newRate,
+            })) ?? [
+              {
+                tons: "",
+                description: "",
+                saudaNo: "",
+                finalRate: newRate,
+              },
+            ];
           })
         );
+
         mounted && setEntries(init);
       } catch {
         toast.error("Failed to load sauda data");
@@ -44,7 +61,7 @@ export function useSaudaEntries(company) {
     return () => {
       mounted = false;
     };
-  }, [company, today]);
+  }, [company, today, rateMap]);
 
   const handleChange = useCallback((key, idx, field, val) => {
     setEntries((prev) => {
@@ -55,10 +72,18 @@ export function useSaudaEntries(company) {
   }, []);
 
   const addRow = useCallback(
-    (key) =>
+    (key, defaultRate = "") =>
       setEntries((prev) => ({
         ...prev,
-        [key]: [...prev[key], { tons: "", description: "", saudaNo: "" }],
+        [key]: [
+          ...prev[key],
+          {
+            tons: "",
+            description: "",
+            saudaNo: "",
+            finalRate: defaultRate,
+          },
+        ],
       })),
     []
   );

@@ -20,6 +20,18 @@ export async function POST(req) {
       );
     }
 
+    // Validate each entry to ensure finalRate is a number (optional but good)
+    for (const [key, list] of Object.entries(saudaEntries)) {
+      saudaEntries[key] = list.map((entry) => ({
+        tons: Number(entry.tons) || 0,
+        description: entry.description || "",
+        saudaNo: String(entry.saudaNo || ""),
+        finalRate: Number(entry.finalRate) || 0,
+        unit: entry.unit,
+        commodity: entry.commodity,
+      }));
+    }
+
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
       now.getMinutes()
@@ -64,7 +76,7 @@ export async function GET(req) {
     const company = searchParams.get("company");
     const date = searchParams.get("date");
 
-    let query = {};
+    const query = {};
     if (company) query.company = company;
     if (date) query.date = date;
 

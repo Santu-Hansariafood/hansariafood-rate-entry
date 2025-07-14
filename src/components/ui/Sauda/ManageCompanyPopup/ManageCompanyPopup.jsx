@@ -39,7 +39,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
     addRow,
     totalTons,
     loading: loadingSauda,
-  } = useSaudaEntries(company);
+  } = useSaudaEntries(company, rateMap);
 
   const [showCommodityPicker, setShowCommodityPicker] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
@@ -201,6 +201,24 @@ export default function ManageCompanyPopup({ name, onClose }) {
                             <span className="font-semibold text-gray-500">
                               {String.fromCharCode(97 + idx)}.
                             </span>
+                            <span className="text-sm text-gray-500">₹</span>
+
+                            <input
+                              className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
+                              placeholder="Final Rate"
+                              type="number"
+                              min={0}
+                              value={e.finalRate}
+                              onChange={(ev) =>
+                                handleChange(
+                                  key,
+                                  idx,
+                                  "finalRate",
+                                  ev.target.value
+                                )
+                              }
+                            />
+
                             <input
                               className="w-16 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
                               placeholder="Tons"
@@ -212,6 +230,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                               }
                             />
                             <span className="text-sm text-gray-500">Tons</span>
+
                             <input
                               className="min-w-[100px] rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
                               placeholder="Desc"
@@ -232,6 +251,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                 )
                               }
                             />
+
                             <input
                               className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
                               placeholder="Sauda No"
@@ -253,7 +273,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                         <div className="flex items-center gap-4 mt-1">
                           <button
                             className="text-xs text-blue-600 hover:underline"
-                            onClick={() => addRow(key)}
+                            onClick={() => addRow(key, newRate)}
                           >
                             + Add Sauda
                           </button>

@@ -64,15 +64,12 @@ export async function generateSaudaPDF({
 
     if (!allowed.includes(com)) return;
 
-    const rate = rateData.find(
-      (r) => r.company === company && r.location === unit && r.commodity === com
-    )?.newRate;
-
-    if (!rate) return;
-
     list.forEach((row) => {
+      const rate = parseFloat(row.finalRate);
       const tons = parseFloat(row.tons);
-      if (!tons) return;
+
+      if (!tons || !rate) return;
+
       totalTons += tons;
 
       body.push([
