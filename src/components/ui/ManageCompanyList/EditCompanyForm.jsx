@@ -11,6 +11,9 @@ const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 const Button = dynamic(() => import("@/components/common/Button/Button"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
+const SelectBox = dynamic(() =>
+  import("@/components/common/SelectBox/SelectBox")
+);
 
 export default function EditCompanyForm({ company, onClose, onUpdated }) {
   const {
@@ -22,6 +25,9 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     commodityOptions,
   } = useCompany();
 
+  const [buyerOrSeller, setBuyerOrSeller] = useState(
+    company.buyerOrSeller || "Buyer"
+  );
   const [companyName, setCompanyName] = useState(company.name || "");
   const [category, setCategory] = useState(company.category || "");
   const [state, setState] = useState(company.state || "");
@@ -137,6 +143,14 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     });
   };
 
+  const buyerSellerOptions = useMemo(
+    () => [
+      { label: "Buyer", value: "Buyer" },
+      { label: "Seller", value: "Seller" },
+    ],
+    []
+  );
+
   const subCommodityOptions = useMemo(() => {
     const selected = commodities.filter((cmd) =>
       selectedCommodities.map((c) => c.value).includes(cmd.name)
@@ -186,6 +200,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
         location: selectedLocations,
         state,
         category,
+        buyerOrSeller,
         commodities: selectedCommodities.map((c) => c.value),
         subCommodities: selectedSubCommodities.map((s) => s.value),
         mobileNumbers,
@@ -203,7 +218,16 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="bg-white p-6 rounded shadow-md w-full max-w-4xl">
+      <div className="relative bg-white p-6 rounded shadow-md w-full max-w-4xl">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl font-bold focus:outline-none"
+          aria-label="Close"
+        >
+          &times;
+        </button>
+
         <Title
           text="Edit Company"
           className="text-xl font-bold mb-4 text-center"
@@ -245,6 +269,13 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
               isMulti
             />
           )}
+          <SelectBox
+            label="Company Type *"
+            name="buyerOrSeller"
+            options={buyerSellerOptions}
+            value={buyerOrSeller}
+            onChange={(e) => setBuyerOrSeller(e.target.value)}
+          />
         </div>
 
         <div className="mt-6">

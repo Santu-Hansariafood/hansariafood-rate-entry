@@ -105,6 +105,9 @@ const ManageCompanyList = () => {
       ...row,
       serial: <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>,
       name: <span className="font-semibold">{row.name || "N/A"}</span>,
+      buyerSellerDisplay: (
+        <span className="text-gray-600">{row.buyerOrSeller || "Buyer"}</span>
+      ),
       locationDisplay: (
         <ul className="list-disc list-inside">
           {row.location.map((loc, idx) => (
@@ -165,6 +168,7 @@ const ManageCompanyList = () => {
     () => [
       { header: "S.No", accessor: "serial" },
       { header: "Company Name", accessor: "name" },
+      { header: "Type", accessor: "buyerSellerDisplay" },
       { header: "Locations", accessor: "locationDisplay" },
       { header: "Category", accessor: "categoryDisplay" },
       { header: "State", accessor: "stateDisplay" },

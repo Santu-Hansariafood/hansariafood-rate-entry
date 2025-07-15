@@ -16,14 +16,20 @@ export async function POST(req) {
       location,
       state,
       category,
+      buyerOrSeller,
       mobileNumbers,
       commodities,
       subCommodities,
     } = await req.json();
 
-    if (!name || !location || !mobileNumbers?.length) {
+    if (
+      !name ||
+      !location ||
+      !buyerOrSeller ||
+      !["Buyer", "Seller"].includes(buyerOrSeller)
+    ) {
       return NextResponse.json(
-        { error: "Name, location, and mobile contact info are required" },
+        { error: "Name, location, and valid buyerOrSeller are required" },
         { status: 400 }
       );
     }
@@ -76,6 +82,7 @@ export async function POST(req) {
       ];
       existingCompany.state = state;
       existingCompany.category = category;
+      existingCompany.buyerOrSeller = buyerOrSeller;
 
       await existingCompany.save();
 
@@ -93,6 +100,7 @@ export async function POST(req) {
       location,
       state,
       category,
+      buyerOrSeller,
       mobileNumbers,
       commodities,
       subCommodities,

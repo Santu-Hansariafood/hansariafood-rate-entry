@@ -13,6 +13,13 @@ const ManageCompanySchema = new mongoose.Schema(
     location: [{ type: String, required: true }],
     state: { type: String, required: true },
     category: { type: String, required: true },
+
+    buyerOrSeller: {
+      type: String,
+      enum: ["Buyer", "Seller"],
+      required: true,
+    },
+
     commodities: [{ type: String, required: true }],
     subCommodities: [{ type: String }],
     mobileNumbers: [MobileNumberSchema],

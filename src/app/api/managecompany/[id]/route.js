@@ -57,14 +57,21 @@ export async function PUT(req, { params }) {
       location,
       state,
       category,
+      buyerOrSeller,
       mobileNumbers = [],
       commodities = [],
       subCommodities = [],
     } = await req.json();
 
-    if (!name || !Array.isArray(location) || location.length === 0) {
+    if (
+      !name ||
+      !Array.isArray(location) ||
+      location.length === 0 ||
+      !buyerOrSeller ||
+      !["Buyer", "Seller"].includes(buyerOrSeller)
+    ) {
       return NextResponse.json(
-        { error: "Name and location are required" },
+        { error: "Name, location, and valid buyerOrSeller are required" },
         { status: 400 }
       );
     }
@@ -78,6 +85,7 @@ export async function PUT(req, { params }) {
     company.location = location;
     company.state = state || company.state;
     company.category = category || company.category;
+    company.buyerOrSeller = buyerOrSeller;
 
     company.mobileNumbers = mobileNumbers.filter(
       (m) => m.primaryMobile || m.contactPerson
