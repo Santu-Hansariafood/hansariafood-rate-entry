@@ -7,6 +7,9 @@ import Loading from "@/components/common/Loading/Loading";
 import useUsers from "@/hooks/Register/useUsers";
 import useRegisterActions from "@/hooks/Register/useRegisterActions";
 import useCompanies from "@/hooks/Register/useCompanies";
+const Title = dynamic(() =>
+  import("@/components/common/Title/Title")
+);
 const AssignPopup = dynamic(() =>
   import("@/components/ui/RegisterList/AssignPopup/AssignPopup")
 );
@@ -45,7 +48,7 @@ export default function RegisterList() {
     <Suspense fallback={<Loading />}>
       <div className="p-4 m-4 w-full max-w-6xl mx-auto bg-white shadow-lg rounded-xl">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Registered Users</h2>
+          <Title text="Registered Users" />
           {(loadingUsers || loadingCompanies) && <Loading />}
         </div>
 

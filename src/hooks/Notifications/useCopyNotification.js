@@ -16,7 +16,7 @@ export default function useCopyNotification() {
     const time = `${datePart}, ${updateTime || "N/A"}`;
     const commodity = capitalizeFirst(notification.commodity || "N/A");
 
-    const copyText = `*Today* ${todayDate} *${company}* is offering \n *${commodity}* - *${quantity}mt @${newRate}/-* \nfor the *${location}* location \n(Updated on: ${time}).\n\n _Thanks,_ \n _Purchase Team_\n _Hansaria Food Pvt Ltd_`;
+    const copyText = `*Today* ${todayDate} *${company}* is offering \n *${commodity}* - *${quantity}mt @${newRate}/-* \nfor the *${location}* location \n(Updated on: ${time}).\n\n *Please Bid your RATE & QUANTITY\n Through Hansaria Food APP.*\n _https://vupix.in/hfood/auth/index.php_\n\n\n\n _Thanks,_ \n _Purchase Team_\n _Hansaria Food Pvt Ltd_\n `;
 
     try {
       await navigator.clipboard.writeText(copyText);
