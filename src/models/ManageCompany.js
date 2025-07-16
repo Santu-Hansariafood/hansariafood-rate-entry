@@ -9,11 +9,11 @@ const MobileNumberSchema = new mongoose.Schema({
 
 const ManageCompanySchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     location: [{ type: String, required: true }],
     state: { type: String, required: true },
     category: { type: String, required: true },
-
+    
     buyerOrSeller: {
       type: String,
       enum: ["Buyer", "Seller"],
@@ -28,6 +28,8 @@ const ManageCompanySchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+ManageCompanySchema.index({ name: 1, buyerOrSeller: 1 }, { unique: true });
 
 export default mongoose.models.ManageCompany ||
   mongoose.model("ManageCompany", ManageCompanySchema);

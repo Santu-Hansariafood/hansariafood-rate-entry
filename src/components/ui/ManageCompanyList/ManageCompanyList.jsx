@@ -106,7 +106,7 @@ const ManageCompanyList = () => {
       serial: <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>,
       name: <span className="font-semibold">{row.name || "N/A"}</span>,
       buyerSellerDisplay: (
-        <span className="text-gray-600">{row.buyerOrSeller || "Buyer"}</span>
+        <span className="text-gray-600">{row.buyerOrSeller || "n.a"}</span>
       ),
       locationDisplay: (
         <ul className="list-disc list-inside">
@@ -201,7 +201,7 @@ const ManageCompanyList = () => {
             <div className="bg-white rounded-lg p-6 w-full max-w-3xl overflow-y-auto max-h-[90vh]">
               {editingCompany ? (
                 <>
-                  <h2 className="text-xl font-bold mb-4">Edit Company</h2>
+                  {/* <h2 className="text-xl font-bold mb-4">Edit Company</h2> */}
                   <EditCompanyForm
                     company={editingCompany}
                     onClose={() => {

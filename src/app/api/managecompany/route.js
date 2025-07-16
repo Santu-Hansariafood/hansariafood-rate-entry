@@ -38,28 +38,27 @@ export async function POST(req) {
     mobileNumbers = Array.isArray(mobileNumbers) ? mobileNumbers : [];
     commodities = Array.isArray(commodities) ? commodities : [];
     subCommodities = Array.isArray(subCommodities) ? subCommodities : [];
-
     state = state || "N.A";
     category = category || "N.A";
 
-    let existingCompany = await ManageCompany.findOne({ name });
+    let existingCompany = await ManageCompany.findOne({ name, buyerOrSeller });
 
     if (existingCompany) {
-      const locationExists = location.every((loc) =>
+      const allLocationsExist = location.every((loc) =>
         existingCompany.location.includes(loc)
       );
 
-      if (locationExists) {
+      if (allLocationsExist) {
         return NextResponse.json(
-          { error: "Company with this location already exists" },
+          { error: "Company with this name, type, and location already exists" },
           { status: 409 }
         );
       }
 
-      existingCompany.location = [
-        ...new Set([...existingCompany.location, ...location]),
-      ];
+      // Merge new locations
+      existingCompany.location = Array.from(new Set([...existingCompany.location, ...location]));
 
+      // Merge mobile numbers without duplicates
       const existingMobileNumbers = existingCompany.mobileNumbers || [];
       const newMobileNumbers = mobileNumbers.filter(
         (newNum) =>
@@ -69,28 +68,25 @@ export async function POST(req) {
               oldNum.commodity === newNum.commodity
           )
       );
-      existingCompany.mobileNumbers = [
-        ...existingMobileNumbers,
-        ...newMobileNumbers,
-      ];
+      existingCompany.mobileNumbers = [...existingMobileNumbers, ...newMobileNumbers];
 
-      existingCompany.commodities = [
-        ...new Set([...existingCompany.commodities, ...commodities]),
-      ];
-      existingCompany.subCommodities = [
-        ...new Set([...existingCompany.subCommodities, ...subCommodities]),
-      ];
+      // Merge commodities
+      existingCompany.commodities = Array.from(
+        new Set([...existingCompany.commodities, ...commodities])
+      );
+
+      // Merge subCommodities
+      existingCompany.subCommodities = Array.from(
+        new Set([...existingCompany.subCommodities, ...subCommodities])
+      );
+
       existingCompany.state = state;
       existingCompany.category = category;
-      existingCompany.buyerOrSeller = buyerOrSeller;
 
       await existingCompany.save();
 
       return NextResponse.json(
-        {
-          message: "Company updated successfully",
-          company: existingCompany,
-        },
+        { message: "Company updated successfully", company: existingCompany },
         { status: 200 }
       );
     }
@@ -114,6 +110,17 @@ export async function POST(req) {
     );
   } catch (error) {
     console.error("Error in POST /managecompany:", error);
+
+    // Duplicate key error (e.g. same name + buyerOrSeller already exists)
+    if (error.code === 11000) {
+      return NextResponse.json(
+        {
+          error: "A company with this name and type (Buyer/Seller) already exists. Please use a different type or name."
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: error.message || "Failed to create/update company" },
       { status: 500 }
@@ -133,6 +140,8 @@ export async function GET(req) {
     const query = searchParams.get("q")?.toLowerCase() || "";
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
+    const buyerOrSellerFilter = searchParams.get("buyerOrSeller");
+
     const skip = (page - 1) * limit;
 
     const filter = {};
@@ -147,6 +156,13 @@ export async function GET(req) {
 
     if (subCommodities.length > 0) {
       filter.subCommodities = { $in: subCommodities };
+    }
+
+    if (
+      buyerOrSellerFilter &&
+      ["Buyer", "Seller"].includes(buyerOrSellerFilter)
+    ) {
+      filter.buyerOrSeller = buyerOrSellerFilter;
     }
 
     const [companies, total] = await Promise.all([

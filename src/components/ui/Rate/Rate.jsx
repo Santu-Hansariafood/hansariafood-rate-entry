@@ -35,13 +35,15 @@ export default function Rate() {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState({
+    buyerOrSeller: "All",
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const itemsPerPage = 10;
 
   const handleFilterChange = useCallback((newFilters) => {
-    setFilters(newFilters);
+    setFilters((prev) => ({ ...prev, ...newFilters }));
   }, []);
 
   const selectedCompanyObj = useMemo(() => {
@@ -54,13 +56,16 @@ export default function Rate() {
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     try {
-      const categoryParams = Object.values(filters)
-        .map((cat) => `category=${encodeURIComponent(cat)}`)
-        .join("&");
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== "All") {
+          params.append(key, value);
+        }
+      });
+      params.append("page", currentPage);
+      params.append("limit", itemsPerPage);
 
-      const { data } = await axiosInstance.get(
-        `/managecompany?page=${currentPage}&limit=${itemsPerPage}&${categoryParams}`
-      );
+      const { data } = await axiosInstance.get(`/managecompany?${params}`);
       setAllCompanies(data.companies);
       setTotalItems(data.total);
 
@@ -124,6 +129,24 @@ export default function Rate() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      <div className="mb-4">
+        <label className="mr-2 font-semibold">Company Type:</label>
+        <select
+          value={filters.buyerOrSeller}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              buyerOrSeller: e.target.value,
+            }))
+          }
+          className="border p-2 rounded"
+        >
+          <option value="All">All</option>
+          <option value="Buyer">Buyer</option>
+          <option value="Seller">Seller</option>
+        </select>
+      </div>
+
       <CompanyList
         companies={companies}
         completedCompanies={completedCompanies}
