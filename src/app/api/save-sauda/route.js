@@ -20,7 +20,6 @@ export async function POST(req) {
       );
     }
 
-    // Validate each entry to ensure finalRate is a number (optional but good)
     for (const [key, list] of Object.entries(saudaEntries)) {
       saudaEntries[key] = list.map((entry) => ({
         tons: Number(entry.tons) || 0,

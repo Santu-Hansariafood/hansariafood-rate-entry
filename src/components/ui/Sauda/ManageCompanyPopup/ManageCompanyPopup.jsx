@@ -44,6 +44,23 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const [showCommodityPicker, setShowCommodityPicker] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [showRatePicker, setShowRatePicker] = useState(false);
+  const [descSuggestions, setDescSuggestions] = useState([]);
+  const [descKey, setDescKey] = useState("");
+  const fetchDescriptionSuggestions = async (q, key, idx) => {
+    try {
+      if (!q || q.length < 2) {
+        setDescSuggestions([]);
+        return;
+      }
+      setDescKey(`${key}-${idx}`);
+      const res = await axiosInstance.get(
+        `save-sauda/sauda-descriptions?q=${q}`
+      );
+      setDescSuggestions(res.data.suggestions || []);
+    } catch (err) {
+      console.error("Failed to fetch suggestions", err);
+    }
+  };
 
   const loading = loadingCompany || loadingRates || loadingSauda;
 
@@ -231,26 +248,55 @@ export default function ManageCompanyPopup({ name, onClose }) {
                             />
                             <span className="text-sm text-gray-500">Tons</span>
 
-                            <input
-                              className="min-w-[100px] rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
-                              placeholder="Desc"
-                              style={{
-                                width: `${Math.max(
-                                  (e.description || "").length * 8 + 20,
-                                  100
-                                )}px`,
-                              }}
-                              type="text"
-                              value={e.description}
-                              onChange={(ev) =>
-                                handleChange(
-                                  key,
-                                  idx,
-                                  "description",
-                                  ev.target.value
-                                )
-                              }
-                            />
+                            <div className="relative w-full max-w-[300px]">
+                              <input
+                                type="text"
+                                placeholder="Desc"
+                                className="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                value={e.description}
+                                style={{ resize: "vertical" }}
+                                onChange={(ev) => {
+                                  const val = ev.target.value;
+                                  handleChange(key, idx, "description", val);
+                                  fetchDescriptionSuggestions(val, key, idx);
+                                }}
+                                onFocus={() => {
+                                  if (e.description.length >= 2) {
+                                    fetchDescriptionSuggestions(
+                                      e.description,
+                                      key,
+                                      idx
+                                    );
+                                  }
+                                }}
+                                onBlur={() => {
+                                  setTimeout(() => setDescSuggestions([]), 200);
+                                }}
+                              />
+
+                              {descSuggestions.length > 0 &&
+                                descKey === `${key}-${idx}` && (
+                                  <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border border-gray-300 bg-white rounded shadow-lg">
+                                    {descSuggestions.map((s, i) => (
+                                      <li
+                                        key={i}
+                                        className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-blue-100"
+                                        onClick={() => {
+                                          handleChange(
+                                            key,
+                                            idx,
+                                            "description",
+                                            s
+                                          );
+                                          setDescSuggestions([]);
+                                        }}
+                                      >
+                                        {s}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                            </div>
 
                             <input
                               className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
