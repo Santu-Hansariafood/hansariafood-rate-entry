@@ -103,6 +103,8 @@ export default function RootLayout({ children }) {
               creator: {
                 "@type": "Person",
                 name: "Santu De",
+                email: "santude1997@gmail.com",
+                telephone: "+91-7029481930",
                 url: "https://www.linkedin.com/in/santu-de-812571158/",
                 jobTitle: "Full Stack Software Engineer",
               },
