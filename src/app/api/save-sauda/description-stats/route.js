@@ -14,7 +14,6 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const days = parseInt(searchParams.get("days") || "15");
-
     const cutoffDate = dayjs().subtract(days, "day").toDate();
 
     const recent = await DescriptionStats.find({
@@ -22,7 +21,6 @@ export async function GET(req) {
     });
 
     const recentDescriptions = new Set(recent.map((r) => r.description));
-
     const all = await DescriptionStats.find();
 
     const inactiveDescriptions = all
@@ -36,6 +34,7 @@ export async function GET(req) {
 
     return NextResponse.json(inactiveDescriptions);
   } catch (error) {
+    console.error("GET /description-stats error:", error);
     return NextResponse.json(
       { error: "Failed to fetch inactive descriptions" },
       { status: 500 }
@@ -61,25 +60,26 @@ export async function POST(req) {
 
     const now = new Date();
 
-    const existing = await DescriptionStats.findOne({ description });
-
-    if (existing) {
-      existing.count += 1;
-      existing.lastUsedDate = now;
-      existing.totalQuantity += quantity;
-      await existing.save();
-    } else {
-      const newEntry = new DescriptionStats({
-        description,
-        count: 1,
-        lastUsedDate: now,
-        totalQuantity: quantity,
-      });
-      await newEntry.save();
-    }
+    await DescriptionStats.findOneAndUpdate(
+      { description },
+      {
+        $inc: {
+          count: 1,
+          totalQuantity: quantity,
+        },
+        $set: {
+          lastUsedDate: now,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
 
     return NextResponse.json({ message: "Stats updated" }, { status: 201 });
   } catch (error) {
+    console.error("POST /description-stats error:", error.message, error.stack);
     return NextResponse.json(
       { error: "Failed to update stats" },
       { status: 500 }

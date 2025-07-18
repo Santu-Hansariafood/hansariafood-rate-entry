@@ -36,27 +36,22 @@ export async function POST(req) {
       now.getMinutes()
     ).padStart(2, "0")}`;
 
-    const existing = await SaudaEntry.findOne({ company, date });
-
-    let entry;
-
-    if (existing) {
-      existing.saudaEntries = saudaEntries;
-      existing.time = currentTime;
-      await existing.save();
-      entry = existing;
-    } else {
-      entry = new SaudaEntry({
-        company,
-        date,
-        time: currentTime,
-        saudaEntries,
-      });
-      await entry.save();
-    }
+    const updatedEntry = await SaudaEntry.findOneAndUpdate(
+      { company, date },
+      {
+        $set: {
+          saudaEntries,
+          time: currentTime,
+        },
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
 
     return NextResponse.json(
-      { message: "Sauda entry saved successfully", entry },
+      { message: "Sauda entry saved successfully", entry: updatedEntry },
       { status: 201 }
     );
   } catch (error) {

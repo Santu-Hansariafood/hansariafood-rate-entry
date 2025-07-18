@@ -31,7 +31,7 @@ export async function GET(req) {
 
     const suggestions = [...descriptionsSet]
       .filter((desc) => desc.toLowerCase().includes(query))
-      .slice(0, 10); // return top 10
+      .slice(0, 10);
 
     return NextResponse.json({ suggestions }, { status: 200 });
   } catch (error) {
