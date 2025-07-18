@@ -4,6 +4,7 @@ import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
 import { UserProvider } from "@/context/UserContext";
+import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,7 @@ export const metadata = {
     siteName: "Hansaria Food",
     images: [
       {
-        url: "/images/og-image.png",
+        url: "/images/og-image1.png",
         width: 1200,
         height: 630,
         alt: "Hansaria Food Private Limited",
@@ -61,7 +62,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-      <meta name="google-site-verification" content="dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4" />
+        <meta
+          name="google-site-verification"
+          content="dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -92,9 +96,15 @@ export default function RootLayout({ children }) {
                 "@type": "ContactPoint",
                 email: "info@hansariafood.com",
                 contactType: "customer service",
-                telephone: "+91-XXXXXXXXXX",
+                telephone: "+91-98304-33535",
                 location:
                   "Primarc Square, Plot No.1, Salt Lake Bypass, LA Block, Sector: 3, Bidhannagar, Kolkata, West Bengal 700098",
+              },
+              creator: {
+                "@type": "Person",
+                name: "Santu De",
+                url: "https://www.linkedin.com/in/santu-de-812571158/",
+                jobTitle: "Full Stack Software Engineer",
               },
               sameAs: [
                 "https://www.facebook.com/hansariafood",
@@ -116,6 +126,7 @@ export default function RootLayout({ children }) {
             <UserProvider>{children}</UserProvider>
           </main>
           <Footer className="mt-auto" />
+          <ScrollToTop />
         </AuthProvider>
       </body>
     </html>

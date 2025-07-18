@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-import SaudaTonsChart from "@/components/common/SaudaTonsChart/SaudaTonsChart";
 
 const Welcome = dynamic(() => import("@/components/ui/Welcome/Welcome"), {
   loading: () => <Loading />,
@@ -31,6 +30,13 @@ const RateCalendar = dynamic(
     loading: () => <Loading />,
   }
 );
+const SaudaTonsChart = dynamic(
+  () => import("@/components/common/SaudaTonsChart/SaudaTonsChart"),
+  {
+    loading: () => <Loading />,
+  }
+);
+
 const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
   {
