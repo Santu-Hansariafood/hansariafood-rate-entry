@@ -19,7 +19,7 @@ export default function MobileNav({
   notifications,
   currentUserMobile,
 }) {
-  const allowedMobileNumbers = ["9830433535", "7029481931"];
+  const allowedMobileNumbers = ["9830433535", "7029481930"];
 
   let navLinks = [
     "Manage Company",
