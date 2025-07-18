@@ -289,6 +289,25 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                             s
                                           );
                                           setDescSuggestions([]);
+
+                                          const quantity = Number(
+                                            entries[key]?.[idx]?.tons || 0
+                                          );
+
+                                          axiosInstance
+                                            .post(
+                                              "/save-sauda/description-stats",
+                                              {
+                                                description: s,
+                                                quantity,
+                                              }
+                                            )
+                                            .catch((err) => {
+                                              console.error(
+                                                "Failed to update description stats:",
+                                                err
+                                              );
+                                            });
                                         }}
                                       >
                                         {s}
