@@ -61,6 +61,10 @@ export default function ManageCompanyPopup({ name, onClose }) {
       console.error("Failed to fetch suggestions", err);
     }
   };
+  const now = new Date();
+  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+    now.getMinutes()
+  ).padStart(2, "0")}`;
 
   const loading = loadingCompany || loadingRates || loadingSauda;
 
@@ -82,6 +86,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
       const { status, data } = await axiosInstance.post("/save-sauda", {
         company: company.name,
         date: today,
+        time: currentTime,
         saudaEntries: structured,
       });
       if (status === 201 && data.entry) {
@@ -246,7 +251,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                 handleChange(key, idx, "tons", ev.target.value)
                               }
                             />
-                            <span className="text-sm text-gray-500">Tons</span>
+                            <span className="text-sm text-gray-600">Tons</span>
 
                             <div className="relative w-full max-w-[300px]">
                               <input
@@ -318,7 +323,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                             </div>
 
                             <input
-                              className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
+                              className="w-20 rounded border text-xl border-orange-300 px-2 py-1 text-orange-700 focus:ring-2 focus:ring-orange-500"
                               placeholder="Sauda No"
                               type="number"
                               min={0}

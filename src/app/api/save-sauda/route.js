@@ -11,7 +11,7 @@ export async function POST(req) {
   }
 
   try {
-    const { company, date, saudaEntries } = await req.json();
+    const { company, date, time, saudaEntries } = await req.json();
 
     if (!company || !date || !saudaEntries) {
       return NextResponse.json(
@@ -31,17 +31,12 @@ export async function POST(req) {
       }));
     }
 
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
-      now.getMinutes()
-    ).padStart(2, "0")}`;
-
     const updatedEntry = await SaudaEntry.findOneAndUpdate(
       { company, date },
       {
         $set: {
           saudaEntries,
-          time: currentTime,
+          time: time || "",
         },
       },
       {
