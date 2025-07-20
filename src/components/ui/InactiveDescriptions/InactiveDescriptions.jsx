@@ -22,7 +22,7 @@ const InactiveDescriptions = () => {
     if (descriptions.length === 0) {
       return (
         <p className="text-gray-500 text-center">
-          All descriptions are recently used.
+          All Party Sauda are recently used.
         </p>
       );
     }
