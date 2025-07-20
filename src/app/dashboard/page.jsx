@@ -18,6 +18,9 @@ const RateEntryList = dynamic(
     loading: () => <Loading />,
   }
 );
+const TopSaudaList = dynamic(() => import("@/components/ui/TopSaudaList/TopSaudaList"), {
+  loading: () => <Loading />,
+});
 const InactiveDescriptions = dynamic(
   () => import("@/components/ui/InactiveDescriptions/InactiveDescriptions"),
   {
@@ -59,7 +62,10 @@ const Page = () => {
       <section role="region" aria-label="Rate Entry List">
         <SaudaTonsChart />
       </section>
-      <section role="region" aria-label="Rate Entry List">
+      <section role="region" aria-label="Top Sauda List">
+        <TopSaudaList />
+      </section>
+      <section role="region" aria-label="Inactive Descriptions">
         <InactiveDescriptions />
       </section>
       <section role="region" aria-label="Rate Calendar">
