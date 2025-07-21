@@ -5,11 +5,26 @@ import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useCategories from "@/hooks/Category/useCategories";
 
-const Title = dynamic(() => import("@/components/common/Title/Title"), { loading: () => <Loading /> });
-const Table = dynamic(() => import("@/components/common/Tables/Tables"), { loading: () => <Loading /> });
-const Actions = dynamic(() => import("@/components/common/Actions/Actions"), { loading: () => <Loading /> });
-const Modal = dynamic(() => import("@/components/common/Modal/Modal"), { loading: () => <Loading /> });
-const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"), { loading: () => <Loading /> });
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  loading: () => <Loading />,
+});
+const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
+  loading: () => <Loading />,
+});
+const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
+  loading: () => <Loading />,
+});
+const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
+  loading: () => <Loading />,
+});
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  { loading: () => <Loading /> }
+);
+const SearchBox = dynamic(
+  () => import("@/components/common/SearchBox/SearchBox"),
+  { loading: () => <Loading /> }
+);
 
 const CategoryList = () => {
   const [modal, setModal] = useState({ open: false, type: "", data: null });
@@ -20,6 +35,8 @@ const CategoryList = () => {
     totalEntries,
     currentPage,
     setCurrentPage,
+    searchQuery,
+    setSearchQuery,
     updateCategory,
     deleteCategory,
   } = useCategories();
@@ -84,6 +101,13 @@ const CategoryList = () => {
     <Suspense fallback={<Loading />}>
       <div className="p-4">
         <Title text="Category List" />
+        <SearchBox
+          value={searchQuery}
+          onChange={(value) => {
+            setSearchQuery(value);
+            setCurrentPage(1);
+          }}
+        />
         <Table data={data} columns={columns} />
 
         <Pagination

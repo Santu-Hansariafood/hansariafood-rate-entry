@@ -50,15 +50,17 @@ export async function POST(req) {
 
       if (allLocationsExist) {
         return NextResponse.json(
-          { error: "Company with this name, type, and location already exists" },
+          {
+            error: "Company with this name, type, and location already exists",
+          },
           { status: 409 }
         );
       }
 
-      // Merge new locations
-      existingCompany.location = Array.from(new Set([...existingCompany.location, ...location]));
+      existingCompany.location = Array.from(
+        new Set([...existingCompany.location, ...location])
+      );
 
-      // Merge mobile numbers without duplicates
       const existingMobileNumbers = existingCompany.mobileNumbers || [];
       const newMobileNumbers = mobileNumbers.filter(
         (newNum) =>
@@ -68,7 +70,10 @@ export async function POST(req) {
               oldNum.commodity === newNum.commodity
           )
       );
-      existingCompany.mobileNumbers = [...existingMobileNumbers, ...newMobileNumbers];
+      existingCompany.mobileNumbers = [
+        ...existingMobileNumbers,
+        ...newMobileNumbers,
+      ];
 
       // Merge commodities
       existingCompany.commodities = Array.from(
@@ -115,7 +120,8 @@ export async function POST(req) {
     if (error.code === 11000) {
       return NextResponse.json(
         {
-          error: "A company with this name and type (Buyer/Seller) already exists. Please use a different type or name."
+          error:
+            "A company with this name and type (Buyer/Seller) already exists. Please use a different type or name.",
         },
         { status: 409 }
       );
@@ -137,17 +143,18 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const query = searchParams.get("q")?.toLowerCase() || "";
+    const skip = (page - 1) * limit;
+
+    const search = searchParams.get("search") || searchParams.get("q") || "";
+
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
     const buyerOrSellerFilter = searchParams.get("buyerOrSeller");
 
-    const skip = (page - 1) * limit;
-
     const filter = {};
 
-    if (query) {
-      filter.name = { $regex: query, $options: "i" };
+    if (search.trim()) {
+      filter.name = { $regex: search.trim(), $options: "i" };
     }
 
     if (categories.length > 0) {
@@ -158,10 +165,7 @@ export async function GET(req) {
       filter.subCommodities = { $in: subCommodities };
     }
 
-    if (
-      buyerOrSellerFilter &&
-      ["Buyer", "Seller"].includes(buyerOrSellerFilter)
-    ) {
+    if (["Buyer", "Seller"].includes(buyerOrSellerFilter)) {
       filter.buyerOrSeller = buyerOrSellerFilter;
     }
 

@@ -1,71 +1,58 @@
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  Suspense,
-} from "react";
-import Actions from "@/components/common/Actions/Actions";
+import React, { useMemo, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import Actions from "@/components/common/Actions/Actions";
+import useManageCompanyList from "@/hooks/ManageCompany/useManageCompanyList";
 import Loading from "@/components/common/Loading/Loading";
-import dynamic from "next/dynamic";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
-const EditCompanyForm = dynamic(() => import("./EditCompanyForm"));
-const Table = dynamic(() => import("@/components/common/Tables/Tables"));
-const Title = dynamic(() => import("@/components/common/Title/Title"));
-const Pagination = dynamic(() =>
-  import("@/components/common/Pagination/Pagination")
+const EditCompanyForm = dynamic(
+  () =>
+    import("@/components/ui/ManageCompanyList/EditCompanyForm/EditCompanyForm"),
+  {
+    loading: () => <Loading />,
+  }
+);
+const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
+  loading: () => <Loading />,
+});
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  loading: () => <Loading />,
+});
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  {
+    loading: () => <Loading />,
+  }
+);
+const SearchBox = dynamic(
+  () => import("@/components/common/SearchBox/SearchBox"),
+  {
+    loading: () => <Loading />,
+  }
 );
 
 const ManageCompanyList = () => {
-  const [companies, setCompanies] = useState([]);
-  const [totalCompanies, setTotalCompanies] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [selectedCompany, setSelectedCompany] = useState(null);
-  const [editingCompany, setEditingCompany] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const fetchCompanies = useCallback(async (page = 1) => {
-    setLoading(true);
-    try {
-      const response = await axiosInstance.get(
-        `/managecompany?page=${page}&limit=${itemsPerPage}`
-      );
-
-      const transformed = (response.data.companies || []).map((company) => ({
-        ...company,
-        location: Array.isArray(company.location) ? company.location : [],
-        commodities: Array.isArray(company.commodities)
-          ? company.commodities
-          : [],
-        subCommodities: Array.isArray(company.subCommodities)
-          ? company.subCommodities
-          : [],
-        mobileNumbers: Array.isArray(company.mobileNumbers)
-          ? company.mobileNumbers
-          : [],
-      }));
-
-      setCompanies(transformed);
-      setTotalCompanies(response.data.total || 0);
-      setCurrentPage(page);
-    } catch (error) {
-      toast.error("Failed to fetch companies");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCompanies(currentPage);
-  }, [fetchCompanies, currentPage]);
+  const {
+    companies,
+    totalCompanies,
+    loading,
+    selectedCompany,
+    editingCompany,
+    showModal,
+    setSelectedCompany,
+    setEditingCompany,
+    setShowModal,
+    searchQuery,
+    currentPage,
+    itemsPerPage,
+    setCurrentPage,
+    fetchCompanies,
+    handleSearchChange,
+  } = useManageCompanyList();
 
   const handleView = (company) => {
     setSelectedCompany(company);
@@ -85,7 +72,7 @@ const ManageCompanyList = () => {
     try {
       await axiosInstance.delete(`/managecompany/${id}`);
       toast.success("Company deleted");
-      fetchCompanies(currentPage);
+      fetchCompanies();
     } catch (error) {
       toast.error("Failed to delete company");
     }
@@ -186,13 +173,18 @@ const ManageCompanyList = () => {
       <div className="p-4">
         <ToastContainer position="top-right" autoClose={3000} />
         <Title text="Manage Company List" />
+        <SearchBox
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder="Search by company name..."
+        />
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <Table data={tableRows} columns={columns} />
           <Pagination
             currentPage={currentPage}
             totalItems={totalCompanies}
             itemsPerPage={itemsPerPage}
-            onPageChange={(page) => fetchCompanies(page)}
+            onPageChange={(page) => setCurrentPage(page)}
           />
         </div>
 
@@ -200,22 +192,19 @@ const ManageCompanyList = () => {
           <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-white rounded-lg p-6 w-full max-w-3xl overflow-y-auto max-h-[90vh]">
               {editingCompany ? (
-                <>
-                  {/* <h2 className="text-xl font-bold mb-4">Edit Company</h2> */}
-                  <EditCompanyForm
-                    company={editingCompany}
-                    onClose={() => {
-                      setShowModal(false);
-                      setEditingCompany(null);
-                    }}
-                    onSuccess={() => {
-                      fetchCompanies(currentPage);
-                      toast.success("✅ Company updated");
-                      setShowModal(false);
-                      setEditingCompany(null);
-                    }}
-                  />
-                </>
+                <EditCompanyForm
+                  company={editingCompany}
+                  onClose={() => {
+                    setShowModal(false);
+                    setEditingCompany(null);
+                  }}
+                  onSuccess={() => {
+                    fetchCompanies();
+                    toast.success("Company updated successfully");
+                    setShowModal(false);
+                    setEditingCompany(null);
+                  }}
+                />
               ) : selectedCompany ? (
                 <>
                   <h2 className="text-xl font-bold mb-4">Company Details</h2>

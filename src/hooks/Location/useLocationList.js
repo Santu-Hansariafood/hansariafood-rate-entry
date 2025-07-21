@@ -13,14 +13,27 @@ export default function useLocationList(itemsPerPage = 10) {
   const [formData, setFormData] = useState({ name: "", state: "" });
   const [totalEntries, setTotalEntries] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
   const states = useMemo(() => stateData.map((item) => item.state), []);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1);
+    }, 1000);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   useEffect(() => {
     const fetchLocations = async () => {
       try {
         const res = await axiosInstance.get(
-          `/location?page=${currentPage}&limit=${itemsPerPage}`
+          `/location?page=${currentPage}&limit=${itemsPerPage}&search=${encodeURIComponent(
+            debouncedSearchQuery
+          )}`
         );
         const sorted = res.data.locations?.sort((a, b) =>
           a.name.localeCompare(b.name)
@@ -33,7 +46,7 @@ export default function useLocationList(itemsPerPage = 10) {
     };
 
     fetchLocations();
-  }, [currentPage, itemsPerPage]);
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
 
   const handleDelete = useCallback(async (id) => {
     try {
@@ -97,5 +110,7 @@ export default function useLocationList(itemsPerPage = 10) {
     handleView,
     handleEditClick,
     handleInputChange,
+    searchQuery,
+    setSearchQuery,
   };
 }

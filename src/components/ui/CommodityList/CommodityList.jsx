@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import React, { useMemo, useState, Suspense } from "react";
 import dynamic from "next/dynamic";
@@ -21,6 +21,10 @@ const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
   { loading: () => <Loading /> }
 );
+const SearchBox = dynamic(
+  () => import("@/components/common/SearchBox/SearchBox"),
+  { loading: () => <Loading /> }
+);
 
 const CommodityList = () => {
   const {
@@ -29,6 +33,8 @@ const CommodityList = () => {
     modal,
     currentPage,
     totalEntries,
+    searchQuery,
+    setSearchQuery,
     setCurrentPage,
     handleEdit,
     handleDelete,
@@ -76,15 +82,18 @@ const CommodityList = () => {
     <Suspense fallback={<Loading />}>
       <div className="p-4">
         <Title text="Commodity List" />
+        <SearchBox
+          value={searchQuery}
+          onChange={(val) => setSearchQuery(val)}
+          placeholder="Search commodities..."
+        />
         <Table data={data} columns={columns} />
-
         <Pagination
           totalItems={totalEntries}
           itemsPerPage={10}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
         />
-
         {selectedCommodity && (
           <div className="mt-4 p-4 bg-gray-100 rounded">
             <h3 className="text-lg font-semibold">Commodity Details</h3>

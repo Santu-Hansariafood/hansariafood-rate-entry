@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useCallback, useEffect } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
@@ -6,10 +7,23 @@ const useCategories = () => {
   const [categories, setCategories] = useState([]);
   const [totalEntries, setTotalEntries] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
-  const fetchCategories = useCallback(async (page = 1) => {
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1);
+    }, 1000);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  const fetchCategories = useCallback(async (page = 1, search = "") => {
     try {
-      const res = await axiosInstance.get(`/categories?page=${page}&limit=10`);
+      const res = await axiosInstance.get(
+        `/categories?page=${page}&limit=10&search=${encodeURIComponent(search)}`
+      );
       setCategories(res.data.categories || []);
       setTotalEntries(res.data.total);
     } catch (error) {
@@ -18,8 +32,8 @@ const useCategories = () => {
   }, []);
 
   useEffect(() => {
-    fetchCategories(currentPage);
-  }, [fetchCategories, currentPage]);
+    fetchCategories(currentPage, debouncedSearchQuery);
+  }, [fetchCategories, currentPage, debouncedSearchQuery]);
 
   const updateCategory = useCallback(
     async (index, newName) => {
@@ -50,6 +64,8 @@ const useCategories = () => {
     totalEntries,
     currentPage,
     setCurrentPage,
+    searchQuery,
+    setSearchQuery,
     updateCategory,
     deleteCategory,
     fetchCategories,

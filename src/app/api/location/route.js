@@ -12,6 +12,7 @@ export async function POST(req) {
 
   try {
     const { state, name } = await req.json();
+
     if (!state || !name) {
       return NextResponse.json(
         { error: "State and location name are required" },
@@ -20,6 +21,7 @@ export async function POST(req) {
     }
 
     const existingLocation = await Location.findOne({ state, name });
+
     if (existingLocation) {
       return NextResponse.json(
         { error: "Location already exists in this state" },
@@ -35,6 +37,7 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (error) {
+    console.error("POST /location error:", error);
     return NextResponse.json(
       { error: "Failed to create location" },
       { status: 500 }
@@ -51,11 +54,15 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const search = searchParams.get("search")?.trim() || "";
+
     const skip = (page - 1) * limit;
 
+    const query = search ? { name: { $regex: search, $options: "i" } } : {};
+
     const [locations, total] = await Promise.all([
-      Location.find().sort({ name: 1 }).skip(skip).limit(limit),
-      Location.countDocuments(),
+      Location.find(query).sort({ name: 1 }).skip(skip).limit(limit),
+      Location.countDocuments(query),
     ]);
 
     return NextResponse.json(
@@ -68,6 +75,7 @@ export async function GET(req) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("GET /location error:", error);
     return NextResponse.json(
       { error: "Failed to fetch locations" },
       { status: 500 }

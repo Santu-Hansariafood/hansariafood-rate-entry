@@ -24,6 +24,13 @@ const InputBox = dynamic(
     loading: () => <Loading />,
   }
 );
+const SearchBox = dynamic(
+  () => import("@/components/common/SearchBox/SearchBox"),
+  {
+    ssr: false,
+    loading: () => <Loading />,
+  }
+);
 const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
   {
@@ -45,9 +52,10 @@ const CompanyList = () => {
     setModalOpen,
     handleSaveEdit,
     handleChange,
+    searchQuery,
+    setSearchQuery,
   } = useCompanyList();
 
-  // Add Sl No column
   const columns = [
     { header: "Sl No", accessor: "slno" },
     { header: "Company Name", accessor: "name" },
@@ -57,8 +65,13 @@ const CompanyList = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4">
+      <div className="p-4 space-y-4">
         <Title text="Company List" />
+        <SearchBox
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search company name..."
+        />
         <Table
           data={paginatedData.map((item, index) => ({
             slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,

@@ -9,6 +9,10 @@ export default function useCompanyList() {
   const [companies, setCompanies] = useState([]);
   const [totalCompanies, setTotalCompanies] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -16,20 +20,35 @@ export default function useCompanyList() {
   const [formData, setFormData] = useState({ name: "", category: "" });
 
   useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const res = await axiosInstance.get(
-          `/companies?page=${currentPage}&limit=${ITEMS_PER_PAGE}`
-        );
-        setCompanies(res.data.companies || []);
-        setTotalCompanies(res.data.total || 0);
-      } catch (error) {
-        console.error("Error fetching companies:", error);
-      }
-    };
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1);
+    }, 1000);
 
-    fetchCompanies();
-  }, [currentPage]);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  const fetchCompanies = useCallback(async (page = 1, search = "") => {
+    try {
+      const res = await axiosInstance.get(
+        `/companies?page=${page}&limit=${ITEMS_PER_PAGE}&search=${encodeURIComponent(
+          search
+        )}`
+      );
+      setCompanies(res.data.companies || []);
+      setTotalCompanies(res.data.total || 0);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCompanies(currentPage, debouncedSearchQuery);
+  }, [currentPage, debouncedSearchQuery, fetchCompanies]);
+
+  const handleSearchChange = useCallback((value) => {
+    setSearchQuery(value);
+  }, []);
 
   const handleDelete = useCallback(async (id) => {
     try {
@@ -127,6 +146,8 @@ export default function useCompanyList() {
     selectedCompany,
     formData,
     editMode,
+    searchQuery,
+    setSearchQuery: handleSearchChange,
     handlePageChange,
     setModalOpen,
     handleSaveEdit,

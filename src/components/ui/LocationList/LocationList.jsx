@@ -21,6 +21,12 @@ const Pagination = dynamic(
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
+const SearchBox = dynamic(
+  () => import("@/components/common/SearchBox/SearchBox"),
+  {
+    loading: () => <Loading />,
+  }
+);
 
 export default function LocationList() {
   const {
@@ -39,6 +45,8 @@ export default function LocationList() {
     setCurrentPage,
     totalEntries,
     locations,
+    searchQuery,
+    setSearchQuery,
   } = useLocationList();
 
   const ITEMS_PER_PAGE = 10;
@@ -78,6 +86,13 @@ export default function LocationList() {
     <Suspense fallback={<Loading />}>
       <div className="p-4">
         <Title text="Location List" />
+        <SearchBox
+          value={searchQuery}
+          onChange={(value) => {
+            setSearchQuery(value);
+            setCurrentPage(1);
+          }}
+        />
         <Table data={data} columns={columns} />
         <Pagination
           currentPage={currentPage}
