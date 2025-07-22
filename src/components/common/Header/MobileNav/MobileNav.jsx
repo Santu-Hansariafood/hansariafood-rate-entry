@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import Loading from "../../Loading/Loading";
@@ -11,6 +11,8 @@ const NotificationBell = dynamic(() =>
 );
 const LogoutButton = dynamic(() => import("../LogoutButton/LogoutButton"));
 
+const allowedMobileNumbers = ["9830433535", "7029481930"];
+
 export default function MobileNav({
   isOpen,
   setIsOpen,
@@ -19,9 +21,7 @@ export default function MobileNav({
   notifications,
   currentUserMobile,
 }) {
-  const allowedMobileNumbers = ["9830433535", "7029481930"];
-
-  let navLinks = [
+  const navLinks = [
     "Manage Company",
     "Company",
     "Location",
@@ -29,11 +29,27 @@ export default function MobileNav({
     "Commodity",
     "Rate",
     "Sauda",
+    ...(allowedMobileNumbers.includes(currentUserMobile) ? ["Register"] : []),
   ];
 
-  if (allowedMobileNumbers.includes(currentUserMobile)) {
-    navLinks.push("Register");
-  }
+  useEffect(() => {
+    if (!isOpen) return;
+
+    window.history.pushState({ mobileNavOpen: true }, "");
+
+    const handlePopState = () => setIsOpen(false);
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isOpen, setIsOpen]);
+
+  const handleCloseDrawer = () => {
+    setIsOpen(false);
+    if (window.history.state?.mobileNavOpen) {
+      window.history.back();
+    }
+  };
 
   return (
     <Suspense fallback={<Loading />}>
@@ -49,8 +65,8 @@ export default function MobileNav({
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
               <h2 className="text-lg font-semibold">Menu</h2>
               <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-white"
+                onClick={handleCloseDrawer}
+                className="text-gray-400 hover:text-white text-xl"
               >
                 ✕
               </button>
@@ -58,12 +74,11 @@ export default function MobileNav({
 
             <nav className="flex-1 overflow-auto">
               <ul className="flex flex-col p-4 gap-4">
-                {navLinks.map((label, index) => {
+                {navLinks.map((label) => {
                   const path = `/${label.toLowerCase().replace(/ /g, "")}`;
-
                   return (
                     <motion.li
-                      key={index}
+                      key={path}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => {
                         setActiveLink(path);
