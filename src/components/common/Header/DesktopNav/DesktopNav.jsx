@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import Loading from "../../Loading/Loading";
 
 const NotificationBell = dynamic(() =>
@@ -19,53 +19,56 @@ export default function DesktopNav({
 }) {
   const allowedMobileNumbers = ["9830433535", "7029481930"];
 
-  let navLinks = [
-    "Manage Company",
-    "Company",
-    "Location",
-    "Category",
-    "Commodity",
-    "Rate",
-    "Sauda",
-  ];
+  const navLinks = useMemo(() => {
+    const links = [
+      "Manage Company",
+      "Company",
+      "Location",
+      "Category",
+      "Commodity",
+      "Rate",
+      "Sauda",
+    ];
 
-  if (allowedMobileNumbers.includes(currentUserMobile)) {
-    navLinks.push("Register");
-  }
+    if (allowedMobileNumbers.includes(currentUserMobile)) {
+      links.push("Register");
+    }
+
+    return links.map((label) => ({
+      label,
+      path: `/${label.toLowerCase().replace(/ /g, "")}`,
+    }));
+  }, [currentUserMobile]);
 
   return (
     <Suspense fallback={<Loading />}>
       <nav className="hidden md:flex items-center gap-8">
         <ul className="flex items-center gap-8 text-sm md:text-base relative">
-          {navLinks.map((label, index) => {
-            const path = `/${label.toLowerCase().replace(/ /g, "")}`;
-
-            return (
-              <motion.li
-                key={index}
-                className="relative"
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95 }}
+          {navLinks.map(({ label, path }) => (
+            <motion.li
+              key={path}
+              className="relative"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                href={path}
+                onClick={() => setActiveLink(path)}
+                className={`relative group ${
+                  activeLink === path
+                    ? "text-green-400"
+                    : "text-white/90 hover:text-white"
+                }`}
               >
-                <Link
-                  href={path}
-                  className={`relative group ${
-                    activeLink === path
-                      ? "text-green-400"
-                      : "text-white/90 hover:text-white"
+                {label}
+                <span
+                  className={`absolute -bottom-1 left-0 h-0.5 bg-green-400 transition-all duration-300 ${
+                    activeLink === path ? "w-full" : "w-0 group-hover:w-full"
                   }`}
-                  onClick={() => setActiveLink(path)}
-                >
-                  {label}
-                  <span
-                    className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-green-400 transition-all duration-300 group-hover:w-full ${
-                      activeLink === path ? "w-full" : ""
-                    }`}
-                  />
-                </Link>
-              </motion.li>
-            );
-          })}
+                />
+              </Link>
+            </motion.li>
+          ))}
 
           <NotificationBell notifications={notifications} />
 
