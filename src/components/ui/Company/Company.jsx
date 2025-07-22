@@ -170,11 +170,11 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-        <div className="bg-white p-6 rounded shadow-md w-full max-w-4xl">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-2 sm:p-4">
+        <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-6xl">
           <Title
             text="Create Company"
-            className="text-xl font-bold mb-4 text-center"
+            className="text-2xl font-bold mb-6 text-center"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -213,8 +213,6 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
                 isMulti
               />
             )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SelectBox
               label="Company Type *"
               name="buyerOrSeller"
@@ -223,7 +221,8 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
               onChange={(e) => setBuyerOrSeller(e.target.value)}
             />
           </div>
-          <div className="mt-6">
+
+          <div className="mt-8">
             <Title
               text="Location-wise Contact Details"
               className="text-lg font-semibold mb-2"
@@ -283,17 +282,17 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
             </div>
           </div>
 
-          <div className="flex justify-center mt-6 gap-4">
+          <div className="flex justify-center mt-8 gap-4 flex-wrap">
             <Button
               onClick={handleSubmit}
               text="Create"
               isLoading={loading}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
             />
             <Button
               onClick={onClose}
               text="Cancel"
-              className="bg-gray-300 hover:bg-gray-400 text-black"
+              className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2"
             />
           </div>
         </div>
