@@ -60,6 +60,7 @@ const CompanyList = () => {
     { header: "Sl No", accessor: "slno" },
     { header: "Company Name", accessor: "name" },
     { header: "Category", accessor: "category" },
+    { header: "Type", accessor: "type" },
     { header: "Actions", accessor: "actions" },
   ];
 
@@ -77,6 +78,7 @@ const CompanyList = () => {
             slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
             name: item.name,
             category: item.category,
+            type: item.type,
             actions: <Actions item={item.actions} />,
           }))}
           columns={columns}
@@ -106,9 +108,38 @@ const CompanyList = () => {
                   onChange={handleChange}
                   placeholder="Category"
                 />
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium mb-2">Type</label>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="type"
+                        value="buyer"
+                        checked={formData.type === "buyer"}
+                        onChange={handleChange}
+                        className="form-radio"
+                      />
+                      <span>Buyer</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="type"
+                        value="seller"
+                        checked={formData.type === "seller"}
+                        onChange={handleChange}
+                        className="form-radio"
+                      />
+                      <span>Seller</span>
+                    </label>
+                  </div>
+                </div>
+
                 <button
                   onClick={handleSaveEdit}
-                  className="bg-blue-600 text-white mt-4 px-4 py-2 rounded-lg"
+                  className="bg-blue-600 text-white mt-6 px-4 py-2 rounded-lg"
                 >
                   Save
                 </button>
@@ -118,6 +149,9 @@ const CompanyList = () => {
                 <h2 className="text-lg font-bold">{selectedCompany.name}</h2>
                 <p className="text-sm text-gray-600 mt-1">
                   Category: {selectedCompany.category}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Type: {selectedCompany.type}
                 </p>
               </>
             )}

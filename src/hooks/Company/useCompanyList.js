@@ -17,7 +17,11 @@ export default function useCompanyList() {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState({ name: "", category: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    type: "",
+  });
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -64,7 +68,11 @@ export default function useCompanyList() {
       const index = companies.findIndex((c) => c._id === company._id);
       setSelectedIndex(index);
       setSelectedCompany(company);
-      setFormData({ name: company.name, category: company.category });
+      setFormData({
+        name: company.name,
+        category: company.category,
+        type: company.type || "",
+      });
       setEditMode(true);
       setModalOpen(true);
     },
@@ -123,9 +131,11 @@ export default function useCompanyList() {
     return companies.map((company) => {
       const capitalizedName = capitalizeWords(company.name);
       const capitalizedCategory = capitalizeWords(company.category);
+      const capitalizedType = capitalizeWords(company.type || "");
       return {
         name: capitalizedName,
         category: capitalizedCategory,
+        type: capitalizedType,
         actions: {
           title: capitalizedName,
           id: company._id,

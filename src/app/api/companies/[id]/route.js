@@ -34,18 +34,23 @@ export async function PUT(req, { params }) {
 
   try {
     const { id } = params;
-    const { name, category } = await req.json();
+    const { name, category, type } = await req.json();
 
-    if (!name || !category || name.trim() === "" || category.trim() === "") {
+    if (
+      !name?.trim() ||
+      !category?.trim() ||
+      !type?.trim() ||
+      !["buyer", "seller"].includes(type.toLowerCase())
+    ) {
       return NextResponse.json(
-        { error: "Company name and category are required" },
+        { error: "Name, category, and valid type are required" },
         { status: 400 }
       );
     }
 
     const updatedCompany = await Company.findByIdAndUpdate(
       id,
-      { name, category },
+      { name, category, type: type.toLowerCase() },
       { new: true }
     );
 

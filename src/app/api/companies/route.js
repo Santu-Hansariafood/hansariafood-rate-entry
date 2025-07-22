@@ -18,7 +18,6 @@ export async function GET(req) {
     const skip = (page - 1) * limit;
 
     const searchRegex = new RegExp(search, "i");
-
     const query = search ? { name: { $regex: searchRegex } } : {};
 
     const [companies, total] = await Promise.all([
@@ -41,26 +40,47 @@ export async function POST(req) {
   }
 
   try {
-    const { name, category } = await req.json();
+    const { name, category, type } = await req.json();
 
-    if (!name || !category || name.trim() === "" || category.trim() === "") {
+    if (
+      !name?.trim() ||
+      !category?.trim() ||
+      !type?.trim() ||
+      !["buyer", "seller"].includes(type.toLowerCase())
+    ) {
       return NextResponse.json(
-        { error: "Company name and category are required" },
+        { error: "Name, category, and valid type are required" },
         { status: 400 }
       );
     }
 
-    const existingCompany = await Company.findOne({ name });
+    const existingCompany = await Company.findOne({
+      name: name.trim(),
+      type: type.toLowerCase(),
+    });
+
     if (existingCompany) {
       return NextResponse.json(
-        { error: "Company already exists" },
+        { error: "Company with this name and type already exists" },
         { status: 400 }
       );
     }
 
-    const newCompany = await Company.create({ name, category });
+    const newCompany = await Company.create({
+      name: name.trim(),
+      category: category.trim(),
+      type: type.toLowerCase(),
+    });
+
     return NextResponse.json(newCompany, { status: 201 });
   } catch (error) {
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { error: "Company with this name and type already exists" },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to create company" },
       { status: 500 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Building2, PlusCircle, ArrowLeft } from "lucide-react";
@@ -12,10 +12,30 @@ import "react-toastify/dist/ReactToastify.css";
 import useCategories from "@/hooks/ManageCompany/useCategories";
 import useCreateCompany from "@/hooks/ManageCompany/useCreateCompany";
 
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), { loading: () => <Loading /> });
-const Title = dynamic(() => import("@/components/common/Title/Title"), { loading: () => <Loading /> });
-const Button = dynamic(() => import("@/components/common/Button/Button"), { loading: () => <Loading /> });
-const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"), { loading: () => <Loading /> });
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  {
+    loading: () => <Loading />,
+  }
+);
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  loading: () => <Loading />,
+});
+const Button = dynamic(() => import("@/components/common/Button/Button"), {
+  loading: () => <Loading />,
+});
+const Dropdown = dynamic(
+  () => import("@/components/common/Dropdown/Dropdown"),
+  {
+    loading: () => <Loading />,
+  }
+);
+const SelectBox = dynamic(
+  () => import("@/components/common/SelectBox/SelectBox"),
+  {
+    loading: () => <Loading />,
+  }
+);
 
 export default function CreateCompany() {
   const categories = useCategories();
@@ -24,9 +44,28 @@ export default function CreateCompany() {
     setCompany,
     category,
     setCategory,
+    companyType,
+    setCompanyType,
     isLoading,
     handleSave,
   } = useCreateCompany();
+
+  const categoryOptions = useMemo(
+    () =>
+      categories.map((cat) => ({
+        label: cat.name,
+        value: cat.name,
+      })),
+    [categories]
+  );
+
+  const companyTypeOptions = useMemo(
+    () => [
+      { label: "Buyer", value: "buyer" },
+      { label: "Seller", value: "seller" },
+    ],
+    []
+  );
 
   return (
     <Suspense fallback={<Loading />}>
@@ -51,7 +90,6 @@ export default function CreateCompany() {
               <Title text="Create New Company" />
             </div>
           </motion.div>
-
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -71,22 +109,26 @@ export default function CreateCompany() {
                   className="w-full"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category
                 </label>
                 <Dropdown
-                  options={categories.map((cat) => ({
-                    label: cat.name,
-                    value: cat.name,
-                  }))}
+                  options={categoryOptions}
                   value={category}
                   onChange={setCategory}
                   className="w-full max-h-60 overflow-y-auto"
                 />
               </div>
-
+              <div>
+                <SelectBox
+                  label="Company Type"
+                  name="companyType"
+                  options={companyTypeOptions}
+                  value={companyType}
+                  onChange={(e) => setCompanyType(e.target.value)}
+                />
+              </div>
               <div className="pt-4">
                 <Button
                   onClick={handleSave}
