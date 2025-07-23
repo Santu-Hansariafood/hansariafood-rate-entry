@@ -6,6 +6,8 @@ const CompanySchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      unique: true,
+      collation: { locale: "en", strength: 2 },
     },
     category: {
       type: String,
@@ -28,11 +30,6 @@ const CompanySchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
-);
-
-CompanySchema.index(
-  { name: 1, type: 1 },
-  { unique: true, collation: { locale: "en", strength: 2 } }
 );
 
 export default mongoose.models.Company ||

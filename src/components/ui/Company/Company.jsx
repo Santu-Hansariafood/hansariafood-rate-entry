@@ -11,9 +11,6 @@ const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 const Button = dynamic(() => import("@/components/common/Button/Button"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
-const SelectBox = dynamic(() =>
-  import("@/components/common/SelectBox/SelectBox")
-);
 
 export default function CreateCompanyForm({ onClose, onCreated }) {
   const {
@@ -30,15 +27,8 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
   const [state, setState] = useState("");
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [selectedCommodities, setSelectedCommodities] = useState([]);
-  const [selectedSubCommodities, setSelectedSubCommodities] = useState([]);
-  const [buyerOrSeller, setBuyerOrSeller] = useState("Buyer");
-  const buyerSellerOptions = useMemo(
-    () => [
-      { label: "Buyer", value: "Buyer" },
-      { label: "Seller", value: "Seller" },
-    ],
-    []
-  );
+  const [locationCommodityContacts, setLocationCommodityContacts] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const updateLocationCommodityContacts = (locs, cmds, prevData = {}) => {
     const updated = {};
@@ -53,12 +43,6 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
     });
     return updated;
   };
-
-  const [locationCommodityContacts, setLocationCommodityContacts] = useState(
-    {}
-  );
-
-  const [loading, setLoading] = useState(false);
 
   const handleCompanyChange = useCallback(
     (val) => {
@@ -94,7 +78,6 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
       locationCommodityContacts
     );
     setLocationCommodityContacts(updated);
-    setSelectedSubCommodities([]);
   };
 
   const handleContactChange = (location, commodity, field, value) => {
@@ -109,15 +92,6 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
       },
     }));
   };
-
-  const subCommodityOptions = useMemo(() => {
-    const selected = commodities.filter((cmd) =>
-      selectedCommodities.map((c) => c.value).includes(cmd.name)
-    );
-    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
-    const unique = Array.from(new Set(subCats));
-    return unique.map((sub) => ({ label: sub, value: sub }));
-  }, [commodities, selectedCommodities]);
 
   const handleSubmit = async () => {
     if (
@@ -151,10 +125,8 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
         name: companyName,
         location: selectedLocations,
         state,
-        buyerOrSeller,
         category,
         commodities: selectedCommodities.map((c) => c.value),
-        subCommodities: selectedSubCommodities.map((s) => s.value),
         mobileNumbers,
       };
 
@@ -200,26 +172,6 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
               onChange={handleCommodityChange}
               isMulti
             />
-            {subCommodityOptions.length > 0 && (
-              <Dropdown
-                label="Sub-Commodities"
-                options={subCommodityOptions}
-                value={selectedSubCommodities.map((s) => s.value)}
-                onChange={(vals) =>
-                  setSelectedSubCommodities(
-                    vals.map((val) => ({ label: val, value: val }))
-                  )
-                }
-                isMulti
-              />
-            )}
-            <SelectBox
-              label="Company Type *"
-              name="buyerOrSeller"
-              options={buyerSellerOptions}
-              value={buyerOrSeller}
-              onChange={(e) => setBuyerOrSeller(e.target.value)}
-            />
           </div>
 
           <div className="mt-8">
@@ -239,11 +191,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
                         key={`${loc}-${cmd.value}`}
                         className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
                       >
-                        <InputBox
-                          label="Commodity"
-                          value={cmd.value}
-                          readOnly
-                        />
+                        <InputBox label="Commodity" value={cmd.value} readOnly />
                         <InputBox
                           label="Primary Mobile"
                           value={

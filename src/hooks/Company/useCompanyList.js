@@ -5,32 +5,37 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const ITEMS_PER_PAGE = 10;
 
+const capitalizeWords = (str = "") =>
+  str.replace(/\b\w/g, (char) => char.toUpperCase());
+
+function useDebounce(value, delay = 1000) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function useCompanyList() {
   const [companies, setCompanies] = useState([]);
   const [totalCompanies, setTotalCompanies] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const [editMode, setEditMode] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     category: "",
-    type: "",
+    type: [],
   });
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      setCurrentPage(1);
-    }, 1000);
-
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
 
   const fetchCompanies = useCallback(async (page = 1, search = "") => {
     try {
@@ -50,55 +55,19 @@ export default function useCompanyList() {
     fetchCompanies(currentPage, debouncedSearchQuery);
   }, [currentPage, debouncedSearchQuery, fetchCompanies]);
 
-  const handleSearchChange = useCallback((value) => {
-    setSearchQuery(value);
-  }, []);
-
-  const handleDelete = useCallback(async (id) => {
-    try {
-      await axiosInstance.delete(`/companies/${id}`);
-      setCompanies((prev) => prev.filter((company) => company._id !== id));
-    } catch (error) {
-      console.error("Error deleting company:", error);
-    }
-  }, []);
-
-  const handleEdit = useCallback(
-    (company) => {
-      const index = companies.findIndex((c) => c._id === company._id);
-      setSelectedIndex(index);
-      setSelectedCompany(company);
-      setFormData({
-        name: company.name,
-        category: company.category,
-        type: company.type || "",
-      });
-      setEditMode(true);
-      setModalOpen(true);
+  const handlePageChange = useCallback(
+    (page) => {
+      if (page >= 1 && page <= Math.ceil(totalCompanies / ITEMS_PER_PAGE)) {
+        setCurrentPage(page);
+      }
     },
-    [companies]
+    [totalCompanies]
   );
 
-  const handleSaveEdit = useCallback(async () => {
-    if (selectedIndex === null) return;
-
-    try {
-      await axiosInstance.put(
-        `/companies/${companies[selectedIndex]._id}`,
-        formData
-      );
-      setCompanies((prev) => {
-        const updated = [...prev];
-        updated[selectedIndex] = { ...updated[selectedIndex], ...formData };
-        return updated;
-      });
-      setModalOpen(false);
-      setEditMode(false);
-      setSelectedIndex(null);
-    } catch (error) {
-      console.error("Error updating company:", error);
-    }
-  }, [formData, selectedIndex, companies]);
+  const handleSearchChange = useCallback((value) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  }, []);
 
   const handleView = useCallback(async (id) => {
     try {
@@ -111,21 +80,70 @@ export default function useCompanyList() {
     }
   }, []);
 
-  const handleChange = useCallback((e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  }, []);
+  const handleEdit = useCallback(
+    (company) => {
+      const index = companies.findIndex((c) => c._id === company._id);
+      if (index === -1) return;
 
-  const handlePageChange = useCallback(
-    (page) => {
-      if (page >= 1 && page <= Math.ceil(totalCompanies / ITEMS_PER_PAGE)) {
-        setCurrentPage(page);
-      }
+      setSelectedIndex(index);
+      setSelectedCompany(company);
+      setFormData({
+        name: company.name,
+        category: company.category,
+        type: Array.isArray(company.type) ? company.type : [company.type],
+      });
+
+      setEditMode(true);
+      setModalOpen(true);
     },
-    [totalCompanies]
+    [companies]
   );
 
-  const capitalizeWords = (str) =>
-    str.replace(/\b\w/g, (char) => char.toUpperCase());
+  const handleSaveEdit = useCallback(async () => {
+    if (selectedIndex === null) return;
+
+    try {
+      const id = companies[selectedIndex]._id;
+      await axiosInstance.put(`/companies/${id}`, formData);
+      setCompanies((prev) => {
+        const updated = [...prev];
+        updated[selectedIndex] = { ...updated[selectedIndex], ...formData };
+        return updated;
+      });
+      setModalOpen(false);
+      setEditMode(false);
+      setSelectedIndex(null);
+    } catch (error) {
+      console.error("Error updating company:", error);
+    }
+  }, [companies, selectedIndex, formData]);
+
+  const handleDelete = useCallback(async (id) => {
+    try {
+      await axiosInstance.delete(`/companies/${id}`);
+      setCompanies((prev) => prev.filter((c) => c._id !== id));
+    } catch (error) {
+      console.error("Error deleting company:", error);
+    }
+  }, []);
+
+  const handleChange = useCallback((e) => {
+    const { name, value, type, checked } = e.target;
+
+    if (name === "type") {
+      setFormData((prev) => {
+        let updatedTypes = [...prev.type];
+        if (checked) {
+          if (!updatedTypes.includes(value)) updatedTypes.push(value);
+        } else {
+          updatedTypes = updatedTypes.filter((t) => t !== value);
+        }
+        return { ...prev, type: updatedTypes };
+      });
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  }, []);
 
   const paginatedData = useMemo(() => {
     return companies.map((company) => {

@@ -61,51 +61,44 @@ export async function POST(req) {
       );
     }
 
-    const existingCompanies = await Company.find({
+    const existingCompany = await Company.findOne({
       name: nameTrimmed,
-      type: { $in: selectedTypes },
     });
 
-    const existingTypes = new Set();
-    for (const company of existingCompanies) {
-      for (const t of company.type) {
-        existingTypes.add(t);
+    if (existingCompany) {
+      const newTypes = selectedTypes.filter(
+        (t) => !existingCompany.type.includes(t)
+      );
+
+      if (newTypes.length === 0) {
+        return NextResponse.json(
+          { error: "All provided types already exist for this company" },
+          { status: 400 }
+        );
       }
-    }
 
-    const newTypes = selectedTypes.filter((t) => !existingTypes.has(t));
+      existingCompany.type.push(...newTypes);
+      await existingCompany.save();
 
-    if (newTypes.length === 0) {
       return NextResponse.json(
-        { error: "Company with this name and selected type(s) already exists" },
-        { status: 400 }
+        { message: "Company type(s) updated", updatedCompany: existingCompany },
+        { status: 200 }
       );
     }
 
-    const createdCompanies = await Promise.all(
-      newTypes.map((t) =>
-        Company.create({
-          name: nameTrimmed,
-          category: categoryTrimmed,
-          type: [t],
-        })
-      )
-    );
+    const newCompany = await Company.create({
+      name: nameTrimmed,
+      category: categoryTrimmed,
+      type: selectedTypes,
+    });
 
     return NextResponse.json(
-      { message: "Companies created", createdCompanies },
+      { message: "Company created", createdCompany: newCompany },
       { status: 201 }
     );
   } catch (error) {
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { error: "Company with this name and type already exists" },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { error: "Failed to create company" },
+      { error: "Failed to create or update company" },
       { status: 500 }
     );
   }

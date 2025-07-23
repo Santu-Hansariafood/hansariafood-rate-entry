@@ -36,27 +36,30 @@ export async function PUT(req, { params }) {
     const { id } = params;
     const { name, category, type } = await req.json();
 
-    if (
-      !name?.trim() ||
-      !category?.trim() ||
-      !type?.trim() ||
-      !["buyer", "seller"].includes(type.toLowerCase())
-    ) {
+    const nameTrimmed = name?.trim();
+    const categoryTrimmed = category?.trim();
+    const typeArray = Array.isArray(type)
+      ? type.map((t) => t.toLowerCase().trim())
+      : [type?.toLowerCase().trim()];
+
+    const validTypes = ["buyer", "seller"];
+    const selectedTypes = typeArray.filter((t) => validTypes.includes(t));
+
+    if (!nameTrimmed || !categoryTrimmed || selectedTypes.length === 0) {
       return NextResponse.json(
-        { error: "Name, category, and valid type are required" },
+        { error: "Name, category, and at least one valid type are required" },
         { status: 400 }
       );
     }
 
-    const existingCompany = await Company.findOne({
+    const duplicateCompany = await Company.findOne({
       _id: { $ne: id },
-      name: name.trim(),
-      type: type.toLowerCase(),
+      name: nameTrimmed,
     });
 
-    if (existingCompany) {
+    if (duplicateCompany) {
       return NextResponse.json(
-        { error: "Another company with this name and type already exists" },
+        { error: "Another company with the same name already exists" },
         { status: 400 }
       );
     }
@@ -64,9 +67,9 @@ export async function PUT(req, { params }) {
     const updatedCompany = await Company.findByIdAndUpdate(
       id,
       {
-        name: name.trim(),
-        category: category.trim(),
-        type: type.toLowerCase(),
+        name: nameTrimmed,
+        category: categoryTrimmed,
+        type: selectedTypes,
       },
       { new: true }
     );

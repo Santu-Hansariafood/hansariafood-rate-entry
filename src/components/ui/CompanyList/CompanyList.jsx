@@ -110,32 +110,32 @@ const CompanyList = () => {
                 />
 
                 <div className="mt-4">
-                  <label className="block text-sm font-medium mb-2">Type</label>
-                  <div className="flex space-x-4">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="type"
-                        value="buyer"
-                        checked={formData.type === "buyer"}
-                        onChange={handleChange}
-                        className="form-radio"
-                      />
-                      <span>Buyer</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="type"
-                        value="seller"
-                        checked={formData.type === "seller"}
-                        onChange={handleChange}
-                        className="form-radio"
-                      />
-                      <span>Seller</span>
-                    </label>
-                  </div>
-                </div>
+  <label className="block text-sm font-medium mb-2">Type</label>
+  <div className="flex space-x-4">
+    <label className="flex items-center space-x-2">
+      <input
+        type="checkbox"
+        name="type"
+        value="buyer"
+        checked={formData.type.includes("buyer")}
+        onChange={handleChange}
+        className="form-checkbox"
+      />
+      <span>Buyer</span>
+    </label>
+    <label className="flex items-center space-x-2">
+      <input
+        type="checkbox"
+        name="type"
+        value="seller"
+        checked={formData.type.includes("seller")}
+        onChange={handleChange}
+        className="form-checkbox"
+      />
+      <span>Seller</span>
+    </label>
+  </div>
+</div>
 
                 <button
                   onClick={handleSaveEdit}
