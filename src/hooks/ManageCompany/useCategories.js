@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
@@ -7,8 +8,10 @@ export default function useCategories() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchAllCategories = async () => {
-      let all = [];
+      let allCategories = [];
       let page = 1;
       let hasMore = true;
 
@@ -20,19 +23,26 @@ export default function useCategories() {
             : res.data.categories || [];
 
           if (data.length > 0) {
-            all = [...all, ...data];
+            allCategories = [...allCategories, ...data];
             page++;
           } else {
             hasMore = false;
           }
         }
-        setCategories(all);
+
+        if (isMounted) {
+          setCategories(allCategories);
+        }
       } catch (error) {
         toast.error("Failed to fetch categories");
       }
     };
 
     fetchAllCategories();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return categories;

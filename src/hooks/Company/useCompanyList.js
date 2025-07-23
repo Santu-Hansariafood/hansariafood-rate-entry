@@ -131,7 +131,10 @@ export default function useCompanyList() {
     return companies.map((company) => {
       const capitalizedName = capitalizeWords(company.name);
       const capitalizedCategory = capitalizeWords(company.category);
-      const capitalizedType = capitalizeWords(company.type || "");
+      const capitalizedType = Array.isArray(company.type)
+        ? company.type.map(capitalizeWords).join(", ")
+        : capitalizeWords(company.type || "");
+
       return {
         name: capitalizedName,
         category: capitalizedCategory,

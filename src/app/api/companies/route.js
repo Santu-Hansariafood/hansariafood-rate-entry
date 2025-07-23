@@ -42,37 +42,60 @@ export async function POST(req) {
   try {
     const { name, category, type } = await req.json();
 
-    if (
-      !name?.trim() ||
-      !category?.trim() ||
-      !type?.trim() ||
-      !["buyer", "seller"].includes(type.toLowerCase())
-    ) {
+    const nameTrimmed = name?.trim();
+    const categoryTrimmed = category?.trim();
+    const typeArray = Array.isArray(type)
+      ? type.map((t) => t.toLowerCase().trim())
+      : [type?.toLowerCase().trim()];
+
+    const validTypes = ["buyer", "seller"];
+    const selectedTypes = typeArray.filter((t) => validTypes.includes(t));
+
+    if (!nameTrimmed || !categoryTrimmed || selectedTypes.length === 0) {
       return NextResponse.json(
-        { error: "Name, category, and valid type are required" },
+        {
+          error:
+            "Name, category, and at least one valid type (buyer/seller) are required",
+        },
         { status: 400 }
       );
     }
 
-    const existingCompany = await Company.findOne({
-      name: name.trim(),
-      type: type.toLowerCase(),
+    const existingCompanies = await Company.find({
+      name: nameTrimmed,
+      type: { $in: selectedTypes },
     });
 
-    if (existingCompany) {
+    const existingTypes = new Set();
+    for (const company of existingCompanies) {
+      for (const t of company.type) {
+        existingTypes.add(t);
+      }
+    }
+
+    const newTypes = selectedTypes.filter((t) => !existingTypes.has(t));
+
+    if (newTypes.length === 0) {
       return NextResponse.json(
-        { error: "Company with this name and type already exists" },
+        { error: "Company with this name and selected type(s) already exists" },
         { status: 400 }
       );
     }
 
-    const newCompany = await Company.create({
-      name: name.trim(),
-      category: category.trim(),
-      type: type.toLowerCase(),
-    });
+    const createdCompanies = await Promise.all(
+      newTypes.map((t) =>
+        Company.create({
+          name: nameTrimmed,
+          category: categoryTrimmed,
+          type: [t],
+        })
+      )
+    );
 
-    return NextResponse.json(newCompany, { status: 201 });
+    return NextResponse.json(
+      { message: "Companies created", createdCompanies },
+      { status: 201 }
+    );
   } catch (error) {
     if (error.code === 11000) {
       return NextResponse.json(

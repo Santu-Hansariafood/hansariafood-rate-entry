@@ -48,9 +48,26 @@ export async function PUT(req, { params }) {
       );
     }
 
+    const existingCompany = await Company.findOne({
+      _id: { $ne: id },
+      name: name.trim(),
+      type: type.toLowerCase(),
+    });
+
+    if (existingCompany) {
+      return NextResponse.json(
+        { error: "Another company with this name and type already exists" },
+        { status: 400 }
+      );
+    }
+
     const updatedCompany = await Company.findByIdAndUpdate(
       id,
-      { name, category, type: type.toLowerCase() },
+      {
+        name: name.trim(),
+        category: category.trim(),
+        type: type.toLowerCase(),
+      },
       { new: true }
     );
 

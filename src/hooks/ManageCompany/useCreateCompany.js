@@ -11,8 +11,12 @@ export default function useCreateCompany() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSave = useCallback(async () => {
-    if (!company.trim() || !category.trim() || !companyType.trim()) {
-      toast.error("All fields are required");
+    const name = company.trim();
+    const categoryValue = category.trim();
+    const type = companyType.trim().toLowerCase();
+
+    if (!name || !categoryValue || !["buyer", "seller"].includes(type)) {
+      toast.error("All fields are required and must be valid");
       return;
     }
 
@@ -20,9 +24,9 @@ export default function useCreateCompany() {
       setIsLoading(true);
 
       const { status } = await axiosInstance.post("/companies", {
-        name: company,
-        category,
-        type: companyType,
+        name,
+        category: categoryValue,
+        type,
       });
 
       if (status === 201) {
