@@ -18,6 +18,11 @@ const RateTable = dynamic(() => import("./RateTable/RateTable"), {
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
 });
+const CompanyTypeFilter = dynamic(
+  () => import("@/components/ui/Rate/CompanyTypeFilter/CompanyTypeFilter"),
+  { loading: () => <Loading /> }
+);
+
 const CategoryCard = dynamic(
   () => import("@/components/ui/Rate/CategoryCard/CategoryCard"),
   { loading: () => <Loading /> }
@@ -43,7 +48,11 @@ export default function Rate() {
   const itemsPerPage = 10;
 
   const handleFilterChange = useCallback((newFilters) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
+    const selectedCategories = Object.values(newFilters);
+    setFilters((prev) => ({
+      ...prev,
+      category: selectedCategories,
+    }));
   }, []);
 
   const selectedCompanyObj = useMemo(() => {
@@ -58,7 +67,11 @@ export default function Rate() {
     try {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== "all") {
+        if (!value || value === "all") return;
+
+        if (Array.isArray(value)) {
+          value.forEach((v) => params.append(key, v));
+        } else {
           params.append(key, value);
         }
       });
@@ -129,23 +142,15 @@ export default function Rate() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="mb-4">
-        <label className="mr-2 font-semibold">Company Type:</label>
-        <select
-          value={filters.type}
-          onChange={(e) =>
-            setFilters((prev) => ({
-              ...prev,
-              type: e.target.value,
-            }))
-          }
-          className="border p-2 rounded"
-        >
-          <option value="all">All</option>
-          <option value="buyer">Buyer</option>
-          <option value="seller">Seller</option>
-        </select>
-      </div>
+      <CompanyTypeFilter
+        selectedType={filters.type}
+        onChange={(type) =>
+          setFilters((prev) => ({
+            ...prev,
+            type,
+          }))
+        }
+      />
 
       <CompanyList
         companies={companies}
