@@ -17,17 +17,26 @@ const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
-  ssr: false,
-  loading: () => <Loading />,
-});
-const SearchBox = dynamic(() => import("@/components/common/SearchBox/SearchBox"), {
-  ssr: false,
-  loading: () => <Loading />,
-});
-const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"), {
-  loading: () => <Loading />,
-});
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  {
+    ssr: false,
+    loading: () => <Loading />,
+  }
+);
+const SearchBox = dynamic(
+  () => import("@/components/common/SearchBox/SearchBox"),
+  {
+    ssr: false,
+    loading: () => <Loading />,
+  }
+);
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  {
+    loading: () => <Loading />,
+  }
+);
 
 const CompanyList = () => {
   const {
@@ -61,24 +70,31 @@ const CompanyList = () => {
     <Suspense fallback={<Loading />}>
       <div className="p-4 space-y-4">
         <Title text="Company List" />
-
-        {/* ✅ Type Filter */}
-        <div className="flex flex-wrap items-center gap-4">
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="border rounded-md px-3 py-2"
-          >
-            <option value="">All Types</option>
-            <option value="buyer">Buyer</option>
-            <option value="seller">Seller</option>
-          </select>
-
-          <SearchBox
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search company name..."
-          />
+        <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-green-100">
+          <div className="flex items-center gap-3">
+            <label
+              htmlFor="typeFilter"
+              className="text-sm font-medium text-green-800"
+            >
+              Filter by Type:
+            </label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="border rounded-md px-3 py-2"
+            >
+              <option value="">All</option>
+              <option value="buyer">Buyer</option>
+              <option value="seller">Seller</option>
+            </select>
+          </div>
+          <div className="w-full md:w-1/2">
+            <SearchBox
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search company name..."
+            />
+          </div>
         </div>
 
         <Table

@@ -177,7 +177,6 @@ const ManageCompanyList = () => {
             </select>
           </div>
 
-          {/* Search Input */}
           <div className="w-full md:w-1/2">
             <SearchBox
               value={searchQuery}
