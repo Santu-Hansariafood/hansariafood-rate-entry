@@ -51,7 +51,12 @@ export default function useCompany() {
   }, []);
 
   const companyOptions = useMemo(
-    () => companies.map((comp) => ({ label: comp.name, value: comp.name })),
+    () =>
+      companies.map((comp) => ({
+        label: comp.name,
+        value: comp.name,
+        type: comp.type,
+      })),
     [companies]
   );
 

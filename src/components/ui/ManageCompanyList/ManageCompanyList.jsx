@@ -4,17 +4,14 @@ import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Actions from "@/components/common/Actions/Actions";
 import useManageCompanyList from "@/hooks/ManageCompany/useManageCompanyList";
-import Loading from "@/components/common/Loading/Loading";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import Loading from "@/components/common/Loading/Loading";
 
 const EditCompanyForm = dynamic(
   () =>
     import("@/components/ui/ManageCompanyList/EditCompanyForm/EditCompanyForm"),
-  {
-    loading: () => <Loading />,
-  }
+  { loading: () => <Loading /> }
 );
 const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
   loading: () => <Loading />,
@@ -24,16 +21,15 @@ const Title = dynamic(() => import("@/components/common/Title/Title"), {
 });
 const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
-  {
-    loading: () => <Loading />,
-  }
+  { loading: () => <Loading /> }
 );
 const SearchBox = dynamic(
   () => import("@/components/common/SearchBox/SearchBox"),
-  {
-    loading: () => <Loading />,
-  }
+  { loading: () => <Loading /> }
 );
+const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
+  loading: () => <Loading />,
+});
 
 const ManageCompanyList = () => {
   const {
@@ -52,19 +48,9 @@ const ManageCompanyList = () => {
     setCurrentPage,
     fetchCompanies,
     handleSearchChange,
+    typeFilter,
+    setTypeFilter,
   } = useManageCompanyList();
-
-  const handleView = (company) => {
-    setSelectedCompany(company);
-    setEditingCompany(null);
-    setShowModal(true);
-  };
-
-  const handleEdit = (company) => {
-    setEditingCompany(company);
-    setSelectedCompany(null);
-    setShowModal(true);
-  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this company?"))
@@ -73,68 +59,56 @@ const ManageCompanyList = () => {
       await axiosInstance.delete(`/managecompany/${id}`);
       toast.success("Company deleted");
       fetchCompanies();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete company");
     }
   };
 
-  const formatMobileNumber = (mobile) => {
-    if (!mobile) return null;
-    const parts = [];
-    if (mobile.primaryMobile) parts.push(`📱 ${mobile.primaryMobile}`);
-    if (mobile.secondaryMobile) parts.push(`📞 ${mobile.secondaryMobile}`);
-    if (mobile.contactPerson) parts.push(`👤 ${mobile.contactPerson}`);
-    return parts.join(" | ");
-  };
-
   const tableRows = useMemo(() => {
+    const formatMobile = (m) => {
+      const parts = [];
+      if (m.primaryMobile) parts.push(`📱 ${m.primaryMobile}`);
+      if (m.secondaryMobile) parts.push(`📞 ${m.secondaryMobile}`);
+      if (m.contactPerson) parts.push(`👤 ${m.contactPerson}`);
+      return parts.join(" | ");
+    };
+
     return companies.map((row, index) => ({
-      ...row,
       serial: <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>,
-      name: <span className="font-semibold">{row.name || "N/A"}</span>,
+      name: <strong>{row.name || "N/A"}</strong>,
       buyerSellerDisplay: (
-        <span className="text-gray-600">{row.buyerOrSeller || "n.a"}</span>
+        <span>
+          {(row.type || [])
+            .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
+            .join(", ") || "N/A"}
+        </span>
       ),
       locationDisplay: (
         <ul className="list-disc list-inside">
-          {row.location.map((loc, idx) => (
-            <li key={idx} className="text-sm">
-              {loc || "N/A"}
-            </li>
+          {row.location.map((l, i) => (
+            <li key={i}>{l}</li>
           ))}
         </ul>
       ),
-      categoryDisplay: (
-        <span className="text-gray-600">{row.category || "N/A"}</span>
-      ),
-      stateDisplay: <span className="text-gray-600">{row.state || "N/A"}</span>,
+      categoryDisplay: <span>{row.category || "N/A"}</span>,
+      stateDisplay: <span>{row.state || "N/A"}</span>,
       commoditiesDisplay: (
         <ul className="list-disc list-inside">
-          {row.commodities.map((cmd, idx) => (
-            <li key={idx} className="text-sm">
-              {cmd || "N/A"}
-              {row.subCommodities[idx] && (
-                <span className="text-gray-500 ml-2">
-                  ({row.subCommodities[idx]})
-                </span>
-              )}
-            </li>
+          {row.commodities.map((c, i) => (
+            <li key={i}>{c}</li>
           ))}
         </ul>
       ),
       mobileNumbersDisplay: (
         <ul className="list-disc list-inside">
-          {row.mobileNumbers.map((mobile, idx) => {
-            const formatted = formatMobileNumber(mobile);
-            return formatted ? (
-              <li key={idx} className="text-sm">
-                {mobile.location && (
-                  <span className="font-medium">{mobile.location}: </span>
-                )}
-                {formatted}
-              </li>
-            ) : null;
-          })}
+          {row.mobileNumbers.map((m, i) => (
+            <li key={i}>
+              {m.location && (
+                <span className="font-medium">{m.location}: </span>
+              )}
+              {formatMobile(m)}
+            </li>
+          ))}
         </ul>
       ),
       actions: (
@@ -142,8 +116,16 @@ const ManageCompanyList = () => {
           item={{
             id: row._id,
             title: row.name,
-            onView: () => handleView(row),
-            onEdit: () => handleEdit(row),
+            onView: () => {
+              setSelectedCompany(row);
+              setEditingCompany(null);
+              setShowModal(true);
+            },
+            onEdit: () => {
+              setEditingCompany(row);
+              setSelectedCompany(null);
+              setShowModal(true);
+            },
             onDelete: () => handleDelete(row._id),
           }}
         />
@@ -173,24 +155,52 @@ const ManageCompanyList = () => {
       <div className="p-4">
         <ToastContainer position="top-right" autoClose={3000} />
         <Title text="Manage Company List" />
-        <SearchBox
-          value={searchQuery}
-          onChange={handleSearchChange}
-          placeholder="Search by company name..."
-        />
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+
+        <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-green-100">
+          {/* Filter Dropdown */}
+          <div className="flex items-center gap-3">
+            <label
+              htmlFor="typeFilter"
+              className="text-sm font-medium text-green-800"
+            >
+              Filter by Type:
+            </label>
+            <select
+              id="typeFilter"
+              className="bg-green-50 text-green-800 border border-green-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition duration-150"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="All">All</option>
+              <option value="buyer">Buyer</option>
+              <option value="seller">Seller</option>
+            </select>
+          </div>
+
+          {/* Search Input */}
+          <div className="w-full md:w-1/2">
+            <SearchBox
+              value={searchQuery}
+              onChange={handleSearchChange}
+              placeholder="Search by company name..."
+              className="w-full border border-green-300 bg-green-50 text-green-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition duration-150"
+            />
+          </div>
+        </div>
+
+        <div className="bg-white rounded shadow overflow-hidden mt-4">
           <Table data={tableRows} columns={columns} />
           <Pagination
             currentPage={currentPage}
             totalItems={totalCompanies}
             itemsPerPage={itemsPerPage}
-            onPageChange={(page) => setCurrentPage(page)}
+            onPageChange={setCurrentPage}
           />
         </div>
 
         {showModal && (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 w-full max-w-3xl overflow-y-auto max-h-[90vh]">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-6xl overflow-y-auto max-h-[90vh]">
               {editingCompany ? (
                 <EditCompanyForm
                   company={editingCompany}
@@ -198,9 +208,8 @@ const ManageCompanyList = () => {
                     setShowModal(false);
                     setEditingCompany(null);
                   }}
-                  onSuccess={() => {
+                  onUpdated={() => {
                     fetchCompanies();
-                    toast.success("Company updated successfully");
                     setShowModal(false);
                     setEditingCompany(null);
                   }}
@@ -208,39 +217,35 @@ const ManageCompanyList = () => {
               ) : selectedCompany ? (
                 <>
                   <h2 className="text-xl font-bold mb-4">Company Details</h2>
-                  <div className="space-y-2">
-                    <p>
+                  <ul className="space-y-2 text-sm">
+                    <li>
                       <strong>Name:</strong> {selectedCompany.name}
-                    </p>
-                    <p>
+                    </li>
+                    <li>
                       <strong>Category:</strong> {selectedCompany.category}
-                    </p>
-                    <p>
+                    </li>
+                    <li>
                       <strong>State:</strong> {selectedCompany.state}
-                    </p>
-                    <div>
+                    </li>
+                    <li>
                       <strong>Locations:</strong>
-                      <ul className="list-disc ml-5">
-                        {selectedCompany.location.map((loc, i) => (
-                          <li key={i}>{loc}</li>
+                      <ul className="list-disc ml-6">
+                        {selectedCompany.location.map((l, i) => (
+                          <li key={i}>{l}</li>
                         ))}
                       </ul>
-                    </div>
-                    <div>
+                    </li>
+                    <li>
                       <strong>Commodities:</strong>
-                      <ul className="list-disc ml-5">
+                      <ul className="list-disc ml-6">
                         {selectedCompany.commodities.map((c, i) => (
-                          <li key={i}>
-                            {c}
-                            {selectedCompany.subCommodities[i] &&
-                              ` (${selectedCompany.subCommodities[i]})`}
-                          </li>
+                          <li key={i}>{c}</li>
                         ))}
                       </ul>
-                    </div>
-                    <div>
+                    </li>
+                    <li>
                       <strong>Mobile Numbers:</strong>
-                      <ul className="list-disc ml-5">
+                      <ul className="list-disc ml-6">
                         {selectedCompany.mobileNumbers.map((m, i) => (
                           <li key={i}>
                             {m.location && (
@@ -254,8 +259,8 @@ const ManageCompanyList = () => {
                           </li>
                         ))}
                       </ul>
-                    </div>
-                  </div>
+                    </li>
+                  </ul>
                   <button
                     className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
                     onClick={() => {

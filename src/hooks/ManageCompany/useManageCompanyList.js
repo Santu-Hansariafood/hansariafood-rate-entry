@@ -8,61 +8,66 @@ const useManageCompanyList = () => {
   const [companies, setCompanies] = useState([]);
   const [totalCompanies, setTotalCompanies] = useState(0);
   const [loading, setLoading] = useState(true);
+
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [editingCompany, setEditingCompany] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const [typeFilter, setTypeFilter] = useState("All");
+
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
+      setDebouncedQuery(searchQuery.trim());
       setCurrentPage(1);
-    }, 1000);
+    }, 500);
     return () => clearTimeout(timeout);
   }, [searchQuery]);
 
   const fetchCompanies = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await axiosInstance.get(
-        `/managecompany?page=${currentPage}&limit=${itemsPerPage}&q=${encodeURIComponent(
-          debouncedQuery
-        )}`
+      const query = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+        q: debouncedQuery,
+      });
+
+      if (typeFilter !== "All") {
+        query.append("type", typeFilter.toLowerCase());
+      }
+
+      const { data } = await axiosInstance.get(
+        `/managecompany?${query.toString()}`
       );
 
-      const transformed = (response.data.companies || []).map((company) => ({
-        ...company,
-        location: Array.isArray(company.location) ? company.location : [],
-        commodities: Array.isArray(company.commodities)
-          ? company.commodities
-          : [],
-        subCommodities: Array.isArray(company.subCommodities)
-          ? company.subCommodities
-          : [],
-        mobileNumbers: Array.isArray(company.mobileNumbers)
-          ? company.mobileNumbers
-          : [],
+      const companiesList = data.companies || [];
+
+      const formatted = companiesList.map((comp) => ({
+        ...comp,
+        location: comp.location || [],
+        commodities: comp.commodities || [],
+        subCommodities: comp.subCommodities || [],
+        mobileNumbers: comp.mobileNumbers || [],
       }));
 
-      setCompanies(transformed);
-      setTotalCompanies(response.data.total || 0);
+      setCompanies(formatted);
+      setTotalCompanies(data.total || 0);
     } catch (error) {
       toast.error("Failed to fetch companies");
     } finally {
       setLoading(false);
     }
-  }, [currentPage, debouncedQuery]);
+  }, [currentPage, debouncedQuery, typeFilter]);
 
   useEffect(() => {
     fetchCompanies();
   }, [fetchCompanies]);
-
-  const handleSearchChange = (value) => {
-    setSearchQuery(value);
-  };
 
   return {
     companies,
@@ -75,11 +80,13 @@ const useManageCompanyList = () => {
     setEditingCompany,
     setShowModal,
     searchQuery,
+    handleSearchChange: setSearchQuery,
     currentPage,
-    itemsPerPage,
     setCurrentPage,
+    itemsPerPage,
     fetchCompanies,
-    handleSearchChange,
+    typeFilter,
+    setTypeFilter,
   };
 };
 

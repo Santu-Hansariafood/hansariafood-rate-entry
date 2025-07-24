@@ -29,80 +29,71 @@ export async function GET(req, { params }) {
   } catch (error) {
     console.error("Error fetching company by ID:", error);
     return NextResponse.json(
-      { error: "Failed to fetch company" },
+      { error: "Failed to fetch company", details: error.message },
       { status: 500 }
     );
   }
 }
 
 export async function PUT(req, { params }) {
-  await connectDB();
-
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const { id } = params;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: "Company ID is required" },
-        { status: 400 }
-      );
-    }
-
+    const id = params.id;
     const {
       name,
       location,
       state,
       category,
-      buyerOrSeller,
-      mobileNumbers = [],
-      commodities = [],
+      commodities,
       subCommodities = [],
+      mobileNumbers = [],
+      type,
     } = await req.json();
 
     if (
       !name ||
       !Array.isArray(location) ||
       location.length === 0 ||
-      !buyerOrSeller ||
-      !["Buyer", "Seller"].includes(buyerOrSeller)
+      !Array.isArray(type) ||
+      type.length === 0 ||
+      !type.every((t) => ["buyer", "seller"].includes(t.toLowerCase()))
     ) {
       return NextResponse.json(
-        { error: "Name, location, and valid buyerOrSeller are required" },
+        {
+          error: "Name, location, and valid type (buyer/seller) are required.",
+        },
         { status: 400 }
       );
     }
 
-    const company = await ManageCompany.findById(id);
-    if (!company) {
+    const normalizedType = type.map((t) => t.toLowerCase());
+
+    const updatedCompany = await ManageCompany.findByIdAndUpdate(
+      id,
+      {
+        name,
+        location,
+        state,
+        category,
+        type: normalizedType,
+        commodities,
+        subCommodities,
+        mobileNumbers,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedCompany) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    company.name = name;
-    company.location = location;
-    company.state = state || company.state;
-    company.category = category || company.category;
-    company.buyerOrSeller = buyerOrSeller;
-
-    company.mobileNumbers = mobileNumbers.filter(
-      (m) => m.primaryMobile || m.contactPerson
-    );
-    company.commodities = commodities;
-    company.subCommodities = subCommodities;
-
-    await company.save();
-
     return NextResponse.json(
-      { message: "Company updated successfully", company },
+      { message: "Company updated successfully", company: updatedCompany },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error updating company:", error);
+    console.error("Error in PUT /managecompany/:id", error);
     return NextResponse.json(
-      { error: "Failed to update company", details: error.message },
+      { error: error.message || "Failed to update company" },
       { status: 500 }
     );
   }
@@ -137,7 +128,7 @@ export async function DELETE(req, { params }) {
   } catch (error) {
     console.error("Error deleting company:", error);
     return NextResponse.json(
-      { error: "Failed to delete company" },
+      { error: "Failed to delete company", details: error.message },
       { status: 500 }
     );
   }

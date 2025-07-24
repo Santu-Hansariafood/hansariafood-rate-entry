@@ -11,9 +11,6 @@ const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 const Button = dynamic(() => import("@/components/common/Button/Button"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
-const SelectBox = dynamic(() =>
-  import("@/components/common/SelectBox/SelectBox")
-);
 
 export default function EditCompanyForm({ company, onClose, onUpdated }) {
   const {
@@ -25,9 +22,6 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     commodityOptions,
   } = useCompany();
 
-  const [buyerOrSeller, setBuyerOrSeller] = useState(
-    company.buyerOrSeller || "Buyer"
-  );
   const [companyName, setCompanyName] = useState(company.name || "");
   const [category, setCategory] = useState(company.category || "");
   const [state, setState] = useState(company.state || "");
@@ -35,22 +29,12 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     company.location || []
   );
   const [selectedCommodities, setSelectedCommodities] = useState(
-    (company.commodities || []).map((cmd) => ({ label: cmd, value: cmd }))
+    (company.commodities || []).map((c) => ({ label: c, value: c }))
   );
-  const [selectedSubCommodities, setSelectedSubCommodities] = useState(
-    (company.subCommodities || []).map((sub) => ({ label: sub, value: sub }))
-  );
+  const [companyType, setCompanyType] = useState(company.type || []);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!category && company.name) {
-      const selectedCompany = companies.find(
-        (comp) => comp.name === company.name
-      );
-      setCategory(selectedCompany?.category || "");
-    }
-  }, [companies, company.name, category]);
-
-  const updateLocationCommodityContacts = (locs, cmds, prevData) => {
+  const updateLocationCommodityContacts = (locs, cmds, prevData = {}) => {
     const updated = {};
     locs.forEach((loc) => {
       updated[loc] = {};
@@ -66,30 +50,31 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
 
   const [locationCommodityContacts, setLocationCommodityContacts] = useState(
     () => {
-      const data = updateLocationCommodityContacts(
-        company.location || [],
-        (company.commodities || []).map((cmd) => ({ label: cmd, value: cmd }))
-      );
+      const cmds = (company.commodities || []).map((c) => ({
+        label: c,
+        value: c,
+      }));
+      const locs = company.location || [];
+      const base = updateLocationCommodityContacts(locs, cmds);
 
-      company.mobileNumbers?.forEach((item) => {
-        if (!data[item.location]) data[item.location] = {};
-        data[item.location][item.commodity] = {
-          primaryMobile: item.primaryMobile,
-          contactPerson: item.contactPerson,
+      (company.mobileNumbers || []).forEach((entry) => {
+        if (!base[entry.location]) base[entry.location] = {};
+        base[entry.location][entry.commodity] = {
+          primaryMobile: entry.primaryMobile,
+          contactPerson: entry.contactPerson,
         };
       });
 
-      return data;
+      return base;
     }
   );
-
-  const [loading, setLoading] = useState(false);
 
   const handleCompanyChange = useCallback(
     (val) => {
       setCompanyName(val);
       const selectedCompany = companies.find((comp) => comp.name === val);
       setCategory(selectedCompany?.category || "");
+      setCompanyType(selectedCompany?.type || []);
     },
     [companies]
   );
@@ -119,7 +104,6 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
       locationCommodityContacts
     );
     setLocationCommodityContacts(updated);
-    setSelectedSubCommodities([]);
   };
 
   const handleContactChange = (location, commodity, field, value) => {
@@ -134,38 +118,6 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
       },
     }));
   };
-
-  const handleRemoveCommodity = (location, commodity) => {
-    setLocationCommodityContacts((prev) => {
-      const updatedLoc = { ...prev[location] };
-      delete updatedLoc[commodity];
-      return { ...prev, [location]: updatedLoc };
-    });
-  };
-
-  const buyerSellerOptions = useMemo(
-    () => [
-      { label: "Buyer", value: "Buyer" },
-      { label: "Seller", value: "Seller" },
-    ],
-    []
-  );
-
-  const subCommodityOptions = useMemo(() => {
-    const selected = commodities.filter((cmd) =>
-      selectedCommodities.map((c) => c.value).includes(cmd.name)
-    );
-    const subCats = selected.flatMap((cmd) => cmd.subCategories || []);
-    const unique = Array.from(new Set(subCats));
-    return unique.map((sub) => ({ label: sub, value: sub }));
-  }, [commodities, selectedCommodities]);
-
-  const memoCompanyOptions = useMemo(() => companyOptions, [companyOptions]);
-  const memoLocationOptions = useMemo(() => locationOptions, [locationOptions]);
-  const memoCommodityOptions = useMemo(
-    () => commodityOptions,
-    [commodityOptions]
-  );
 
   const handleSubmit = async () => {
     if (
@@ -200,17 +152,17 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
         location: selectedLocations,
         state,
         category,
-        buyerOrSeller,
+        type: companyType,
         commodities: selectedCommodities.map((c) => c.value),
-        subCommodities: selectedSubCommodities.map((s) => s.value),
         mobileNumbers,
       };
 
       await axiosInstance.put(`/managecompany/${company._id}`, payload);
       toast.success("Company updated successfully");
-      onUpdated();
+      onUpdated?.();
       onClose();
     } catch (error) {
+      toast.error("Failed to update company");
     } finally {
       setLoading(false);
     }
@@ -218,93 +170,70 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="relative bg-white p-6 rounded shadow-md w-full max-w-4xl">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl font-bold focus:outline-none"
-          aria-label="Close"
-        >
-          &times;
-        </button>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-2 sm:p-4">
+        <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-6xl">
+          <Title
+            text="Edit Company"
+            className="text-2xl font-bold mb-6 text-center"
+          />
 
-        <Title
-          text="Edit Company"
-          className="text-xl font-bold mb-4 text-center"
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Dropdown
-            label="Company Name *"
-            options={memoCompanyOptions}
-            value={companyName}
-            onChange={handleCompanyChange}
-          />
-          <Dropdown
-            label="Locations *"
-            options={memoLocationOptions}
-            value={selectedLocations}
-            onChange={handleLocationChange}
-            isMulti
-          />
-          <InputBox label="Category" value={category} readOnly />
-          <InputBox label="State" value={state} readOnly />
-          <Dropdown
-            label="Commodities *"
-            options={memoCommodityOptions}
-            value={selectedCommodities.map((c) => c.value)}
-            onChange={(vals) => handleCommodityChange(vals)}
-            isMulti
-          />
-          {subCommodityOptions.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Dropdown
-              label="Sub-Commodities"
-              options={subCommodityOptions}
-              value={selectedSubCommodities.map((s) => s.value)}
-              onChange={(vals) =>
-                setSelectedSubCommodities(
-                  vals.map((val) => ({ label: val, value: val }))
-                )
-              }
+              label="Company Name *"
+              options={companyOptions}
+              value={companyName}
+              onChange={handleCompanyChange}
+            />
+            <Dropdown
+              label="Locations *"
+              options={locationOptions}
+              value={selectedLocations}
+              onChange={handleLocationChange}
               isMulti
             />
-          )}
-          <SelectBox
-            label="Company Type *"
-            name="buyerOrSeller"
-            options={buyerSellerOptions}
-            value={buyerOrSeller}
-            onChange={(e) => setBuyerOrSeller(e.target.value)}
-          />
-        </div>
+            <InputBox label="Category" value={category} readOnly />
+            <InputBox label="State" value={state} readOnly />
+            <Dropdown
+              label="Commodities *"
+              options={commodityOptions}
+              value={selectedCommodities.map((c) => c.value)}
+              onChange={handleCommodityChange}
+              isMulti
+            />
+          </div>
 
-        <div className="mt-6">
-          <Title
-            text="Location-wise Contact Details"
-            className="text-lg font-semibold mb-2"
-          />
-          <div className="space-y-6">
-            {selectedLocations.map((loc) => (
-              <div key={loc} className="bg-gray-50 p-4 rounded border">
-                <h3 className="text-md font-semibold text-blue-700 mb-2">
-                  {loc}
-                </h3>
-
-                <div className="space-y-3 mb-4">
-                  {Object.entries(locationCommodityContacts[loc] || {}).map(
-                    ([cmdName, contactInfo]) => (
+          <div className="mt-8">
+            <Title
+              text="Location-wise Contact Details"
+              className="text-lg font-semibold mb-2"
+            />
+            <div className="space-y-6">
+              {selectedLocations.map((loc) => (
+                <div key={loc} className="bg-gray-50 p-4 rounded border">
+                  <h3 className="text-md font-semibold text-blue-700 mb-2">
+                    {loc}
+                  </h3>
+                  <div className="space-y-3">
+                    {selectedCommodities.map((cmd) => (
                       <div
-                        key={`${loc}-${cmdName}`}
+                        key={`${loc}-${cmd.value}`}
                         className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center"
                       >
-                        <InputBox label="Commodity" value={cmdName} readOnly />
+                        <InputBox
+                          label="Commodity"
+                          value={cmd.value}
+                          readOnly
+                        />
                         <InputBox
                           label="Primary Mobile"
-                          value={contactInfo.primaryMobile}
+                          value={
+                            locationCommodityContacts?.[loc]?.[cmd.value]
+                              ?.primaryMobile || ""
+                          }
                           onChange={(e) =>
                             handleContactChange(
                               loc,
-                              cmdName,
+                              cmd.value,
                               "primaryMobile",
                               e.target.value
                             )
@@ -312,67 +241,47 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
                         />
                         <InputBox
                           label="Contact Person"
-                          value={contactInfo.contactPerson}
+                          value={
+                            locationCommodityContacts?.[loc]?.[cmd.value]
+                              ?.contactPerson || ""
+                          }
                           onChange={(e) =>
                             handleContactChange(
                               loc,
-                              cmdName,
+                              cmd.value,
                               "contactPerson",
                               e.target.value
                             )
                           }
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCommodity(loc, cmdName)}
-                          className="text-red-600 hover:text-red-800 font-semibold"
-                        >
-                          Remove
-                        </button>
+                        <InputBox
+                          label="Company Type"
+                          value={companyType
+                            .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
+                            .join(", ")}
+                          readOnly
+                        />
                       </div>
-                    )
-                  )}
+                    ))}
+                  </div>
                 </div>
-
-                <div className="flex gap-4 items-end">
-                  <Dropdown
-                    label="Add Commodity"
-                    options={memoCommodityOptions.filter(
-                      (opt) => !locationCommodityContacts[loc]?.[opt.value]
-                    )}
-                    onChange={(val) => {
-                      if (!val) return;
-                      setLocationCommodityContacts((prev) => ({
-                        ...prev,
-                        [loc]: {
-                          ...prev[loc],
-                          [val]: {
-                            primaryMobile: "",
-                            contactPerson: "",
-                          },
-                        },
-                      }));
-                    }}
-                    placeholder="Select Commodity to Add"
-                  />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="flex justify-center mt-6 gap-4">
-          <Button
-            onClick={handleSubmit}
-            text="Update"
-            isLoading={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          />
-          <Button
-            onClick={onClose}
-            text="Cancel"
-            className="bg-gray-300 hover:bg-gray-400 text-black"
-          />
+          <div className="flex justify-center mt-8 gap-4 flex-wrap">
+            <Button
+              onClick={handleSubmit}
+              text="Update"
+              isLoading={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+            />
+            <Button
+              onClick={onClose}
+              text="Cancel"
+              className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2"
+            />
+          </div>
         </div>
       </div>
     </Suspense>

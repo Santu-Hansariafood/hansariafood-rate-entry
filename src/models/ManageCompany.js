@@ -13,23 +13,28 @@ const ManageCompanySchema = new mongoose.Schema(
     location: [{ type: String, required: true }],
     state: { type: String, required: true },
     category: { type: String, required: true },
-    
-    buyerOrSeller: {
-      type: String,
-      enum: ["Buyer", "Seller"],
+
+    type: {
+      type: [String],
+      enum: ["buyer", "seller"],
       required: true,
+      validate: {
+        validator: (arr) =>
+          Array.isArray(arr) &&
+          arr.length > 0 &&
+          arr.every((t) => ["buyer", "seller"].includes(t)),
+        message: "Invalid company type",
+      },
     },
 
     commodities: [{ type: String, required: true }],
     subCommodities: [{ type: String }],
     mobileNumbers: [MobileNumberSchema],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-ManageCompanySchema.index({ name: 1, buyerOrSeller: 1 }, { unique: true });
+ManageCompanySchema.index({ name: 1, type: 1 }, { unique: true });
 
 export default mongoose.models.ManageCompany ||
   mongoose.model("ManageCompany", ManageCompanySchema);

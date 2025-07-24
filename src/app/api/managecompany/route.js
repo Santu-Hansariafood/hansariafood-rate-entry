@@ -14,34 +14,33 @@ export async function POST(req) {
     let {
       name,
       location,
-      state,
-      category,
-      buyerOrSeller,
-      mobileNumbers,
-      commodities,
-      subCommodities,
+      state = "N.A",
+      category = "N.A",
+      type,
+      mobileNumbers = [],
+      commodities = [],
+      subCommodities = [],
     } = await req.json();
 
     if (
       !name ||
-      !location ||
-      !buyerOrSeller ||
-      !["Buyer", "Seller"].includes(buyerOrSeller)
+      !Array.isArray(location) ||
+      location.length === 0 ||
+      !Array.isArray(type) ||
+      type.length === 0 ||
+      !type.every((t) => ["buyer", "seller"].includes(t))
     ) {
       return NextResponse.json(
-        { error: "Name, location, and valid buyerOrSeller are required" },
+        {
+          error: "Name, location, and valid type (Buyer/Seller) are required.",
+        },
         { status: 400 }
       );
     }
 
-    location = Array.isArray(location) ? location : [location];
-    mobileNumbers = Array.isArray(mobileNumbers) ? mobileNumbers : [];
-    commodities = Array.isArray(commodities) ? commodities : [];
-    subCommodities = Array.isArray(subCommodities) ? subCommodities : [];
-    state = state || "N.A";
-    category = category || "N.A";
+    type = [...new Set(type)].sort();
 
-    let existingCompany = await ManageCompany.findOne({ name, buyerOrSeller });
+    const existingCompany = await ManageCompany.findOne({ name, type });
 
     if (existingCompany) {
       const allLocationsExist = location.every((loc) =>
@@ -51,7 +50,7 @@ export async function POST(req) {
       if (allLocationsExist) {
         return NextResponse.json(
           {
-            error: "Company with this name, type, and location already exists",
+            error: "Company with this name, type, and location already exists.",
           },
           { status: 409 }
         );
@@ -61,29 +60,27 @@ export async function POST(req) {
         new Set([...existingCompany.location, ...location])
       );
 
-      const existingMobileNumbers = existingCompany.mobileNumbers || [];
-      const newMobileNumbers = mobileNumbers.filter(
-        (newNum) =>
-          !existingMobileNumbers.some(
-            (oldNum) =>
-              oldNum.location === newNum.location &&
-              oldNum.commodity === newNum.commodity
-          )
-      );
-      existingCompany.mobileNumbers = [
-        ...existingMobileNumbers,
-        ...newMobileNumbers,
-      ];
-
-      // Merge commodities
       existingCompany.commodities = Array.from(
         new Set([...existingCompany.commodities, ...commodities])
       );
 
-      // Merge subCommodities
       existingCompany.subCommodities = Array.from(
         new Set([...existingCompany.subCommodities, ...subCommodities])
       );
+
+      const existingMobile = existingCompany.mobileNumbers || [];
+      const mergedMobile = [...existingMobile];
+
+      mobileNumbers.forEach((newNum) => {
+        const exists = existingMobile.some(
+          (oldNum) =>
+            oldNum.location === newNum.location &&
+            oldNum.commodity === newNum.commodity
+        );
+        if (!exists) mergedMobile.push(newNum);
+      });
+
+      existingCompany.mobileNumbers = mergedMobile;
 
       existingCompany.state = state;
       existingCompany.category = category;
@@ -101,7 +98,7 @@ export async function POST(req) {
       location,
       state,
       category,
-      buyerOrSeller,
+      type,
       mobileNumbers,
       commodities,
       subCommodities,
@@ -116,19 +113,18 @@ export async function POST(req) {
   } catch (error) {
     console.error("Error in POST /managecompany:", error);
 
-    // Duplicate key error (e.g. same name + buyerOrSeller already exists)
     if (error.code === 11000) {
       return NextResponse.json(
         {
           error:
-            "A company with this name and type (Buyer/Seller) already exists. Please use a different type or name.",
+            "A company with this name and type already exists. Use a different name or type.",
         },
         { status: 409 }
       );
     }
 
     return NextResponse.json(
-      { error: error.message || "Failed to create/update company" },
+      { error: error.message || "Failed to create/update company." },
       { status: 500 }
     );
   }
@@ -141,15 +137,15 @@ export async function GET(req) {
 
   try {
     const { searchParams } = new URL(req.url);
+
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const search = searchParams.get("search") || searchParams.get("q") || "";
-
+    const search = searchParams.get("search") || "";
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
-    const buyerOrSellerFilter = searchParams.get("buyerOrSeller");
+    const typeFilter = searchParams.get("type");
 
     const filter = {};
 
@@ -165,8 +161,8 @@ export async function GET(req) {
       filter.subCommodities = { $in: subCommodities };
     }
 
-    if (["Buyer", "Seller"].includes(buyerOrSellerFilter)) {
-      filter.buyerOrSeller = buyerOrSellerFilter;
+    if (["buyer", "seller"].includes(typeFilter)) {
+      filter.type = typeFilter;
     }
 
     const [companies, total] = await Promise.all([
@@ -178,7 +174,7 @@ export async function GET(req) {
   } catch (error) {
     console.error("Error in GET /managecompany:", error);
     return NextResponse.json(
-      { error: "Failed to fetch companies" },
+      { error: "Failed to fetch companies." },
       { status: 500 }
     );
   }

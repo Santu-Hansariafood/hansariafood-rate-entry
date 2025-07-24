@@ -27,7 +27,10 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
   const [state, setState] = useState("");
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [selectedCommodities, setSelectedCommodities] = useState([]);
-  const [locationCommodityContacts, setLocationCommodityContacts] = useState({});
+  const [companyType, setCompanyType] = useState([]);
+  const [locationCommodityContacts, setLocationCommodityContacts] = useState(
+    {}
+  );
   const [loading, setLoading] = useState(false);
 
   const updateLocationCommodityContacts = (locs, cmds, prevData = {}) => {
@@ -49,6 +52,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
       setCompanyName(val);
       const selectedCompany = companies.find((comp) => comp.name === val);
       setCategory(selectedCompany?.category || "");
+      setCompanyType(selectedCompany?.type || []);
     },
     [companies]
   );
@@ -126,6 +130,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
         location: selectedLocations,
         state,
         category,
+        type: companyType,
         commodities: selectedCommodities.map((c) => c.value),
         mobileNumbers,
       };
@@ -189,9 +194,13 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
                     {selectedCommodities.map((cmd) => (
                       <div
                         key={`${loc}-${cmd.value}`}
-                        className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"
+                        className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center"
                       >
-                        <InputBox label="Commodity" value={cmd.value} readOnly />
+                        <InputBox
+                          label="Commodity"
+                          value={cmd.value}
+                          readOnly
+                        />
                         <InputBox
                           label="Primary Mobile"
                           value={
@@ -221,6 +230,13 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
                               e.target.value
                             )
                           }
+                        />
+                        <InputBox
+                          label="Company Type"
+                          value={companyType
+                            .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
+                            .join(", ")}
+                          readOnly
                         />
                       </div>
                     ))}
