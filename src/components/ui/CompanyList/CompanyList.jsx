@@ -17,26 +17,17 @@ const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  {
-    ssr: false,
-    loading: () => <Loading />,
-  }
-);
-const SearchBox = dynamic(
-  () => import("@/components/common/SearchBox/SearchBox"),
-  {
-    ssr: false,
-    loading: () => <Loading />,
-  }
-);
-const Pagination = dynamic(
-  () => import("@/components/common/Pagination/Pagination"),
-  {
-    loading: () => <Loading />,
-  }
-);
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  ssr: false,
+  loading: () => <Loading />,
+});
+const SearchBox = dynamic(() => import("@/components/common/SearchBox/SearchBox"), {
+  ssr: false,
+  loading: () => <Loading />,
+});
+const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"), {
+  loading: () => <Loading />,
+});
 
 const CompanyList = () => {
   const {
@@ -54,6 +45,8 @@ const CompanyList = () => {
     handleChange,
     searchQuery,
     setSearchQuery,
+    typeFilter,
+    setTypeFilter,
   } = useCompanyList();
 
   const columns = [
@@ -68,11 +61,26 @@ const CompanyList = () => {
     <Suspense fallback={<Loading />}>
       <div className="p-4 space-y-4">
         <Title text="Company List" />
-        <SearchBox
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder="Search company name..."
-        />
+
+        {/* ✅ Type Filter */}
+        <div className="flex flex-wrap items-center gap-4">
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="border rounded-md px-3 py-2"
+          >
+            <option value="">All Types</option>
+            <option value="buyer">Buyer</option>
+            <option value="seller">Seller</option>
+          </select>
+
+          <SearchBox
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search company name..."
+          />
+        </div>
+
         <Table
           data={paginatedData.map((item, index) => ({
             slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
@@ -83,12 +91,14 @@ const CompanyList = () => {
           }))}
           columns={columns}
         />
+
         <Pagination
           currentPage={currentPage}
           totalItems={totalCompanies}
           itemsPerPage={ITEMS_PER_PAGE}
           onPageChange={handlePageChange}
         />
+
         {modalOpen && selectedCompany && (
           <Modal onClose={() => setModalOpen(false)}>
             {editMode ? (
@@ -110,32 +120,32 @@ const CompanyList = () => {
                 />
 
                 <div className="mt-4">
-  <label className="block text-sm font-medium mb-2">Type</label>
-  <div className="flex space-x-4">
-    <label className="flex items-center space-x-2">
-      <input
-        type="checkbox"
-        name="type"
-        value="buyer"
-        checked={formData.type.includes("buyer")}
-        onChange={handleChange}
-        className="form-checkbox"
-      />
-      <span>Buyer</span>
-    </label>
-    <label className="flex items-center space-x-2">
-      <input
-        type="checkbox"
-        name="type"
-        value="seller"
-        checked={formData.type.includes("seller")}
-        onChange={handleChange}
-        className="form-checkbox"
-      />
-      <span>Seller</span>
-    </label>
-  </div>
-</div>
+                  <label className="block text-sm font-medium mb-2">Type</label>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="type"
+                        value="buyer"
+                        checked={formData.type.includes("buyer")}
+                        onChange={handleChange}
+                        className="form-checkbox"
+                      />
+                      <span>Buyer</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        name="type"
+                        value="seller"
+                        checked={formData.type.includes("seller")}
+                        onChange={handleChange}
+                        className="form-checkbox"
+                      />
+                      <span>Seller</span>
+                    </label>
+                  </div>
+                </div>
 
                 <button
                   onClick={handleSaveEdit}

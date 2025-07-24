@@ -19,15 +19,13 @@ function useDebounce(value, delay = 1000) {
 
 export default function useCompanyList() {
   const [companies, setCompanies] = useState([]);
-  const [totalCompanies, setTotalCompanies] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState(""); // "", "buyer", "seller"
   const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
-
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedIndex, setSelectedIndex] = useState(null);
 
@@ -40,20 +38,52 @@ export default function useCompanyList() {
   const fetchCompanies = useCallback(async (page = 1, search = "") => {
     try {
       const res = await axiosInstance.get(
-        `/companies?page=${page}&limit=${ITEMS_PER_PAGE}&search=${encodeURIComponent(
-          search
-        )}`
+        `/companies?page=${page}&limit=1000&search=${encodeURIComponent(search)}`
       );
       setCompanies(res.data.companies || []);
-      setTotalCompanies(res.data.total || 0);
     } catch (error) {
       console.error("Error fetching companies:", error);
     }
   }, []);
 
   useEffect(() => {
-    fetchCompanies(currentPage, debouncedSearchQuery);
-  }, [currentPage, debouncedSearchQuery, fetchCompanies]);
+    fetchCompanies(1, debouncedSearchQuery);
+    setCurrentPage(1);
+  }, [debouncedSearchQuery, fetchCompanies]);
+
+  const filteredCompanies = useMemo(() => {
+    return companies.filter((company) => {
+      const matchesType = typeFilter ? company.type.includes(typeFilter) : true;
+      return matchesType;
+    });
+  }, [companies, typeFilter]);
+
+  const totalCompanies = filteredCompanies.length;
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return filteredCompanies.slice(start, end).map((company) => {
+      const capitalizedName = capitalizeWords(company.name);
+      const capitalizedCategory = capitalizeWords(company.category);
+      const capitalizedType = Array.isArray(company.type)
+        ? company.type.map(capitalizeWords).join(", ")
+        : capitalizeWords(company.type || "");
+
+      return {
+        name: capitalizedName,
+        category: capitalizedCategory,
+        type: capitalizedType,
+        actions: {
+          title: capitalizedName,
+          id: company._id,
+          onDelete: () => handleDelete(company._id),
+          onEdit: () => handleEdit(company),
+          onView: () => handleView(company._id),
+        },
+      };
+    });
+  }, [filteredCompanies, currentPage]);
 
   const handlePageChange = useCallback(
     (page) => {
@@ -145,29 +175,6 @@ export default function useCompanyList() {
     }
   }, []);
 
-  const paginatedData = useMemo(() => {
-    return companies.map((company) => {
-      const capitalizedName = capitalizeWords(company.name);
-      const capitalizedCategory = capitalizeWords(company.category);
-      const capitalizedType = Array.isArray(company.type)
-        ? company.type.map(capitalizeWords).join(", ")
-        : capitalizeWords(company.type || "");
-
-      return {
-        name: capitalizedName,
-        category: capitalizedCategory,
-        type: capitalizedType,
-        actions: {
-          title: capitalizedName,
-          id: company._id,
-          onDelete: () => handleDelete(company._id),
-          onEdit: () => handleEdit(company),
-          onView: () => handleView(company._id),
-        },
-      };
-    });
-  }, [companies, handleDelete, handleEdit, handleView]);
-
   return {
     currentPage,
     totalCompanies,
@@ -183,5 +190,7 @@ export default function useCompanyList() {
     setModalOpen,
     handleSaveEdit,
     handleChange,
+    typeFilter,
+    setTypeFilter,
   };
 }
