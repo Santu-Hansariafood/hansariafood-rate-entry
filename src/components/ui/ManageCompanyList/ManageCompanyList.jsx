@@ -157,7 +157,6 @@ const ManageCompanyList = () => {
         <Title text="Manage Company List" />
 
         <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-green-100">
-          {/* Filter Dropdown */}
           <div className="flex items-center gap-3">
             <label
               htmlFor="typeFilter"

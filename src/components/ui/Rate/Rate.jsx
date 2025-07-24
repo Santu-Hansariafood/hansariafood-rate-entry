@@ -36,7 +36,7 @@ export default function Rate() {
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    buyerOrSeller: "All",
+    type: "all",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -58,7 +58,7 @@ export default function Rate() {
     try {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== "All") {
+        if (value && value !== "all") {
           params.append(key, value);
         }
       });
@@ -132,18 +132,18 @@ export default function Rate() {
       <div className="mb-4">
         <label className="mr-2 font-semibold">Company Type:</label>
         <select
-          value={filters.buyerOrSeller}
+          value={filters.type}
           onChange={(e) =>
             setFilters((prev) => ({
               ...prev,
-              buyerOrSeller: e.target.value,
+              type: e.target.value,
             }))
           }
           className="border p-2 rounded"
         >
-          <option value="All">All</option>
-          <option value="Buyer">Buyer</option>
-          <option value="Seller">Seller</option>
+          <option value="all">All</option>
+          <option value="buyer">Buyer</option>
+          <option value="seller">Seller</option>
         </select>
       </div>
 
