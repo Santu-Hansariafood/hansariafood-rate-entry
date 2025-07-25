@@ -1,11 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import useLoginForm from "@/hooks/Login/useLoginForm";
 import Loading from "@/components/common/Loading/Loading";
+
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
@@ -93,6 +95,15 @@ export default function Login() {
                 >
                   {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                 </button>
+              </div>
+              <div className="text-right mt-2">
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-green-600 hover:underline"
+                  aria-label="Reset your password"
+                >
+                  Forgot Password?
+                </Link>
               </div>
             </div>
 

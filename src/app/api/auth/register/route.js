@@ -126,3 +126,40 @@ export async function DELETE(req) {
     );
   }
 }
+
+export async function PATCH(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    await connectDB();
+    const { mobile } = await req.json();
+
+    if (!mobile) {
+      return NextResponse.json(
+        { message: "Mobile number is required" },
+        { status: 400 }
+      );
+    }
+
+    const user = await User.findOne({ mobile });
+    if (!user) {
+      return NextResponse.json(
+        { message: "Mobile number not registered" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Mobile number found", name: user.name },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Mobile Check Error:", error);
+    return NextResponse.json(
+      { message: "Error checking mobile number" },
+      { status: 500 }
+    );
+  }
+}
