@@ -12,7 +12,7 @@ export default function CompanyTypeFilter({ selectedType, onChange }) {
   return (
     <div className="mb-6 flex justify-center">
       <div className="bg-white shadow-md rounded-xl p-4 w-full max-w-md text-center">
-        <h2 className="text-base font-semibold text-gray-800 mb-4">
+        <h2 className="text-base font-semibold text-green-500 mb-4">
           Filter by Company Type
         </h2>
         <div className="flex flex-wrap justify-center gap-3">

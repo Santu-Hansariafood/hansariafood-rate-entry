@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import useLoginForm from "@/hooks/Login/useLoginForm";
 import Loading from "@/components/common/Loading/Loading";
-
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 export default function Login() {
@@ -46,24 +46,16 @@ export default function Login() {
             aria-describedby="form-errors"
           >
             <div>
-              <label
-                htmlFor="mobile"
-                className="block text-sm font-semibold text-gray-700 mb-2"
-              >
-                Mobile Number
-              </label>
-              <input
-                id="mobile"
-                type="text"
+              <InputBox
+                label="Mobile Number"
+                name="mobile"
+                type="number"
+                maxLength={10}
+                required
+                readOnly={false}
+                placeholder="Enter your mobile number"
                 value={mobile}
                 onChange={handleMobileChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 outline-none"
-                placeholder="Enter your mobile number"
-                maxLength={10}
-                autoComplete="tel"
-                aria-invalid={!!mobileError}
-                aria-describedby={mobileError ? "mobile-error" : undefined}
-                inputMode="numeric"
               />
               {mobileError && (
                 <motion.p
@@ -86,15 +78,12 @@ export default function Login() {
                 Password
               </label>
               <div className="relative">
-                <input
-                  id="password"
+                <InputBox
+                  name="password"
                   type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 outline-none pr-12"
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                  aria-describedby={error ? "error-message" : undefined}
                 />
                 <button
                   type="button"
@@ -126,7 +115,7 @@ export default function Login() {
               className="w-full bg-green-500 text-white py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors duration-200 shadow-lg hover:shadow-xl"
               aria-label="Sign in to your account"
             >
-              Sign In
+              Log In
             </motion.button>
           </form>
         </motion.div>

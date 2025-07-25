@@ -21,7 +21,7 @@ export default function useCompanyList() {
   const [companies, setCompanies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState(""); // "", "buyer", "seller"
+  const [typeFilter, setTypeFilter] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
   const [modalOpen, setModalOpen] = useState(false);
