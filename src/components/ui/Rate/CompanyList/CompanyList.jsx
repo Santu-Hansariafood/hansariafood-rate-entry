@@ -5,8 +5,9 @@ import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import debounce from "lodash.debounce";
 import dynamic from "next/dynamic";
+import useDebouncedSearch from "@/hooks/useDebouncedSearch/useDebouncedSearch";
+
 const NotificationList = dynamic(() =>
   import("@/components/NotificationList/NotificationList")
 );
@@ -20,20 +21,21 @@ export default function CompanyList({
 }) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
+
+  const { results: searchResults, loading } = useDebouncedSearch(
+    searchQuery,
+    "/managecompany"
+  );
 
   const defaultCompanies = useMemo(() => {
     return [...companies].sort((a, b) => a.localeCompare(b));
   }, [companies]);
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
         const response = await axiosInstance.get("/rate", {
-          params: {
-            sort: "updatedAt_desc",
-            limit: 5000,
-          },
+          params: { sort: "updatedAt_desc", limit: 5000 },
         });
 
         const sortedNotifications = response.data.sort(
@@ -47,43 +49,14 @@ export default function CompanyList({
     };
 
     fetchNotifications();
-
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 30 * 1000);
-
+    const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const performSearch = useMemo(
-    () =>
-      debounce(async (query) => {
-        setLoading(true);
-        try {
-          const response = await axiosInstance.get(`/managecompany?q=${query}`);
-          const companyNames = response.data.companies.map((c) => c.name);
-          setSearchResults(companyNames);
-        } catch (err) {
-          console.error("Search error:", err);
-          setSearchResults([]);
-        } finally {
-          setLoading(false);
-        }
-      }, 300),
-    []
-  );
-
-  useEffect(() => {
-    if (searchQuery.trim() !== "") {
-      performSearch(searchQuery);
-    } else {
-      setSearchResults([]);
-    }
-    return () => performSearch.cancel();
-  }, [searchQuery]);
-
   const displayCompanies =
-    searchQuery.trim() === "" ? defaultCompanies : searchResults;
+    searchQuery.trim() === ""
+      ? defaultCompanies
+      : searchResults.map((c) => c.name);
 
   return (
     <Suspense fallback={<Loading />}>
@@ -127,14 +100,11 @@ export default function CompanyList({
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2, delay: index * 0.05 }}
                     onClick={() => onCompanySelect(company)}
-                    className={`
-                      group relative overflow-hidden rounded-xl p-4 transition-all duration-200
-                      ${
-                        completedCompanies[company]
-                          ? "bg-green-50 hover:bg-green-100 border border-green-200"
-                          : "bg-red-50 hover:bg-red-100 border border-red-200"
-                      }
-                    `}
+                    className={`group relative overflow-hidden rounded-xl p-4 transition-all duration-200 ${
+                      completedCompanies[company]
+                        ? "bg-green-50 hover:bg-green-100 border border-green-200"
+                        : "bg-red-50 hover:bg-red-100 border border-red-200"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <div

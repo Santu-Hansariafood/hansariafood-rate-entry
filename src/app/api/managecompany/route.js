@@ -142,7 +142,7 @@ export async function GET(req) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    const search = searchParams.get("search") || "";
+    const search = searchParams.get("search") || searchParams.get("q") || "";
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
     const typeFilter = searchParams.get("type");
