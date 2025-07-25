@@ -22,17 +22,19 @@ const ForgotPassword = () => {
 
     try {
       setIsLoading(true);
-      const res = await axiosInstance.patch(`/auth/register`, { mobile });
+      const res = await axiosInstance.patch("/auth/register", { mobile });
 
       if (res.status === 200) {
         toast.success(
           `Hello ${res.data.name}, password sent to your WhatsApp number.`
         );
-      } else {
-        toast.error("Mobile number not registered.");
       }
     } catch (error) {
-      toast.error("Something went wrong.");
+      if (error.response?.status === 404) {
+        toast.error("Mobile number not registered.");
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +54,6 @@ const ForgotPassword = () => {
         transition={{ delay: 0.2 }}
       >
         <Title text="Forgot Password" />
-
         <p className="text-center text-gray-600 mb-6">
           Send password to your registered WhatsApp number
         </p>
@@ -63,10 +64,7 @@ const ForgotPassword = () => {
               Registered Mobile Number
             </label>
             <div className="relative">
-              <Phone
-                className="absolute left-4 top-3.5 text-gray-400"
-                size={20}
-              />
+              <Phone className="absolute left-4 top-3.5 text-gray-400" size={20} />
               <input
                 type="tel"
                 maxLength={10}
@@ -93,10 +91,7 @@ const ForgotPassword = () => {
 
         <p className="mt-6 text-center text-sm text-gray-500">
           Remembered your password?{" "}
-          <Link
-            href="/"
-            className="text-green-600 font-semibold hover:underline"
-          >
+          <Link href="/" className="text-green-600 font-semibold hover:underline">
             Log In
           </Link>
         </p>

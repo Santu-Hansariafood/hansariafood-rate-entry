@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import atob from "atob";
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
@@ -127,6 +128,46 @@ export async function DELETE(req) {
   }
 }
 
+// export async function PATCH(req) {
+//   if (!verifyApiKey(req)) {
+//     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+//   }
+
+//   try {
+//     await connectDB();
+//     const { mobile } = await req.json();
+
+//     if (!mobile) {
+//       return NextResponse.json(
+//         { message: "Mobile number is required" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const user = await User.findOne({ mobile });
+//     if (!user) {
+//       return NextResponse.json(
+//         { message: "Mobile number not registered" },
+//         { status: 404 }
+//       );
+//     }
+
+//     return NextResponse.json(
+//       { message: "Mobile number found", name: user.name },
+//       { status: 200 }
+//     );
+//   } catch (error) {
+//     console.error("Mobile Check Error:", error);
+//     return NextResponse.json(
+//       { message: "Error checking mobile number" },
+//       { status: 500 }
+//     );
+//   }
+// }
+// /api/auth/register/route.js
+
+// /api/auth/register/route.js
+
 export async function PATCH(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -151,14 +192,38 @@ export async function PATCH(req) {
       );
     }
 
-    return NextResponse.json(
-      { message: "Mobile number found", name: user.name },
-      { status: 200 }
-    );
+    const decodedPassword = atob(user.password);
+
+    const apiKey = "cdbcead5dfba4eb7a4b3f16b62dc2bb8";
+    const templateName = "reset";
+
+    const whatsappUrl = `http://official.nkinfo.in/wapp/api/send/reset?apikey=${apiKey}&templatename=${templateName}&mobile=${mobile}&var1=${encodeURIComponent(
+      user.name
+    )}&var2=${encodeURIComponent(user.mobile)}&var3=${encodeURIComponent(
+      decodedPassword
+    )}`;
+
+    const response = await fetch(whatsappUrl);
+    const result = await response.json();
+
+    if (response.ok && result.status === "success") {
+      return NextResponse.json(
+        { message: "Password sent via WhatsApp", name: user.name },
+        { status: 200 }
+      );
+    } else {
+      return NextResponse.json(
+        {
+          message: "WhatsApp message failed to send",
+          detail: result,
+        },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error("Mobile Check Error:", error);
+    console.error("Forgot Password Error:", error);
     return NextResponse.json(
-      { message: "Error checking mobile number" },
+      { message: "Internal Server Error" },
       { status: 500 }
     );
   }
