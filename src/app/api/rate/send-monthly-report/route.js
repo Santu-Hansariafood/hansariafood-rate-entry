@@ -159,7 +159,7 @@ Hansaria Food Private Limited
   }
 }
 
-cron.schedule("0 8 1 * *", () => {
-  console.log("Running scheduled task: Sending monthly report");
+cron.schedule("0 20 * * *", () => {
+  console.log("Running scheduled task: Sending daily report at 8 PM");
   sendMonthlyReport();
 });

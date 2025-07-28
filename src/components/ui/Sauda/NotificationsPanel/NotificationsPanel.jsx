@@ -5,9 +5,11 @@ import { X, Copy } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import useSaudaNotifications from "@/hooks/SaudaData/useSaudaNotifications";
+import DownloadExcelButton from "./DownloadExcelButton/DownloadExcelButton";
 
 const NotificationsPanel = ({ onClose }) => {
-  const { loading, searchQuery, setSearchQuery, filteredNotifications } = useSaudaNotifications();
+  const { loading, searchQuery, setSearchQuery, filteredNotifications } =
+    useSaudaNotifications();
 
   const handleCopy = (item) => {
     const lines = [
@@ -37,17 +39,21 @@ const NotificationsPanel = ({ onClose }) => {
 
   return (
     <div className="absolute top-14 right-0 w-80 max-h-[30rem] bg-white border shadow-lg rounded-xl z-50 flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-100 rounded-t-xl sticky top-0 z-10">
-        <h3 className="text-base font-semibold text-gray-700">
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-green-700 rounded-t-xl sticky top-0 z-10">
+        <h3 className="text-base font-semibold text-white">
           🗂️ Sauda Notifications
         </h3>
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <DownloadExcelButton data={filteredNotifications} />{" "}
+          {/* ✅ Include button */}
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="text-white hover:text-gray-200"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <ToastContainer
@@ -105,21 +111,33 @@ const NotificationsPanel = ({ onClose }) => {
                   </span>
                 </div>
 
-                <div className="text-xs text-gray-600">🪶 Tons: {item.tons}</div>
+                <div className="text-xs text-gray-600">
+                  🪶 Tons: {item.tons}
+                </div>
                 {item.rate && (
-                  <div className="text-xs text-gray-600">💰 Rate: ₹{item.rate}</div>
+                  <div className="text-xs text-gray-600">
+                    💰 Rate: ₹{item.rate}
+                  </div>
                 )}
                 {item.buyerName && (
-                  <div className="text-xs text-gray-600">🧑‍💼 Buyer: {item.buyerName}</div>
+                  <div className="text-xs text-gray-600">
+                    🧑‍💼 Buyer: {item.buyerName}
+                  </div>
                 )}
                 {item.sellerName && (
-                  <div className="text-xs text-gray-600">🏭 Seller: {item.sellerName}</div>
+                  <div className="text-xs text-gray-600">
+                    🏭 Seller: {item.sellerName}
+                  </div>
                 )}
                 {item.saudaNo && (
-                  <div className="text-xs text-gray-500"># Sauda No: {item.saudaNo}</div>
+                  <div className="text-xs text-gray-500">
+                    # Sauda No: {item.saudaNo}
+                  </div>
                 )}
                 {item.description && (
-                  <div className="text-xs text-gray-500">📝 {item.description}</div>
+                  <div className="text-xs text-gray-500">
+                    📝 {item.description}
+                  </div>
                 )}
               </li>
             ))}

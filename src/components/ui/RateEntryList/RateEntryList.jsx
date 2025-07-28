@@ -6,7 +6,7 @@ import { Building2, MapPin, IndianRupee, Clock4 } from "lucide-react";
 import useRateEntries from "@/hooks/RateEntries/useRateEntries";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
-
+const DownloadRateEntriesExcel = dynamic(()=> import("./DownloadRateEntriesExcel/DownloadRateEntriesExcel"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 const RateEntryList = () => {
@@ -21,7 +21,11 @@ const RateEntryList = () => {
   return (
     <Suspense fallback={<Loading />}>
       <div className="p-4">
-        <Title text="📊 Today Entries by User" />
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <Title text="📊 Today Entries by User" />
+          <DownloadRateEntriesExcel />
+        </div>
+
         {Object.keys(groupedRates).length === 0 ? (
           <div className="text-center text-gray-500">
             No rate entries found.
@@ -67,11 +71,11 @@ const RateEntryList = () => {
                           transition={{ delay: idx * 0.05 }}
                         >
                           <div className="text-sm flex items-center gap-2 text-blue-700 font-medium">
-                            <Building2 size={16} /> 
+                            <Building2 size={16} />
                             <strong>Company:</strong> {entry.company}
                           </div>
                           <div className="text-sm flex items-center gap-2 text-purple-700">
-                            <MapPin size={16} /> 
+                            <MapPin size={16} />
                             <strong>Location:</strong> {entry.location}
                           </div>
                           <div className="text-sm flex items-center gap-2 text-green-600 font-semibold">
@@ -81,7 +85,9 @@ const RateEntryList = () => {
                           <div className="text-sm flex items-center gap-2 text-gray-500">
                             <Clock4 size={16} />
                             <strong>Updated:</strong>{" "}
-                            {new Date(entry.lastUpdated).toLocaleString("en-GB")}
+                            {new Date(entry.lastUpdated).toLocaleString(
+                              "en-GB"
+                            )}
                           </div>
                         </motion.div>
                       ))}
