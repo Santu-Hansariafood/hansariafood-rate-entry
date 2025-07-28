@@ -116,7 +116,6 @@ const DownloadRateEntriesExcel = () => {
       title="Download Rate Entries as Excel"
     >
       <Download size={16} />
-      Download Excel
     </button>
   );
 };

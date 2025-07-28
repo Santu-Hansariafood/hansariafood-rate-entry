@@ -9,6 +9,7 @@ export default function UserTable({
   users,
   handleOpenPopup,
   handleDeleteUser,
+  onView,
 }) {
   const columns = [
     { header: "Name", accessor: "name" },
@@ -39,6 +40,13 @@ export default function UserTable({
           <Trash2 size={16} />
           Remove
         </motion.button>
+
+        <button
+          className="text-sm text-blue-600 hover:underline"
+          onClick={() => onView(user)}
+        >
+          View
+        </button>
       </div>
     ),
   }));

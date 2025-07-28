@@ -253,73 +253,107 @@ export default function ManageCompanyPopup({ name, onClose }) {
                             />
                             <span className="text-sm text-gray-600">Tons</span>
 
-                            <div className="relative w-full max-w-[300px]">
-                              <input
-                                type="text"
-                                placeholder="Desc"
-                                className="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                value={e.description}
-                                style={{ resize: "vertical" }}
-                                onChange={(ev) => {
-                                  const val = ev.target.value;
-                                  handleChange(key, idx, "description", val);
-                                  fetchDescriptionSuggestions(val, key, idx);
-                                }}
-                                onFocus={() => {
-                                  if (e.description.length >= 2) {
-                                    fetchDescriptionSuggestions(
-                                      e.description,
-                                      key,
-                                      idx
+                            <div className="flex flex-col gap-1 w-full">
+                              {/* Description Input */}
+                              <div className="relative w-full max-w-[300px]">
+                                <input
+                                  type="text"
+                                  placeholder="Desc"
+                                  className="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                  value={e.description}
+                                  onChange={(ev) => {
+                                    const val = ev.target.value;
+                                    handleChange(key, idx, "description", val);
+                                    fetchDescriptionSuggestions(val, key, idx);
+                                  }}
+                                  onFocus={() => {
+                                    if (e.description.length >= 2) {
+                                      fetchDescriptionSuggestions(
+                                        e.description,
+                                        key,
+                                        idx
+                                      );
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    setTimeout(
+                                      () => setDescSuggestions([]),
+                                      200
                                     );
-                                  }
-                                }}
-                                onBlur={() => {
-                                  setTimeout(() => setDescSuggestions([]), 200);
-                                }}
-                              />
+                                  }}
+                                />
 
-                              {descSuggestions.length > 0 &&
-                                descKey === `${key}-${idx}` && (
-                                  <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border border-gray-300 bg-white rounded shadow-lg">
-                                    {descSuggestions.map((s, i) => (
-                                      <li
-                                        key={i}
-                                        className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-blue-100"
-                                        onClick={() => {
-                                          handleChange(
-                                            key,
-                                            idx,
-                                            "description",
-                                            s
-                                          );
-                                          setDescSuggestions([]);
-
-                                          const quantity = Number(
-                                            entries[key]?.[idx]?.tons || 0
-                                          );
-
-                                          axiosInstance
-                                            .post(
-                                              "/save-sauda/description-stats",
-                                              {
-                                                description: s,
-                                                quantity,
-                                              }
-                                            )
-                                            .catch((err) => {
-                                              console.error(
-                                                "Failed to update description stats:",
-                                                err
+                                {descSuggestions.length > 0 &&
+                                  descKey === `${key}-${idx}` && (
+                                    <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border border-gray-300 bg-white rounded shadow-lg">
+                                      {descSuggestions.map((s, i) => (
+                                        <li
+                                          key={i}
+                                          className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-blue-100"
+                                          onClick={() => {
+                                            handleChange(
+                                              key,
+                                              idx,
+                                              "description",
+                                              s
+                                            );
+                                            setDescSuggestions([]);
+                                            const quantity = Number(
+                                              entries[key]?.[idx]?.tons || 0
+                                            );
+                                            axiosInstance
+                                              .post(
+                                                "/save-sauda/description-stats",
+                                                {
+                                                  description: s,
+                                                  quantity,
+                                                }
+                                              )
+                                              .catch((err) =>
+                                                console.error(
+                                                  "Failed to update description stats:",
+                                                  err
+                                                )
                                               );
-                                            });
-                                        }}
-                                      >
-                                        {s}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
+                                          }}
+                                        >
+                                          {s}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                              </div>
+
+                              {/* + Others button */}
+                              {!e.showOthers && (
+                                <button
+                                  type="button"
+                                  className="text-xs text-blue-500 underline w-fit"
+                                  onClick={() =>
+                                    handleChange(key, idx, "showOthers", true)
+                                  }
+                                >
+                                  + Others
+                                </button>
+                              )}
+
+                              {/* Others input (only if enabled) */}
+                              {e.showOthers && (
+                                <input
+                                  type="text"
+                                  placeholder="Others"
+                                  className="w-full px-3 py-2 rounded border border-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                                  value={e.others || ""}
+                                  onChange={(ev) =>
+                                    handleChange(
+                                      key,
+                                      idx,
+                                      "others",
+                                      ev.target.value
+                                    )
+                                  }
+                                />
+                              )}
                             </div>
 
                             <input
