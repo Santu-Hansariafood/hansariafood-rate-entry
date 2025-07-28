@@ -192,38 +192,49 @@ export async function PATCH(req) {
       );
     }
 
-    const decodedPassword = atob(user.password);
+    // Base64 encode the password
+    const encodedPassword = user.password ? btoa(user.password) : "";
+
+    // Template variables
+    const var1 = (user.name || "").trim();
+    const var2 = `Your password is ${encodedPassword}. Please login at https://hansariafood.site`;
+
+    if (!var1 || !var2) {
+      console.error("❌ Template vars missing", { var1, var2 });
+      return NextResponse.json(
+        { message: "WhatsApp template variables are blank", var1, var2 },
+        { status: 400 }
+      );
+    }
 
     const apiKey = "cdbcead5dfba4eb7a4b3f16b62dc2bb8";
-    const templateName = "reset";
+    const templateName = "details_confirmation";
 
-    const whatsappUrl = `http://official.nkinfo.in/wapp/api/send/reset?apikey=${apiKey}&templatename=${templateName}&mobile=${mobile}&var1=${encodeURIComponent(
-      user.name
-    )}&var2=${encodeURIComponent(user.mobile)}&var3=${encodeURIComponent(
-      decodedPassword
-    )}`;
+    const whatsappUrl = `http://official.nkinfo.in/wapp/api/v2/send/bytemplate/json?apikey=${apiKey}&templatename=${templateName}&mobile=${mobile}&var1=${encodeURIComponent(
+      var1
+    )}&var2=${encodeURIComponent(var2)}`;
+
+    console.log("📨 Sending WhatsApp:", whatsappUrl);
 
     const response = await fetch(whatsappUrl);
     const result = await response.json();
 
     if (response.ok && result.status === "success") {
       return NextResponse.json(
-        { message: "Password sent via WhatsApp", name: user.name },
+        { message: "Details sent via WhatsApp", name: user.name },
         { status: 200 }
       );
     } else {
+      console.error("❌ WhatsApp API Error:", result);
       return NextResponse.json(
-        {
-          message: "WhatsApp message failed to send",
-          detail: result,
-        },
+        { message: "WhatsApp message failed to send", detail: result },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error("Forgot Password Error:", error);
+    console.error("❌ Forgot Password Error:", error);
     return NextResponse.json(
-      { message: "Internal Server Error" },
+      { message: "Internal Server Error", error: error.message },
       { status: 500 }
     );
   }

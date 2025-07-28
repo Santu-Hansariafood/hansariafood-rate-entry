@@ -24,16 +24,26 @@ const ForgotPassword = () => {
       setIsLoading(true);
       const res = await axiosInstance.patch("/auth/register", { mobile });
 
-      if (res.status === 200) {
+      if (
+        res?.data &&
+        res.status === 200 &&
+        res.data.message?.includes("Details sent")
+      ) {
         toast.success(
           `Hello ${res.data.name}, password sent to your WhatsApp number.`
         );
+      } else {
+        toast.error("Unexpected response from server.");
+        console.warn("Unexpected WhatsApp response:", res.data);
       }
     } catch (error) {
-      if (error.response?.status === 404) {
-        toast.error("Mobile number not registered.");
+      const detail = error.response?.data;
+      console.error("❌ Frontend Error:", detail);
+
+      if (detail?.message) {
+        toast.error(detail.message);
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error("Something went wrong.");
       }
     } finally {
       setIsLoading(false);
