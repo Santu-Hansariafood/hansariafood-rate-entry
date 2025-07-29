@@ -24,7 +24,8 @@ const NotificationsPanel = ({ onClose }) => {
       item.buyerName ? `*Buyer:* ${item.buyerName}` : null,
       item.sellerName ? `*Seller:* ${item.sellerName}` : null,
       item.description ? `*Seller Name:* ${item.description}` : null,
-      `*Paymet Terms:*`,
+      item.others ? `*Notes:* ${item.others}` : null,
+      `*Payment Terms:*`,
       `*_Proper Sauda Contract will be Shared Shortly. Please Check Email_*`,
       ` `,
       `*Thanks*,`,
@@ -45,7 +46,6 @@ const NotificationsPanel = ({ onClose }) => {
         </h3>
         <div className="flex items-center gap-2">
           <DownloadExcelButton data={filteredNotifications} />{" "}
-          {/* ✅ Include button */}
           <button
             onClick={onClose}
             aria-label="Close"
@@ -137,6 +137,11 @@ const NotificationsPanel = ({ onClose }) => {
                 {item.description && (
                   <div className="text-xs text-gray-500">
                     📝 {item.description}
+                  </div>
+                )}
+                {item.others && (
+                  <div className="text-xs text-gray-500">
+                    🗒️ Notes: {item.others}
                   </div>
                 )}
               </li>

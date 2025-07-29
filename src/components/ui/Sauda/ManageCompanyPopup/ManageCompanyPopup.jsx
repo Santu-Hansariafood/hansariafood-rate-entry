@@ -254,7 +254,6 @@ export default function ManageCompanyPopup({ name, onClose }) {
                             <span className="text-sm text-gray-600">Tons</span>
 
                             <div className="flex flex-col gap-1 w-full">
-                              {/* Description Input */}
                               <div className="relative w-full max-w-[300px]">
                                 <input
                                   type="text"
@@ -324,7 +323,6 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                   )}
                               </div>
 
-                              {/* + Others button */}
                               {!e.showOthers && (
                                 <button
                                   type="button"
@@ -337,7 +335,6 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                 </button>
                               )}
 
-                              {/* Others input (only if enabled) */}
                               {e.showOthers && (
                                 <input
                                   type="text"

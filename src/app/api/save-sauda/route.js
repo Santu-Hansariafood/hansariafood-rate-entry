@@ -24,6 +24,7 @@ export async function POST(req) {
       saudaEntries[key] = list.map((entry) => ({
         tons: Number(entry.tons) || 0,
         description: entry.description || "",
+        others: entry.others || "",
         saudaNo: String(entry.saudaNo || ""),
         finalRate: Number(entry.finalRate) || 0,
         unit: entry.unit,

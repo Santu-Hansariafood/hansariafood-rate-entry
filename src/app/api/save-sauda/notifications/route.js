@@ -45,6 +45,7 @@ export async function GET(req) {
             sellerName: item.sellerName || "",
             saudaNo: item.saudaNo || "",
             description: item.description || "",
+            others: item.others || "",
             unit: item.unit || "",
             time: time || "00:00",
           });
