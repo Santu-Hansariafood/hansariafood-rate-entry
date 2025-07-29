@@ -69,12 +69,6 @@ export default function RegisterList() {
           {(loadingUsers || loadingCompanies) && <Loading />}
         </div>
 
-        {/* <UserTable
-          users={users}
-          handleOpenPopup={handleOpenPopup}
-          handleDeleteUser={handleDeleteUser}
-          saving={saving}
-        /> */}
         <UserTable
           users={users}
           handleOpenPopup={handleOpenPopup}

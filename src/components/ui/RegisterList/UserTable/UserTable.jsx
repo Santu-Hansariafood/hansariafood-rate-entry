@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Eye } from "lucide-react";
 import dynamic from "next/dynamic";
+
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 
 export default function UserTable({
@@ -20,7 +21,7 @@ export default function UserTable({
   const usersWithActions = users.map((user) => ({
     ...user,
     action: (
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -41,12 +42,15 @@ export default function UserTable({
           Remove
         </motion.button>
 
-        <button
-          className="text-sm text-blue-600 hover:underline"
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => onView(user)}
+          className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
         >
+          <Eye size={16} />
           View
-        </button>
+        </motion.button>
       </div>
     ),
   }));
