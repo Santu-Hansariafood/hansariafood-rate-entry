@@ -1,12 +1,15 @@
 "use client";
 
-import React, { useState, useMemo, Suspense, useRef } from "react";
+import React, { useState, Suspense, useRef } from "react";
 import { X, CalendarDays, Download } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-import { format, startOfWeek, addDays } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { format } from "date-fns";
+
+import useWeeklyDates from "@/hooks/CompanyViewPopup/useWeeklyDates";
+import useGroupedCompanies from "@/hooks/CompanyViewPopup/useGroupedCompanies";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
@@ -20,21 +23,8 @@ export default function CompanyViewPopup({
   const [downloading, setDownloading] = useState(false);
   const downloadRef = useRef();
 
-  const weekDates = useMemo(() => {
-    const start = startOfWeek(selectedDate, { weekStartsOn: 0 });
-    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-  }, [selectedDate]);
-
-  const validCompanies = assignedCompanies.filter(
-    (company) => company?.companyId?.name
-  );
-
-  const groupedCompanies = useMemo(() => {
-    return validCompanies.map((company) => ({
-      name: company.companyId.name,
-      locations: company.locations || [],
-    }));
-  }, [validCompanies]);
+  const weekDates = useWeeklyDates(selectedDate);
+  const groupedCompanies = useGroupedCompanies(assignedCompanies);
 
   const handleDownload = async () => {
     if (!downloadRef.current) return;
@@ -66,22 +56,18 @@ export default function CompanyViewPopup({
       const pdf = new jsPDF("landscape", "mm", "a4");
 
       const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
       let heightLeft = imgHeight;
       let position = 0;
 
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+      heightLeft -= pdf.internal.pageSize.getHeight();
 
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+        heightLeft -= pdf.internal.pageSize.getHeight();
       }
 
       pdf.save(`Weekly_Rate_Sheet_${userName || "User"}.pdf`);
