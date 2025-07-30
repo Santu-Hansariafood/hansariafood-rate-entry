@@ -169,17 +169,18 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
           <table className="w-full overflow-hidden rounded-lg border text-sm shadow-sm">
             <thead>
-              <tr className="bg-green-500 text-left font-semibold text-gray-100">
-                <th className="px-3 py-2">Sl.</th>
-                <th className="px-3 py-2">Unit</th>
-                <th className="px-3 py-2">Commodity</th>
-                <th className="px-3 py-2">Target Quantity</th>
-                <th className="px-3 py-2">Rate</th>
-                <th className="px-3 py-2">Sauda (Tons + Desc)</th>
-                <th className="px-3 py-2">Sauda No</th>
-                <th className="px-3 py-2">Total Tons</th>
+              <tr className="bg-green-600 text-white text-left">
+                <th className="px-4 py-3">Sl.</th>
+                <th className="px-4 py-3">Unit</th>
+                <th className="px-4 py-3">Commodity</th>
+                <th className="px-4 py-3">Target Quantity</th>
+                <th className="px-4 py-3">Rate</th>
+                <th className="px-4 py-3"></th>
+                <th className="px-4 py-3">Sauda Details</th>
+                <th className="px-4 py-3">Total Tons</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-gray-200">
               {company.location.flatMap((unit) =>
                 company.commodities.map((commodity) => {
@@ -218,146 +219,116 @@ export default function ManageCompanyPopup({ name, onClose }) {
                         {list.map((e, idx) => (
                           <div
                             key={idx}
-                            className="flex flex-wrap items-center gap-2 border-b border-dashed border-gray-200 pb-1"
+                            className="flex flex-wrap items-center gap-3 border border-gray-200 rounded-md p-3 bg-gray-50 shadow-sm"
                           >
                             <span className="font-semibold text-gray-500">
                               {String.fromCharCode(97 + idx)}.
                             </span>
-                            <span className="text-sm text-gray-500">₹</span>
+
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">₹</span>
+                              <input
+                                className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
+                                placeholder="Rate"
+                                type="number"
+                                value={e.finalRate}
+                                onChange={(ev) =>
+                                  handleChange(
+                                    key,
+                                    idx,
+                                    "finalRate",
+                                    ev.target.value
+                                  )
+                                }
+                              />
+                            </div>
 
                             <input
                               className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
-                              placeholder="Final Rate"
-                              type="number"
-                              min={0}
-                              value={e.finalRate}
-                              onChange={(ev) =>
-                                handleChange(
-                                  key,
-                                  idx,
-                                  "finalRate",
-                                  ev.target.value
-                                )
-                              }
-                            />
-
-                            <input
-                              className="w-16 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
                               placeholder="Tons"
                               type="number"
-                              min={0}
                               value={e.tons}
                               onChange={(ev) =>
                                 handleChange(key, idx, "tons", ev.target.value)
                               }
                             />
-                            <span className="text-sm text-gray-600">Tons</span>
 
-                            <div className="flex flex-col gap-1 w-full">
-                              <div className="relative w-full max-w-[300px]">
-                                <input
-                                  type="text"
-                                  placeholder="Desc"
-                                  className="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                  value={e.description}
-                                  onChange={(ev) => {
-                                    const val = ev.target.value;
-                                    handleChange(key, idx, "description", val);
-                                    fetchDescriptionSuggestions(val, key, idx);
-                                  }}
-                                  onFocus={() => {
-                                    if (e.description.length >= 2) {
-                                      fetchDescriptionSuggestions(
-                                        e.description,
-                                        key,
-                                        idx
-                                      );
-                                    }
-                                  }}
-                                  onBlur={() => {
-                                    setTimeout(
-                                      () => setDescSuggestions([]),
-                                      200
-                                    );
-                                  }}
-                                />
-
-                                {descSuggestions.length > 0 &&
-                                  descKey === `${key}-${idx}` && (
-                                    <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border border-gray-300 bg-white rounded shadow-lg">
-                                      {descSuggestions.map((s, i) => (
-                                        <li
-                                          key={i}
-                                          className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-blue-100"
-                                          onClick={() => {
-                                            handleChange(
-                                              key,
-                                              idx,
-                                              "description",
-                                              s
-                                            );
-                                            setDescSuggestions([]);
-                                            const quantity = Number(
-                                              entries[key]?.[idx]?.tons || 0
-                                            );
-                                            axiosInstance
-                                              .post(
-                                                "/save-sauda/description-stats",
-                                                {
-                                                  description: s,
-                                                  quantity,
-                                                }
-                                              )
-                                              .catch((err) =>
-                                                console.error(
-                                                  "Failed to update description stats:",
-                                                  err
-                                                )
-                                              );
-                                          }}
-                                        >
-                                          {s}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
-                              </div>
-
-                              {!e.showOthers && (
-                                <button
-                                  type="button"
-                                  className="text-xs text-blue-500 underline w-fit"
-                                  onClick={() =>
-                                    handleChange(key, idx, "showOthers", true)
-                                  }
-                                >
-                                  + Others
-                                </button>
-                              )}
-
-                              {e.showOthers && (
-                                <input
-                                  type="text"
-                                  placeholder="Others"
-                                  className="w-full px-3 py-2 rounded border border-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                                  value={e.others || ""}
-                                  onChange={(ev) =>
-                                    handleChange(
-                                      key,
-                                      idx,
-                                      "others",
-                                      ev.target.value
-                                    )
-                                  }
-                                />
-                              )}
+                            <div className="flex-grow">
+                              <input
+                                type="text"
+                                placeholder="Description"
+                                className="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-300"
+                                value={e.description}
+                                onChange={(ev) => {
+                                  const val = ev.target.value;
+                                  handleChange(key, idx, "description", val);
+                                  fetchDescriptionSuggestions(val, key, idx);
+                                }}
+                              />
+                              {descSuggestions.length > 0 &&
+                                descKey === `${key}-${idx}` && (
+                                  <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border border-gray-300 bg-white rounded shadow-md">
+                                    {descSuggestions.map((s, i) => (
+                                      <li
+                                        key={i}
+                                        className="cursor-pointer px-4 py-2 text-sm hover:bg-blue-100"
+                                        onClick={() => {
+                                          handleChange(
+                                            key,
+                                            idx,
+                                            "description",
+                                            s
+                                          );
+                                          setDescSuggestions([]);
+                                          axiosInstance.post(
+                                            "/save-sauda/description-stats",
+                                            {
+                                              description: s,
+                                              quantity: Number(
+                                                entries[key]?.[idx]?.tons || 0
+                                              ),
+                                            }
+                                          );
+                                        }}
+                                      >
+                                        {s}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
                             </div>
 
+                            {e.showOthers ? (
+                              <input
+                                type="text"
+                                placeholder="Others"
+                                className="w-full rounded border border-yellow-300 px-3 py-2 focus:ring-2 focus:ring-yellow-400"
+                                value={e.others || ""}
+                                onChange={(ev) =>
+                                  handleChange(
+                                    key,
+                                    idx,
+                                    "others",
+                                    ev.target.value
+                                  )
+                                }
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                className="text-xs text-blue-600 underline"
+                                onClick={() =>
+                                  handleChange(key, idx, "showOthers", true)
+                                }
+                              >
+                                + Others
+                              </button>
+                            )}
+
                             <input
-                              className="w-20 rounded border text-xl border-orange-300 px-2 py-1 text-orange-700 focus:ring-2 focus:ring-orange-500"
+                              className="w-24 rounded border border-orange-400 px-2 py-1 focus:ring-2 focus:ring-orange-500"
                               placeholder="Sauda No"
                               type="number"
-                              min={0}
                               value={e.saudaNo}
                               onChange={(ev) =>
                                 handleChange(
@@ -420,26 +391,29 @@ export default function ManageCompanyPopup({ name, onClose }) {
             />
           )}
 
-          <div className="mt-4 flex gap-3">
+          <div className="mt-6 flex flex-wrap justify-end gap-3">
             <button
-              className="flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+              className="flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700"
               onClick={handleSave}
             >
-              <Save className="h-4 w-4" /> Save
+              <Save className="h-4 w-4" />
+              Save
             </button>
 
             <button
-              className="flex items-center gap-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               onClick={handleShare}
             >
-              <Share2 className="h-4 w-4" /> Share Sauda
+              <Share2 className="h-4 w-4" />
+              Share Sauda
             </button>
 
             <button
-              className="flex items-center gap-2 rounded bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
+              className="flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
               onClick={handleExportRate}
             >
-              <ArrowDownToLine className="h-4 w-4" /> Export Rate
+              <ArrowDownToLine className="h-4 w-4" />
+              Export Rate
             </button>
           </div>
         </div>
