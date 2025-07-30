@@ -321,7 +321,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                   handleChange(key, idx, "showOthers", true)
                                 }
                               >
-                                + Others
+                                + notes
                               </button>
                             )}
 
