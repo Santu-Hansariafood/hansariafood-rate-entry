@@ -12,25 +12,25 @@ const ManageCompanyPopup = dynamic(
 );
 const NotificationsPanel = dynamic(
   () => import("@/components/ui/Sauda/NotificationsPanel/NotificationsPanel"),
-  {
-    suspense: true,
-  }
+  { suspense: true }
 );
-
+const BuyerSellerFilter = dynamic(
+  () => import("@/components/common/BuyerSellerFilter/BuyerSellerFilter"),
+  { suspense: true }
+);
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   suspense: true,
 });
-
-const InputBox = dynamic(
-  () => import("@/components/common/InputBox/InputBox"),
-  { suspense: true }
-);
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  suspense: true,
+});
 
 const Sauda = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
 
+  // ✅ Use from the hook
   const {
     companies,
     rateData,
@@ -38,6 +38,8 @@ const Sauda = () => {
     loading,
     hasRate,
     updateCompanyStatus,
+    filterType,
+    setFilterType,
   } = useSaudaData();
 
   const filteredCompanies = useMemo(() => {
@@ -83,6 +85,9 @@ const Sauda = () => {
             <NotificationsPanel onClose={() => setShowNotifications(false)} />
           )}
         </div>
+
+        {/* ✅ Controlled filter UI */}
+        <BuyerSellerFilter value={filterType} onChange={setFilterType} />
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center w-full h-60">

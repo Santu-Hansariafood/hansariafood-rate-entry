@@ -7,6 +7,7 @@ const useSaudaData = () => {
   const [rateData, setRateData] = useState([]);
   const [saudaStatusMap, setSaudaStatusMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState("all"); // "all", "buyer", "seller"
 
   const today = useMemo(() => {
     return new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
@@ -35,8 +36,14 @@ const useSaudaData = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const res = await axiosInstance.get(`/companies?limit=1000`);
+        let query = `/companies?limit=1000`;
+        if (filterType !== "all") {
+          query += `&type=${filterType}`;
+        }
+
+        const res = await axiosInstance.get(query);
         const fetchedCompanies = res.data.companies || [];
         setCompanies(fetchedCompanies);
 
@@ -101,7 +108,7 @@ const useSaudaData = () => {
     };
 
     fetchData();
-  }, [today]);
+  }, [today, filterType]);
 
   return {
     companies,
@@ -110,6 +117,8 @@ const useSaudaData = () => {
     loading,
     hasRate,
     updateCompanyStatus,
+    filterType,
+    setFilterType, // use this to control filter from UI
   };
 };
 
