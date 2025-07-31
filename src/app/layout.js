@@ -66,6 +66,11 @@ export default function RootLayout({ children }) {
           name="google-site-verification"
           content="dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4"
         />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="robots" content="index, follow" />
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="author" content="Hansaria Food Private Limited" />
+        <link rel="canonical" href="https://www.hansariafood.site" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
