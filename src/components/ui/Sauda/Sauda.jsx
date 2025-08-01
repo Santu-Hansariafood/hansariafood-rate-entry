@@ -27,7 +27,6 @@ const InputBox = dynamic(
     suspense: true,
   }
 );
-
 const Legend = dynamic(() => import("@/components/ui/Sauda/Legend/Legend"), {
   suspense: true,
 });
