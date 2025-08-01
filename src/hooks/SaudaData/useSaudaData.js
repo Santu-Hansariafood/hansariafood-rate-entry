@@ -7,7 +7,7 @@ const useSaudaData = () => {
   const [rateData, setRateData] = useState([]);
   const [saudaStatusMap, setSaudaStatusMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState("all"); // "all", "buyer", "seller"
+  const [filterType, setFilterType] = useState("all");
 
   const today = useMemo(() => {
     return new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
@@ -118,7 +118,7 @@ const useSaudaData = () => {
     hasRate,
     updateCompanyStatus,
     filterType,
-    setFilterType, // use this to control filter from UI
+    setFilterType,
   };
 };
 

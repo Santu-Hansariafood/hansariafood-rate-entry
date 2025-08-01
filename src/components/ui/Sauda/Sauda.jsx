@@ -21,16 +21,18 @@ const BuyerSellerFilter = dynamic(
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   suspense: true,
 });
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
-  suspense: true,
-});
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  {
+    suspense: true,
+  }
+);
 
 const Sauda = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // ✅ Use from the hook
   const {
     companies,
     rateData,
@@ -86,7 +88,6 @@ const Sauda = () => {
           )}
         </div>
 
-        {/* ✅ Controlled filter UI */}
         <BuyerSellerFilter value={filterType} onChange={setFilterType} />
 
         {loading ? (
