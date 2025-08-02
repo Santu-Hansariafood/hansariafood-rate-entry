@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
@@ -50,6 +50,9 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const [showRatePicker, setShowRatePicker] = useState(false);
   const [descSuggestions, setDescSuggestions] = useState([]);
   const [descKey, setDescKey] = useState("");
+
+  const [tradeMode, setTradeMode] = useState("");
+
   const fetchDescriptionSuggestions = async (q, key, idx) => {
     try {
       if (!q || q.length < 2) {
@@ -85,6 +88,12 @@ export default function ManageCompanyPopup({ name, onClose }) {
         commodity,
       }));
     });
+    useEffect(() => {
+      if (!loading && company?.type?.length === 1) {
+        const type = company.type[0];
+        setTradeMode(type === "buyer" ? "buying" : "selling");
+      }
+    }, [loading, company]);
 
     try {
       const { status, data } = await axiosInstance.post("/save-sauda", {
@@ -203,6 +212,9 @@ export default function ManageCompanyPopup({ name, onClose }) {
                   if (newRate === 0) return null;
 
                   sl += 1;
+                  if (company?.type?.length === 2 && !tradeMode) {
+                    return null; // until tradeMode is selected
+                  }
 
                   return (
                     <tr key={key} className="transition-all hover:bg-gray-50">
@@ -413,6 +425,29 @@ export default function ManageCompanyPopup({ name, onClose }) {
           />
         </div>
       </div>
+      {company?.type?.length === 2 && !tradeMode && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40">
+          <div className="rounded-xl bg-white p-6 shadow-lg max-w-sm text-center space-y-4">
+            <p className="text-lg font-semibold text-gray-700">
+              Select Trade Mode
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setTradeMode("buying")}
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                Buying
+              </button>
+              <button
+                onClick={() => setTradeMode("selling")}
+                className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+              >
+                Selling
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Suspense>
   );
 }
