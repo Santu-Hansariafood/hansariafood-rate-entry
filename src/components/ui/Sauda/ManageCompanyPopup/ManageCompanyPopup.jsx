@@ -2,7 +2,7 @@
 
 import React, { Suspense, useState } from "react";
 import dynamic from "next/dynamic";
-import { X, Save, Share2, ArrowDownToLine } from "lucide-react";
+import { X } from "lucide-react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
@@ -23,6 +23,10 @@ const SaudaSharePopup = dynamic(
 const CommodityPickerPopup = dynamic(
   () =>
     import("@/components/ui/Sauda/CommodityPickerPopup/CommodityPickerPopup"),
+  { suspense: true }
+);
+const ActionButtons = dynamic(
+  () => import("@/components/ui/Sauda/ActionButtons/ActionButtons"),
   { suspense: true }
 );
 
@@ -402,31 +406,11 @@ export default function ManageCompanyPopup({ name, onClose }) {
             />
           )}
 
-          <div className="mt-6 flex flex-wrap justify-end gap-3">
-            <button
-              className="flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700"
-              onClick={handleSave}
-            >
-              <Save className="h-4 w-4" />
-              Save
-            </button>
-
-            <button
-              className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-              onClick={handleShare}
-            >
-              <Share2 className="h-4 w-4" />
-              Share Sauda
-            </button>
-
-            <button
-              className="flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
-              onClick={handleExportRate}
-            >
-              <ArrowDownToLine className="h-4 w-4" />
-              Export Rate
-            </button>
-          </div>
+          <ActionButtons
+            onSave={handleSave}
+            onShare={handleShare}
+            onExportRate={handleExportRate}
+          />
         </div>
       </div>
     </Suspense>
