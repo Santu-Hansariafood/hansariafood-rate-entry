@@ -22,9 +22,9 @@ const DownloadExcelButton = () => {
       { header: "Rate", key: "rate", width: 15 },
       { header: "Seller", key: "seller", width: 25 },
       { header: "Sauda No", key: "saudaNo", width: 15 },
+      { header: "Notes", key: "others", width: 15 },
     ];
 
-    // Style header
     sheet.getRow(1).eachCell((cell) => {
       cell.fill = {
         type: "pattern",
@@ -55,6 +55,7 @@ const DownloadExcelButton = () => {
         rate: item.rate ?? "N/A",
         seller: item.description ?? "",
         saudaNo: item.saudaNo ?? "",
+        others: item.others ?? "",
       });
 
       row.eachCell((cell) => {
