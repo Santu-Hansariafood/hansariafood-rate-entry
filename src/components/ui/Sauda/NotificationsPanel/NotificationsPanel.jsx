@@ -141,7 +141,7 @@ const NotificationsPanel = ({ onClose }) => {
                 )}
                 {item.others && (
                   <div className="text-xs text-gray-500">
-                    🗒️ Notes: {item.others}
+                    ✍️ Notes: {item.others}
                   </div>
                 )}
               </li>
