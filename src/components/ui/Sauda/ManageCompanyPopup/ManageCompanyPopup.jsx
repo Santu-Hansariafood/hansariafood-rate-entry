@@ -216,58 +216,70 @@ export default function ManageCompanyPopup({ name, onClose }) {
                         ₹ {newRate}
                       </td>
                       <td colSpan={2} className="space-y-1 px-3 py-2">
-                        {list.map((e, idx) => (
-                          <div
-                            key={idx}
-                            className="flex flex-wrap items-center gap-3 border border-gray-200 rounded-md p-3 bg-gray-50 shadow-sm"
-                          >
-                            <span className="font-semibold text-gray-500">
-                              {String.fromCharCode(97 + idx)}.
-                            </span>
+                        {list.map((e, idx) => {
+                          const isFilled =
+                            e?.tons && e?.finalRate && e?.description;
+                          const isCurrent = descKey === `${key}-${idx}`;
 
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm">₹</span>
+                          return (
+                            <div
+                              key={idx}
+                              className={`
+        flex flex-col sm:flex-row flex-wrap gap-3 p-4 rounded-xl shadow-md transition-all
+        border
+        ${
+          isFilled ? "border-green-400 bg-green-50" : "border-red-300 bg-red-50"
+        }
+      `}
+                            >
+                              <span className="text-base font-semibold text-gray-600">
+                                {String.fromCharCode(97 + idx)}.
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm text-gray-500">₹</span>
+                                <input
+                                  type="number"
+                                  placeholder="Rate"
+                                  className="w-20 rounded border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-400"
+                                  value={e.finalRate}
+                                  onChange={(ev) =>
+                                    handleChange(
+                                      key,
+                                      idx,
+                                      "finalRate",
+                                      ev.target.value
+                                    )
+                                  }
+                                />
+                              </div>
                               <input
-                                className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
-                                placeholder="Rate"
                                 type="number"
-                                value={e.finalRate}
+                                placeholder="Tons"
+                                className="w-20 rounded border border-gray-300 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-400"
+                                value={e.tons}
                                 onChange={(ev) =>
                                   handleChange(
                                     key,
                                     idx,
-                                    "finalRate",
+                                    "tons",
                                     ev.target.value
                                   )
                                 }
                               />
-                            </div>
-
-                            <input
-                              className="w-20 rounded border border-gray-300 px-2 py-1 focus:ring-2 focus:ring-blue-300"
-                              placeholder="Tons"
-                              type="number"
-                              value={e.tons}
-                              onChange={(ev) =>
-                                handleChange(key, idx, "tons", ev.target.value)
-                              }
-                            />
-
-                            <div className="flex-grow">
-                              <input
-                                type="text"
-                                placeholder="Description"
-                                className="w-full rounded border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-300"
-                                value={e.description}
-                                onChange={(ev) => {
-                                  const val = ev.target.value;
-                                  handleChange(key, idx, "description", val);
-                                  fetchDescriptionSuggestions(val, key, idx);
-                                }}
-                              />
-                              {descSuggestions.length > 0 &&
-                                descKey === `${key}-${idx}` && (
-                                  <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border border-gray-300 bg-white rounded shadow-md">
+                              <div className="relative flex-grow">
+                                <input
+                                  type="text"
+                                  placeholder="Description"
+                                  className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400"
+                                  value={e.description}
+                                  onChange={(ev) => {
+                                    const val = ev.target.value;
+                                    handleChange(key, idx, "description", val);
+                                    fetchDescriptionSuggestions(val, key, idx);
+                                  }}
+                                />
+                                {descSuggestions.length > 0 && isCurrent && (
+                                  <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border border-gray-300 bg-white rounded shadow-lg">
                                     {descSuggestions.map((s, i) => (
                                       <li
                                         key={i}
@@ -296,51 +308,50 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                     ))}
                                   </ul>
                                 )}
-                            </div>
-
-                            {e.showOthers ? (
+                              </div>
+                              {e.showOthers ? (
+                                <input
+                                  type="text"
+                                  placeholder="Others"
+                                  className="w-full rounded border border-yellow-300 px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400"
+                                  value={e.others || ""}
+                                  onChange={(ev) =>
+                                    handleChange(
+                                      key,
+                                      idx,
+                                      "others",
+                                      ev.target.value
+                                    )
+                                  }
+                                />
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="text-xs text-blue-600 underline"
+                                  onClick={() =>
+                                    handleChange(key, idx, "showOthers", true)
+                                  }
+                                >
+                                  + notes
+                                </button>
+                              )}
                               <input
-                                type="text"
-                                placeholder="Others"
-                                className="w-full rounded border border-yellow-300 px-3 py-2 focus:ring-2 focus:ring-yellow-400"
-                                value={e.others || ""}
+                                type="number"
+                                placeholder="Sauda No"
+                                className="w-24 rounded border border-orange-400 px-2 py-1 text-sm focus:ring-2 focus:ring-orange-500"
+                                value={e.saudaNo}
                                 onChange={(ev) =>
                                   handleChange(
                                     key,
                                     idx,
-                                    "others",
+                                    "saudaNo",
                                     ev.target.value
                                   )
                                 }
                               />
-                            ) : (
-                              <button
-                                type="button"
-                                className="text-xs text-blue-600 underline"
-                                onClick={() =>
-                                  handleChange(key, idx, "showOthers", true)
-                                }
-                              >
-                                + notes
-                              </button>
-                            )}
-
-                            <input
-                              className="w-24 rounded border border-orange-400 px-2 py-1 focus:ring-2 focus:ring-orange-500"
-                              placeholder="Sauda No"
-                              type="number"
-                              value={e.saudaNo}
-                              onChange={(ev) =>
-                                handleChange(
-                                  key,
-                                  idx,
-                                  "saudaNo",
-                                  ev.target.value
-                                )
-                              }
-                            />
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
 
                         <div className="flex items-center gap-4 mt-1">
                           <button
