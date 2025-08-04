@@ -35,7 +35,7 @@ const normalize = (s) => s?.trim().toLowerCase() || "";
 export default function ManageCompanyPopup({ name, onClose }) {
   const today = useToday();
 
-  const { company, loading: loadingCompany } = useCompanyData(name);
+  const { company, loading: loadingCompany, role } = useCompanyData(name);
   const { rates, rateMap, loading: loadingRates } = useRateData(company?.name);
   const {
     entries,
@@ -52,6 +52,13 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const [descKey, setDescKey] = useState("");
 
   const [tradeMode, setTradeMode] = useState("");
+
+  useEffect(() => {
+  if (role && !tradeMode) {
+    setTradeMode(role === "buyer" ? "buying" : "selling");
+  }
+}, [role, tradeMode]);
+
 
   const fetchDescriptionSuggestions = async (q, key, idx) => {
     try {
@@ -90,20 +97,42 @@ export default function ManageCompanyPopup({ name, onClose }) {
   });
 
   try {
-    const { status, data } = await axiosInstance.post("/save-sauda", {
+    const payload = {
       company: company.name,
       date: today,
       time: currentTime,
       saudaEntries: structured,
-    });
+    };
+
+    // ✅ Determine and assign role
+    const effectiveRole =
+      role && role !== "both"
+        ? role
+        : tradeMode === "selling"
+        ? "seller"
+        : tradeMode === "buying"
+        ? "buyer"
+        : null;
+
+    if (!effectiveRole) {
+      toast.error("Please select trade mode.");
+      return;
+    }
+
+    payload[effectiveRole] = company.name;
+
+    const { status, data } = await axiosInstance.post("/save-sauda", payload);
+
     if (status === 201 && data.entry) {
       toast.success("Updated successfully");
+
       const filled = Object.values(entries).some((l) =>
         l.some((e) => e.tons || e.description)
       );
       const allNos = Object.values(entries).every((l) =>
         l.every((e) => e.saudaNo)
       );
+
       onClose(filled ? (allNos ? "blue" : "yellow") : "green");
     } else {
       toast.error(data.message || "Failed to save");

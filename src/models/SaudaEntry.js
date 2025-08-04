@@ -16,6 +16,8 @@ const saudaEntrySubSchema = new mongoose.Schema(
 const SaudaEntrySchema = new mongoose.Schema(
   {
     company: { type: String, required: true },
+    buyer: { type: String },
+    seller: { type: String },
     date: { type: String, required: true },
     time: { type: String },
     saudaEntries: {

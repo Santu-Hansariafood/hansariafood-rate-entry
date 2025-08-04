@@ -11,39 +11,45 @@ export async function POST(req) {
   }
 
   try {
-    const { company, date, time, saudaEntries } = await req.json();
+    const { company, date, time, saudaEntries, buyer, seller } = await req.json();
 
-    if (!company || !date || !saudaEntries) {
+    if (!company || !date || !saudaEntries || typeof saudaEntries !== "object") {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing or invalid required fields" },
         { status: 400 }
       );
     }
 
+    const normalizedEntries = {};
+
     for (const [key, list] of Object.entries(saudaEntries)) {
-      saudaEntries[key] = list.map((entry) => ({
+      if (!Array.isArray(list)) continue;
+
+      normalizedEntries[key] = list.map((entry) => ({
         tons: Number(entry.tons) || 0,
-        description: entry.description || "",
-        others: entry.others || "",
-        saudaNo: String(entry.saudaNo || ""),
+        description: (entry.description || "").trim(),
+        others: (entry.others || "").trim(),
+        saudaNo: String(entry.saudaNo || "").trim(),
         finalRate: Number(entry.finalRate) || 0,
-        unit: entry.unit,
-        commodity: entry.commodity,
+        unit: (entry.unit || "").trim(),
+        commodity: (entry.commodity || "").trim(),
       }));
     }
 
+    const updateData = {
+      company: company.trim(),
+      date: date.trim(),
+      time: time || "",
+      saudaEntries: normalizedEntries,
+    };
+
+    if (buyer) updateData.buyer = buyer.trim();
+    if (seller) updateData.seller = seller.trim();
+
     const updatedEntry = await SaudaEntry.findOneAndUpdate(
       { company, date },
-      {
-        $set: {
-          saudaEntries,
-          time: time || "",
-        },
-      },
-      {
-        new: true,
-        upsert: true,
-      }
+      { $set: updateData },
+      { new: true, upsert: true }
     );
 
     return NextResponse.json(
@@ -51,7 +57,7 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error in POST /save-sauda:", error.message, error.stack);
+    console.error("Error in POST /save-sauda:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

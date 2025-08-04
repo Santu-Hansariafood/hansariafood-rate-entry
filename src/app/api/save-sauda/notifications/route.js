@@ -27,28 +27,41 @@ export async function GET(req) {
     const notifications = [];
 
     for (const entry of entries) {
-      const { company, date, time, saudaEntries } = entry;
+      const { company, date, time, saudaEntries, buyer, seller } = entry;
       if (!saudaEntries) continue;
+
+      const mode = buyer ? "buyer" : seller ? "seller" : "unknown";
 
       for (const [location, items] of Object.entries(saudaEntries)) {
         if (!Array.isArray(items)) continue;
 
         for (const item of items) {
-          notifications.push({
-            company,
+          let notification = {
             date,
             location: location.split("-")[0].trim(),
             commodity: item.commodity || "",
             tons: item.tons || 0,
             rate: item.finalRate || 0,
-            buyerName: item.buyerName || "",
-            sellerName: item.sellerName || "",
+            buyerName: buyer || "",
+            sellerName: seller || "",
             saudaNo: item.saudaNo || "",
-            description: item.description || "",
-            others: item.others || "",
             unit: item.unit || "",
             time: time || "00:00",
-          });
+          };
+
+          if (mode === "seller") {
+            notification.description = company;
+            notification.company = item.description || "";
+          } else {
+            notification.company = company;
+            notification.description = item.description || "";
+          }
+
+          if (item.others) {
+            notification.others = item.others;
+          }
+
+          notifications.push(notification);
         }
       }
     }
