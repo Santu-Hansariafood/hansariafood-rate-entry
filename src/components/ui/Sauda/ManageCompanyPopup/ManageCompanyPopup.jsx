@@ -76,48 +76,42 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const loading = loadingCompany || loadingRates || loadingSauda;
 
   const handleSave = async () => {
-    if (!company) return;
+  if (!company) return;
 
-    const structured = {};
-    Object.entries(entries).forEach(([k, list]) => {
-      const [unit, commodity] = k.split("-");
-      structured[k] = list.map((e) => ({
-        ...e,
-        tons: +e.tons || 0,
-        unit,
-        commodity,
-      }));
+  const structured = {};
+  Object.entries(entries).forEach(([k, list]) => {
+    const [unit, commodity] = k.split("-");
+    structured[k] = list.map((e) => ({
+      ...e,
+      tons: +e.tons || 0,
+      unit,
+      commodity,
+    }));
+  });
+
+  try {
+    const { status, data } = await axiosInstance.post("/save-sauda", {
+      company: company.name,
+      date: today,
+      time: currentTime,
+      saudaEntries: structured,
     });
-    useEffect(() => {
-      if (!loading && company?.type?.length === 1) {
-        const type = company.type[0];
-        setTradeMode(type === "buyer" ? "buying" : "selling");
-      }
-    }, [loading, company]);
-
-    try {
-      const { status, data } = await axiosInstance.post("/save-sauda", {
-        company: company.name,
-        date: today,
-        time: currentTime,
-        saudaEntries: structured,
-      });
-      if (status === 201 && data.entry) {
-        toast.success("Updated successfully");
-        const filled = Object.values(entries).some((l) =>
-          l.some((e) => e.tons || e.description)
-        );
-        const allNos = Object.values(entries).every((l) =>
-          l.every((e) => e.saudaNo)
-        );
-        onClose(filled ? (allNos ? "blue" : "yellow") : "green");
-      } else {
-        toast.error(data.message || "Failed to save");
-      }
-    } catch {
-      toast.error("Error saving data");
+    if (status === 201 && data.entry) {
+      toast.success("Updated successfully");
+      const filled = Object.values(entries).some((l) =>
+        l.some((e) => e.tons || e.description)
+      );
+      const allNos = Object.values(entries).every((l) =>
+        l.every((e) => e.saudaNo)
+      );
+      onClose(filled ? (allNos ? "blue" : "yellow") : "green");
+    } else {
+      toast.error(data.message || "Failed to save");
     }
-  };
+  } catch {
+    toast.error("Error saving data");
+  }
+};
 
   const handleShare = () => {
     if (loading) return toast.warn("Data still loading.");
@@ -213,7 +207,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
                   sl += 1;
                   if (company?.type?.length === 2 && !tradeMode) {
-                    return null; // until tradeMode is selected
+                    return null;
                   }
 
                   return (
@@ -294,6 +288,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                     fetchDescriptionSuggestions(val, key, idx);
                                   }}
                                 />
+
                                 {descSuggestions.length > 0 && isCurrent && (
                                   <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto border border-gray-300 bg-white rounded shadow-lg">
                                     {descSuggestions.map((s, i) => (
