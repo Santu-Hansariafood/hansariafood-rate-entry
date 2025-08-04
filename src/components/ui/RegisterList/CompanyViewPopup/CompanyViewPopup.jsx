@@ -35,12 +35,10 @@ export default function CompanyViewPopup({
 
       container.querySelectorAll("*").forEach((el) => {
         const style = window.getComputedStyle(el);
-        if (style.backgroundColor.includes("oklch")) {
+        if (/oklch|lab/.test(style.backgroundColor))
           el.style.backgroundColor = "#ffffff";
-        }
-        if (style.color.includes("oklch")) {
-          el.style.color = "#000000";
-        }
+        if (/oklch|lab/.test(style.color)) el.style.color = "#000000";
+        el.style.fontFamily = "Arial, sans-serif";
       });
 
       await new Promise((resolve) => setTimeout(resolve, 300));
@@ -51,23 +49,92 @@ export default function CompanyViewPopup({
         backgroundColor: "#fff",
       });
 
-      const imgData = canvas.toDataURL("image/png");
-
       const pdf = new jsPDF("landscape", "mm", "a4");
-
       const pageWidth = pdf.internal.pageSize.getWidth();
-      const imgHeight = (canvas.height * pageWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const topMargin = 20;
+      const bottomMargin = 15;
+      const usableHeight = pageHeight - topMargin - bottomMargin;
 
-      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
-      heightLeft -= pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = pageWidth / imgWidth;
+      const scaledHeight = imgHeight * ratio;
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
-        heightLeft -= pdf.internal.pageSize.getHeight();
+      const pageHeightPx = (usableHeight * imgHeight) / scaledHeight;
+
+      let renderedHeight = 0;
+      let pageNum = 1;
+
+      const drawHeader = () => {
+        pdf.setFillColor(216, 255, 216);
+        pdf.rect(0, 0, pageWidth, topMargin, "F");
+        pdf.setTextColor(200, 0, 0);
+        pdf.setFont("helvetica", "italic");
+        pdf.setFontSize(13);
+        pdf.text(`Weekly Rate Sheet - ${userName || "User"}`, 10, 10);
+        pdf.setTextColor(20, 20, 20);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(10);
+        pdf.text(
+          `Week: ${format(weekDates[0], "dd MMM yyyy")} - ${format(
+            weekDates[6],
+            "dd MMM yyyy"
+          )}`,
+          10,
+          16
+        );
+      };
+
+      const drawFooter = () => {
+        pdf.setFontSize(9);
+        pdf.setTextColor(120);
+        pdf.text(`Page ${pageNum}`, pageWidth - 20, pageHeight - 8);
+      };
+
+      while (renderedHeight < imgHeight) {
+        const partCanvas = document.createElement("canvas");
+        const rowHeightPx = 45;
+        const rowsPerPage = Math.floor(pageHeightPx / rowHeightPx);
+        const adjustedHeight = rowsPerPage * rowHeightPx;
+
+        const sliceHeight = Math.min(
+          adjustedHeight,
+          imgHeight - renderedHeight
+        );
+
+        partCanvas.width = imgWidth;
+        partCanvas.height = sliceHeight;
+
+        const ctx = partCanvas.getContext("2d");
+        ctx.drawImage(
+          canvas,
+          0,
+          renderedHeight,
+          imgWidth,
+          sliceHeight,
+          0,
+          0,
+          imgWidth,
+          sliceHeight
+        );
+
+        const partImg = partCanvas.toDataURL("image/png");
+        if (pageNum > 1) pdf.addPage();
+
+        drawHeader();
+        pdf.addImage(
+          partImg,
+          "PNG",
+          0,
+          topMargin,
+          pageWidth,
+          sliceHeight * ratio
+        );
+        drawFooter();
+
+        renderedHeight += sliceHeight;
+        pageNum++;
       }
 
       pdf.save(`Weekly_Rate_Sheet_${userName || "User"}.pdf`);
@@ -113,54 +180,65 @@ export default function CompanyViewPopup({
 
           <div
             ref={downloadRef}
-            className="overflow-x-auto border rounded-md p-4 bg-white text-black"
+            className="overflow-x-auto border rounded-md p-4 bg-white text-black text-xs"
           >
-            <h2 className="text-lg font-semibold mb-4">
+            <h2 className="text-lg font-semibold mb-4 text-center">
               Weekly Rate Sheet for {userName || "User"}
             </h2>
-            <p className="mb-2 text-sm text-gray-600">
+            <p className="mb-4 text-sm text-center text-gray-600">
               Week: {format(weekDates[0], "dd MMM yyyy")} -{" "}
               {format(weekDates[6], "dd MMM yyyy")}
             </p>
 
-            <table className="min-w-full table-auto border-collapse text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border px-3 py-2 text-left">Company</th>
-                  <th className="border px-3 py-2 text-left">Location</th>
-                  {weekDates.map((date, idx) => (
-                    <th key={idx} className="border px-3 py-2 text-center">
-                      {format(date, "EEE dd")}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {groupedCompanies.map((company, idx) =>
-                  company.locations.map((location, locIdx) => (
-                    <tr key={`${idx}-${locIdx}`}>
-                      {locIdx === 0 && (
-                        <td
-                          className="border px-3 py-2 font-semibold text-blue-700"
-                          rowSpan={company.locations.length}
-                        >
-                          {company.name}
-                        </td>
-                      )}
-                      <td className="border px-3 py-2">{location}</td>
-                      {weekDates.map((_, i) => (
-                        <td
-                          key={i}
-                          className="border px-3 py-4 text-center text-gray-400"
-                        >
-                          <div className="w-6 h-6 border border-dashed rounded-md mx-auto" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
+            {groupedCompanies.map((company, idx) => (
+              <div key={idx} className="mb-6 break-inside-avoid">
+                <div className="text-right text-sm font-medium text-blue-700 mb-1">
+                  {company.locations.length === 0 ? company.name : null}
+                </div>
+
+                {company.locations.length > 0 && (
+                  <>
+                    <div className="text-right text-sm font-semibold text-green-700 mb-2">
+                      {company.name}
+                    </div>
+                    <table className="min-w-full table-auto border-collapse text-[10px]">
+                      <thead className="bg-green-100 text-green-800">
+                        <tr>
+                          <th className="border px-2 py-1 text-left">
+                            Location
+                          </th>
+                          {weekDates.map((date, i) => (
+                            <th
+                              key={i}
+                              className="border px-2 py-1 text-center"
+                            >
+                              {format(date, "EEE dd")}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {company.locations.map((location, locIdx) => (
+                          <tr key={`${idx}-${locIdx}`}>
+                            <td className="border px-2 py-1 text-yellow-800 font-medium bg-yellow-50">
+                              {location}
+                            </td>
+                            {weekDates.map((_, i) => (
+                              <td
+                                key={i}
+                                className="border px-2 py-1 text-center"
+                              >
+                                <div className="w-5 h-5 border border-dashed rounded mx-auto" />
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
                 )}
-              </tbody>
-            </table>
+              </div>
+            ))}
           </div>
         </div>
       </div>
