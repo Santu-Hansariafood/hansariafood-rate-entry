@@ -54,11 +54,10 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const [tradeMode, setTradeMode] = useState("");
 
   useEffect(() => {
-  if (role && !tradeMode) {
-    setTradeMode(role === "buyer" ? "buying" : "selling");
-  }
-}, [role, tradeMode]);
-
+    if (role && !tradeMode) {
+      setTradeMode(role === "buyer" ? "buying" : "selling");
+    }
+  }, [role, tradeMode]);
 
   const fetchDescriptionSuggestions = async (q, key, idx) => {
     try {
@@ -83,63 +82,63 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const loading = loadingCompany || loadingRates || loadingSauda;
 
   const handleSave = async () => {
-  if (!company) return;
+    if (!company) return;
 
-  const structured = {};
-  Object.entries(entries).forEach(([k, list]) => {
-    const [unit, commodity] = k.split("-");
-    structured[k] = list.map((e) => ({
-      ...e,
-      tons: +e.tons || 0,
-      unit,
-      commodity,
-    }));
-  });
+    const structured = {};
+    Object.entries(entries).forEach(([k, list]) => {
+      const [unit, commodity] = k.split("-");
+      structured[k] = list.map((e) => ({
+        ...e,
+        tons: +e.tons || 0,
+        unit,
+        commodity,
+      }));
+    });
 
-  try {
-    const payload = {
-      company: company.name,
-      date: today,
-      time: currentTime,
-      saudaEntries: structured,
-    };
+    try {
+      const payload = {
+        company: company.name,
+        date: today,
+        time: currentTime,
+        saudaEntries: structured,
+      };
 
-    const effectiveRole =
-      role && role !== "both"
-        ? role
-        : tradeMode === "selling"
-        ? "seller"
-        : tradeMode === "buying"
-        ? "buyer"
-        : null;
+      const effectiveRole =
+        role && role !== "both"
+          ? role
+          : tradeMode === "selling"
+          ? "seller"
+          : tradeMode === "buying"
+          ? "buyer"
+          : null;
 
-    if (!effectiveRole) {
-      toast.error("Please select trade mode.");
-      return;
+      if (!effectiveRole) {
+        toast.error("Please select trade mode.");
+        return;
+      }
+
+      payload[effectiveRole] = company.name;
+
+      const { status, data } = await axiosInstance.post("/save-sauda", payload);
+
+      if (status === 201 && data.entry) {
+        toast.success("Updated successfully");
+
+        const filled = Object.values(entries).some((l) =>
+          l.some((e) => e.tons || e.description)
+        );
+        const allNos = Object.values(entries).every((l) =>
+          l.every((e) => e.saudaNo)
+        );
+
+        onClose(filled ? (allNos ? "blue" : "yellow") : "green");
+      } else {
+        toast.error(data.message || "Failed to save");
+      }
+    } catch {
+      toast.error("Error saving data");
     }
-
-    payload[effectiveRole] = company.name;
-
-    const { status, data } = await axiosInstance.post("/save-sauda", payload);
-
-    if (status === 201 && data.entry) {
-      toast.success("Updated successfully");
-
-      const filled = Object.values(entries).some((l) =>
-        l.some((e) => e.tons || e.description)
-      );
-      const allNos = Object.values(entries).every((l) =>
-        l.every((e) => e.saudaNo)
-      );
-
-      onClose(filled ? (allNos ? "blue" : "yellow") : "green");
-    } else {
-      toast.error(data.message || "Failed to save");
-    }
-  } catch {
-    toast.error("Error saving data");
-  }
-};
+  };
 
   const handleShare = () => {
     if (loading) return toast.warn("Data still loading.");
@@ -348,7 +347,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                   </ul>
                                 )}
                               </div>
-                              {e.showOthers ? (
+                              {e.showOthers || e.others ? (
                                 <input
                                   type="text"
                                   placeholder="Others"
