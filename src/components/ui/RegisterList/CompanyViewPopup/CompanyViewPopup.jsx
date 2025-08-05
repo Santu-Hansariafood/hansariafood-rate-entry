@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useState, Suspense, useRef } from "react";
-import { X, CalendarDays, Download } from "lucide-react";
+import React, { useState, useRef, Suspense } from "react";
 import dynamic from "next/dynamic";
-import Loading from "@/components/common/Loading/Loading";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
+import Loading from "@/components/common/Loading/Loading";
 
 import useWeeklyDates from "@/hooks/CompanyViewPopup/useWeeklyDates";
 import useGroupedCompanies from "@/hooks/CompanyViewPopup/useGroupedCompanies";
-
-const Title = dynamic(() => import("@/components/common/Title/Title"));
+const PopupWrapper = dynamic(() => import("./PopupWrapper/PopupWrapper"));
+const PopupHeader = dynamic(() => import("./PopupHeader/PopupHeader"));
+const PopupActions = dynamic(() => import("./PopupActions/PopupActions"));
+const DownloadableContent = dynamic(() =>
+  import("./DownloadableContent/DownloadableContent")
+);
 
 export default function CompanyViewPopup({
   open,
@@ -29,7 +32,6 @@ export default function CompanyViewPopup({
   const handleDownload = async () => {
     if (!downloadRef.current) return;
     setDownloading(true);
-
     try {
       const container = downloadRef.current;
 
@@ -41,7 +43,7 @@ export default function CompanyViewPopup({
         el.style.fontFamily = "Arial, sans-serif";
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((r) => setTimeout(r, 300));
 
       const canvas = await html2canvas(container, {
         scale: 2,
@@ -60,7 +62,6 @@ export default function CompanyViewPopup({
       const imgHeight = canvas.height;
       const ratio = pageWidth / imgWidth;
       const scaledHeight = imgHeight * ratio;
-
       const pageHeightPx = (usableHeight * imgHeight) / scaledHeight;
 
       let renderedHeight = 0;
@@ -149,99 +150,20 @@ export default function CompanyViewPopup({
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="fixed inset-0 z-50 bg-black/40 flex justify-center items-center">
-        <div className="bg-white w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-xl shadow-xl p-6 relative">
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
-          >
-            <X />
-          </button>
-
-          <Title text={`Weekly Rate Sheet for ${userName || "User"}`} />
-
-          <div className="flex justify-between items-center mt-4 mb-6">
-            <div className="flex items-center gap-3">
-              <CalendarDays className="text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                Week: {format(weekDates[0], "dd MMM yyyy")} -{" "}
-                {format(weekDates[6], "dd MMM yyyy")}
-              </span>
-            </div>
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
-            >
-              <Download size={16} />
-              {downloading ? "Generating..." : "Download"}
-            </button>
-          </div>
-
-          <div
-            ref={downloadRef}
-            className="overflow-x-auto border rounded-md p-4 bg-white text-black text-xs"
-          >
-            <h2 className="text-lg font-semibold mb-4 text-center">
-              Weekly Rate Sheet for {userName || "User"}
-            </h2>
-            <p className="mb-4 text-sm text-center text-gray-600">
-              Week: {format(weekDates[0], "dd MMM yyyy")} -{" "}
-              {format(weekDates[6], "dd MMM yyyy")}
-            </p>
-
-            {groupedCompanies.map((company, idx) => (
-              <div key={idx} className="mb-6 break-inside-avoid">
-                <div className="text-right text-sm font-medium text-blue-700 mb-1">
-                  {company.locations.length === 0 ? company.name : null}
-                </div>
-
-                {company.locations.length > 0 && (
-                  <>
-                    <div className="text-right text-sm font-semibold text-green-700 mb-2">
-                      {company.name}
-                    </div>
-                    <table className="min-w-full table-auto border-collapse text-[10px]">
-                      <thead className="bg-green-100 text-green-800">
-                        <tr>
-                          <th className="border px-2 py-1 text-left">
-                            Location
-                          </th>
-                          {weekDates.map((date, i) => (
-                            <th
-                              key={i}
-                              className="border px-2 py-1 text-center"
-                            >
-                              {format(date, "EEE dd")}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {company.locations.map((location, locIdx) => (
-                          <tr key={`${idx}-${locIdx}`}>
-                            <td className="border px-2 py-1 text-yellow-800 font-medium bg-yellow-50">
-                              {location}
-                            </td>
-                            {weekDates.map((_, i) => (
-                              <td
-                                key={i}
-                                className="border px-2 py-1 text-center"
-                              >
-                                <div className="w-5 h-5 border border-dashed rounded mx-auto" />
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PopupWrapper>
+        <PopupHeader onClose={onClose} userName={userName} />
+        <PopupActions
+          weekDates={weekDates}
+          downloading={downloading}
+          onDownload={handleDownload}
+        />
+        <DownloadableContent
+          refObj={downloadRef}
+          weekDates={weekDates}
+          groupedCompanies={groupedCompanies}
+          userName={userName}
+        />
+      </PopupWrapper>
     </Suspense>
   );
 }
