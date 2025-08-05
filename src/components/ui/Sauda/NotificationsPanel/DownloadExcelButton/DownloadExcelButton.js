@@ -15,6 +15,7 @@ const DownloadExcelButton = () => {
 
     sheet.columns = [
       { header: "Buyer", key: "buyer", width: 25 },
+      { header: "Mode", key: "mode", width: 10 },
       { header: "Date", key: "date", width: 15 },
       { header: "Location", key: "location", width: 20 },
       { header: "Commodity", key: "commodity", width: 20 },
@@ -46,8 +47,12 @@ const DownloadExcelButton = () => {
     });
 
     filteredNotifications.forEach((item, index) => {
+      const mode =
+        item.description === item.company ? "Seller" : "Buyer"; // logic preserved
+
       const row = sheet.addRow({
         buyer: item.company,
+        mode,
         date: item.date,
         location: item.location,
         commodity: item.commodity,

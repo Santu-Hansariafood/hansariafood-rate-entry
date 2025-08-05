@@ -104,7 +104,6 @@ export default function ManageCompanyPopup({ name, onClose }) {
       saudaEntries: structured,
     };
 
-    // ✅ Determine and assign role
     const effectiveRole =
       role && role !== "both"
         ? role
