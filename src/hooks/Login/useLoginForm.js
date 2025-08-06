@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 export default function useLoginForm() {
   const [mobile, setMobile] = useState("");
@@ -15,13 +16,17 @@ export default function useLoginForm() {
   const router = useRouter();
   const { setMobile: setGlobalMobile } = useUser();
 
-  const validateMobile = useCallback((value) => /^[6-9]\d{9}$/.test(value), []);
-
   const handleMobileChange = useCallback((e) => {
     const value = e.target.value;
+
     if (/^\d{0,10}$/.test(value)) {
       setMobile(value);
-      setMobileError("");
+
+      if (value && !validationPatterns.mobile.test(value)) {
+        setMobileError("Enter a valid 10-digit mobile number");
+      } else {
+        setMobileError("");
+      }
     }
   }, []);
 
@@ -29,10 +34,18 @@ export default function useLoginForm() {
     async (e) => {
       e.preventDefault();
 
-      if (!validateMobile(mobile)) {
+      if (!validationPatterns.mobile.test(mobile)) {
         setMobileError("Enter a valid 10-digit mobile number");
         return;
       }
+
+      if (!validationPatterns.password.test(password)) {
+        setError("Password must be at least 6 characters long");
+        return;
+      }
+
+      setError("");
+      setMobileError("");
 
       const result = await signIn("credentials", {
         mobile,
@@ -49,7 +62,7 @@ export default function useLoginForm() {
         router.push("/dashboard");
       }
     },
-    [mobile, password, router, setGlobalMobile, validateMobile]
+    [mobile, password, router, setGlobalMobile]
   );
 
   return {
