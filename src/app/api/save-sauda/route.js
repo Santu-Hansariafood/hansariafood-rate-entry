@@ -11,20 +11,45 @@ export async function POST(req) {
   }
 
   try {
-    const { company, date, time, saudaEntries, buyer, seller } = await req.json();
+    const {
+      company,
+      date,
+      time,
+      saudaEntries,
+      buyer,
+      seller,
+      lastUpdated: clientLastUpdated,
+    } = await req.json();
 
-    if (!company || !date || !saudaEntries || typeof saudaEntries !== "object") {
+    if (
+      !company ||
+      !date ||
+      !saudaEntries ||
+      typeof saudaEntries !== "object"
+    ) {
       return NextResponse.json(
         { error: "Missing or invalid required fields" },
         { status: 400 }
       );
     }
 
-    const normalizedEntries = {};
+    const existingEntry = await SaudaEntry.findOne({ company, date });
 
+    if (
+      existingEntry &&
+      clientLastUpdated &&
+      new Date(clientLastUpdated).getTime() !==
+        new Date(existingEntry.lastUpdated).getTime()
+    ) {
+      return NextResponse.json(
+        { conflict: true, message: "Data has changed. Please refresh." },
+        { status: 409 }
+      );
+    }
+
+    const normalizedEntries = {};
     for (const [key, list] of Object.entries(saudaEntries)) {
       if (!Array.isArray(list)) continue;
-
       normalizedEntries[key] = list.map((entry) => ({
         tons: Number(entry.tons) || 0,
         description: (entry.description || "").trim(),
@@ -41,6 +66,7 @@ export async function POST(req) {
       date: date.trim(),
       time: time || "",
       saudaEntries: normalizedEntries,
+      lastUpdated: new Date(),
     };
 
     if (buyer) updateData.buyer = buyer.trim();

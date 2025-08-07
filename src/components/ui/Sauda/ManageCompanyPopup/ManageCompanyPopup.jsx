@@ -50,8 +50,27 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const [showRatePicker, setShowRatePicker] = useState(false);
   const [descSuggestions, setDescSuggestions] = useState([]);
   const [descKey, setDescKey] = useState("");
-
+  const [lastUpdated, setLastUpdated] = useState(null);
   const [tradeMode, setTradeMode] = useState("");
+
+  useEffect(() => {
+  const fetchSauda = async () => {
+    if (!company?.name) return;
+    try {
+      const res = await axiosInstance.get(
+        `/save-sauda?company=${company.name}&date=${today}`
+      );
+      if (res?.data?.entry) {
+        setLastUpdated(res.data.entry.lastUpdated);
+      }
+    } catch (error) {
+      console.error("Failed to fetch sauda:", error);
+    }
+  };
+
+  fetchSauda();
+}, [company?.name, today]);
+
 
   useEffect(() => {
     if (role && !tradeMode) {
@@ -95,34 +114,36 @@ export default function ManageCompanyPopup({ name, onClose }) {
       }));
     });
 
+    const payload = {
+      company: company.name,
+      date: today,
+      time: currentTime,
+      saudaEntries: structured,
+      lastUpdated,
+    };
+
+    const effectiveRole =
+      role && role !== "both"
+        ? role
+        : tradeMode === "selling"
+        ? "seller"
+        : tradeMode === "buying"
+        ? "buyer"
+        : null;
+
+    if (!effectiveRole) {
+      toast.error("Please select trade mode.");
+      return;
+    }
+
+    payload[effectiveRole] = company.name;
+
     try {
-      const payload = {
-        company: company.name,
-        date: today,
-        time: currentTime,
-        saudaEntries: structured,
-      };
-
-      const effectiveRole =
-        role && role !== "both"
-          ? role
-          : tradeMode === "selling"
-          ? "seller"
-          : tradeMode === "buying"
-          ? "buyer"
-          : null;
-
-      if (!effectiveRole) {
-        toast.error("Please select trade mode.");
-        return;
-      }
-
-      payload[effectiveRole] = company.name;
-
       const { status, data } = await axiosInstance.post("/save-sauda", payload);
 
       if (status === 201 && data.entry) {
         toast.success("Updated successfully");
+        setLastUpdated(data.entry.lastUpdated);
 
         const filled = Object.values(entries).some((l) =>
           l.some((e) => e.tons || e.description)
@@ -132,11 +153,13 @@ export default function ManageCompanyPopup({ name, onClose }) {
         );
 
         onClose(filled ? (allNos ? "blue" : "yellow") : "green");
-      } else {
-        toast.error(data.message || "Failed to save");
       }
-    } catch {
-      toast.error("Error saving data");
+    } catch (err) {
+      if (err?.response?.status === 409) {
+        toast.error("Data has been updated by someone else. Please refresh.");
+      } else {
+        toast.error("Error saving data");
+      }
     }
   };
 
