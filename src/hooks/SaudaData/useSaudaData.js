@@ -38,7 +38,7 @@ const useSaudaData = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        let query = `/companies?limit=1000`;
+        let query = `/companies?limit=100`;
         if (filterType !== "all") {
           query += `&type=${filterType}`;
         }

@@ -203,7 +203,7 @@ export default function Rate() {
           </button>
           <RateTable
             selectedCompany={selectedCompany}
-            commodities={selectedCompanyObj?.commodities || []} // 👈 all commodities
+            commodities={selectedCompanyObj?.commodities || []}
             onClose={() => {
               setSelectedCompany(null);
             }}

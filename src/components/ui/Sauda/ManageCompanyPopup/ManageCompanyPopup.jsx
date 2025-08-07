@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
 import { toast } from "react-toastify";
@@ -31,6 +31,17 @@ const ActionButtons = dynamic(
 );
 
 const normalize = (s) => s?.trim().toLowerCase() || "";
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func.apply(this, args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 
 export default function ManageCompanyPopup({ name, onClose }) {
   const today = useToday();
@@ -54,45 +65,52 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const [tradeMode, setTradeMode] = useState("");
 
   useEffect(() => {
-  const fetchSauda = async () => {
-    if (!company?.name) return;
-    try {
-      const res = await axiosInstance.get(
-        `/save-sauda?company=${company.name}&date=${today}`
-      );
-      if (res?.data?.entry) {
-        setLastUpdated(res.data.entry.lastUpdated);
+    let isCancelled = false;
+    const fetchSauda = async () => {
+      if (!company?.name) return;
+      try {
+        const res = await axiosInstance.get(
+          `/save-sauda?company=${company.name}&date=${today}`
+        );
+        if (!isCancelled && res?.data?.entry) {
+          setLastUpdated(res.data.entry.lastUpdated);
+        }
+      } catch (error) {
+        if (!isCancelled) console.error("Failed to fetch sauda:", error);
       }
-    } catch (error) {
-      console.error("Failed to fetch sauda:", error);
-    }
-  };
+    };
 
-  fetchSauda();
-}, [company?.name, today]);
-
+    fetchSauda();
+    return () => {
+      isCancelled = true;
+    };
+  }, [company?.name, today]);
 
   useEffect(() => {
-    if (role && !tradeMode) {
+    if (!tradeMode && (role === "buyer" || role === "seller")) {
       setTradeMode(role === "buyer" ? "buying" : "selling");
     }
-  }, [role, tradeMode]);
+  }, [role]);
 
-  const fetchDescriptionSuggestions = async (q, key, idx) => {
-    try {
-      if (!q || q.length < 2) {
-        setDescSuggestions([]);
-        return;
+  const fetchDescriptionSuggestions = useCallback(
+    debounce(async (q, key, idx) => {
+      try {
+        if (!q || q.length < 2) {
+          setDescSuggestions([]);
+          return;
+        }
+        setDescKey(`${key}-${idx}`);
+        const res = await axiosInstance.get(
+          `save-sauda/sauda-descriptions?q=${q}`
+        );
+        setDescSuggestions(res.data.suggestions || []);
+      } catch (err) {
+        console.error("Failed to fetch suggestions", err);
       }
-      setDescKey(`${key}-${idx}`);
-      const res = await axiosInstance.get(
-        `save-sauda/sauda-descriptions?q=${q}`
-      );
-      setDescSuggestions(res.data.suggestions || []);
-    } catch (err) {
-      console.error("Failed to fetch suggestions", err);
-    }
-  };
+    }, 300),
+    []
+  );
+
   const now = new Date();
   const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
     now.getMinutes()
