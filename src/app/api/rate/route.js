@@ -11,7 +11,8 @@ export async function POST(req) {
   }
 
   try {
-    const { company, location, newRate, mobile, commodity, quantity } = await req.json();
+    const { company, location, newRate, mobile, commodity, quantity } =
+      await req.json();
 
     if (!company || !location || !commodity || newRate === undefined) {
       return NextResponse.json(
@@ -29,13 +30,11 @@ export async function POST(req) {
       const lastUpdated = new Date(rateEntry.newRateDate);
       lastUpdated.setHours(0, 0, 0, 0);
 
-      if (lastUpdated.getTime() !== today.getTime()) {
-        if (rateEntry.newRate) {
-          rateEntry.oldRates.push({
-            rate: rateEntry.newRate,
-            date: rateEntry.newRateDate,
-          });
-        }
+      if (lastUpdated.getTime() !== today.getTime() && rateEntry.newRate) {
+        rateEntry.oldRates.push({
+          rate: rateEntry.newRate,
+          date: rateEntry.newRateDate,
+        });
       }
 
       rateEntry.newRate = newRate;
@@ -61,6 +60,7 @@ export async function POST(req) {
       mobile,
       quantity,
     });
+
     await rateEntry.save();
 
     return NextResponse.json(
@@ -68,7 +68,7 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error in POST /rates:", error);
+    console.error("Error in POST /rate:", error);
     return NextResponse.json({ error: "Error saving rate" }, { status: 500 });
   }
 }
@@ -83,9 +83,9 @@ export async function GET(req) {
     const company = searchParams.get("company");
     const commodity = searchParams.get("commodity");
 
-    let query = {};
-    if (company) query.company = company;
-    if (commodity) query.commodity = commodity;
+    const query = {};
+    if (company && company !== "all") query.company = company;
+    if (commodity && commodity !== "all") query.commodity = commodity;
 
     const rates = await Rate.find(query);
 
@@ -120,7 +120,7 @@ export async function GET(req) {
 
     return NextResponse.json(formattedRates, { status: 200 });
   } catch (error) {
-    console.error("Error in GET /rates:", error);
+    console.error("Error in GET /rate:", error);
     return NextResponse.json(
       { error: "Error fetching rates" },
       { status: 500 }
@@ -134,7 +134,8 @@ export async function PUT(req) {
   }
 
   try {
-    const { company, location, newRate, mobile, commodity, quantity } = await req.json();
+    const { company, location, newRate, mobile, commodity, quantity } =
+      await req.json();
 
     if (!company || !location || !commodity || newRate === undefined) {
       return NextResponse.json(
@@ -160,7 +161,7 @@ export async function PUT(req) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error in PUT /rates:", error);
+    console.error("Error in PUT /rate:", error);
     return NextResponse.json({ error: "Error updating rate" }, { status: 500 });
   }
 }
@@ -177,7 +178,7 @@ export async function DELETE(req) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error in DELETE /rates:", error);
+    console.error("Error in DELETE /rate:", error);
     return NextResponse.json(
       { error: "Error deleting rates" },
       { status: 500 }

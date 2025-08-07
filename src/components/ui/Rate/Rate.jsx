@@ -82,13 +82,18 @@ export default function Rate() {
       setAllCompanies(data.companies);
       setTotalItems(data.total);
 
-      const names = data.companies.map((c) => c.name);
+      const companyMap = {};
+      const names = [];
+
+      data.companies.forEach((c) => {
+        names.push(c.name);
+        companyMap[c.name] = c.commodities || [];
+      });
+
       setCompanies(names);
 
       if (names.length > 0) {
-        const allCmds = data.companies.flatMap((c) => c.commodities || []);
-        const first = [...new Set(allCmds)][0];
-        await checkAllCompanies(names, first);
+        await checkAllCompanies(companyMap);
       }
     } catch {
       toast.error("Failed to fetch companies");
@@ -97,30 +102,47 @@ export default function Rate() {
     }
   }, [filters, currentPage]);
 
-  const checkAllCompanies = useCallback(async (companyNames, commodity) => {
-    if (!commodity) return;
+  const checkAllCompanies = useCallback(async (companyCommoditiesMap) => {
     try {
-      const statusArr = await Promise.all(
-        companyNames.map(async (name) => {
-          try {
-            const { data } = await axiosInstance.get(
-              `/rate?company=${name}&commodity=${encodeURIComponent(commodity)}`
-            );
-            return {
-              [name]:
-                data.length > 0 &&
-                data.every(
-                  (r) => r.hasNewRateToday && r.commodity === commodity
-                ),
-            };
-          } catch {
-            return { [name]: false };
+      const statusMap = {};
+
+      await Promise.all(
+        Object.entries(companyCommoditiesMap).map(
+          async ([company, commodities]) => {
+            try {
+              if (commodities.length === 0) {
+                statusMap[company] = false;
+                return;
+              }
+
+              const responses = await Promise.all(
+                commodities.map(async (cmd) => {
+                  try {
+                    const { data } = await axiosInstance.get(
+                      `/rate?company=${encodeURIComponent(
+                        company
+                      )}&commodity=${encodeURIComponent(cmd)}`
+                    );
+                    return data.every(
+                      (r) => r.hasNewRateToday && r.commodity === cmd
+                    );
+                  } catch {
+                    return false;
+                  }
+                })
+              );
+
+              statusMap[company] = responses.every(Boolean);
+            } catch {
+              statusMap[company] = false;
+            }
           }
-        })
+        )
       );
-      setCompletedCompanies(Object.assign({}, ...statusArr));
+
+      setCompletedCompanies(statusMap);
     } catch (e) {
-      console.error(e);
+      console.error("Error in checkAllCompanies:", e);
     }
   }, []);
 
@@ -181,7 +203,7 @@ export default function Rate() {
           </button>
           <RateTable
             selectedCompany={selectedCompany}
-            commodity={selectedCompanyObj?.commodities?.[0] || ""}
+            commodities={selectedCompanyObj?.commodities || []} // 👈 all commodities
             onClose={() => {
               setSelectedCompany(null);
             }}

@@ -31,19 +31,12 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
 
   const fetchRates = useCallback(async () => {
     try {
-      const [
-        { data: companyData },
-        { data: existingRates },
-        { data: locationData },
-      ] = await Promise.all([
-        axiosInstance.get("/managecompany?limit=100"),
-        axiosInstance.get(
-          `/rate?company=${encodeURIComponent(
-            selectedCompany.trim()
-          )}&commodity=${encodeURIComponent(commodity)}`
-        ),
-        axiosInstance.get("/location?limit=1000"),
-      ]);
+      const [{ data: companyData }, { data: locationData }] = await Promise.all(
+        [
+          axiosInstance.get("/managecompany?limit=1000"),
+          axiosInstance.get("/location?limit=1000"),
+        ]
+      );
 
       const locationMap = {};
       locationData.locations.forEach((loc) => {
@@ -54,63 +47,69 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
         (c) => c.name.trim() === selectedCompany.trim()
       );
 
-      if (company) {
-        const initialRates = [];
-        const commoditySet = new Set();
+      if (!company) {
+        toast.error("Company not found");
+        return;
+      }
 
-        company.commodities.forEach((cmd) => {
+      const commoditySet = new Set();
+      const initialRates = [];
+
+      await Promise.all(
+        company.commodities.map(async (cmd) => {
+          const { data: cmdRates } = await axiosInstance.get(
+            `/rate?company=${encodeURIComponent(
+              selectedCompany.trim()
+            )}&commodity=${encodeURIComponent(cmd)}`
+          );
+
           commoditySet.add(cmd);
-          company.location.forEach((location) => {
-            const cleanLocation = location.trim();
-            const foundRate = existingRates.find(
-              (rate) =>
-                rate.location.trim() === cleanLocation && rate.commodity === cmd
+
+          company.location.forEach((loc) => {
+            const cleanLoc = loc.trim();
+            const matched = cmdRates.find(
+              (r) => r.location.trim() === cleanLoc && r.commodity === cmd
             );
-            const matchedMobile = company.mobileNumbers?.find(
+
+            const mobileMatch = company.mobileNumbers?.find(
               (entry) =>
-                entry.location.trim() === cleanLocation &&
-                entry.commodity === cmd
+                entry.location.trim() === cleanLoc && entry.commodity === cmd
             );
+
             initialRates.push({
-              location: cleanLocation,
+              location: cleanLoc,
+              state: locationMap[cleanLoc.toUpperCase()] || "Unknown",
               commodity: cmd,
-              state: locationMap[cleanLocation.toUpperCase()] || "Unknown",
-              oldRate: foundRate?.oldRates?.at(-1) || "—",
-              newRate: foundRate?.newRate ?? "",
-              quantity: foundRate?.quantity ?? "",
-              isUpdated: !!foundRate?.newRate,
-              lastUpdated: foundRate?.oldRates?.at(-1)
-                ? new Date(
-                    foundRate.oldRates[foundRate.oldRates.length - 1]
-                      .split("(")[1]
-                      .split(")")[0]
-                  )
+              oldRate: matched?.oldRates?.at(-1) || "—",
+              newRate: matched?.newRate ?? "",
+              quantity: matched?.quantity ?? "",
+              isUpdated: !!matched?.newRate,
+              lastUpdated: matched?.lastUpdated
+                ? new Date(matched.lastUpdated)
                 : null,
-              primaryMobile: matchedMobile?.primaryMobile || "N/A",
-              contactPerson: matchedMobile?.contactPerson || "N/A",
+              primaryMobile: mobileMatch?.primaryMobile || "N/A",
+              contactPerson: mobileMatch?.contactPerson || "N/A",
             });
           });
-        });
+        })
+      );
 
-        const sortedRates = initialRates.sort((a, b) => {
-          if (!a.isUpdated && b.isUpdated) return -1;
-          if (a.isUpdated && !b.isUpdated) return 1;
-          return b.lastUpdated - a.lastUpdated;
-        });
+      const sortedRates = initialRates.sort((a, b) => {
+        if (!a.isUpdated && b.isUpdated) return -1;
+        if (a.isUpdated && !b.isUpdated) return 1;
+        return (b.lastUpdated || 0) - (a.lastUpdated || 0);
+      });
 
-        startTransition(() => {
-          setAllRates(sortedRates);
-          setRates(sortedRates);
-          setAvailableCommodities([...commoditySet]);
-        });
-      } else {
-        toast.error("Company not found in the database.");
-      }
-    } catch (error) {
-      toast.error("Failed to fetch locations or rates");
-      console.error("Error fetching rates:", error);
+      startTransition(() => {
+        setAllRates(sortedRates);
+        setRates(sortedRates);
+        setAvailableCommodities([...commoditySet]);
+      });
+    } catch (err) {
+      toast.error("Failed to fetch rates");
+      console.error("fetchRates error:", err);
     }
-  }, [selectedCompany, commodity]);
+  }, [selectedCompany]);
 
   useEffect(() => {
     fetchRates();
@@ -134,31 +133,26 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
     const parsedRate = parseFloat(rateToSave.newRate);
 
     if (!rateToSave.newRate || isNaN(parsedRate)) {
-      toast.error("Please enter a valid numeric rate.");
+      toast.error("Enter a valid rate.");
       return;
     }
 
     try {
-      const newOldRate = `${parsedRate} (${new Date().toLocaleDateString(
-        "en-GB"
-      )})`;
-
       await axiosInstance.post("/rate", {
         company: selectedCompany,
         location: rateToSave.location,
         newRate: parsedRate,
-        oldRates: [newOldRate],
         mobile,
         commodity: rateToSave.commodity,
         quantity: rateToSave.quantity || 0,
       });
 
-      toast.success("Rate updated successfully!");
+      toast.success("Rate saved!");
       setEditIndex(null);
-
       await fetchRates();
     } catch (error) {
-      toast.error("Error updating rate.");
+      toast.error("Save failed.");
+      console.error("Error saving rate:", error);
     }
   };
 
