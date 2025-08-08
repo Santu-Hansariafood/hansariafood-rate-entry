@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, Suspense } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  Suspense,
+  useEffect,
+  useRef,
+} from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useSaudaData from "@/hooks/SaudaData/useSaudaData";
@@ -35,6 +42,7 @@ const Sauda = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
+  const inactivityTimer = useRef(null);
 
   const {
     companies,
@@ -61,9 +69,23 @@ const Sauda = () => {
       if (status) {
         updateCompanyStatus(companyName, status);
       }
+      clearTimeout(inactivityTimer.current);
     },
     [updateCompanyStatus]
   );
+
+  useEffect(() => {
+    if (selectedCompany) {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        handlePopupClose(selectedCompany);
+      }, 3 * 60 * 1000);
+    }
+
+    return () => {
+      clearTimeout(inactivityTimer.current);
+    };
+  }, [selectedCompany, handlePopupClose]);
 
   return (
     <Suspense fallback={<Loading />}>
