@@ -128,46 +128,6 @@ export async function DELETE(req) {
   }
 }
 
-// export async function PATCH(req) {
-//   if (!verifyApiKey(req)) {
-//     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-//   }
-
-//   try {
-//     await connectDB();
-//     const { mobile } = await req.json();
-
-//     if (!mobile) {
-//       return NextResponse.json(
-//         { message: "Mobile number is required" },
-//         { status: 400 }
-//       );
-//     }
-
-//     const user = await User.findOne({ mobile });
-//     if (!user) {
-//       return NextResponse.json(
-//         { message: "Mobile number not registered" },
-//         { status: 404 }
-//       );
-//     }
-
-//     return NextResponse.json(
-//       { message: "Mobile number found", name: user.name },
-//       { status: 200 }
-//     );
-//   } catch (error) {
-//     console.error("Mobile Check Error:", error);
-//     return NextResponse.json(
-//       { message: "Error checking mobile number" },
-//       { status: 500 }
-//     );
-//   }
-// }
-// /api/auth/register/route.js
-
-// /api/auth/register/route.js
-
 export async function PATCH(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -192,15 +152,13 @@ export async function PATCH(req) {
       );
     }
 
-    // Base64 encode the password
     const encodedPassword = user.password ? btoa(user.password) : "";
 
-    // Template variables
     const var1 = (user.name || "").trim();
     const var2 = `Your password is ${encodedPassword}. Please login at https://hansariafood.site`;
 
     if (!var1 || !var2) {
-      console.error("❌ Template vars missing", { var1, var2 });
+      console.error("Template vars missing", { var1, var2 });
       return NextResponse.json(
         { message: "WhatsApp template variables are blank", var1, var2 },
         { status: 400 }

@@ -27,21 +27,25 @@ export default function Login() {
   return (
     <Suspense fallback={<Loading />}>
       <main
-        className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 to-green-100"
-        role="main"
-        aria-label="Login Page"
+        className="flex min-h-screen items-center justify-center 
+          bg-gradient-to-br from-green-50 via-white to-green-100 
+          dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 
+          transition-colors duration-500"
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md p-8 shadow-2xl rounded-3xl bg-white/90 backdrop-blur-sm"
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="w-full max-w-md p-8 rounded-3xl shadow-xl 
+            bg-white/80 dark:bg-gray-900/80 
+            backdrop-blur-lg border border-gray-200 dark:border-gray-700"
         >
           <div className="text-center mb-8">
             <Title text="Welcome Back" />
-            <p className="text-gray-600">Please sign in to your account</p>
+            <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+              Sign in to continue
+            </p>
           </div>
-
           <form
             onSubmit={handleSubmit}
             className="space-y-6"
@@ -54,7 +58,6 @@ export default function Login() {
                 type="number"
                 maxLength={10}
                 required
-                readOnly={false}
                 placeholder="Enter your mobile number"
                 value={mobile}
                 onChange={handleMobileChange}
@@ -71,11 +74,10 @@ export default function Login() {
                 </motion.p>
               )}
             </div>
-
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-semibold text-gray-700 mb-2"
+                className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
               >
                 Password
               </label>
@@ -90,7 +92,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
@@ -99,14 +101,12 @@ export default function Login() {
               <div className="text-right mt-2">
                 <Link
                   href="/forgot-password"
-                  className="text-sm text-green-600 hover:underline"
-                  aria-label="Reset your password"
+                  className="text-sm text-green-600 hover:underline dark:text-green-400"
                 >
                   Forgot Password?
                 </Link>
               </div>
             </div>
-
             {error && (
               <motion.p
                 id="error-message"
@@ -114,17 +114,16 @@ export default function Login() {
                 animate={{ opacity: 1 }}
                 className="text-red-500 text-sm font-medium"
                 role="alert"
-                aria-live="polite"
               >
                 {error}
               </motion.p>
             )}
-
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full bg-green-500 text-white py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors duration-200 shadow-lg hover:shadow-xl"
-              aria-label="Sign in to your account"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="w-full bg-green-500 text-white py-3 rounded-xl font-semibold 
+                hover:bg-green-600 shadow-lg hover:shadow-xl 
+                transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-300"
             >
               Log In
             </motion.button>

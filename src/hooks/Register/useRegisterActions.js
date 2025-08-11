@@ -11,8 +11,38 @@ export default function useRegisterActions({ companies, fetchUsers }) {
   const [saving, setSaving] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const handleOpenPopup = (user) => {
+  const handleOpenPopup = async (user) => {
+    if (!user?.mobile) {
+      toast.error("Invalid user data");
+      return;
+    }
+
     setSelectedUser(user);
+    try {
+      const res = await axiosInstance.get(
+        `/user-companies?mobile=${user.mobile}`
+      );
+
+      if (Array.isArray(res.data?.companies) && res.data.companies.length > 0) {
+        const preselectedCompanies = res.data.companies
+          .filter((c) => c?.companyId?._id)
+          .map((c) => c.companyId._id);
+
+        const preselectedLocations = res.data.companies
+          .filter((c) => Array.isArray(c?.locations))
+          .flatMap((c) => c.locations);
+
+        setSelectedCompanies(preselectedCompanies);
+        setSelectedLocations(preselectedLocations);
+      } else {
+        setSelectedCompanies([]);
+        setSelectedLocations([]);
+      }
+    } catch (err) {
+      console.error("Error loading preselected companies:", err);
+      setSelectedCompanies([]);
+      setSelectedLocations([]);
+    }
     setOpen(true);
   };
 

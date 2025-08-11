@@ -137,9 +137,19 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
 
       await axiosInstance.post("/managecompany", payload);
       toast.success("Company created successfully");
+
+      setCompanyName("");
+      setCategory("");
+      setState("");
+      setSelectedLocations([]);
+      setSelectedCommodities([]);
+      setCompanyType([]);
+      setLocationCommodityContacts({});
+
       onCreated?.();
-      onClose();
+      onClose?.();
     } catch (error) {
+      toast.error("Failed to create company. Please try again.");
     } finally {
       setLoading(false);
     }

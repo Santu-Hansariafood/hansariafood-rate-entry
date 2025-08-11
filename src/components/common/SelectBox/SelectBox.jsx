@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useId } from "react";
+import { motion } from "framer-motion";
 
 export default function SelectBox({
   label,
@@ -27,14 +28,17 @@ export default function SelectBox({
           const isSelected = value === option.value;
 
           return (
-            <label
+            <motion.label
               key={optionId}
               htmlFor={optionId}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all duration-200 shadow
+              whileHover={!disabled ? { scale: 1.03 } : {}}
+              whileTap={!disabled ? { scale: 0.97 } : {}}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl border cursor-pointer shadow-sm backdrop-blur-md transition-all duration-300
                 ${
                   isSelected
-                    ? "bg-green-600 text-white border-green-700 ring-2 ring-green-400"
-                    : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
+                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white border-green-500 shadow-lg"
+                    : "bg-white/80 dark:bg-gray-900/80 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white hover:border-green-400 hover:shadow-md"
                 }
                 ${disabled ? "opacity-50 cursor-not-allowed" : ""}
               `}
@@ -48,10 +52,10 @@ export default function SelectBox({
                 onChange={onChange}
                 required={required}
                 disabled={disabled}
-                className="accent-green-600 h-4 w-4"
+                className="hidden"
               />
               <span className="text-sm font-medium">{option.label}</span>
-            </label>
+            </motion.label>
           );
         })}
       </div>

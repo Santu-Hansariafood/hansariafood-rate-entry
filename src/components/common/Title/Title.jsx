@@ -5,14 +5,32 @@ import { motion } from "framer-motion";
 
 const Title = ({ text }) => {
   return (
-    <motion.h2
+    <motion.div
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className="text-3xl sm:text-4xl font-extrabold mb-6 text-center bg-gradient-to-r from-green-500 via-green-600 to-green-500 text-transparent bg-clip-text drop-shadow-[2px_2px_1px_rgba(0,0,0,0.3)]"
+      className="relative w-full flex items-center justify-center"
     >
-      {text}
-    </motion.h2>
+      <motion.div
+        animate={{
+          backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+        }}
+        transition={{
+          duration: 6,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="absolute inset-0 -z-10 rounded-2xl shadow-lg border border-white/10 dark:border-white/5"
+        style={{
+          backgroundImage:
+            "linear-gradient(90deg, rgba(34,197,94,0.2) 0%, rgba(52,211,153,0.2) 50%, rgba(16,185,129,0.2) 100%)",
+          backgroundSize: "200% 200%",
+        }}
+      />
+      <h2 className="text-3xl sm:text-4xl font-extrabold font-serif text-center text-gray-900 dark:text-white tracking-tight py-6 drop-shadow-sm">
+        {text}
+      </h2>
+    </motion.div>
   );
 };
 
