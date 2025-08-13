@@ -59,17 +59,22 @@ export default function Rate() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
+      className="space-y-6"
     >
-      <CompanyTypeFilter
-        selectedType={filters.type}
-        onChange={(type) => setFilters((prev) => ({ ...prev, type }))}
-      />
+      <div className="flex justify-center">
+        <CompanyTypeFilter
+          selectedType={filters.type}
+          onChange={(type) => setFilters((prev) => ({ ...prev, type }))}
+        />
+      </div>
+
       <CompanyList
         companies={companies}
         completedCompanies={completedCompanies}
         loading={loading}
         onCompanySelect={setSelectedCompany}
       />
+
       <Pagination
         totalItems={totalItems}
         itemsPerPage={itemsPerPage}
@@ -81,11 +86,11 @@ export default function Rate() {
 
   const renderRateTable = (
     <Suspense fallback={<Loading />}>
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded shadow-lg w-full max-w-3xl relative">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-2xl w-full max-w-4xl relative transition-all">
           <button
             onClick={() => setSelectedCompany(null)}
-            className="absolute top-2 right-2"
+            className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white transition"
           >
             ✕
           </button>
@@ -101,12 +106,14 @@ export default function Rate() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
-        <ToastContainer position="top-right" />
-        <Title text="Rate Management" />
-        <CategoryCard onFilterChange={handleFilterChange} />
-        {!selectedCompany && renderCompanySelector}
-        {selectedCompany && renderRateTable}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 sm:p-6 lg:p-8 transition-colors">
+        <ToastContainer position="top-right" theme="colored" />
+        <div className="max-w-7xl mx-auto space-y-8">
+          <Title text="Rate Management" />
+          <CategoryCard onFilterChange={handleFilterChange} />
+          {!selectedCompany && renderCompanySelector}
+          {selectedCompany && renderRateTable}
+        </div>
       </div>
     </Suspense>
   );
