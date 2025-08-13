@@ -40,30 +40,35 @@ export default function RateTableModal({
         <div className="mt-2 text-sm text-gray-700">
           <p className="font-medium mb-1">Filter by Commodity:</p>
           <div className="flex flex-wrap gap-3">
-            {availableCommodities.map((c, i) => {
-              const { bg, text, ring } = palette[i % palette.length];
-              const isChecked = selectedCommodities.includes(c);
-              return (
-                <label key={c} className="relative inline-flex cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => onCommodityToggle(c)}
-                    className="sr-only peer"
-                  />
-                  <span
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full border border-gray-300 transition
+            {[...availableCommodities]
+              .sort((a, b) => a.localeCompare(b))
+              .map((c, i) => {
+                const { bg, text, ring } = palette[i % palette.length];
+                const isChecked = selectedCommodities.includes(c);
+                return (
+                  <label
+                    key={c}
+                    className="relative inline-flex cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => onCommodityToggle(c)}
+                      className="sr-only peer"
+                    />
+                    <span
+                      className={`flex items-center gap-1 px-3 py-1 rounded-full border border-gray-300 transition
                       ${bg} ${text}
                       peer-checked:ring-2 peer-checked:${ring}
                       hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:${ring}
                     `}
-                  >
-                    {isChecked && <Check className="w-3.5 h-3.5 shrink-0" />}
-                    {c}
-                  </span>
-                </label>
-              );
-            })}
+                    >
+                      {isChecked && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      {c}
+                    </span>
+                  </label>
+                );
+              })}
           </div>
         </div>
       ),
