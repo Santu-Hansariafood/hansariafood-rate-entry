@@ -12,7 +12,6 @@ const Loading = () => {
         transition={{ duration: 0.4 }}
         className="flex flex-col items-center space-y-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-green-200 dark:border-green-700 max-w-sm w-full"
       >
-        {/* Animated Circle Loader */}
         <div className="relative w-20 h-20">
           <motion.div
             animate={{ rotate: 360 }}
@@ -27,8 +26,6 @@ const Loading = () => {
             <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
           </motion.div>
         </div>
-
-        {/* Icon Accent */}
         <motion.div
           animate={{ rotate: [0, 10, -10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -36,8 +33,6 @@ const Loading = () => {
         >
           <Leaf className="w-6 h-6 text-green-600 dark:text-green-400" />
         </motion.div>
-
-        {/* Text */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
