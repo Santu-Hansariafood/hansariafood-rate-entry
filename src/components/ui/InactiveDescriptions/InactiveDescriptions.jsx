@@ -3,9 +3,10 @@
 import { useState, useMemo, useCallback, Suspense } from "react";
 import dayjs from "dayjs";
 import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { useInactiveDescriptions } from "@/hooks/InactiveDescriptions/useInactiveDescriptions";
 import Loading from "@/components/common/Loading/Loading";
-import { motion } from "framer-motion";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
@@ -19,20 +20,60 @@ export default function InactiveDescriptions() {
   const dayOptions = useMemo(() => [7, 15, 30], []);
 
   const handleDaysChange = useCallback((e) => {
-    setDays(parseInt(e.target.value));
+    setDays(Number(e.target.value));
     setVisibleCount(ITEMS_PER_PAGE);
   }, []);
 
-  const showMore = () => {
+  const showMore = useCallback(() => {
     setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
-  };
+  }, []);
+
+  const processedList = useMemo(() => {
+    return descriptions.map((desc) => {
+      const lastUsed = desc.lastUsedDate ? dayjs(desc.lastUsedDate) : null;
+      const daysAgo = lastUsed ? dayjs().diff(lastUsed, "day") : null;
+
+      let status = { icon: null, text: null, highlight: false };
+
+      if (daysAgo === null || daysAgo > 21) {
+        status = {
+          icon: <ArrowDown className="text-red-500 animate-bounce" size={20} />,
+          text: (
+            <span className="ml-2 text-xs font-bold text-red-500 animate-pulse">
+              Needs Attention
+            </span>
+          ),
+          highlight: true,
+        };
+      } else if (daysAgo > 7) {
+        status = {
+          icon: <ArrowDown className="text-red-500" size={20} />,
+        };
+      } else {
+        status = {
+          icon: <ArrowUp className="text-green-500" size={20} />,
+        };
+      }
+
+      return {
+        ...desc,
+        lastUsed,
+        daysAgo,
+        status,
+      };
+    });
+  }, [descriptions]);
 
   const renderList = useMemo(() => {
     if (loading) {
-      return <p className="text-gray-500 dark:text-gray-400 text-center">Loading...</p>;
+      return (
+        <p className="text-gray-500 dark:text-gray-400 text-center">
+          Loading...
+        </p>
+      );
     }
 
-    if (descriptions.length === 0) {
+    if (processedList.length === 0) {
       return (
         <p className="text-gray-500 dark:text-gray-400 text-center">
           All Party Sauda are recently used.
@@ -41,36 +82,42 @@ export default function InactiveDescriptions() {
     }
 
     return (
-      <>
+      <Suspense fallback={<Loading />}>
         <ul className="space-y-4">
-          {descriptions.slice(0, visibleCount).map((desc, index) => (
+          {processedList.slice(0, visibleCount).map((desc, index) => (
             <motion.li
               key={index}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.03 }}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex justify-between items-center shadow-sm hover:shadow-md hover:border-green-400 transition-all"
+              className={`rounded-xl p-5 flex justify-between items-center transition-all shadow-sm hover:shadow-lg border ${
+                desc.status.highlight
+                  ? "border-red-400 bg-red-50 dark:bg-red-900/30"
+                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+              }`}
             >
               <div>
-                <p className="text-lg font-medium text-gray-800 dark:text-gray-100">
+                <p className="text-lg font-semibold bg-gradient-to-r from-green-500 to-teal-400 bg-clip-text text-transparent">
                   {desc.description}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center">
                   Last used:{" "}
-                  {desc.lastUsedDate
-                    ? dayjs(desc.lastUsedDate).format("DD MMM YYYY")
+                  {desc.lastUsed
+                    ? desc.lastUsed.format("DD MMM YYYY")
                     : "Never"}
+                  {desc.status.icon}
+                  {desc.status.text}
                 </p>
               </div>
               <div className="text-sm text-right text-gray-700 dark:text-gray-300">
-                <p>Count: {desc.count}</p>
-                <p>Qty: {desc.totalQuantity} tons</p>
+                <p className="font-medium">Count: {desc.count}</p>
+                <p className="mt-1">Qty: {desc.totalQuantity} tons</p>
               </div>
             </motion.li>
           ))}
         </ul>
 
-        {visibleCount < descriptions.length && (
+        {visibleCount < processedList.length && (
           <div className="flex justify-center mt-6">
             <button
               onClick={showMore}
@@ -80,9 +127,9 @@ export default function InactiveDescriptions() {
             </button>
           </div>
         )}
-      </>
+      </Suspense>
     );
-  }, [loading, descriptions, visibleCount]);
+  }, [loading, processedList, visibleCount, showMore]);
 
   return (
     <Suspense fallback={<Loading />}>
@@ -102,7 +149,6 @@ export default function InactiveDescriptions() {
               ))}
             </select>
           </div>
-
           {renderList}
         </div>
       </div>
