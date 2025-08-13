@@ -7,6 +7,7 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 export default function Welcome() {
@@ -59,38 +60,45 @@ export default function Welcome() {
   const assignedCompaniesList = useMemo(() => {
     if (assignedCompanies.length > 0) {
       return (
-        <div className="mt-4 text-left">
-          <Title text="Assigned Companies:" />
-          <div className="space-y-4">
+        <div className="mt-8 text-left">
+          <Title text="Assigned Companies" />
+          <div className="space-y-5 mt-4">
             {assignedCompanies.map((company) => {
               if (!company?.companyId) return null;
 
               return (
-                <div
+                <motion.div
                   key={company.companyId._id}
-                  className="bg-gray-50 p-4 rounded-lg shadow-md"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md hover:shadow-lg p-5"
                 >
-                  <h3 className="font-semibold text-lg text-blue-700">
+                  <h3 className="font-bold text-lg bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
                     {company.companyId.name}
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-3">
                     {company.locations.map((loc, index) => (
                       <span
                         key={`${company.companyId._id}-${index}`}
-                        className="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full text-center"
+                        className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 text-xs px-3 py-1 rounded-full text-center font-medium shadow-sm"
                       >
                         {loc}
                       </span>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         </div>
       );
     } else {
-      return <p className="text-gray-500 mt-4">No assigned companies found.</p>;
+      return (
+        <p className="text-gray-500 dark:text-gray-400 mt-6">
+          No assigned companies found.
+        </p>
+      );
     }
   }, [assignedCompanies]);
 
@@ -98,19 +106,22 @@ export default function Welcome() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white shadow-lg rounded-xl p-6 max-w-4xl w-full text-center"
+          transition={{ duration: 0.5 }}
+          className="bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-8 max-w-4xl w-full text-center"
         >
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-green-500 to-teal-400 bg-clip-text text-transparent mb-4">
             Welcome, {name}
           </h1>
-          <p className="text-sm text-blue-600 hover:underline mt-2">
-            <Link href="/resetpassword">Reset Your Password</Link>
-          </p>
+          <Link
+            href="/resetpassword"
+            className="inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Reset Your Password
+          </Link>
           {assignedCompaniesList}
         </motion.div>
       </div>
