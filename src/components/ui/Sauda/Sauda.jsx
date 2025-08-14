@@ -89,10 +89,10 @@ const Sauda = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 space-y-6 min-h-screen flex flex-col items-center bg-gray-50">
+      <div className="p-4 space-y-6 min-h-screen flex flex-col items-center bg-gray-50 dark:bg-gray-900">
         <Title text="Check Sauda List" />
 
-        <div className="w-full max-w-md flex items-center gap-4 relative bg-white p-3 rounded-xl shadow-sm">
+        <div className="w-full max-w-md flex items-center gap-4 relative bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm">
           <InputBox
             name="company-search"
             placeholder="Search by company name…"
@@ -102,10 +102,10 @@ const Sauda = () => {
 
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-full bg-green-100 hover:bg-green-200 transition border border-green-300 group"
+            className="relative p-2 rounded-full bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 transition border border-green-300 dark:border-green-700 group"
             aria-label="Notifications"
           >
-            <Handshake className="w-6 h-6 text-green-700 transform transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
+            <Handshake className="w-6 h-6 text-green-700 dark:text-green-300 transform transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
           </button>
 
           {showNotifications && (
@@ -127,16 +127,16 @@ const Sauda = () => {
                   const statusColor = saudaStatusMap[company.name] || "green";
                   const bgColor =
                     statusColor === "blue"
-                      ? "bg-blue-50 border-blue-400"
+                      ? "bg-blue-50 border-blue-400 dark:bg-blue-900/40 dark:border-blue-600"
                       : statusColor === "yellow"
-                      ? "bg-yellow-50 border-yellow-400"
-                      : "bg-green-50 border-green-400";
+                      ? "bg-yellow-50 border-yellow-400 dark:bg-yellow-900/40 dark:border-yellow-600"
+                      : "bg-green-50 border-green-400 dark:bg-green-900/40 dark:border-green-600";
                   const textColor =
                     statusColor === "blue"
-                      ? "text-blue-700"
+                      ? "text-blue-700 dark:text-blue-300"
                       : statusColor === "yellow"
-                      ? "text-yellow-700"
-                      : "text-green-700";
+                      ? "text-yellow-700 dark:text-yellow-300"
+                      : "text-green-700 dark:text-green-300";
 
                   return (
                     <div
@@ -147,7 +147,7 @@ const Sauda = () => {
                       <h2 className={`text-lg font-bold ${textColor}`}>
                         {company.name}
                       </h2>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {company.category}
                       </p>
                     </div>
@@ -155,7 +155,7 @@ const Sauda = () => {
                 })}
               </div>
             ) : (
-              <div className="text-gray-500 text-center py-4">
+              <div className="text-gray-500 dark:text-gray-400 text-center py-4">
                 No companies found. Please Update Rate.
               </div>
             )}

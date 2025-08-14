@@ -46,11 +46,11 @@ export default function CreateCategory() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-6">
-        <ToastContainer position="top-right" autoClose={3000} />
-        <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md space-y-6">
-          <Title text="Create Category" />
-          {memoizedInput}
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-6 transition-colors duration-300">
+        <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md space-y-6 transition-colors duration-300">
+          <Title text="Create Category" className="text-gray-800 dark:text-gray-100" />
+          <div className="dark:text-gray-200">{memoizedInput}</div>
           {memoizedButton}
         </div>
       </div>

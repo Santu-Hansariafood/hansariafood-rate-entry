@@ -9,23 +9,27 @@ export default function ActionButtons({ onSave, onShare, onExportRate }) {
     <Suspense fallback={<Loading />}>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
         <button
-          className="flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+          className="flex items-center gap-2 rounded-md 
+            bg-green-600 px-4 py-2 text-white hover:bg-green-700 
+            dark:bg-green-500 dark:hover:bg-green-600"
           onClick={onSave}
         >
           <Save className="h-4 w-4" />
           Save
         </button>
-
         <button
-          className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          className="flex items-center gap-2 rounded-md 
+            bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 
+            dark:bg-blue-500 dark:hover:bg-blue-600"
           onClick={onShare}
         >
           <Share2 className="h-4 w-4" />
           Share Sauda
         </button>
-
         <button
-          className="flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
+          className="flex items-center gap-2 rounded-md 
+            bg-purple-600 px-4 py-2 text-white hover:bg-purple-700 
+            dark:bg-purple-500 dark:hover:bg-purple-600"
           onClick={onExportRate}
         >
           <ArrowDownToLine className="h-4 w-4" />

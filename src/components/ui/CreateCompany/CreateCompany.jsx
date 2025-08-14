@@ -69,36 +69,39 @@ export default function CreateCompany() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="max-w-4xl mx-auto p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 transition-colors duration-300">
+        <div className="max-w-4xl mx-auto p-4 sm:p-6">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="flex items-center gap-4 mb-8"
+            className="flex items-center gap-4 mb-8 flex-wrap"
           >
             <Link
               href="/dashboard"
-              className="p-2 rounded-lg bg-white shadow-sm hover:shadow-md transition-all"
+              className="p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
+              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100">
-                <Building2 className="w-6 h-6 text-blue-600" />
+              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
+                <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-300" />
               </div>
-              <Title text="Create New Company" />
+              <Title
+                text="Create New Company"
+                className="text-gray-800 dark:text-gray-100"
+              />
             </div>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-white rounded-2xl shadow-lg overflow-hidden"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden transition-colors duration-300"
           >
-            <div className="p-8 space-y-6">
+            <div className="p-4 sm:p-8 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Company Name
                 </label>
                 <InputBox
@@ -106,18 +109,18 @@ export default function CreateCompany() {
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder="Enter company name"
-                  className="w-full"
+                  className="w-full dark:bg-gray-900 dark:text-gray-200"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Category
                 </label>
                 <Dropdown
                   options={categoryOptions}
                   value={category}
                   onChange={setCategory}
-                  className="w-full max-h-60 overflow-y-auto"
+                  className="w-full max-h-60 overflow-y-auto dark:bg-gray-900 dark:text-gray-200"
                 />
               </div>
               <div>
@@ -127,6 +130,7 @@ export default function CreateCompany() {
                   options={companyTypeOptions}
                   value={companyType}
                   onChange={(e) => setCompanyType(e.target.value)}
+                  className="dark:bg-gray-900 dark:text-gray-200"
                 />
               </div>
               <div className="pt-4">
@@ -153,7 +157,7 @@ export default function CreateCompany() {
           </motion.div>
         </div>
 
-        <ToastContainer position="top-right" autoClose={3000} />
+        <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       </div>
     </Suspense>
   );

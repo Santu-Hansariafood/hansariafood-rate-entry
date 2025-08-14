@@ -28,9 +28,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [companyType, setCompanyType] = useState([]);
-  const [locationCommodityContacts, setLocationCommodityContacts] = useState(
-    {}
-  );
+  const [locationCommodityContacts, setLocationCommodityContacts] = useState({});
   const [loading, setLoading] = useState(false);
 
   const updateLocationCommodityContacts = (locs, cmds, prevData = {}) => {
@@ -137,7 +135,6 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
 
       await axiosInstance.post("/managecompany", payload);
       toast.success("Company created successfully");
-
       setCompanyName("");
       setCategory("");
       setState("");
@@ -157,11 +154,11 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-2 sm:p-4">
-        <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-6xl">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-2 sm:p-4">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded shadow-md w-full max-w-6xl">
           <Title
             text="Create Company"
-            className="text-2xl font-bold mb-6 text-center"
+            className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -178,8 +175,18 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
               onChange={handleLocationChange}
               isMulti
             />
-            <InputBox label="Category" value={category} readOnly />
-            <InputBox label="State" value={state} readOnly />
+            <InputBox
+              label="Category"
+              value={category}
+              readOnly
+              className="dark:bg-gray-700 dark:text-gray-100"
+            />
+            <InputBox
+              label="State"
+              value={state}
+              readOnly
+              className="dark:bg-gray-700 dark:text-gray-100"
+            />
             <Dropdown
               label="Commodities *"
               options={commodityOptions}
@@ -192,12 +199,15 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
           <div className="mt-8">
             <Title
               text="Location-wise Contact Details"
-              className="text-lg font-semibold mb-2"
+              className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100"
             />
             <div className="space-y-6">
               {selectedLocations.map((loc) => (
-                <div key={loc} className="bg-gray-50 p-4 rounded border">
-                  <h3 className="text-md font-semibold text-blue-700 mb-2">
+                <div
+                  key={loc}
+                  className="bg-gray-50 dark:bg-gray-700 p-4 rounded border border-gray-200 dark:border-gray-600"
+                >
+                  <h3 className="text-md font-semibold text-blue-700 dark:text-blue-300 mb-2">
                     {loc}
                   </h3>
                   <div className="space-y-3">
@@ -210,6 +220,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
                           label="Commodity"
                           value={cmd.value}
                           readOnly
+                          className="dark:bg-gray-600 dark:text-gray-100"
                         />
                         <InputBox
                           label="Primary Mobile"
@@ -225,6 +236,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
                               e.target.value
                             )
                           }
+                          className="dark:bg-gray-600 dark:text-gray-100"
                         />
                         <InputBox
                           label="Contact Person"
@@ -240,6 +252,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
                               e.target.value
                             )
                           }
+                          className="dark:bg-gray-600 dark:text-gray-100"
                         />
                         <InputBox
                           label="Company Type"
@@ -247,6 +260,7 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
                             .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
                             .join(", ")}
                           readOnly
+                          className="dark:bg-gray-600 dark:text-gray-100"
                         />
                       </div>
                     ))}
@@ -261,12 +275,12 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
               onClick={handleSubmit}
               text="Create"
               isLoading={loading}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 dark:bg-green-500 dark:hover:bg-green-600"
             />
             <Button
               onClick={onClose}
               text="Cancel"
-              className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2"
+              className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white"
             />
           </div>
         </div>
