@@ -99,7 +99,7 @@ const CategoryList = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4">
+      <div className="p-4 dark:bg-gray-900 dark:text-gray-100 min-h-screen">
         <Title text="Category List" />
         <SearchBox
           value={searchQuery}
@@ -118,7 +118,7 @@ const CategoryList = () => {
         />
 
         {selectedCategory && (
-          <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-800 dark:text-white">
+          <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded dark:text-gray-100">
             <h3 className="text-lg font-semibold">Category Details</h3>
             <p>Name: {selectedCategory.name}</p>
           </div>
@@ -127,12 +127,12 @@ const CategoryList = () => {
         {modal.open && (
           <Modal onClose={closeModal}>
             {modal.type === "edit" && (
-              <div>
+              <div className="dark:bg-gray-900 dark:text-gray-100 p-4 rounded">
                 <h2 className="text-lg font-semibold mb-4">Edit Category</h2>
                 <input
                   type="text"
                   defaultValue={modal.data.name}
-                  className="border p-2 w-full mb-4 rounded"
+                  className="border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 p-2 w-full mb-4 rounded"
                   id="editCategoryInput"
                 />
                 <button
@@ -149,12 +149,12 @@ const CategoryList = () => {
               </div>
             )}
             {modal.type === "delete" && (
-              <div>
+              <div className="dark:bg-gray-900 dark:text-gray-100 p-4 rounded">
                 <h2 className="text-lg font-semibold mb-4">Delete Category</h2>
                 <p>Are you sure you want to delete {modal.data.name}?</p>
                 <div className="flex justify-end space-x-2 mt-4">
                   <button
-                    className="px-4 py-2 bg-gray-300 rounded"
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:text-gray-100 rounded"
                     onClick={closeModal}
                   >
                     Cancel

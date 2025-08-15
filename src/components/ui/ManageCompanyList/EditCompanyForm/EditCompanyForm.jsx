@@ -170,8 +170,8 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-2 sm:p-4">
-        <div className="bg-white p-4 sm:p-6 rounded shadow-md w-full max-w-6xl">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-2 sm:p-4 transition-colors duration-300">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded shadow-md w-full max-w-6xl text-gray-900 dark:text-gray-100">
           <Title
             text="Edit Company"
             className="text-2xl font-bold mb-6 text-center"
@@ -209,8 +209,11 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
             />
             <div className="space-y-6">
               {selectedLocations.map((loc) => (
-                <div key={loc} className="bg-gray-50 p-4 rounded border">
-                  <h3 className="text-md font-semibold text-blue-700 mb-2">
+                <div
+                  key={loc}
+                  className="bg-gray-50 dark:bg-gray-700 p-4 rounded border dark:border-gray-600"
+                >
+                  <h3 className="text-md font-semibold text-blue-700 dark:text-blue-400 mb-2">
                     {loc}
                   </h3>
                   <div className="space-y-3">
@@ -279,7 +282,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
             <Button
               onClick={onClose}
               text="Cancel"
-              className="bg-gray-300 hover:bg-gray-400 text-black px-6 py-2"
+              className="bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-black dark:text-white px-6 py-2"
             />
           </div>
         </div>

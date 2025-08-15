@@ -152,21 +152,20 @@ const ManageCompanyList = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4">
+      <div className="p-4 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
         <ToastContainer position="top-right" autoClose={3000} />
         <Title text="Manage Company List" />
-
-        <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-green-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-green-100 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <label
               htmlFor="typeFilter"
-              className="text-sm font-medium text-green-800"
+              className="text-sm font-medium text-green-800 dark:text-green-300"
             >
               Filter by Type:
             </label>
             <select
               id="typeFilter"
-              className="bg-green-50 text-green-800 border border-green-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition duration-150"
+              className="bg-green-50 dark:bg-gray-700 text-green-800 dark:text-green-200 border border-green-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-150"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
             >
@@ -181,12 +180,11 @@ const ManageCompanyList = () => {
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Search by company name..."
-              className="w-full border border-green-300 bg-green-50 text-green-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition duration-150"
+              className="w-full border border-green-300 dark:border-gray-600 bg-green-50 dark:bg-gray-700 text-green-800 dark:text-green-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-150"
             />
           </div>
         </div>
-
-        <div className="bg-white rounded shadow overflow-hidden mt-4">
+        <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden mt-4 border border-gray-200 dark:border-gray-700">
           <Table data={tableRows} columns={columns} />
           <Pagination
             currentPage={currentPage}
@@ -195,10 +193,9 @@ const ManageCompanyList = () => {
             onPageChange={setCurrentPage}
           />
         </div>
-
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-6xl overflow-y-auto max-h-[90vh]">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-6xl overflow-y-auto max-h-[90vh] dark:text-gray-100">
               {editingCompany ? (
                 <EditCompanyForm
                   company={editingCompany}
@@ -260,7 +257,7 @@ const ManageCompanyList = () => {
                     </li>
                   </ul>
                   <button
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
                     onClick={() => {
                       setShowModal(false);
                       setSelectedCompany(null);

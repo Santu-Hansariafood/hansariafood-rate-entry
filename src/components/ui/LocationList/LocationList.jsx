@@ -84,7 +84,7 @@ export default function LocationList() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4">
+      <div className="p-4 dark:bg-gray-900 min-h-screen">
         <Title text="Location List" />
         <SearchBox
           value={searchQuery}
@@ -107,9 +107,9 @@ export default function LocationList() {
             onClose={() => setShowModal(false)}
           >
             {editMode ? (
-              <div className="space-y-4 p-4">
+              <div className="space-y-4 p-4 dark:bg-gray-800 rounded-lg">
                 <label className="block">
-                  <span className="text-gray-700 font-semibold">
+                  <span className="text-gray-700 dark:text-gray-200 font-semibold">
                     Location Name
                   </span>
                   <input
@@ -117,17 +117,19 @@ export default function LocationList() {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm p-2 focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter location name"
                   />
                 </label>
                 <label className="block">
-                  <span className="text-gray-700 font-semibold">State</span>
+                  <span className="text-gray-700 dark:text-gray-200 font-semibold">
+                    State
+                  </span>
                   <select
                     name="state"
                     value={formData.state}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm p-2 focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="" disabled>
                       Select a state
@@ -142,36 +144,36 @@ export default function LocationList() {
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={handleEdit}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
                   >
                     Save Changes
                   </button>
                   <button
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="p-4">
-                <p>
+              <div className="p-4 dark:bg-gray-800 rounded-lg">
+                <p className="dark:text-gray-200">
                   <strong>State:</strong> {selectedLocation?.state}
                 </p>
-                <p>
+                <p className="dark:text-gray-200">
                   <strong>Name:</strong> {selectedLocation?.name}
                 </p>
                 <div className="flex justify-end gap-2 mt-4">
                   <button
                     onClick={() => handleDelete(selectedLocation._id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
                   >
                     Delete
                   </button>
                   <button
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded"
                   >
                     Close
                   </button>

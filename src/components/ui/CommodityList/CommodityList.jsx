@@ -80,7 +80,7 @@ const CommodityList = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4">
+      <div className="p-4 dark:bg-gray-900 min-h-screen">
         <Title text="Commodity List" />
         <SearchBox
           value={searchQuery}
@@ -94,8 +94,9 @@ const CommodityList = () => {
           currentPage={currentPage}
           onPageChange={setCurrentPage}
         />
+
         {selectedCommodity && (
-          <div className="mt-4 p-4 bg-gray-100 rounded">
+          <div className="mt-4 p-4 bg-gray-100 rounded dark:bg-gray-800 dark:text-gray-200">
             <h3 className="text-lg font-semibold">Commodity Details</h3>
             <p>
               <strong>Name:</strong> {selectedCommodity.name}
@@ -106,16 +107,16 @@ const CommodityList = () => {
         {modal.open && (
           <Modal onClose={closeModal}>
             {modal.type === "edit" && (
-              <div>
+              <div className="dark:bg-gray-900 dark:text-gray-200">
                 <h2 className="text-lg font-semibold mb-4">Edit Commodity</h2>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="border p-2 w-full mb-4"
+                  className="border border-gray-300 dark:border-gray-600 p-2 w-full mb-4 rounded bg-white dark:bg-gray-800 dark:text-gray-200"
                 />
                 <button
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded"
+                  className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
                   onClick={() => handleEdit(modal.data.index, editName)}
                 >
                   Save Changes
@@ -124,7 +125,7 @@ const CommodityList = () => {
             )}
 
             {modal.type === "delete" && (
-              <div>
+              <div className="dark:bg-gray-900 dark:text-gray-200">
                 <h2 className="text-lg font-semibold mb-4">Delete Commodity</h2>
                 <p>
                   Are you sure you want to delete{" "}
@@ -132,13 +133,13 @@ const CommodityList = () => {
                 </p>
                 <div className="flex justify-end space-x-2 mt-4">
                   <button
-                    className="px-4 py-2 bg-gray-300 rounded"
+                    className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:text-gray-200 rounded"
                     onClick={closeModal}
                   >
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-2 bg-red-600 text-white rounded"
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
                     onClick={() => handleDelete(modal.data.index)}
                   >
                     Confirm
