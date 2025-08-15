@@ -8,6 +8,7 @@ import useUsers from "@/hooks/Register/useUsers";
 import useRegisterActions from "@/hooks/Register/useRegisterActions";
 import useCompanies from "@/hooks/Register/useCompanies";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const AssignPopup = dynamic(() =>
   import("@/components/ui/RegisterList/AssignPopup/AssignPopup")
@@ -18,6 +19,7 @@ const UserTable = dynamic(() =>
 const CompanyViewPopup = dynamic(() =>
   import("@/components/ui/RegisterList/CompanyViewPopup/CompanyViewPopup")
 );
+
 export default function RegisterList() {
   const { users, fetchUsers, loadingUsers } = useUsers();
   const { companies, loadingCompanies } = useCompanies();
@@ -63,7 +65,12 @@ export default function RegisterList() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 m-4 w-full max-w-6xl mx-auto bg-white shadow-lg rounded-xl">
+      <div
+        className="p-4 m-4 w-full max-w-6xl mx-auto rounded-xl shadow-lg 
+                      bg-white dark:bg-gray-900 
+                      text-gray-900 dark:text-gray-100 
+                      transition-colors duration-300"
+      >
         <div className="flex justify-between items-center mb-6">
           <Title text="Registered Users" />
           {(loadingUsers || loadingCompanies) && <Loading />}

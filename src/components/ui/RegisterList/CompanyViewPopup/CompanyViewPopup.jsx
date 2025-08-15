@@ -9,6 +9,7 @@ import Loading from "@/components/common/Loading/Loading";
 
 import useWeeklyDates from "@/hooks/CompanyViewPopup/useWeeklyDates";
 import useGroupedCompanies from "@/hooks/CompanyViewPopup/useGroupedCompanies";
+
 const PopupWrapper = dynamic(() => import("./PopupWrapper/PopupWrapper"));
 const PopupHeader = dynamic(() => import("./PopupHeader/PopupHeader"));
 const PopupActions = dynamic(() => import("./PopupActions/PopupActions"));
@@ -35,11 +36,24 @@ export default function CompanyViewPopup({
     try {
       const container = downloadRef.current;
 
+      const fixColor = (color, fallback) => {
+        if (!color) return fallback;
+        if (/oklch|lab|var\(/.test(color)) return fallback;
+        return color;
+      };
+
       container.querySelectorAll("*").forEach((el) => {
         const style = window.getComputedStyle(el);
-        if (/oklch|lab/.test(style.backgroundColor))
-          el.style.backgroundColor = "#ffffff";
-        if (/oklch|lab/.test(style.color)) el.style.color = "#000000";
+
+        el.style.backgroundColor = fixColor(style.backgroundColor, "#ffffff");
+        el.style.color = fixColor(style.color, "#000000");
+        el.style.borderColor = fixColor(style.borderColor, "#000000");
+        el.style.outlineColor = fixColor(style.outlineColor, "#000000");
+        el.style.boxShadow = style.boxShadow.replace(
+          /(oklch|lab|var\()[^)]+\)/g,
+          "rgba(0,0,0,0)"
+        );
+
         el.style.fontFamily = "Arial, sans-serif";
       });
 
@@ -61,8 +75,7 @@ export default function CompanyViewPopup({
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
       const ratio = pageWidth / imgWidth;
-      const scaledHeight = imgHeight * ratio;
-      const pageHeightPx = (usableHeight * imgHeight) / scaledHeight;
+      const pageHeightPx = (usableHeight * imgHeight) / (imgHeight * ratio);
 
       let renderedHeight = 0;
       let pageNum = 1;
@@ -151,18 +164,20 @@ export default function CompanyViewPopup({
   return (
     <Suspense fallback={<Loading />}>
       <PopupWrapper>
-        <PopupHeader onClose={onClose} userName={userName} />
-        <PopupActions
-          weekDates={weekDates}
-          downloading={downloading}
-          onDownload={handleDownload}
-        />
-        <DownloadableContent
-          refObj={downloadRef}
-          weekDates={weekDates}
-          groupedCompanies={groupedCompanies}
-          userName={userName}
-        />
+        <div className="dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+          <PopupHeader onClose={onClose} userName={userName} />
+          <PopupActions
+            weekDates={weekDates}
+            downloading={downloading}
+            onDownload={handleDownload}
+          />
+          <DownloadableContent
+            refObj={downloadRef}
+            weekDates={weekDates}
+            groupedCompanies={groupedCompanies}
+            userName={userName}
+          />
+        </div>
       </PopupWrapper>
     </Suspense>
   );

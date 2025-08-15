@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { X, Loader2, Check } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+
 const CompanyCard = dynamic(() =>
   import("@/components/ui/RegisterList/CompanyCard/CompanyCard")
 );
@@ -31,23 +32,32 @@ export default function AssignPopup({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+        className="fixed inset-0 z-50 flex items-center justify-center 
+                   bg-black/50 dark:bg-black/70"
       >
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
-          className="bg-white p-6 rounded-xl w-[90%] max-w-3xl relative"
+          className="w-[90%] max-w-3xl relative p-6 rounded-xl 
+                     bg-white dark:bg-gray-900 
+                     text-gray-900 dark:text-gray-100 
+                     shadow-lg transition-colors duration-300"
         >
           <button
             onClick={handleClosePopup}
-            className="absolute top-4 right-4 text-gray-500 hover:text-red-600 transition-colors"
+            className="absolute top-4 right-4 
+                       text-gray-500 dark:text-gray-400 
+                       hover:text-red-600 dark:hover:text-red-400 
+                       transition-colors"
           >
             <X />
           </button>
           <h3 className="text-xl font-semibold mb-4">
             Assign Companies & Locations to{" "}
-            <span className="text-blue-600">{selectedUser?.name || ""}</span>
+            <span className="text-blue-600 dark:text-blue-400">
+              {selectedUser?.name || ""}
+            </span>
           </h3>
           <div className="flex flex-col gap-4 max-h-[60vh] overflow-auto">
             {companies.map((company) => (
@@ -69,18 +79,23 @@ export default function AssignPopup({
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleClosePopup}
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+              className="px-4 py-2 rounded-lg 
+                         bg-gray-200 dark:bg-gray-700 
+                         text-gray-700 dark:text-gray-200 
+                         hover:bg-gray-300 dark:hover:bg-gray-600 
+                         transition-colors"
             >
               Cancel
             </motion.button>
+
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleSave}
               disabled={saving}
-              className={`px-4 py-2 rounded-lg text-white flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-lg text-white flex items-center gap-2 transition-colors ${
                 saving
-                  ? "bg-blue-300 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
+                  ? "bg-blue-300 dark:bg-blue-500 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
               }`}
             >
               {saving ? (
