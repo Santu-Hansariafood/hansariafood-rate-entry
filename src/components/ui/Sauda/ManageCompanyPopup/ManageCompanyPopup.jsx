@@ -118,25 +118,27 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
   const loading = loadingCompany || loadingRates || loadingSauda;
 
-  const handleSave = async () => {
+  const handleUnitSave = async (key, idx) => {
     if (!company) return;
 
-    const structured = {};
-    Object.entries(entries).forEach(([k, list]) => {
-      const [unit, commodity] = k.split("-");
-      structured[k] = list.map((e) => ({
-        ...e,
-        tons: +e.tons || 0,
-        unit,
-        commodity,
-      }));
-    });
+    const [unit, commodity] = key.split("-");
+    const entry = entries[key]?.[idx];
+    if (!entry) return;
 
     const payload = {
       company: company.name,
       date: today,
       time: currentTime,
-      saudaEntries: structured,
+      saudaEntries: {
+        [key]: [
+          {
+            ...entry,
+            tons: +entry.tons || 0,
+            unit,
+            commodity,
+          },
+        ],
+      },
       lastUpdated,
     };
 
@@ -158,19 +160,9 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
     try {
       const { status, data } = await axiosInstance.post("/save-sauda", payload);
-
       if (status === 201 && data.entry) {
-        toast.success("Updated successfully");
+        toast.success(`Saved successfully for ${unit} - ${commodity}`);
         setLastUpdated(data.entry.lastUpdated);
-
-        const filled = Object.values(entries).some((l) =>
-          l.some((e) => e.tons || e.description)
-        );
-        const allNos = Object.values(entries).every((l) =>
-          l.every((e) => e.saudaNo)
-        );
-
-        onClose(filled ? (allNos ? "blue" : "yellow") : "green");
       }
     } catch (err) {
       if (err?.response?.status === 409) {
@@ -457,9 +449,9 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                   type="number"
                                   placeholder="Sauda No"
                                   className="w-24 rounded border border-orange-400 dark:border-orange-600 
-                                bg-white dark:bg-gray-800 
-                                text-gray-800 dark:text-gray-200 
-                                px-2 py-1 text-sm focus:ring-2 focus:ring-orange-500"
+    bg-white dark:bg-gray-800 
+    text-gray-800 dark:text-gray-200 
+    px-2 py-1 text-sm focus:ring-2 focus:ring-orange-500"
                                   value={e.saudaNo}
                                   onChange={(ev) =>
                                     handleChange(
@@ -470,6 +462,14 @@ export default function ManageCompanyPopup({ name, onClose }) {
                                     )
                                   }
                                 />
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleUnitSave(key, idx)}
+                                  className="ml-2 rounded bg-green-600 dark:bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                                >
+                                  Save
+                                </button>
                               </div>
                             );
                           })}
@@ -523,7 +523,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
           {/* Action Buttons */}
           <ActionButtons
-            onSave={handleSave}
+            // onSave={handleSave}
             onShare={handleShare}
             onExportRate={handleExportRate}
           />
