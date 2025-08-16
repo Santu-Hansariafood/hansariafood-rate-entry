@@ -29,7 +29,11 @@ const ScrollToTop = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 100 }}
           transition={{ duration: 0.3 }}
-          className="fixed bottom-6 right-6 z-50 bg-white border border-gray-300 rounded-full p-3 shadow-lg hover:shadow-xl transition-all"
+          className="fixed bottom-6 right-6 z-50 
+            bg-white dark:bg-gray-800 
+            border border-gray-300 dark:border-gray-600 
+            rounded-full p-3 shadow-lg hover:shadow-xl 
+            transition-all"
         >
           <Image
             src="/logo/logo1.png"
