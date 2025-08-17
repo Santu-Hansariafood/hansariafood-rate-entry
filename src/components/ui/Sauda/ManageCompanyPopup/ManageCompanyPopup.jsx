@@ -1,17 +1,17 @@
 "use client";
 
-import React, { Suspense, useState, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { X } from "lucide-react";
-import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 import { useCompanyData } from "@/hooks/ManageCompanyPopup/useCompanyData";
 import { useRateData } from "@/hooks/ManageCompanyPopup/useRateData";
 import { useSaudaEntries } from "@/hooks/ManageCompanyPopup/useSaudaEntries";
 import { useToday } from "@/hooks/ManageCompanyPopup/useToday";
-import { generateSaudaPDF } from "@/utils/generateSaudaPDF/generateSaudaPDF";
-import { generateRatePDF } from "@/utils/generateSaudaPDF/generateRatePDF";
+import { useSaudaSave } from "@/hooks/ManageCompanyPopup/useSaudaSave";
+import { useDescriptionSuggestions } from "@/hooks/ManageCompanyPopup/useDescriptionSuggestions";
+import { useSaudaExport } from "@/hooks/ManageCompanyPopup/useSaudaExport";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   suspense: true,
@@ -38,21 +38,8 @@ const TradeModeSelector = dynamic(
   { suspense: true }
 );
 
-function debounce(func, wait) {
-  let timeout;
-  return function (...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func.apply(this, args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
 export default function ManageCompanyPopup({ name, onClose }) {
   const today = useToday();
-
   const { company, loading: loadingCompany, role } = useCompanyData(name);
   const { rates, rateMap, loading: loadingRates } = useRateData(company?.name);
   const {
@@ -63,14 +50,25 @@ export default function ManageCompanyPopup({ name, onClose }) {
     loading: loadingSauda,
   } = useSaudaEntries(company, rateMap);
 
-  const [showCommodityPicker, setShowCommodityPicker] = useState(false);
-  const [showSharePopup, setShowSharePopup] = useState(false);
-  const [showRatePicker, setShowRatePicker] = useState(false);
-  const [descSuggestions, setDescSuggestions] = useState([]);
-  const [descKey, setDescKey] = useState("");
   const [lastUpdated, setLastUpdated] = useState(null);
   const [tradeMode, setTradeMode] = useState("");
-  const [saveStatus, setSaveStatus] = useState({});
+
+  const { handleUnitSave, saveStatus } = useSaudaSave(
+    company,
+    entries,
+    role,
+    tradeMode,
+    today,
+    lastUpdated,
+    setLastUpdated
+  );
+  const {
+    descSuggestions,
+    setDescSuggestions,
+    descKey,
+    fetchDescriptionSuggestions,
+  } = useDescriptionSuggestions();
+  const exportHook = useSaudaExport({ company, today, rates, entries });
 
   useEffect(() => {
     let isCancelled = false;
@@ -87,7 +85,6 @@ export default function ManageCompanyPopup({ name, onClose }) {
         if (!isCancelled) console.error("Failed to fetch sauda:", error);
       }
     };
-
     fetchSauda();
     return () => {
       isCancelled = true;
@@ -100,145 +97,18 @@ export default function ManageCompanyPopup({ name, onClose }) {
     }
   }, [role]);
 
-  const fetchDescriptionSuggestions = useCallback(
-    debounce(async (q, key, idx) => {
-      try {
-        if (!q || q.length < 2) {
-          setDescSuggestions([]);
-          return;
-        }
-        setDescKey(`${key}-${idx}`);
-        const res = await axiosInstance.get(
-          `save-sauda/sauda-descriptions?q=${q}`
-        );
-        setDescSuggestions(res.data.suggestions || []);
-      } catch (err) {
-        console.error("Failed to fetch suggestions", err);
-      }
-    }, 300),
-    []
-  );
-
-  const now = new Date();
-  const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
-    now.getMinutes()
-  ).padStart(2, "0")}`;
-
   const loading = loadingCompany || loadingRates || loadingSauda;
-
-  const handleUnitSave = async (key, idx) => {
-    if (!company) return;
-    const [unit, commodity] = key.split("-");
-    const entry = entries[key]?.[idx];
-    if (!entry) return;
-
-    const entryId = `${key}-${idx}`;
-    setSaveStatus((prev) => ({ ...prev, [entryId]: "saving" }));
-
-    const payload = {
-      company: company.name,
-      date: today,
-      time: currentTime,
-      saudaEntries: {
-        [key]: [
-          {
-            ...entry,
-            tons: +entry.tons || 0,
-            unit,
-            commodity,
-          },
-        ],
-      },
-      lastUpdated,
-    };
-
-    const effectiveRole =
-      role && role !== "both"
-        ? role
-        : tradeMode === "selling"
-        ? "seller"
-        : tradeMode === "buying"
-        ? "buyer"
-        : null;
-
-    if (!effectiveRole) {
-      toast.error("Please select trade mode.");
-      setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
-      return;
-    }
-
-    payload[effectiveRole] = company.name;
-
-    try {
-      const { status, data } = await axiosInstance.post("/save-sauda", payload);
-      if (status === 201 && data.entry) {
-        toast.success(`Saved successfully for ${unit} - ${commodity}`);
-        setLastUpdated(data.entry.lastUpdated);
-        setSaveStatus((prev) => ({ ...prev, [entryId]: "success" }));
-      }
-    } catch (err) {
-      if (err?.response?.status === 409) {
-        toast.error("Data has been updated by someone else. Please refresh.");
-      } else {
-        toast.error("Error saving data");
-      }
-      setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
-    }
-  };
-
-  const handleShare = () => {
-    if (loading) return toast.warn("Data still loading.");
-    setShowCommodityPicker(true);
-  };
-  const handleCommodityDone = (selected) => {
-    generateSaudaPDF({
-      company: company.name,
-      date: today,
-      rateData: rates,
-      saudaEntries: entries,
-      allowedCommodities: selected,
-    });
-    setShowCommodityPicker(false);
-    setShowSharePopup(true);
-  };
-
-  const handleExportRate = () => {
-    if (loading) return toast.warn("Data still loading.");
-    setShowRatePicker(true);
-  };
-  const handleRateDone = (selected) => {
-    generateRatePDF({
-      company: company.name,
-      date: today,
-      rateData: rates,
-      allowedCommodities: selected,
-    });
-    setShowRatePicker(false);
-  };
-
-  if (loading) {
-    return <Loading />;
-  }
+  if (loading) return <Loading />;
   if (!company) return null;
 
   return (
     <Suspense fallback={<Loading />}>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/70">
-        <div
-          className="
-        relative w-full 
-        max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl
-        max-h-[90vh] overflow-y-auto 
-        rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg
-        transition-colors
-      "
-        >
+        <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
           <button
             aria-label="Close"
             onClick={() => onClose("red")}
-            className="absolute right-3 top-2 rounded-full p-1 
-          text-gray-500 dark:text-gray-300 
-          hover:text-red-500 transition-colors"
+            className="absolute right-3 top-2 rounded-full p-1 text-gray-500 dark:text-gray-300 hover:text-red-500 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -247,6 +117,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
             <Title text={company.name} />
             <p className="text-red-600 dark:text-red-400">Date: {today}</p>
           </div>
+
           <div className="overflow-x-auto">
             <SaudaTable
               company={company}
@@ -263,32 +134,34 @@ export default function ManageCompanyPopup({ name, onClose }) {
               saveStatus={saveStatus}
             />
           </div>
-          {showSharePopup && (
+
+          {exportHook.showSharePopup && (
             <SaudaSharePopup
               company={company.name}
               date={today}
               saudaEntries={entries}
               rateData={rates}
-              onClose={() => setShowSharePopup(false)}
+              onClose={() => exportHook.setShowSharePopup(false)}
             />
           )}
-          {showCommodityPicker && (
+          {exportHook.showCommodityPicker && (
             <CommodityPickerPopup
               options={company.commodities}
-              onCancel={() => setShowCommodityPicker(false)}
-              onDone={handleCommodityDone}
+              onCancel={() => exportHook.setShowCommodityPicker(false)}
+              onDone={exportHook.handleCommodityDone}
             />
           )}
-          {showRatePicker && (
+          {exportHook.showRatePicker && (
             <CommodityPickerPopup
               options={company.commodities}
-              onCancel={() => setShowRatePicker(false)}
-              onDone={handleRateDone}
+              onCancel={() => exportHook.setShowRatePicker(false)}
+              onDone={exportHook.handleRateDone}
             />
           )}
+
           <ActionButtons
-            onShare={handleShare}
-            onExportRate={handleExportRate}
+            onShare={() => exportHook.handleShare(loading)}
+            onExportRate={() => exportHook.handleExportRate(loading)}
           />
         </div>
       </div>
