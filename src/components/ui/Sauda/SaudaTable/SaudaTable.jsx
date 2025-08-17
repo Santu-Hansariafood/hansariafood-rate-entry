@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense } from "react";
+import Loading from "@/components/common/Loading/Loading";
 
 const normalize = (s) => s?.trim().toLowerCase() || "";
 
@@ -21,7 +22,7 @@ export default function SaudaTable({
   let sl = 0;
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<Loading />}>
       <div className="overflow-x-auto">
         <table className="min-w-full overflow-hidden rounded-lg border border-gray-300 dark:border-gray-700 text-sm md:text-base shadow-sm">
           <thead>
