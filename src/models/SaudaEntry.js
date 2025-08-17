@@ -24,6 +24,7 @@ const SaudaEntrySchema = new mongoose.Schema(
       type: Map,
       of: [saudaEntrySubSchema],
     },
+    lastUpdated: { type: Date },
   },
   {
     timestamps: true,

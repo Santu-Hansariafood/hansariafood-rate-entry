@@ -33,7 +33,7 @@ export async function POST(req) {
       );
     }
 
-    const existingEntry = await SaudaEntry.findOne({ company, date });
+    let existingEntry = await SaudaEntry.findOne({ company, date });
 
     if (
       existingEntry &&
@@ -61,25 +61,34 @@ export async function POST(req) {
       }));
     }
 
-    const updateData = {
-      company: company.trim(),
-      date: date.trim(),
-      time: time || "",
-      saudaEntries: normalizedEntries,
-      lastUpdated: new Date(),
-    };
+    if (existingEntry) {
+      for (const [key, newList] of Object.entries(normalizedEntries)) {
+        if (!existingEntry.saudaEntries.has(key)) {
+          existingEntry.saudaEntries.set(key, []);
+        }
+        const oldList = existingEntry.saudaEntries.get(key) || [];
+        existingEntry.saudaEntries.set(key, [...oldList, ...newList]);
+      }
+      existingEntry.time = time || existingEntry.time;
+      if (buyer) existingEntry.buyer = buyer.trim();
+      if (seller) existingEntry.seller = seller.trim();
+      existingEntry.lastUpdated = new Date();
 
-    if (buyer) updateData.buyer = buyer.trim();
-    if (seller) updateData.seller = seller.trim();
-
-    const updatedEntry = await SaudaEntry.findOneAndUpdate(
-      { company, date },
-      { $set: updateData },
-      { new: true, upsert: true }
-    );
+      await existingEntry.save();
+    } else {
+      existingEntry = await SaudaEntry.create({
+        company: company.trim(),
+        date: date.trim(),
+        time: time || "",
+        buyer: buyer?.trim(),
+        seller: seller?.trim(),
+        saudaEntries: normalizedEntries,
+        lastUpdated: new Date(),
+      });
+    }
 
     return NextResponse.json(
-      { message: "Sauda entry saved successfully", entry: updatedEntry },
+      { message: "Sauda entry saved successfully", entry: existingEntry },
       { status: 201 }
     );
   } catch (error) {
