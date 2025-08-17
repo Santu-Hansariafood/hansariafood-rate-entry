@@ -39,12 +39,14 @@ export function useSaudaEntries(company, rateMap) {
               description: entry.description || "",
               saudaNo: entry.saudaNo || "",
               finalRate: entry.finalRate ?? newRate,
+              others: entry.others || "",
             })) ?? [
               {
                 tons: "",
                 description: "",
                 saudaNo: "",
                 finalRate: newRate,
+                others: "",
               },
             ];
           })
@@ -82,6 +84,7 @@ export function useSaudaEntries(company, rateMap) {
             description: "",
             saudaNo: "",
             finalRate: defaultRate,
+            others: "",
           },
         ],
       })),
