@@ -221,8 +221,6 @@ export default function ManageCompanyPopup({ name, onClose }) {
   }
   if (!company) return null;
 
-  let sl = 0;
-
   return (
     <Suspense fallback={<Loading />}>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/70">
