@@ -12,6 +12,7 @@ import { useToday } from "@/hooks/ManageCompanyPopup/useToday";
 import { useSaudaSave } from "@/hooks/ManageCompanyPopup/useSaudaSave";
 import { useDescriptionSuggestions } from "@/hooks/ManageCompanyPopup/useDescriptionSuggestions";
 import { useSaudaExport } from "@/hooks/ManageCompanyPopup/useSaudaExport";
+import { useFirstLoadBlocker } from "@/hooks/ManageCompanyPopup/useFirstLoadBlocker";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   suspense: true,
@@ -70,6 +71,13 @@ export default function ManageCompanyPopup({ name, onClose }) {
   } = useDescriptionSuggestions();
   const exportHook = useSaudaExport({ company, today, rates, entries });
 
+  const firstLoading = useFirstLoadBlocker([
+    !loadingCompany && !loadingRates && !loadingSauda,
+    company,
+    rates,
+    entries,
+  ]);
+
   useEffect(() => {
     let isCancelled = false;
     const fetchSauda = async () => {
@@ -97,8 +105,9 @@ export default function ManageCompanyPopup({ name, onClose }) {
     }
   }, [role]);
 
+  if (firstLoading) return <Loading />;
+
   const loading = loadingCompany || loadingRates || loadingSauda;
-  if (loading) return <Loading />;
   if (!company) return null;
 
   return (
