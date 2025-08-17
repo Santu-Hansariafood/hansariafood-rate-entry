@@ -67,6 +67,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
   const [descKey, setDescKey] = useState("");
   const [lastUpdated, setLastUpdated] = useState(null);
   const [tradeMode, setTradeMode] = useState("");
+  const [saveStatus, setSaveStatus] = useState({});
 
   useEffect(() => {
     let isCancelled = false;
@@ -124,10 +125,12 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
   const handleUnitSave = async (key, idx) => {
     if (!company) return;
-
     const [unit, commodity] = key.split("-");
     const entry = entries[key]?.[idx];
     if (!entry) return;
+
+    const entryId = `${key}-${idx}`;
+    setSaveStatus((prev) => ({ ...prev, [entryId]: "saving" }));
 
     const payload = {
       company: company.name,
@@ -157,6 +160,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
     if (!effectiveRole) {
       toast.error("Please select trade mode.");
+      setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
       return;
     }
 
@@ -167,6 +171,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
       if (status === 201 && data.entry) {
         toast.success(`Saved successfully for ${unit} - ${commodity}`);
         setLastUpdated(data.entry.lastUpdated);
+        setSaveStatus((prev) => ({ ...prev, [entryId]: "success" }));
       }
     } catch (err) {
       if (err?.response?.status === 409) {
@@ -174,6 +179,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
       } else {
         toast.error("Error saving data");
       }
+      setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
     }
   };
 
@@ -253,6 +259,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
               descSuggestions={descSuggestions}
               fetchDescriptionSuggestions={fetchDescriptionSuggestions}
               setDescSuggestions={setDescSuggestions}
+              saveStatus={saveStatus}
             />
           </div>
           {showSharePopup && (
@@ -278,10 +285,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
               onDone={handleRateDone}
             />
           )}
-
-          {/* Action Buttons */}
           <ActionButtons
-            // onSave={handleSave}
             onShare={handleShare}
             onExportRate={handleExportRate}
           />
