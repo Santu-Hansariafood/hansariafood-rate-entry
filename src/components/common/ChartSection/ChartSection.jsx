@@ -30,7 +30,6 @@ export const ChartSection = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Title */}
         <motion.h2
           className="text-3xl font-extrabold mb-6 text-center sm:text-left 
                      bg-gradient-to-r from-green-500 to-green-700 
@@ -41,8 +40,6 @@ export const ChartSection = ({
         >
           {title}
         </motion.h2>
-
-        {/* Controls */}
         <motion.div
           className="flex flex-col sm:flex-row flex-wrap gap-4 mb-8 
                      justify-center sm:justify-start"

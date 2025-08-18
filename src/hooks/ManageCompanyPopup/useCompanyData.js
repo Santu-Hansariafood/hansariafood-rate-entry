@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 export function useCompanyData(name) {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState(null); // "buyer" | "seller" | null
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -24,11 +24,10 @@ export function useCompanyData(name) {
           if (mounted) {
             setCompany(first);
 
-            // Set role if type is unique
             if (first.type?.length === 1) {
-              setRole(first.type[0]); // "buyer" or "seller"
+              setRole(first.type[0]);
             } else {
-              setRole(null); // UI must prompt for buying/selling
+              setRole(null);
             }
           }
         }

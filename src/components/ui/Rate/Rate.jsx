@@ -25,6 +25,11 @@ const CategoryCard = dynamic(
   () => import("@/components/ui/Rate/CategoryCard/CategoryCard"),
   { loading: () => <Loading /> }
 );
+const RateUpdatePopup = dynamic(
+  () => import("@/components/ui/Rate/RateUpdatePopup/RateUpdatePopup"),
+  { loading: () => <Loading /> }
+);
+
 const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
   { loading: () => <Loading /> }
@@ -74,6 +79,9 @@ export default function Rate() {
         loading={loading}
         onCompanySelect={setSelectedCompany}
       />
+
+            <RateUpdatePopup />
+
 
       <Pagination
         totalItems={totalItems}

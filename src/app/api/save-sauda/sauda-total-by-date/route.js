@@ -11,32 +11,24 @@ export async function GET(req) {
   }
 
   try {
-    const allEntries = await SaudaEntry.find({});
+    const totals = await SaudaEntry.aggregate([
+      {
+        $group: {
+          _id: "$date",
+          totalTons: { $sum: "$tons" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          totalTons: 1,
+        },
+      },
+      { $sort: { date: 1 } },
+    ]);
 
-    const dateTotals = new Map();
-
-    for (const entry of allEntries) {
-      let entryTotalTons = 0;
-
-      for (const entriesArray of entry.saudaEntries.values()) {
-        for (const item of entriesArray) {
-          entryTotalTons += item.tons;
-        }
-      }
-
-      if (dateTotals.has(entry.date)) {
-        dateTotals.set(entry.date, dateTotals.get(entry.date) + entryTotalTons);
-      } else {
-        dateTotals.set(entry.date, entryTotalTons);
-      }
-    }
-
-    const result = Array.from(dateTotals.entries()).map(([date, totalTons]) => ({
-      date,
-      totalTons,
-    }));
-
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json(totals, { status: 200 });
   } catch (error) {
     console.error("Error in GET /sauda-total-by-date:", error);
     return NextResponse.json(
