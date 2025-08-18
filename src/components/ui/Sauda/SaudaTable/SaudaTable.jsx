@@ -230,21 +230,9 @@ export default function SaudaTable({
                             >
                               Save
                             </button>
-                            {saveStatus?.[`${key}-${idx}`] === "saving" && (
-                              <span className="text-blue-500 text-xs">
-                                Saving...
-                              </span>
-                            )}
-                            {saveStatus?.[`${key}-${idx}`] === "success" && (
-                              <span className="text-green-500 text-xs">
-                                ✔ Saved
-                              </span>
-                            )}
-                            {saveStatus?.[`${key}-${idx}`] === "error" && (
-                              <span className="text-red-500 text-xs">
-                                ✘ Error
-                              </span>
-                            )}
+                            {saveStatus[key] === "saving" && <span className="text-blue-500">Saving...</span>}
+                            {saveStatus[key] === "success" && <span className="text-green-500">Saved!</span>}
+                            {saveStatus[key] === "error" && <span className="text-red-500">Error saving!</span>}
                           </div>
                         );
                       })}
@@ -275,3 +263,4 @@ export default function SaudaTable({
     </Suspense>
   );
 }
+<button onClick={() => removeRow(key, idx)} className="text-red-500">Remove</button>

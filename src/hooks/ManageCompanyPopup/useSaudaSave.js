@@ -13,14 +13,13 @@ export const useSaudaSave = (
 ) => {
   const [saveStatus, setSaveStatus] = useState({});
 
-  const handleUnitSave = async (key, idx) => {
+  const handleUnitSave = async (key) => {
     if (!company) return;
     const [unit, commodity] = key.split("-");
-    const entry = entries[key]?.[idx];
-    if (!entry) return;
+    const entryList = entries[key];
+    if (!entryList || !entryList.length) return;
 
-    const entryId = `${key}-${idx}`;
-    setSaveStatus((prev) => ({ ...prev, [entryId]: "saving" }));
+    setSaveStatus((prev) => ({ ...prev, [key]: "saving" }));
 
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
@@ -32,14 +31,12 @@ export const useSaudaSave = (
       date: today,
       time: currentTime,
       saudaEntries: {
-        [key]: [
-          {
-            ...entry,
-            tons: +entry.tons || 0,
-            unit,
-            commodity,
-          },
-        ],
+        [key]: entryList.map((entry) => ({
+          ...entry,
+          tons: +entry.tons || 0,
+          unit,
+          commodity,
+        })),
       },
       lastUpdated,
     };
@@ -55,7 +52,7 @@ export const useSaudaSave = (
 
     if (!effectiveRole) {
       toast.error("Please select trade mode.");
-      setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
+      setSaveStatus((prev) => ({ ...prev, [key]: "error" }));
       return;
     }
 
@@ -66,7 +63,7 @@ export const useSaudaSave = (
       if (status === 201 && data.entry) {
         toast.success(`Saved successfully for ${unit} - ${commodity}`);
         setLastUpdated(data.entry.lastUpdated);
-        setSaveStatus((prev) => ({ ...prev, [entryId]: "success" }));
+        setSaveStatus((prev) => ({ ...prev, [key]: "success" }));
       }
     } catch (err) {
       if (err?.response?.status === 409) {
@@ -74,7 +71,7 @@ export const useSaudaSave = (
       } else {
         toast.error("Error saving data");
       }
-      setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
+      setSaveStatus((prev) => ({ ...prev, [key]: "error" }));
     }
   };
 

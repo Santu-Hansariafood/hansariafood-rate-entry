@@ -91,6 +91,14 @@ export function useSaudaEntries(company, rateMap) {
     []
   );
 
+  const removeRow = useCallback((key, idx) => {
+    setEntries((prev) => {
+      const list = [...prev[key]];
+      list.splice(idx, 1);
+      return { ...prev, [key]: list };
+    });
+  }, []);
+
   const totalTons = useCallback(
     (key) => entries[key]?.reduce((s, e) => s + (+e.tons || 0), 0),
     [entries]

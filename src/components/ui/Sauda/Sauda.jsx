@@ -79,7 +79,7 @@ const Sauda = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         handlePopupClose(selectedCompany);
-      }, 3 * 60 * 1000);
+      }, 5 * 60 * 1000);
     }
 
     return () => {

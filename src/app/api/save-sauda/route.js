@@ -63,11 +63,7 @@ export async function POST(req) {
 
     if (existingEntry) {
       for (const [key, newList] of Object.entries(normalizedEntries)) {
-        if (!existingEntry.saudaEntries.has(key)) {
-          existingEntry.saudaEntries.set(key, []);
-        }
-        const oldList = existingEntry.saudaEntries.get(key) || [];
-        existingEntry.saudaEntries.set(key, [...oldList, ...newList]);
+        existingEntry.saudaEntries.set(key, newList); // Replace instead of append
       }
       existingEntry.time = time || existingEntry.time;
       if (buyer) existingEntry.buyer = buyer.trim();
