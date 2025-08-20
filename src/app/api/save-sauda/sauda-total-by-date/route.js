@@ -13,11 +13,20 @@ export async function GET(req) {
   try {
     const totals = await SaudaEntry.aggregate([
       {
-        $group: {
-          _id: "$date",
-          totalTons: { $sum: "$tons" },
+        $project: {
+          date: 1,
+          saudaEntries: { $objectToArray: "$saudaEntries" },
         },
       },
+      { $unwind: "$saudaEntries" },
+      { $unwind: "$saudaEntries.v" },
+      {
+        $group: {
+          _id: "$date",
+          totalTons: { $sum: "$saudaEntries.v.tons" },
+        },
+      },
+
       {
         $project: {
           _id: 0,
