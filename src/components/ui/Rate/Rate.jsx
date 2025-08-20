@@ -80,8 +80,7 @@ export default function Rate() {
         onCompanySelect={setSelectedCompany}
       />
 
-            <RateUpdatePopup />
-
+      <RateUpdatePopup />
 
       <Pagination
         totalItems={totalItems}

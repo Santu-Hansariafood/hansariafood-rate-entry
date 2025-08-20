@@ -55,9 +55,7 @@ const RateUpdatePopup = () => {
       });
 
       if (res.data.success) {
-        toast.success(
-          `Saved ${selectedCompanies.length} companies for today`
-        );
+        toast.success(`Saved ${selectedCompanies.length} companies for today`);
         setOpen(false);
       }
     } catch (err) {

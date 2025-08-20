@@ -21,6 +21,7 @@ export default function CompanyList({
 }) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [searchQuery, setSearchQuery] = useState("");
+  const [disabledCompanies, setDisabledCompanies] = useState([]);
 
   const { results: searchResults, loading } = useDebouncedSearch(
     searchQuery,
@@ -51,6 +52,26 @@ export default function CompanyList({
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fetchDisabledCompanies = async () => {
+      try {
+        const res = await axiosInstance.get("/rateupdate");
+        const data = res.data;
+        if (data.success && data.data.length > 0) {
+          const today = new Date().toISOString().split("T")[0];
+          const todayEntry = data.data.find((d) => d.date === today);
+          if (todayEntry) {
+            setDisabledCompanies(todayEntry.companies || []);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching disabled companies:", err);
+      }
+    };
+
+    fetchDisabledCompanies();
   }, []);
 
   const displayCompanies =
@@ -92,74 +113,82 @@ export default function CompanyList({
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
             >
               <AnimatePresence>
-                {displayCompanies.map((company, index) => (
-                  <motion.button
-                    key={company}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2, delay: index * 0.05 }}
-                    onClick={() => onCompanySelect(company)}
-                    className={`group relative overflow-hidden rounded-xl p-4 transition-all duration-200 ${
-                      completedCompanies[company]
-                        ? "bg-green-50 hover:bg-green-100 border border-green-200"
-                        : "bg-red-50 hover:bg-red-100 border border-red-200"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`p-2 rounded-lg ${
-                          completedCompanies[company]
-                            ? "bg-green-100 group-hover:bg-green-200"
-                            : "bg-red-100 group-hover:bg-red-200"
-                        }`}
-                      >
-                        <Building2
-                          className={`w-5 h-5 ${
+                {displayCompanies.map((company, index) => {
+                  const isDisabled = disabledCompanies.includes(company);
+                  return (
+                    <motion.button
+                      key={company}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
+                      onClick={() => !isDisabled && onCompanySelect(company)}
+                      disabled={isDisabled}
+                      className={`group relative overflow-hidden rounded-xl p-4 transition-all duration-200 ${
+                        isDisabled
+                          ? "bg-gray-200 border border-gray-300 cursor-not-allowed opacity-60"
+                          : completedCompanies[company]
+                          ? "bg-green-50 hover:bg-green-100 border border-green-200"
+                          : "bg-red-50 hover:bg-red-100 border border-red-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`p-2 rounded-lg ${
                             completedCompanies[company]
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <h3
-                          className={`font-medium truncate ${
-                            completedCompanies[company]
-                              ? "text-green-800"
-                              : "text-red-800"
+                              ? "bg-green-100 group-hover:bg-green-200"
+                              : "bg-red-100 group-hover:bg-red-200"
                           }`}
                         >
-                          {company}
-                        </h3>
-                        <p
-                          className={`text-sm ${
+                          <Building2
+                            className={`w-5 h-5 ${
+                              completedCompanies[company]
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          />
+                        </div>
+                        <div className="flex-1 text-left">
+                          <h3
+                            className={`font-medium truncate ${
+                              completedCompanies[company]
+                                ? "text-green-800"
+                                : "text-red-800"
+                            }`}
+                          >
+                            {company}
+                          </h3>
+                          <p
+                            className={`text-sm ${
+                              completedCompanies[company]
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {completedCompanies[company]
+                              ? "Completed"
+                              : isDisabled
+                              ? "No Buying Today"
+                              : "Pending"}
+                          </p>
+                        </div>
+                        <div
+                          className={`p-1 rounded-full ${
                             completedCompanies[company]
-                              ? "text-green-600"
-                              : "text-red-600"
+                              ? "bg-green-100 group-hover:bg-green-200"
+                              : "bg-red-100 group-hover:bg-red-200"
                           }`}
                         >
-                          {completedCompanies[company]
-                            ? "Completed"
-                            : "Pending"}
-                        </p>
+                          {completedCompanies[company] ? (
+                            <CheckCircle2 className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <XCircle className="w-5 h-5 text-red-600" />
+                          )}
+                        </div>
                       </div>
-                      <div
-                        className={`p-1 rounded-full ${
-                          completedCompanies[company]
-                            ? "bg-green-100 group-hover:bg-green-200"
-                            : "bg-red-100 group-hover:bg-red-200"
-                        }`}
-                      >
-                        {completedCompanies[company] ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <XCircle className="w-5 h-5 text-red-600" />
-                        )}
-                      </div>
-                    </div>
-                  </motion.button>
-                ))}
+                    </motion.button>
+                  );
+                })}
               </AnimatePresence>
             </motion.div>
           )}
