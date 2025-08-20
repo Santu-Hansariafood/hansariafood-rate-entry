@@ -73,13 +73,7 @@ export default function Rate() {
         />
       </div>
 
-      <CompanyList
-        companies={companies}
-        completedCompanies={completedCompanies}
-        loading={loading}
-        onCompanySelect={setSelectedCompany}
-      />
-
+      
       <RateUpdatePopup />
 
       <Pagination
@@ -88,6 +82,13 @@ export default function Rate() {
         currentPage={currentPage}
         onPageChange={setCurrentPage}
       />
+      <CompanyList
+        companies={companies}
+        completedCompanies={completedCompanies}
+        loading={loading}
+        onCompanySelect={setSelectedCompany}
+      />
+
     </motion.div>
   );
 
