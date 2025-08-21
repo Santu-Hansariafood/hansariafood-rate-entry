@@ -22,16 +22,17 @@ export default function DesktopNav({
   const navLinks = useMemo(() => {
     const links = [
       "Manage Company",
-      "Company",
-      "Location",
-      "Category",
-      "Commodity",
+      "Seller Company",
       "Rate",
       "Sauda",
     ];
 
     if (allowedMobileNumbers.includes(currentUserMobile)) {
       links.push("Register");
+      links.push("Commodity");
+      links.push("Location");
+      links.push("Category");
+links.push("Company");
     }
 
     return links.map((label) => ({

@@ -11,7 +11,7 @@ const NotificationBell = dynamic(() =>
 );
 const LogoutButton = dynamic(() => import("../LogoutButton/LogoutButton"));
 
-const allowedMobileNumbers = ["9830433535", "7029481930"];
+const allowedMobileNumbers = ["9830433535", "7029481931"];
 
 export default function MobileNav({
   isOpen,
@@ -24,12 +24,13 @@ export default function MobileNav({
   const navLinks = [
     "Manage Company",
     "Company",
+    "Seller Company",
     "Location",
     "Category",
     "Commodity",
     "Rate",
     "Sauda",
-    ...(allowedMobileNumbers.includes(currentUserMobile) ? ["Register"] : []),
+    ...(allowedMobileNumbers.includes(currentUserMobile) ? ["Register","Category", "Commodity", "Company"] : []),
   ];
 
   useEffect(() => {
