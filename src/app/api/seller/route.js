@@ -17,7 +17,6 @@ export async function GET(req) {
     const search = searchParams.get("search") || "";
     const skip = (page - 1) * limit;
 
-    // ✅ Search in both sellerName and companies array
     const searchRegex = new RegExp(search, "i");
     const query = search
       ? {
@@ -58,15 +57,20 @@ export async function POST(req) {
       );
     }
 
-    if (!companies || !Array.isArray(companies) || companies.some((c) => !c.trim())) {
+    if (
+      !companies ||
+      !Array.isArray(companies) ||
+      companies.some((c) => !c.trim())
+    ) {
       return NextResponse.json(
         { error: "All company names are required" },
         { status: 400 }
       );
     }
 
-    // ✅ Check for existing seller
-    const existingSeller = await Seller.findOne({ sellerName: sellerNameTrimmed });
+    const existingSeller = await Seller.findOne({
+      sellerName: sellerNameTrimmed,
+    });
     if (existingSeller) {
       return NextResponse.json(
         { error: "Seller name already exists" },

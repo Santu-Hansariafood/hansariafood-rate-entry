@@ -29,34 +29,31 @@ const CreateSeller = () => {
   };
 
   const handleSave = async () => {
-  if (!sellerName.trim()) {
-    toast.error("Seller name is required!");
-    return;
-  }
-  if (companies.some((c) => !c.name.trim())) {
-    toast.error("Please fill all company names!");
-    return;
-  }
+    if (!sellerName.trim()) {
+      toast.error("Seller name is required!");
+      return;
+    }
+    if (companies.some((c) => !c.name.trim())) {
+      toast.error("Please fill all company names!");
+      return;
+    }
 
-  const payload = {
-    sellerName,
-    companies: companies.map((c) => c.name),
+    const payload = {
+      sellerName,
+      companies: companies.map((c) => c.name),
+    };
+
+    try {
+      const res = await axiosInstance.post("/seller", payload);
+
+      toast.success(res.data.message || "Seller created successfully!");
+      setSellerName("");
+      setCompanies([{ id: Date.now(), name: "" }]);
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.error || "Failed to create seller");
+    }
   };
-
-  try {
-    const res = await axiosInstance.post("/seller", payload);
-
-    toast.success(res.data.message || "Seller created successfully!");
-    setSellerName("");
-    setCompanies([{ id: Date.now(), name: "" }]);
-  } catch (error) {
-    console.error(error);
-    toast.error(
-      error.response?.data?.error || "Failed to create seller"
-    );
-  }
-};
-
 
   return (
     <Suspense fallback={<Loading />}>

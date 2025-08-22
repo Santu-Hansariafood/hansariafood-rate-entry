@@ -5,7 +5,6 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
-// GET /api/seller/:id
 export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,7 +27,6 @@ export async function GET(req, { params }) {
   }
 }
 
-// PUT /api/seller/:id
 export async function PUT(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -40,11 +38,21 @@ export async function PUT(req, { params }) {
 
     const sellerNameTrimmed = sellerName?.trim();
     if (!sellerNameTrimmed) {
-      return NextResponse.json({ error: "Seller name is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Seller name is required" },
+        { status: 400 }
+      );
     }
 
-    if (!companies || !Array.isArray(companies) || companies.some((c) => !c.trim())) {
-      return NextResponse.json({ error: "All company names are required" }, { status: 400 });
+    if (
+      !companies ||
+      !Array.isArray(companies) ||
+      companies.some((c) => !c.trim())
+    ) {
+      return NextResponse.json(
+        { error: "All company names are required" },
+        { status: 400 }
+      );
     }
 
     const existingSeller = await Seller.findOne({
@@ -53,12 +61,18 @@ export async function PUT(req, { params }) {
     });
 
     if (existingSeller) {
-      return NextResponse.json({ error: "Seller name already exists" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Seller name already exists" },
+        { status: 400 }
+      );
     }
 
     const updatedSeller = await Seller.findByIdAndUpdate(
       id,
-      { sellerName: sellerNameTrimmed, companies: companies.map((c) => c.trim()) },
+      {
+        sellerName: sellerNameTrimmed,
+        companies: companies.map((c) => c.trim()),
+      },
       { new: true, runValidators: true }
     );
 
@@ -66,16 +80,24 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Seller not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Seller updated", updatedSeller }, { status: 200 });
+    return NextResponse.json(
+      { message: "Seller updated", updatedSeller },
+      { status: 200 }
+    );
   } catch (error) {
     if (error.code === 11000) {
-      return NextResponse.json({ error: "Seller name must be unique" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Seller name must be unique" },
+        { status: 400 }
+      );
     }
-    return NextResponse.json({ error: "Failed to update seller", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update seller", details: error.message },
+      { status: 500 }
+    );
   }
 }
 
-// DELETE /api/seller/:id
 export async function DELETE(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -89,8 +111,14 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: "Seller not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Seller deleted", deletedSeller }, { status: 200 });
+    return NextResponse.json(
+      { message: "Seller deleted", deletedSeller },
+      { status: 200 }
+    );
   } catch (error) {
-    return NextResponse.json({ error: "Failed to delete seller", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete seller", details: error.message },
+      { status: 500 }
+    );
   }
 }

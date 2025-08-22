@@ -11,17 +11,13 @@ const useSellerList = () => {
   const [totalSellers, setTotalSellers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-
-  // modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [formData, setFormData] = useState({ sellerName: "", companies: [] });
   const [editMode, setEditMode] = useState(false);
 
-  // search state
   const [searchQuery, setSearchQuery] = useState("");
 
-  /** 📌 Fetch sellers with pagination + search */
   const fetchSellers = useCallback(
     async (page = currentPage, search = searchQuery) => {
       setLoading(true);
@@ -45,25 +41,21 @@ const useSellerList = () => {
     [currentPage, searchQuery]
   );
 
-  /** 📌 Fetch sellers on page change */
   useEffect(() => {
     fetchSellers();
   }, [currentPage, fetchSellers]);
 
-  /** 📌 Debounced search */
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setCurrentPage(1); // reset to first page
+      setCurrentPage(1);
       fetchSellers(1, searchQuery);
-    }, 400); // wait 400ms after typing
+    }, 400);
 
     return () => clearTimeout(timeout);
   }, [searchQuery, fetchSellers]);
 
-  /** 📌 Pagination */
   const handlePageChange = (page) => setCurrentPage(page);
 
-  /** 📌 Edit seller */
   const handleEdit = (seller) => {
     setSelectedSeller(seller);
     setFormData({
@@ -74,7 +66,6 @@ const useSellerList = () => {
     setModalOpen(true);
   };
 
-  /** 📌 View seller */
   const handleView = async (idOrSeller) => {
     try {
       const sellerId =
@@ -90,7 +81,6 @@ const useSellerList = () => {
     }
   };
 
-  /** 📌 Form input change */
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "companies") {
@@ -112,7 +102,6 @@ const useSellerList = () => {
     }
   };
 
-  /** 📌 Save after edit */
   const handleSaveEdit = async () => {
     try {
       const updated = {
@@ -130,7 +119,6 @@ const useSellerList = () => {
     }
   };
 
-  /** 📌 Create seller */
   const handleCreate = async () => {
     try {
       const newSeller = {
@@ -148,7 +136,6 @@ const useSellerList = () => {
     }
   };
 
-  /** 📌 Delete seller */
   const handleDelete = async (idOrSeller) => {
     const sellerId =
       typeof idOrSeller === "string" ? idOrSeller : idOrSeller._id;
@@ -164,7 +151,7 @@ const useSellerList = () => {
     }
   };
 
-  const paginatedData = sellers; // API already paginates
+  const paginatedData = sellers;
 
   return {
     currentPage,

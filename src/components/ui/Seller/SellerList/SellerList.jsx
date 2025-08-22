@@ -68,8 +68,6 @@ export default function SellerList() {
     <Suspense fallback={<Loading />}>
       <div className="p-4 space-y-4 bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100 transition-colors">
         <Title text="Seller List" />
-
-        {/* Search */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-green-100 dark:border-gray-700">
           <div className="w-full md:w-1/2">
             <SearchBox
@@ -79,8 +77,6 @@ export default function SellerList() {
             />
           </div>
         </div>
-
-        {/* Table */}
         <Table
           data={paginatedData.map((item, index) => ({
             slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
@@ -101,7 +97,6 @@ export default function SellerList() {
           columns={columns}
         />
 
-        {/* Pagination */}
         <Pagination
           currentPage={currentPage}
           totalItems={totalSellers}
@@ -109,17 +104,14 @@ export default function SellerList() {
           onPageChange={handlePageChange}
         />
 
-        {/* Modal */}
         {modalOpen && selectedSeller && (
           <Modal onClose={() => setModalOpen(false)}>
             <div className="bg-white dark:bg-gray-900 p-6 rounded-lg text-gray-900 dark:text-gray-100 w-full max-w-md">
               {editMode ? (
-                <>
+                <Suspense fallback={<Loading />}>
                   <h2 className="text-xl font-bold mb-6 border-b border-gray-200 dark:border-gray-700 pb-2">
                     Edit Seller
                   </h2>
-
-                  {/* Seller Name */}
                   <div className="mb-5">
                     <label className="block font-semibold mb-2">
                       Seller Name
@@ -131,8 +123,6 @@ export default function SellerList() {
                       placeholder="Enter seller name"
                     />
                   </div>
-
-                  {/* Companies */}
                   <div className="mb-5">
                     <label className="block font-semibold mb-2">
                       Companies
@@ -156,8 +146,6 @@ export default function SellerList() {
                             }}
                             placeholder={`Company ${idx + 1}`}
                           />
-
-                          {/* Remove button */}
                           <button
                             type="button"
                             className="text-red-500 hover:text-red-700 p-1 rounded"
@@ -174,8 +162,6 @@ export default function SellerList() {
                           >
                             ✕
                           </button>
-
-                          {/* Add button */}
                           {idx === formData.companies.length - 1 && (
                             <button
                               type="button"
@@ -197,8 +183,6 @@ export default function SellerList() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Action buttons */}
                   <div className="flex justify-end gap-3 mt-6">
                     <button
                       onClick={() => setModalOpen(false)}
@@ -213,9 +197,9 @@ export default function SellerList() {
                       Save Changes
                     </button>
                   </div>
-                </>
+                </Suspense>
               ) : (
-                <>
+                <Suspense fallback={<Loading />}>
                   <h2 className="text-lg font-bold mb-2">
                     {selectedSeller.sellerName}
                   </h2>
@@ -225,7 +209,7 @@ export default function SellerList() {
                       <li key={i}>{c}</li>
                     ))}
                   </ul>
-                </>
+                </Suspense>
               )}
             </div>
           </Modal>
