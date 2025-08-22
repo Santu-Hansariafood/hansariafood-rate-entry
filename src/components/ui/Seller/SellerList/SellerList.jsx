@@ -17,15 +17,24 @@ const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   loading: () => <Loading />,
 });
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
-  loading: () => <Loading />,
-});
-const SearchBox = dynamic(() => import("@/components/common/SearchBox/SearchBox"), {
-  loading: () => <Loading />,
-});
-const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"), {
-  loading: () => <Loading />,
-});
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  {
+    loading: () => <Loading />,
+  }
+);
+const SearchBox = dynamic(
+  () => import("@/components/common/SearchBox/SearchBox"),
+  {
+    loading: () => <Loading />,
+  }
+);
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  {
+    loading: () => <Loading />,
+  }
+);
 
 export default function SellerList() {
   const {
@@ -73,25 +82,24 @@ export default function SellerList() {
 
         {/* Table */}
         <Table
-  data={paginatedData.map((item, index) => ({
-    slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
-    sellerName: item.sellerName,
-    companies: item.companies.join(", "),
-    actions: (
-      <Actions
-        item={{
-          ...item,
-          id: item._id,
-          onEdit: handleEdit,
-          onView: handleView,
-          onDelete: handleDelete,
-        }}
-      />
-    ),
-  }))}
-  columns={columns}
-/>
-
+          data={paginatedData.map((item, index) => ({
+            slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
+            sellerName: item.sellerName,
+            companies: item.companies.join(", "),
+            actions: (
+              <Actions
+                item={{
+                  ...item,
+                  id: item._id,
+                  onEdit: handleEdit,
+                  onView: handleView,
+                  onDelete: handleDelete,
+                }}
+              />
+            ),
+          }))}
+          columns={columns}
+        />
 
         {/* Pagination */}
         <Pagination
@@ -107,64 +115,110 @@ export default function SellerList() {
             <div className="bg-white dark:bg-gray-900 p-6 rounded-lg text-gray-900 dark:text-gray-100 w-full max-w-md">
               {editMode ? (
                 <>
-                  <h2 className="text-lg font-bold mb-4">Edit Seller</h2>
-                  <InputBox
-                    label="Seller Name"
-                    name="sellerName"
-                    value={formData.sellerName}
-                    onChange={handleChange}
-                    placeholder="Seller Name"
-                  />
-                  <div className="mb-4">
-                    <label className="block font-semibold mb-2">Companies</label>
-                    {formData.companies.map((company, idx) => (
-                      <div key={idx} className="flex items-center mb-2 gap-2">
-                        <input
-                          type="text"
-                          className="border rounded px-2 py-1 flex-1"
-                          value={company}
-                          onChange={e => {
-                            const updated = [...formData.companies];
-                            updated[idx] = e.target.value;
-                            handleChange({ target: { name: 'companies', value: updated } });
-                          }}
-                          placeholder={`Company ${idx + 1}`}
-                        />
-                        <button
-                          type="button"
-                          className="text-red-500 hover:text-red-700 px-2"
-                          onClick={() => {
-                            const updated = formData.companies.filter((_, i) => i !== idx);
-                            handleChange({ target: { name: 'companies', value: updated } });
-                          }}
-                          disabled={formData.companies.length === 1}
-                          title="Remove"
+                  <h2 className="text-xl font-bold mb-6 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    Edit Seller
+                  </h2>
+
+                  {/* Seller Name */}
+                  <div className="mb-5">
+                    <label className="block font-semibold mb-2">
+                      Seller Name
+                    </label>
+                    <InputBox
+                      name="sellerName"
+                      value={formData.sellerName}
+                      onChange={handleChange}
+                      placeholder="Enter seller name"
+                    />
+                  </div>
+
+                  {/* Companies */}
+                  <div className="mb-5">
+                    <label className="block font-semibold mb-2">
+                      Companies
+                    </label>
+                    <div className="space-y-3">
+                      {formData.companies.map((company, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-lg border border-gray-200 dark:border-gray-700"
                         >
-                          -
-                        </button>
-                        {idx === formData.companies.length - 1 && (
+                          <input
+                            type="text"
+                            className="border rounded-lg px-3 py-2 flex-1 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={company}
+                            onChange={(e) => {
+                              const updated = [...formData.companies];
+                              updated[idx] = e.target.value;
+                              handleChange({
+                                target: { name: "companies", value: updated },
+                              });
+                            }}
+                            placeholder={`Company ${idx + 1}`}
+                          />
+
+                          {/* Remove button */}
                           <button
                             type="button"
-                            className="text-green-500 hover:text-green-700 px-2"
-                            onClick={() => handleChange({ target: { name: 'companies', value: [...formData.companies, ''] } })}
-                            title="Add"
+                            className="text-red-500 hover:text-red-700 p-1 rounded"
+                            onClick={() => {
+                              const updated = formData.companies.filter(
+                                (_, i) => i !== idx
+                              );
+                              handleChange({
+                                target: { name: "companies", value: updated },
+                              });
+                            }}
+                            disabled={formData.companies.length === 1}
+                            title="Remove"
                           >
-                            +
+                            ✕
                           </button>
-                        )}
-                      </div>
-                    ))}
+
+                          {/* Add button */}
+                          {idx === formData.companies.length - 1 && (
+                            <button
+                              type="button"
+                              className="text-green-500 hover:text-green-700 p-1 rounded"
+                              onClick={() =>
+                                handleChange({
+                                  target: {
+                                    name: "companies",
+                                    value: [...formData.companies, ""],
+                                  },
+                                })
+                              }
+                              title="Add"
+                            >
+                              +
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <button
-                    onClick={handleSaveEdit}
-                    className="bg-blue-600 hover:bg-blue-700 text-white mt-6 px-4 py-2 rounded-lg w-full"
-                  >
-                    Save Changes
-                  </button>
+
+                  {/* Action buttons */}
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button
+                      onClick={() => setModalOpen(false)}
+                      className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
-                  <h2 className="text-lg font-bold mb-2">{selectedSeller.sellerName}</h2>
+                  <h2 className="text-lg font-bold mb-2">
+                    {selectedSeller.sellerName}
+                  </h2>
                   <p className="text-sm mb-2">Companies:</p>
                   <ul className="list-disc list-inside mb-4">
                     {selectedSeller.companies.map((c, i) => (

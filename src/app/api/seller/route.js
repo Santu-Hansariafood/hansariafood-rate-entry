@@ -17,8 +17,16 @@ export async function GET(req) {
     const search = searchParams.get("search") || "";
     const skip = (page - 1) * limit;
 
+    // ✅ Search in both sellerName and companies array
     const searchRegex = new RegExp(search, "i");
-    const query = search ? { sellerName: { $regex: searchRegex } } : {};
+    const query = search
+      ? {
+          $or: [
+            { sellerName: { $regex: searchRegex } },
+            { companies: { $elemMatch: { $regex: searchRegex } } },
+          ],
+        }
+      : {};
 
     const [sellers, total] = await Promise.all([
       Seller.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -77,7 +85,6 @@ export async function POST(req) {
     );
   } catch (error) {
     if (error.code === 11000) {
-      // MongoDB duplicate key error
       return NextResponse.json(
         { error: "Seller name must be unique" },
         { status: 400 }

@@ -22,34 +22,48 @@ const useSellerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   /** 📌 Fetch sellers with pagination + search */
-  const fetchSellers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get("/seller", {
-        params: {
-          page: currentPage,
-          limit: ITEMS_PER_PAGE,
-          search: searchQuery,
-        },
-      });
+  const fetchSellers = useCallback(
+    async (page = currentPage, search = searchQuery) => {
+      setLoading(true);
+      try {
+        const res = await axiosInstance.get("/seller", {
+          params: {
+            page,
+            limit: ITEMS_PER_PAGE,
+            search,
+          },
+        });
 
-      setSellers(res.data.sellers || []);
-      setTotalSellers(res.data.total || 0);
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to fetch sellers");
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, searchQuery]);
+        setSellers(res.data.sellers || []);
+        setTotalSellers(res.data.total || 0);
+      } catch (error) {
+        toast.error(error.response?.data?.error || "Failed to fetch sellers");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentPage, searchQuery]
+  );
 
+  /** 📌 Fetch sellers on page change */
   useEffect(() => {
     fetchSellers();
-  }, [fetchSellers]);
+  }, [currentPage, fetchSellers]);
+
+  /** 📌 Debounced search */
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setCurrentPage(1); // reset to first page
+      fetchSellers(1, searchQuery);
+    }, 400); // wait 400ms after typing
+
+    return () => clearTimeout(timeout);
+  }, [searchQuery, fetchSellers]);
 
   /** 📌 Pagination */
   const handlePageChange = (page) => setCurrentPage(page);
 
-  /** 📌 Edit seller (item is passed directly) */
+  /** 📌 Edit seller */
   const handleEdit = (seller) => {
     setSelectedSeller(seller);
     setFormData({
@@ -60,16 +74,19 @@ const useSellerList = () => {
     setModalOpen(true);
   };
 
-  /** 📌 View seller (Actions sends id only) */
+  /** 📌 View seller */
   const handleView = async (idOrSeller) => {
     try {
-      const sellerId = typeof idOrSeller === "string" ? idOrSeller : idOrSeller._id;
+      const sellerId =
+        typeof idOrSeller === "string" ? idOrSeller : idOrSeller._id;
       const res = await axiosInstance.get(`/seller/${sellerId}`);
       setSelectedSeller(res.data);
       setEditMode(false);
       setModalOpen(true);
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to fetch seller details");
+      toast.error(
+        error.response?.data?.error || "Failed to fetch seller details"
+      );
     }
   };
 
@@ -81,7 +98,10 @@ const useSellerList = () => {
       if (Array.isArray(value)) {
         companiesArr = value;
       } else if (typeof value === "string") {
-        companiesArr = value.split(",").map((c) => c.trim()).filter(Boolean);
+        companiesArr = value
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean);
       }
       setFormData((prev) => ({
         ...prev,
@@ -128,9 +148,10 @@ const useSellerList = () => {
     }
   };
 
-  /** 📌 Delete seller (Actions sends id only) */
+  /** 📌 Delete seller */
   const handleDelete = async (idOrSeller) => {
-    const sellerId = typeof idOrSeller === "string" ? idOrSeller : idOrSeller._id;
+    const sellerId =
+      typeof idOrSeller === "string" ? idOrSeller : idOrSeller._id;
 
     if (!window.confirm("Are you sure you want to delete this seller?")) return;
 
