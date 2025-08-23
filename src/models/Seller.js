@@ -2,12 +2,7 @@ import mongoose from "mongoose";
 
 const SellerSchema = new mongoose.Schema(
   {
-    sellerName: {
-      type: String,
-      required: true,
-      trim: true,
-      unique: true,
-    },
+    sellerName: { type: String, required: true, trim: true, unique: true },
     companies: [
       {
         type: String,

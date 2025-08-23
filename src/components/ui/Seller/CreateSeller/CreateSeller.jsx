@@ -1,54 +1,61 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
-import { Plus, Minus } from "lucide-react"; // icons
+import React, { Suspense, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
+
 const Button = dynamic(() => import("@/components/common/Button/Button"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 const Title = dynamic(() => import("@/components/common/Title/Title"));
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 
 const CreateSeller = () => {
   const [sellerName, setSellerName] = useState("");
-  const [companies, setCompanies] = useState([{ id: Date.now(), name: "" }]);
+  const [companyOptions, setCompanyOptions] = useState([]);
+  const [selectedCompanies, setSelectedCompanies] = useState([]);
 
-  const handleCompanyChange = (id, value) => {
-    setCompanies((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, name: value } : c))
-    );
-  };
-
-  const addCompany = () => {
-    setCompanies((prev) => [...prev, { id: Date.now(), name: "" }]);
-  };
-
-  const removeCompany = (id) => {
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
-  };
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await axiosInstance.get("/companies?limit=all");
+        if (res.data && Array.isArray(res.data.companies)) {
+          setCompanyOptions(
+            res.data.companies.map((c) => ({
+              label: c.name,
+              value: c.name,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch companies:", error);
+        toast.error("Failed to load companies");
+      }
+    };
+    fetchCompanies();
+  }, []);
 
   const handleSave = async () => {
     if (!sellerName.trim()) {
       toast.error("Seller name is required!");
       return;
     }
-    if (companies.some((c) => !c.name.trim())) {
-      toast.error("Please fill all company names!");
+    if (selectedCompanies.length === 0) {
+      toast.error("Please select at least one company!");
       return;
     }
 
     const payload = {
       sellerName,
-      companies: companies.map((c) => c.name),
+      companies: selectedCompanies,
     };
 
     try {
       const res = await axiosInstance.post("/seller", payload);
-
       toast.success(res.data.message || "Seller created successfully!");
       setSellerName("");
-      setCompanies([{ id: Date.now(), name: "" }]);
+      setSelectedCompanies([]);
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.error || "Failed to create seller");
@@ -71,42 +78,16 @@ const CreateSeller = () => {
               onChange={(e) => setSellerName(e.target.value)}
               className="dark:bg-gray-700 dark:text-gray-100"
             />
-            <div>
-              <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
-                Companies
-              </h3>
-              <div className="space-y-3">
-                {companies.map((company, index) => (
-                  <div key={company.id} className="flex items-center gap-2">
-                    <InputBox
-                      label={`Company ${index + 1}`}
-                      value={company.name}
-                      onChange={(e) =>
-                        handleCompanyChange(company.id, e.target.value)
-                      }
-                      className="dark:bg-gray-700 dark:text-gray-100 flex-1"
-                    />
-                    {companies.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeCompany(company.id)}
-                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
-                      >
-                        <Minus size={18} />
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={addCompany}
-                      className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600"
-                    >
-                      <Plus size={18} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <Dropdown
+              label="Select Companies"
+              options={companyOptions}
+              value={selectedCompanies}
+              onChange={setSelectedCompanies}
+              isMulti={true}
+              placeholder="Search or select companies..."
+            />
           </div>
+
           <div className="flex justify-center mt-8">
             <Button
               onClick={handleSave}
