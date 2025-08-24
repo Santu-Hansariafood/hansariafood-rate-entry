@@ -86,10 +86,17 @@ export default function SellerList() {
     try {
       const res = await axiosInstance.get("/companies?limit=all");
       if (res.data && Array.isArray(res.data.companies)) {
-        const sortedCompanies = res.data.companies.sort((a, b) =>
+        // ✅ Only companies with type including "seller"
+        const sellerCompanies = res.data.companies.filter((c) =>
+          Array.isArray(c.type) && c.type.includes("seller")
+        );
+
+        const sortedCompanies = sellerCompanies.sort((a, b) =>
           (a?.name || "").localeCompare(b?.name || "")
         );
+
         setCompanies(sortedCompanies);
+
         setCompanyOptions(
           sortedCompanies.map((c) => ({
             label: c?.name || "Unknown",
@@ -127,11 +134,11 @@ export default function SellerList() {
     setEditMode(true);
     setSelectedSeller(seller);
     const companyIds = [];
+
     if (seller?.companies && Array.isArray(seller.companies)) {
-      seller.companies.forEach((companyName) => {
-        const matchingCompany = companies.find((c) => c.name === companyName);
-        if (matchingCompany) {
-          companyIds.push(matchingCompany._id);
+      seller.companies.forEach((company) => {
+        if (company._id) {
+          companyIds.push(company._id);
         }
       });
     }
@@ -163,16 +170,9 @@ export default function SellerList() {
 
   const handleSaveEdit = async () => {
     try {
-      const companyNames = formData.companies
-        .map((id) => {
-          const company = companies.find((c) => c._id === id);
-          return company?.name || "";
-        })
-        .filter((name) => name !== "");
-
       const payload = {
         sellerName: formData.sellerName.trim(),
-        companies: companyNames,
+        companies: formData.companies, // send as IDs
       };
 
       await axiosInstance.put(`/seller/${selectedSeller._id}`, payload);
@@ -271,7 +271,7 @@ export default function SellerList() {
                           setFormData({ ...formData, companies: val })
                         }
                         isMulti={true}
-                        placeholder="Select companies..."
+                        placeholder="Select seller companies..."
                       />
                     </div>
                   </div>
