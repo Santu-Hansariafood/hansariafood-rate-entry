@@ -32,6 +32,7 @@ export default function SellerList() {
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [formData, setFormData] = useState({ sellerName: "", companies: [] });
 
+  // ✅ fetch all sellers and normalize companies as names
   const fetchSellers = async () => {
     try {
       const res = await axiosInstance.get("/seller");
@@ -40,38 +41,29 @@ export default function SellerList() {
           let processedCompanies = [];
 
           if (seller.companies && Array.isArray(seller.companies)) {
+            // case: array of strings (already names)
             if (typeof seller.companies[0] === "string") {
-              processedCompanies = seller.companies.map((companyName) => {
-                const matchingCompany = companies.find(
-                  (c) => c.name === companyName
-                );
-                return {
-                  name: companyName,
-                  _id: matchingCompany?._id || null,
-                };
-              });
-            } else if (typeof seller.companies[0] === "object") {
+              processedCompanies = seller.companies.map((name) => ({
+                name,
+              }));
+            }
+            // case: array of objects
+            else if (typeof seller.companies[0] === "object") {
               processedCompanies = seller.companies.map((company) => {
                 if (company.name) {
-                  return company;
+                  return { name: company.name };
                 } else if (company.companyId) {
                   const matchingCompany = companies.find(
                     (c) => c._id === company.companyId
                   );
-                  return {
-                    name: matchingCompany?.name || "Unknown",
-                    _id: company.companyId,
-                  };
+                  return { name: matchingCompany?.name || "Unknown" };
                 }
-                return { name: "Unknown", _id: null };
+                return { name: "Unknown" };
               });
             }
           }
 
-          return {
-            ...seller,
-            companies: processedCompanies,
-          };
+          return { ...seller, companies: processedCompanies };
         });
 
         setSellers(processedSellers);
@@ -82,11 +74,11 @@ export default function SellerList() {
     }
   };
 
+  // ✅ fetch companies (we keep names for Dropdown)
   const fetchCompanies = async () => {
     try {
       const res = await axiosInstance.get("/companies?limit=all");
       if (res.data && Array.isArray(res.data.companies)) {
-        // ✅ Only companies with type including "seller"
         const sellerCompanies = res.data.companies.filter((c) =>
           Array.isArray(c.type) && c.type.includes("seller")
         );
@@ -100,7 +92,7 @@ export default function SellerList() {
         setCompanyOptions(
           sortedCompanies.map((c) => ({
             label: c?.name || "Unknown",
-            value: c._id,
+            value: c?.name || "Unknown", // ✅ store company name instead of id
           }))
         );
       }
@@ -115,7 +107,6 @@ export default function SellerList() {
       await fetchCompanies();
       await fetchSellers();
     };
-
     initData();
   }, []);
 
@@ -130,22 +121,17 @@ export default function SellerList() {
 
   const handlePageChange = (page) => setCurrentPage(page);
 
+  // ✅ open modal with names pre-filled
   const handleEdit = (seller) => {
     setEditMode(true);
     setSelectedSeller(seller);
-    const companyIds = [];
 
-    if (seller?.companies && Array.isArray(seller.companies)) {
-      seller.companies.forEach((company) => {
-        if (company._id) {
-          companyIds.push(company._id);
-        }
-      });
-    }
+    const companyNames =
+      seller?.companies?.map((c) => c?.name).filter(Boolean) || [];
 
     setFormData({
       sellerName: seller?.sellerName || "",
-      companies: companyIds,
+      companies: companyNames, // ✅ names
     });
 
     setModalOpen(true);
@@ -168,11 +154,12 @@ export default function SellerList() {
     }
   };
 
+  // ✅ save with names
   const handleSaveEdit = async () => {
     try {
       const payload = {
         sellerName: formData.sellerName.trim(),
-        companies: formData.companies, // send as IDs
+        companies: formData.companies, // ✅ names
       };
 
       await axiosInstance.put(`/seller/${selectedSeller._id}`, payload);
@@ -205,6 +192,7 @@ export default function SellerList() {
             />
           </div>
         </div>
+
         <Table
           data={paginatedData.map((item, index) => ({
             slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
@@ -229,12 +217,14 @@ export default function SellerList() {
           }))}
           columns={columns}
         />
+
         <Pagination
           currentPage={currentPage}
           totalItems={totalSellers}
           itemsPerPage={ITEMS_PER_PAGE}
           onPageChange={handlePageChange}
         />
+
         {modalOpen && (
           <Modal onClose={() => setModalOpen(false)}>
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md w-full max-w-lg mx-auto">
@@ -303,9 +293,7 @@ export default function SellerList() {
                       ?.sort((a, b) =>
                         (a?.name || "").localeCompare(b?.name || "")
                       )
-                      ?.map((c, i) => (
-                        <li key={i}>{c?.name || "Unknown"}</li>
-                      ))}
+                      ?.map((c, i) => <li key={i}>{c?.name || "Unknown"}</li>)}
                   </ul>
                 </>
               )}
