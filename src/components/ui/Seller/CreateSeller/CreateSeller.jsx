@@ -1,10 +1,9 @@
 "use client";
 
-import React, { Suspense, useState, useEffect } from "react";
-import { toast } from "react-toastify";
-import Loading from "@/components/common/Loading/Loading";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
+import Loading from "@/components/common/Loading/Loading";
+import useSellerForm from "@/hooks/Seller/useSellerForm";
 
 const Button = dynamic(() => import("@/components/common/Button/Button"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
@@ -12,60 +11,15 @@ const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 
 const CreateSeller = () => {
-  const [sellerName, setSellerName] = useState("");
-  const [companyOptions, setCompanyOptions] = useState([]);
-  const [selectedCompanies, setSelectedCompanies] = useState([]);
-
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const res = await axiosInstance.get("/companies?limit=all");
-
-        if (res.data && Array.isArray(res.data.companies)) {
-          const sellerCompanies = res.data.companies.filter((c) =>
-            Array.isArray(c.type) && c.type.includes("seller")
-          );
-
-          setCompanyOptions(
-            sellerCompanies.map((c) => ({
-              label: c.name,
-              value: c.name,
-            }))
-          );
-        }
-      } catch (error) {
-        console.error("Failed to fetch companies:", error);
-        toast.error("Failed to load companies");
-      }
-    };
-    fetchCompanies();
-  }, []);
-
-  const handleSave = async () => {
-    if (!sellerName.trim()) {
-      toast.error("Seller name is required!");
-      return;
-    }
-    if (selectedCompanies.length === 0) {
-      toast.error("Please select at least one company!");
-      return;
-    }
-
-    const payload = {
-      sellerName,
-      companies: selectedCompanies,
-    };
-
-    try {
-      const res = await axiosInstance.post("/seller", payload);
-      toast.success(res.data.message || "Seller created successfully!");
-      setSellerName("");
-      setSelectedCompanies([]);
-    } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.error || "Failed to create seller");
-    }
-  };
+  const {
+    sellerName,
+    setSellerName,
+    companyOptions,
+    selectedCompanies,
+    setSelectedCompanies,
+    handleSave,
+    loading,
+  } = useSellerForm();
 
   return (
     <Suspense fallback={<Loading />}>
@@ -96,7 +50,8 @@ const CreateSeller = () => {
           <div className="flex justify-center mt-8">
             <Button
               onClick={handleSave}
-              text="Save"
+              text={loading ? "Saving..." : "Save"}
+              disabled={loading}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
             />
           </div>

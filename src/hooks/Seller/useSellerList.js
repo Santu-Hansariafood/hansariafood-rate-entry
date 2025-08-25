@@ -1,178 +1,212 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import useDebouncedSearch from "@/hooks/useDebouncedSearch/useDebouncedSearch";
 
 const ITEMS_PER_PAGE = 10;
 
 const useSellerList = () => {
   const [sellers, setSellers] = useState([]);
   const [totalSellers, setTotalSellers] = useState(0);
+  const [companies, setCompanies] = useState([]);
+  const [companyOptions, setCompanyOptions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [formData, setFormData] = useState({ sellerName: "", companies: [] });
-  const [editMode, setEditMode] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebouncedSearch(searchQuery, 350);
+  const requestAbortRef = useRef(null);
 
   const fetchSellers = useCallback(
-    async (page = currentPage, search = searchQuery) => {
-      setLoading(true);
+    async (page, query) => {
       try {
-        const res = await axiosInstance.get("/seller", {
-          params: {
-            page,
-            limit: ITEMS_PER_PAGE,
-            search,
-          },
-        });
+        if (requestAbortRef.current) {
+          requestAbortRef.current.abort();
+        }
+        const controller = new AbortController();
+        requestAbortRef.current = controller;
 
-        setSellers(res.data.sellers || []);
-        setTotalSellers(res.data.total || 0);
+        const res = await axiosInstance.get(
+          `/seller?page=${page}&limit=${ITEMS_PER_PAGE}&search=${encodeURIComponent(
+            query || ""
+          )}`,
+          { signal: controller.signal }
+        );
+
+        if (res.data && Array.isArray(res.data.sellers)) {
+          const companiesSnapshot = companies;
+          const processedSellers = res.data.sellers.map((seller) => {
+            let processedCompanies = [];
+
+            if (seller.companies && Array.isArray(seller.companies)) {
+              if (typeof seller.companies[0] === "string") {
+                processedCompanies = seller.companies.map((name) => ({ name }));
+              } else if (typeof seller.companies[0] === "object") {
+                processedCompanies = seller.companies.map((company) => {
+                  if (company.name) return { name: company.name };
+                  if (company.companyId) {
+                    const match = companiesSnapshot.find(
+                      (c) => c._id === company.companyId
+                    );
+                    return { name: match?.name || "Unknown" };
+                  }
+                  return { name: "Unknown" };
+                });
+              }
+            }
+            return { ...seller, companies: processedCompanies };
+          });
+
+          setSellers(processedSellers);
+          setTotalSellers(res.data.total || 0);
+        }
       } catch (error) {
-        toast.error(error.response?.data?.error || "Failed to fetch sellers");
-      } finally {
-        setLoading(false);
+        if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") {
+          return;
+        }
+        console.error(error);
+        toast.error("Failed to load sellers");
       }
     },
-    [currentPage, searchQuery]
+    [companies]
   );
 
-  useEffect(() => {
-    fetchSellers();
-  }, [currentPage, fetchSellers]);
+  const fetchCompanies = useCallback(async () => {
+    try {
+      const res = await axiosInstance.get("/companies?limit=all");
+      if (res.data && Array.isArray(res.data.companies)) {
+        const sellerCompanies = res.data.companies.filter(
+          (c) => Array.isArray(c.type) && c.type.includes("seller")
+        );
+        const sorted = sellerCompanies.sort((a, b) =>
+          (a?.name || "").localeCompare(b?.name || "")
+        );
+        setCompanies(sorted);
+        setCompanyOptions(
+          sorted.map((c) => ({
+            label: c?.name || "Unknown",
+            value: c?.name || "Unknown",
+          }))
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load companies");
+    }
+  }, []);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setCurrentPage(1);
-      fetchSellers(1, searchQuery);
-    }, 400);
+    fetchCompanies();
+  }, [fetchCompanies]);
 
-    return () => clearTimeout(timeout);
-  }, [searchQuery, fetchSellers]);
+  useEffect(() => {
+    fetchSellers(currentPage, debouncedSearch);
+    return () => {
+      if (requestAbortRef.current) {
+        requestAbortRef.current.abort();
+      }
+    };
+  }, [currentPage, debouncedSearch, fetchSellers]);
 
   const handlePageChange = (page) => setCurrentPage(page);
 
   const handleEdit = (seller) => {
-    setSelectedSeller(seller);
-    setFormData({
-      sellerName: seller.sellerName,
-      companies: seller.companies,
-    });
     setEditMode(true);
+    // normalize id so subsequent operations have _id available
+    const normalizedId = seller?._id || seller?.id;
+    setSelectedSeller({ ...seller, _id: normalizedId });
+
+    const companyNames =
+      seller?.companies?.map((c) => c?.name).filter(Boolean) || [];
+
+    setFormData({
+      sellerName: seller?.sellerName || "",
+      companies: companyNames,
+    });
     setModalOpen(true);
   };
 
-  const handleView = async (idOrSeller) => {
-    try {
-      const sellerId =
-        typeof idOrSeller === "string" ? idOrSeller : idOrSeller._id;
-      const res = await axiosInstance.get(`/seller/${sellerId}`);
-      setSelectedSeller(res.data);
-      setEditMode(false);
-      setModalOpen(true);
-    } catch (error) {
-      toast.error(
-        error.response?.data?.error || "Failed to fetch seller details"
-      );
+  const handleView = (seller) => {
+    setEditMode(false);
+    const normalizedId = seller?._id || seller?.id;
+    setSelectedSeller({ ...seller, _id: normalizedId });
+    setModalOpen(true);
+  };
+
+  const refreshAfterDelete = async () => {
+    const newTotal = Math.max(0, totalSellers - 1);
+    const newTotalPages = Math.max(1, Math.ceil(newTotal / ITEMS_PER_PAGE));
+    const nextPage = Math.min(currentPage, newTotalPages);
+
+    if (nextPage !== currentPage) {
+      setCurrentPage(nextPage);
+    } else {
+      await fetchSellers(nextPage, debouncedSearch);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "companies") {
-      let companiesArr = [];
-      if (Array.isArray(value)) {
-        companiesArr = value;
-      } else if (typeof value === "string") {
-        companiesArr = value
-          .split(",")
-          .map((c) => c.trim())
-          .filter(Boolean);
+  const handleDelete = async (seller) => {
+    try {
+      const id = seller?._id || seller?.id;
+      if (!id) {
+        toast.error("Missing seller id");
+        return;
       }
-      setFormData((prev) => ({
-        ...prev,
-        companies: companiesArr,
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      await axiosInstance.delete(`/seller/${id}`);
+      toast.success("Seller deleted");
+      await refreshAfterDelete();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete seller");
     }
   };
 
   const handleSaveEdit = async () => {
     try {
-      const updated = {
+      const id = selectedSeller?._id || selectedSeller?.id;
+      if (!id) {
+        toast.error("Missing seller id");
+        return;
+      }
+      const payload = {
         sellerName: formData.sellerName.trim(),
         companies: formData.companies,
       };
-
-      await axiosInstance.put(`/seller/${selectedSeller._id}`, updated);
-      toast.success("Seller updated successfully");
+      await axiosInstance.put(`/seller/${id}`, payload);
+      toast.success("Seller updated");
       setModalOpen(false);
-      setFormData({ sellerName: "", companies: [] });
-      fetchSellers();
+      await fetchSellers(currentPage, debouncedSearch);
     } catch (error) {
+      console.error(error);
       toast.error(error.response?.data?.error || "Failed to update seller");
     }
   };
 
-  const handleCreate = async () => {
-    try {
-      const newSeller = {
-        sellerName: formData.sellerName.trim(),
-        companies: formData.companies,
-      };
-
-      await axiosInstance.post("/seller", newSeller);
-      toast.success("Seller created successfully");
-      setModalOpen(false);
-      setFormData({ sellerName: "", companies: [] });
-      fetchSellers();
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to create seller");
-    }
-  };
-
-  const handleDelete = async (idOrSeller) => {
-    const sellerId =
-      typeof idOrSeller === "string" ? idOrSeller : idOrSeller._id;
-
-    if (!window.confirm("Are you sure you want to delete this seller?")) return;
-
-    try {
-      await axiosInstance.delete(`/seller/${sellerId}`);
-      toast.success("Seller deleted successfully");
-      fetchSellers();
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to delete seller");
-    }
-  };
-
-  const paginatedData = sellers;
-
   return {
-    currentPage,
+    sellers,
     totalSellers,
-    ITEMS_PER_PAGE,
-    paginatedData,
+    companies,
+    companyOptions,
+    currentPage,
+    searchQuery,
     modalOpen,
+    editMode,
     selectedSeller,
     formData,
-    editMode,
-    handlePageChange,
+    setFormData,
     setModalOpen,
+    setSearchQuery,
+    handlePageChange,
     handleEdit,
     handleView,
-    handleSaveEdit,
-    handleCreate,
-    handleChange,
     handleDelete,
-    searchQuery,
-    setSearchQuery,
-    loading,
+    handleSaveEdit,
+    ITEMS_PER_PAGE,
   };
 };
 

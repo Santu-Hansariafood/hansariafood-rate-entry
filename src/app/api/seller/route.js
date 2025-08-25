@@ -5,7 +5,6 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
-// -------------------- GET Sellers with Pagination & Search --------------------
 export async function GET(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,7 +17,6 @@ export async function GET(req) {
     const search = searchParams.get("search") || "";
     const skip = (page - 1) * limit;
 
-    // Search by sellerName or company name
     const searchRegex = new RegExp(search, "i");
     const query = search
       ? {
@@ -29,12 +27,13 @@ export async function GET(req) {
         }
       : {};
 
-    // Fetch sellers + total count
     const [sellers, total] = await Promise.all([
       Seller.find(query)
-        .sort({ createdAt: -1 })
+        .select("sellerName companies createdAt")
+        .sort({ sellerName: 1, createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       Seller.countDocuments(query),
     ]);
 
@@ -58,7 +57,6 @@ export async function GET(req) {
   }
 }
 
-// -------------------- CREATE Seller --------------------
 export async function POST(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -86,10 +84,9 @@ export async function POST(req) {
       );
     }
 
-    // Check duplicate seller
     const existingSeller = await Seller.findOne({
       sellerName: sellerNameTrimmed,
-    });
+    }).lean();
     if (existingSeller) {
       return NextResponse.json(
         { error: "Seller name already exists" },
