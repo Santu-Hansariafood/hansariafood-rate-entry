@@ -77,7 +77,10 @@ export default function SaudaTable({
                     <td colSpan={2} className="space-y-1 px-3 py-2">
                       {list.map((e, idx) => {
                         const isFilled =
-                          e?.tons && e?.finalRate && e?.sellerName && e?.sellerCompany;
+                          e?.tons &&
+                          e?.finalRate &&
+                          e?.sellerName &&
+                          e?.sellerCompany;
                         const entryId = `${key}-${idx}`;
 
                         return (
@@ -96,7 +99,7 @@ export default function SaudaTable({
                             <span className="text-base font-semibold text-gray-600 dark:text-gray-300">
                               {String.fromCharCode(97 + idx)}.
                             </span>
-                            
+
                             {/* Rate Input */}
                             <div className="flex items-center gap-1">
                               <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -139,9 +142,9 @@ export default function SaudaTable({
                             <div className="flex flex-col sm:flex-row gap-3 flex-grow">
                               <select
                                 className="w-full rounded border border-gray-300 dark:border-gray-700 
-      bg-white dark:bg-gray-800 
-      text-gray-800 dark:text-gray-200 
-      px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                                bg-white dark:bg-gray-800 
+                                text-gray-800 dark:text-gray-200 
+                                px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
                                 value={e.sellerName || ""}
                                 onChange={(ev) => {
                                   const val = ev.target.value;
@@ -158,9 +161,9 @@ export default function SaudaTable({
                               </select>
                               <select
                                 className="w-full rounded border border-gray-300 dark:border-gray-700 
-      bg-white dark:bg-gray-800 
-      text-gray-800 dark:text-gray-200 
-      px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                                bg-white dark:bg-gray-800 
+                                text-gray-800 dark:text-gray-200 
+                                px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
                                 value={e.sellerCompany || ""}
                                 onChange={(ev) =>
                                   handleChange(
@@ -175,9 +178,9 @@ export default function SaudaTable({
                                 <option value="">Select Company</option>
                                 {sellers
                                   .find((s) => s.sellerName === e.sellerName)
-                                  ?.companies?.map((c, i) => (
-                                    <option key={i} value={c}>
-                                      {c}
+                                  ?.companies?.map((companyName, i) => (
+                                    <option key={i} value={companyName}>
+                                      {companyName}
                                     </option>
                                   ))}
                               </select>
@@ -189,9 +192,9 @@ export default function SaudaTable({
                                 type="text"
                                 placeholder="Others"
                                 className="w-full rounded border border-yellow-300 dark:border-yellow-600 
-      bg-white dark:bg-gray-800 
-      text-gray-800 dark:text-gray-200 
-      px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500"
+                                bg-white dark:bg-gray-800 
+                                text-gray-800 dark:text-gray-200 
+                                px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500"
                                 value={e.others || ""}
                                 onChange={(ev) =>
                                   handleChange(
@@ -221,7 +224,7 @@ export default function SaudaTable({
                               className="w-24 rounded border border-orange-400 dark:border-orange-600 
                               bg-white dark:bg-gray-800 
                               text-gray-800 dark:text-gray-200 
-                              px-3 py-1 text-sm focus:ring-2 focus:ring-orange-500"
+                              px-2 py-1 text-sm focus:ring-2 focus:ring-orange-500"
                               value={e.saudaNo || ""}
                               onChange={(ev) =>
                                 handleChange(
