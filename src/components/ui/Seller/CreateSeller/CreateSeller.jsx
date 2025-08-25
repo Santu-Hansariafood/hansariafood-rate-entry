@@ -5,10 +5,18 @@ import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useSellerForm from "@/hooks/Seller/useSellerForm";
 
-const Button = dynamic(() => import("@/components/common/Button/Button"));
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
-const Title = dynamic(() => import("@/components/common/Title/Title"));
-const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
+const Button = dynamic(() => import("@/components/common/Button/Button"), {
+  suspense: true,
+});
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  suspense: true,
+});
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  suspense: true,
+});
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"), {
+  suspense: true,
+});
 
 const CreateSeller = () => {
   const {
