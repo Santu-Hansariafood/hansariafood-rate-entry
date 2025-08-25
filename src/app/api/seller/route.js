@@ -22,7 +22,8 @@ export async function GET(req) {
       ? {
           $or: [
             { sellerName: { $regex: searchRegex } },
-            { companies: { $elemMatch: { $regex: searchRegex } } },
+            { companies: { $regex: searchRegex } },
+            { "companies.name": { $regex: searchRegex } },
           ],
         }
       : {};
@@ -31,6 +32,7 @@ export async function GET(req) {
       Seller.find(query)
         .select("sellerName companies createdAt")
         .sort({ sellerName: 1, createdAt: -1 })
+        .collation({ locale: "en", strength: 2 })
         .skip(skip)
         .limit(limit)
         .lean(),
@@ -40,13 +42,7 @@ export async function GET(req) {
     const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json(
-      {
-        sellers,
-        total,
-        currentPage: page,
-        totalPages,
-        pageSize: limit,
-      },
+      { sellers, total, currentPage: page, totalPages, pageSize: limit },
       { status: 200 }
     );
   } catch (error) {

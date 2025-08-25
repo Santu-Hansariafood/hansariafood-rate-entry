@@ -55,9 +55,7 @@ export default function SellerList() {
           <div className="w-full md:w-1/2">
             <SearchBox
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-              }}
+              onChange={setSearchQuery}
               placeholder="Search seller name..."
             />
           </div>
@@ -166,7 +164,7 @@ export default function SellerList() {
                         <li key={i}>{c?.name || "Unknown"}</li>
                       ))}
                   </ul>
-                </Suspense >
+                </Suspense>
               )}
             </div>
           </Modal>

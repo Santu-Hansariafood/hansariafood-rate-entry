@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import useDebouncedSearch from "@/hooks/useDebouncedSearch/useDebouncedSearch";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,7 +18,11 @@ const useSellerList = () => {
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [formData, setFormData] = useState({ sellerName: "", companies: [] });
 
-  const debouncedSearch = useDebouncedSearch(searchQuery, 350);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setDebouncedSearch(searchQuery), 350);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
   const requestAbortRef = useRef(null);
 
   const fetchSellers = useCallback(
@@ -31,12 +34,14 @@ const useSellerList = () => {
         const controller = new AbortController();
         requestAbortRef.current = controller;
 
-        const res = await axiosInstance.get(
-          `/seller?page=${page}&limit=${ITEMS_PER_PAGE}&search=${encodeURIComponent(
-            query || ""
-          )}`,
-          { signal: controller.signal }
-        );
+        const res = await axiosInstance.get("/seller", {
+          signal: controller.signal,
+          params: {
+            page,
+            limit: ITEMS_PER_PAGE,
+            search: query || "",
+          },
+        });
 
         if (res.data && Array.isArray(res.data.sellers)) {
           const companiesSnapshot = companies;
@@ -78,7 +83,10 @@ const useSellerList = () => {
 
   const fetchCompanies = useCallback(async () => {
     try {
-      const res = await axiosInstance.get("/companies?limit=all");
+      const res = await axiosInstance.get("/companies", {
+        params: { limit: "all" },
+      });
+
       if (res.data && Array.isArray(res.data.companies)) {
         const sellerCompanies = res.data.companies.filter(
           (c) => Array.isArray(c.type) && c.type.includes("seller")
@@ -117,7 +125,6 @@ const useSellerList = () => {
 
   const handleEdit = (seller) => {
     setEditMode(true);
-    // normalize id so subsequent operations have _id available
     const normalizedId = seller?._id || seller?.id;
     setSelectedSeller({ ...seller, _id: normalizedId });
 
@@ -131,10 +138,17 @@ const useSellerList = () => {
     setModalOpen(true);
   };
 
-  const handleView = (seller) => {
+  const handleView = (sellerOrId) => {
     setEditMode(false);
-    const normalizedId = seller?._id || seller?.id;
-    setSelectedSeller({ ...seller, _id: normalizedId });
+    const isPrimitive =
+      typeof sellerOrId === "string" || typeof sellerOrId === "number";
+    const normalizedId = isPrimitive
+      ? String(sellerOrId)
+      : sellerOrId?._id || sellerOrId?.id;
+    const normalizedSeller = isPrimitive
+      ? { _id: normalizedId }
+      : { ...sellerOrId, _id: normalizedId };
+    setSelectedSeller(normalizedSeller);
     setModalOpen(true);
   };
 
@@ -150,9 +164,12 @@ const useSellerList = () => {
     }
   };
 
-  const handleDelete = async (seller) => {
+  const handleDelete = async (sellerOrId) => {
     try {
-      const id = seller?._id || seller?.id;
+      const id =
+        typeof sellerOrId === "string" || typeof sellerOrId === "number"
+          ? String(sellerOrId)
+          : sellerOrId?._id || sellerOrId?.id;
       if (!id) {
         toast.error("Missing seller id");
         return;
