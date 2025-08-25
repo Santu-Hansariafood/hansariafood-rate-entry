@@ -11,16 +11,13 @@ const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 const Actions = dynamic(() => import("@/components/common/Actions/Actions"));
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
-const SearchBox = dynamic(() =>
-  import("@/components/common/SearchBox/SearchBox")
-);
-const Pagination = dynamic(() =>
-  import("@/components/common/Pagination/Pagination")
-);
+const SearchBox = dynamic(() => import("@/components/common/SearchBox/SearchBox"));
+const Pagination = dynamic(() => import("@/components/common/Pagination/Pagination"));
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 
 export default function SellerList() {
   const [sellers, setSellers] = useState([]);
+  const [totalSellers, setTotalSellers] = useState(0);
   const [companies, setCompanies] = useState([]);
   const [companyOptions, setCompanyOptions] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,30 +29,25 @@ export default function SellerList() {
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [formData, setFormData] = useState({ sellerName: "", companies: [] });
 
-  // ✅ fetch all sellers and normalize companies as names
-  const fetchSellers = async () => {
+  // fetch all sellers for current page from server (server-side pagination)
+  const fetchSellers = async (page = currentPage, query = searchQuery) => {
     try {
-      const res = await axiosInstance.get("/seller");
+      const res = await axiosInstance.get(
+        `/seller?page=${page}&limit=${ITEMS_PER_PAGE}&search=${encodeURIComponent(query)}`
+      );
       if (res.data && Array.isArray(res.data.sellers)) {
         const processedSellers = res.data.sellers.map((seller) => {
           let processedCompanies = [];
 
           if (seller.companies && Array.isArray(seller.companies)) {
-            // case: array of strings (already names)
             if (typeof seller.companies[0] === "string") {
-              processedCompanies = seller.companies.map((name) => ({
-                name,
-              }));
-            }
-            // case: array of objects
-            else if (typeof seller.companies[0] === "object") {
+              processedCompanies = seller.companies.map((name) => ({ name }));
+            } else if (typeof seller.companies[0] === "object") {
               processedCompanies = seller.companies.map((company) => {
                 if (company.name) {
                   return { name: company.name };
                 } else if (company.companyId) {
-                  const matchingCompany = companies.find(
-                    (c) => c._id === company.companyId
-                  );
+                  const matchingCompany = companies.find((c) => c._id === company.companyId);
                   return { name: matchingCompany?.name || "Unknown" };
                 }
                 return { name: "Unknown" };
@@ -67,6 +59,7 @@ export default function SellerList() {
         });
 
         setSellers(processedSellers);
+        setTotalSellers(res.data.total || 0);
       }
     } catch (error) {
       console.error(error);
@@ -74,25 +67,21 @@ export default function SellerList() {
     }
   };
 
-  // ✅ fetch companies (we keep names for Dropdown)
+  // fetch companies (names for Dropdown)
   const fetchCompanies = async () => {
     try {
       const res = await axiosInstance.get("/companies?limit=all");
       if (res.data && Array.isArray(res.data.companies)) {
-        const sellerCompanies = res.data.companies.filter((c) =>
-          Array.isArray(c.type) && c.type.includes("seller")
+        const sellerCompanies = res.data.companies.filter(
+          (c) => Array.isArray(c.type) && c.type.includes("seller")
         );
 
-        const sortedCompanies = sellerCompanies.sort((a, b) =>
-          (a?.name || "").localeCompare(b?.name || "")
-        );
-
+        const sortedCompanies = sellerCompanies.sort((a, b) => (a?.name || "").localeCompare(b?.name || ""));
         setCompanies(sortedCompanies);
-
         setCompanyOptions(
           sortedCompanies.map((c) => ({
             label: c?.name || "Unknown",
-            value: c?.name || "Unknown", // ✅ store company name instead of id
+            value: c?.name || "Unknown",
           }))
         );
       }
@@ -102,36 +91,34 @@ export default function SellerList() {
     }
   };
 
+  // initial load
   useEffect(() => {
-    const initData = async () => {
+    const init = async () => {
       await fetchCompanies();
-      await fetchSellers();
+      await fetchSellers(1, searchQuery);
     };
-    initData();
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filtered = sellers.filter((s) =>
-    (s?.sellerName || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const totalSellers = filtered.length;
-  const paginatedData = filtered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // refetch when page or search changes
+  useEffect(() => {
+    fetchSellers(currentPage, searchQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, searchQuery]);
 
   const handlePageChange = (page) => setCurrentPage(page);
 
-  // ✅ open modal with names pre-filled
+  // open modal with names pre-filled
   const handleEdit = (seller) => {
     setEditMode(true);
     setSelectedSeller(seller);
 
-    const companyNames =
-      seller?.companies?.map((c) => c?.name).filter(Boolean) || [];
+    const companyNames = seller?.companies?.map((c) => c?.name).filter(Boolean) || [];
 
     setFormData({
       sellerName: seller?.sellerName || "",
-      companies: companyNames, // ✅ names
+      companies: companyNames,
     });
 
     setModalOpen(true);
@@ -143,29 +130,42 @@ export default function SellerList() {
     setModalOpen(true);
   };
 
+  // adjust page after delete when needed
+  const refreshAfterDelete = async () => {
+    const newTotal = Math.max(0, (totalSellers || 0) - 1);
+    const newTotalPages = Math.max(1, Math.ceil(newTotal / ITEMS_PER_PAGE));
+    const nextPage = Math.min(currentPage, newTotalPages);
+    if (nextPage !== currentPage) {
+      setCurrentPage(nextPage);
+      // fetch will run via useEffect
+    } else {
+      await fetchSellers(nextPage, searchQuery);
+    }
+  };
+
   const handleDelete = async (seller) => {
     try {
       await axiosInstance.delete(`/seller/${seller._id}`);
       toast.success("Seller deleted");
-      setSellers((prev) => prev.filter((s) => s._id !== seller._id));
+      await refreshAfterDelete();
     } catch (error) {
       console.error(error);
       toast.error("Failed to delete seller");
     }
   };
 
-  // ✅ save with names
+  // save edits and refresh current page
   const handleSaveEdit = async () => {
     try {
       const payload = {
         sellerName: formData.sellerName.trim(),
-        companies: formData.companies, // ✅ names
+        companies: formData.companies,
       };
 
       await axiosInstance.put(`/seller/${selectedSeller._id}`, payload);
       toast.success("Seller updated");
       setModalOpen(false);
-      fetchSellers();
+      await fetchSellers(currentPage, searchQuery);
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.error || "Failed to update seller");
@@ -187,14 +187,17 @@ export default function SellerList() {
           <div className="w-full md:w-1/2">
             <SearchBox
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setCurrentPage(1);
+                setSearchQuery(e.target.value);
+              }}
               placeholder="Search seller name..."
             />
           </div>
         </div>
 
         <Table
-          data={paginatedData.map((item, index) => ({
+          data={sellers.map((item, index) => ({
             slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
             sellerName: item?.sellerName || "Unknown",
             companies:
@@ -235,9 +238,7 @@ export default function SellerList() {
                   </h2>
                   <div className="space-y-5">
                     <div>
-                      <label className="block font-semibold mb-2">
-                        Seller Name
-                      </label>
+                      <label className="block font-semibold mb-2">Seller Name</label>
                       <InputBox
                         name="sellerName"
                         value={formData.sellerName}
@@ -251,15 +252,11 @@ export default function SellerList() {
                       />
                     </div>
                     <div>
-                      <label className="block font-semibold mb-2">
-                        Companies
-                      </label>
+                      <label className="block font-semibold mb-2">Companies</label>
                       <Dropdown
                         options={companyOptions}
                         value={formData.companies}
-                        onChange={(val) =>
-                          setFormData({ ...formData, companies: val })
-                        }
+                        onChange={(val) => setFormData({ ...formData, companies: val })}
                         isMulti={true}
                         placeholder="Select seller companies..."
                       />
@@ -283,16 +280,12 @@ export default function SellerList() {
                 </>
               ) : (
                 <>
-                  <h2 className="text-xl font-bold mb-4">
-                    {selectedSeller?.sellerName || "Unknown Seller"}
-                  </h2>
+                  <h2 className="text-xl font-bold mb-4">{selectedSeller?.sellerName || "Unknown Seller"}</h2>
                   <p className="text-sm mb-2 font-semibold">Companies:</p>
                   <ul className="list-disc list-inside space-y-1">
                     {selectedSeller?.companies
                       ?.slice()
-                      ?.sort((a, b) =>
-                        (a?.name || "").localeCompare(b?.name || "")
-                      )
+                      ?.sort((a, b) => (a?.name || "").localeCompare(b?.name || ""))
                       ?.map((c, i) => <li key={i}>{c?.name || "Unknown"}</li>)}
                   </ul>
                 </>

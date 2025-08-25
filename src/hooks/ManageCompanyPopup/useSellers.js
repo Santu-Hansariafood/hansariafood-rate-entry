@@ -13,7 +13,7 @@ export function useSellers() {
     const fetchSellers = async () => {
       setLoading(true);
       try {
-        const { data } = await axiosInstance.get("/seller");
+        const { data } = await axiosInstance.get("/seller?limit=all");
         if (mounted && data?.sellers) {
           setSellers(data.sellers);
         }

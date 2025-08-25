@@ -5,6 +5,7 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
+// -------------------- GET Sellers with Pagination & Search --------------------
 export async function GET(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,6 +18,7 @@ export async function GET(req) {
     const search = searchParams.get("search") || "";
     const skip = (page - 1) * limit;
 
+    // Search by sellerName or company name
     const searchRegex = new RegExp(search, "i");
     const query = search
       ? {
@@ -27,12 +29,27 @@ export async function GET(req) {
         }
       : {};
 
+    // Fetch sellers + total count
     const [sellers, total] = await Promise.all([
-      Seller.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Seller.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
       Seller.countDocuments(query),
     ]);
 
-    return NextResponse.json({ sellers, total }, { status: 200 });
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json(
+      {
+        sellers,
+        total,
+        currentPage: page,
+        totalPages,
+        pageSize: limit,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch sellers", details: error.message },
@@ -41,6 +58,7 @@ export async function GET(req) {
   }
 }
 
+// -------------------- CREATE Seller --------------------
 export async function POST(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -68,6 +86,7 @@ export async function POST(req) {
       );
     }
 
+    // Check duplicate seller
     const existingSeller = await Seller.findOne({
       sellerName: sellerNameTrimmed,
     });
