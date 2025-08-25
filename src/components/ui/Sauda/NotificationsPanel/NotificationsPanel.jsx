@@ -23,8 +23,7 @@ const NotificationsPanel = ({ onClose }) => {
       `*Rate:* ₹${item.rate ?? "N/A"}`,
       item.saudaNo ? `*Sauda No:* ${item.saudaNo}` : null,
       item.buyerName ? `*Buyer:* ${item.buyerName}` : null,
-      item.sellerName ? `*Seller:* ${item.sellerName}` : null,
-      item.description ? `*Seller Name:* ${item.description}` : null,
+      item.sellerCompany ? `*Seller Company:* ${item.sellerCompany}` : null,
       item.others ? `*Notes:* ${item.others}` : null,
       `*Payment Terms:*`,
       `*_Proper Sauda Contract will be Shared Shortly. Please Check Email_*`,
@@ -135,14 +134,14 @@ const NotificationsPanel = ({ onClose }) => {
                     🏭 Seller: {item.sellerName}
                   </div>
                 )}
+                {item.sellerCompany && (
+                  <div className="text-xs text-gray-500 dark:text-gray-500">
+                    🏢 Company: {item.sellerCompany}
+                  </div>
+                )}
                 {item.saudaNo && (
                   <div className="text-xs text-gray-500 dark:text-gray-500">
                     # Sauda No: {item.saudaNo}
-                  </div>
-                )}
-                {item.description && (
-                  <div className="text-xs text-gray-500 dark:text-gray-500">
-                    📝 {item.description}
                   </div>
                 )}
                 {item.others && (

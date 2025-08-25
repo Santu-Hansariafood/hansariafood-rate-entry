@@ -22,8 +22,9 @@ const DownloadExcelButton = () => {
       { header: "Tons", key: "tons", width: 10 },
       { header: "Rate", key: "rate", width: 15 },
       { header: "Seller", key: "seller", width: 25 },
+      { header: "Seller Company", key: "sellerCompany", width: 25 },
       { header: "Sauda No", key: "saudaNo", width: 15 },
-      { header: "Notes", key: "others", width: 15 },
+      { header: "Notes", key: "others", width: 20 },
     ];
 
     sheet.getRow(1).eachCell((cell) => {
@@ -47,8 +48,7 @@ const DownloadExcelButton = () => {
     });
 
     filteredNotifications.forEach((item, index) => {
-      const mode =
-        item.description === item.company ? "Seller" : "Buyer"; // logic preserved
+      const mode = item.sellerCompany === item.company ? "Seller" : "Buyer";
 
       const row = sheet.addRow({
         buyer: item.company,
@@ -58,7 +58,8 @@ const DownloadExcelButton = () => {
         commodity: item.commodity,
         tons: item.tons,
         rate: item.rate ?? "N/A",
-        seller: item.description ?? "",
+        seller: item.sellerName ?? "",
+        sellerCompany: item.sellerCompany ?? "",
         saudaNo: item.saudaNo ?? "",
         others: item.others ?? "",
       });
@@ -95,7 +96,7 @@ const DownloadExcelButton = () => {
     });
 
     saveAs(blob, `sauda_notifications_${new Date().toISOString()}.xlsx`);
-    toast.success("📁 Excel downloaded with Buyer/Seller mapping!");
+    toast.success("📁 Excel downloaded with Seller and Company details!");
   };
 
   return (

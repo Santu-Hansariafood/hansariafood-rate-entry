@@ -2,9 +2,10 @@
 
 import React, { Suspense } from "react";
 import Loading from "@/components/common/Loading/Loading";
+import dynamic from "next/dynamic";
 
 const normalize = (s) => s?.trim().toLowerCase() || "";
-
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 export default function SaudaTable({
   company,
   rateMap,
@@ -134,50 +135,36 @@ export default function SaudaTable({
                               }
                             />
                             <div className="flex flex-col sm:flex-row gap-3 flex-grow">
-                              <select
-                                className="w-full rounded border border-gray-300 dark:border-gray-700 
-                                bg-white dark:bg-gray-800 
-                                text-gray-800 dark:text-gray-200 
-                                px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                              <Dropdown
+                                label="Seller"
+                                options={sellers.map((s) => ({
+                                  label: s.sellerName,
+                                  value: s.sellerName,
+                                }))}
                                 value={e.sellerName || ""}
-                                onChange={(ev) => {
-                                  const val = ev.target.value;
+                                onChange={(val) => {
                                   handleChange(key, idx, "sellerName", val);
                                   handleChange(key, idx, "sellerCompany", "");
                                 }}
-                              >
-                                <option value="">Select Seller</option>
-                                {sellers.map((s) => (
-                                  <option key={s._id} value={s.sellerName}>
-                                    {s.sellerName}
-                                  </option>
-                                ))}
-                              </select>
-                              <select
-                                className="w-full rounded border border-gray-300 dark:border-gray-700 
-                                bg-white dark:bg-gray-800 
-                                text-gray-800 dark:text-gray-200 
-                                px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
-                                value={e.sellerCompany || ""}
-                                onChange={(ev) =>
-                                  handleChange(
-                                    key,
-                                    idx,
-                                    "sellerCompany",
-                                    ev.target.value
-                                  )
+                                placeholder="Select Seller..."
+                              />
+
+                              <Dropdown
+                                label="Company"
+                                options={
+                                  sellers
+                                    .find((s) => s.sellerName === e.sellerName)
+                                    ?.companies?.map((companyName) => ({
+                                      label: companyName,
+                                      value: companyName,
+                                    })) || []
                                 }
-                                disabled={!e.sellerName}
-                              >
-                                <option value="">Select Company</option>
-                                {sellers
-                                  .find((s) => s.sellerName === e.sellerName)
-                                  ?.companies?.map((companyName, i) => (
-                                    <option key={i} value={companyName}>
-                                      {companyName}
-                                    </option>
-                                  ))}
-                              </select>
+                                value={e.sellerCompany || ""}
+                                onChange={(val) =>
+                                  handleChange(key, idx, "sellerCompany", val)
+                                }
+                                placeholder="Select Company..."
+                              />
                             </div>
                             {e.showOthers || e.others !== "" ? (
                               <input

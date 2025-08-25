@@ -30,38 +30,30 @@ export async function GET(req) {
       const { company, date, time, saudaEntries, buyer, seller } = entry;
       if (!saudaEntries) continue;
 
-      const mode = buyer ? "buyer" : seller ? "seller" : "unknown";
-
       for (const [location, items] of Object.entries(saudaEntries)) {
         if (!Array.isArray(items)) continue;
 
         for (const item of items) {
-          let notification = {
+          const notif = {
             date,
             location: location.split("-")[0].trim(),
             commodity: item.commodity || "",
             tons: item.tons || 0,
             rate: item.finalRate || 0,
             buyerName: buyer || "",
-            sellerName: seller || "",
+            sellerName: item.sellerName || seller || "",
+            sellerCompany: item.sellerCompany || "",
             saudaNo: item.saudaNo || "",
             unit: item.unit || "",
             time: time || "00:00",
+            company: company,
           };
 
-          if (mode === "seller") {
-            notification.description = company;
-            notification.company = item.description || "";
-          } else {
-            notification.company = company;
-            notification.description = item.description || "";
-          }
-
           if (item.others) {
-            notification.others = item.others;
+            notif.others = item.others;
           }
 
-          notifications.push(notification);
+          notifications.push(notif);
         }
       }
     }
