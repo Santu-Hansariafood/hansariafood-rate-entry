@@ -22,7 +22,6 @@ const CreateSeller = () => {
         const res = await axiosInstance.get("/companies?limit=all");
 
         if (res.data && Array.isArray(res.data.companies)) {
-          // ✅ Only include companies with type including "seller"
           const sellerCompanies = res.data.companies.filter((c) =>
             Array.isArray(c.type) && c.type.includes("seller")
           );
@@ -30,7 +29,7 @@ const CreateSeller = () => {
           setCompanyOptions(
             sellerCompanies.map((c) => ({
               label: c.name,
-              value: c._id, // better to use _id as value instead of name
+              value: c.name,
             }))
           );
         }
@@ -54,7 +53,7 @@ const CreateSeller = () => {
 
     const payload = {
       sellerName,
-      companies: selectedCompanies, // will be array of _ids
+      companies: selectedCompanies,
     };
 
     try {
