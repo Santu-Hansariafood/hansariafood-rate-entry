@@ -5,18 +5,34 @@ import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useSellerList from "@/hooks/Seller/useSellerList";
 
-const Title = dynamic(() => import("@/components/common/Title/Title"));
-const Table = dynamic(() => import("@/components/common/Tables/Tables"));
-const Actions = dynamic(() => import("@/components/common/Actions/Actions"));
-const Modal = dynamic(() => import("@/components/common/Modal/Modal"));
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
+const Title = dynamic(() => import("@/components/common/Title/Title"), {
+  suspense: true,
+});
+const Table = dynamic(() => import("@/components/common/Tables/Tables"), {
+  suspense: true,
+});
+const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
+  suspense: true,
+});
+const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
+  suspense: true,
+});
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
+  suspense: true,
+});
 const SearchBox = dynamic(() =>
-  import("@/components/common/SearchBox/SearchBox")
+  import("@/components/common/SearchBox/SearchBox"), {
+    suspense: true,
+  }
 );
 const Pagination = dynamic(() =>
-  import("@/components/common/Pagination/Pagination")
+  import("@/components/common/Pagination/Pagination"), {
+    suspense: true,
+  }
 );
-const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"), {
+  suspense: true,
+});
 
 export default function SellerList() {
   const {
