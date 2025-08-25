@@ -3,12 +3,13 @@ import mongoose from "mongoose";
 const saudaEntrySubSchema = new mongoose.Schema(
   {
     tons: { type: Number, required: true },
-    description: { type: String, default: "" },
     others: { type: String, default: "" },
     saudaNo: { type: String, default: "" },
     finalRate: { type: Number, default: 0 },
     unit: { type: String, required: true },
     commodity: { type: String, required: true },
+    sellerName: { type: String, default: "" },
+    sellerCompany: { type: String, default: "" },
   },
   { _id: false }
 );

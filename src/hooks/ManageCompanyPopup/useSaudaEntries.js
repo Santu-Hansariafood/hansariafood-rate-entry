@@ -36,17 +36,19 @@ export function useSaudaEntries(company, rateMap) {
 
             init[k] = saved[k]?.map((entry) => ({
               tons: entry.tons || "",
-              description: entry.description || "",
               saudaNo: entry.saudaNo || "",
               finalRate: entry.finalRate ?? newRate,
               others: entry.others || "",
+              sellerName: entry.sellerName || "",
+              sellerCompany: entry.sellerCompany || "",
             })) ?? [
               {
                 tons: "",
-                description: "",
                 saudaNo: "",
                 finalRate: newRate,
                 others: "",
+                sellerName: "",
+                sellerCompany: "",
               },
             ];
           })
@@ -81,10 +83,11 @@ export function useSaudaEntries(company, rateMap) {
           ...prev[key],
           {
             tons: "",
-            description: "",
             saudaNo: "",
             finalRate: defaultRate,
             others: "",
+            sellerName: "",
+            sellerCompany: "",
           },
         ],
       })),
@@ -94,8 +97,11 @@ export function useSaudaEntries(company, rateMap) {
   const removeRow = useCallback((key, idx) => {
     setEntries((prev) => {
       const list = [...prev[key]];
-      list.splice(idx, 1);
-      return { ...prev, [key]: list };
+      if (list.length > 1) {
+        list.splice(idx, 1);
+        return { ...prev, [key]: list };
+      }
+      return prev; // Don't remove if it's the last row
     });
   }, []);
 
@@ -104,5 +110,5 @@ export function useSaudaEntries(company, rateMap) {
     [entries]
   );
 
-  return { entries, handleChange, addRow, totalTons, loading };
+  return { entries, handleChange, addRow, removeRow, totalTons, loading };
 }

@@ -35,6 +35,7 @@ export async function POST(req) {
 
     let existingEntry = await SaudaEntry.findOne({ company, date });
 
+    // ✅ Handle conflict
     if (
       existingEntry &&
       clientLastUpdated &&
@@ -47,24 +48,28 @@ export async function POST(req) {
       );
     }
 
+    // ✅ Normalize input
     const normalizedEntries = {};
     for (const [key, list] of Object.entries(saudaEntries)) {
       if (!Array.isArray(list)) continue;
       normalizedEntries[key] = list.map((entry) => ({
         tons: Number(entry.tons) || 0,
-        description: (entry.description || "").trim(),
         others: (entry.others || "").trim(),
         saudaNo: String(entry.saudaNo || "").trim(),
         finalRate: Number(entry.finalRate) || 0,
         unit: (entry.unit || "").trim(),
         commodity: (entry.commodity || "").trim(),
+        sellerName: (entry.sellerName || "").trim(),
+        sellerCompany: (entry.sellerCompany || "").trim(),
       }));
     }
 
     if (existingEntry) {
+      // ✅ Replace old data with latest update only
       for (const [key, newList] of Object.entries(normalizedEntries)) {
-        existingEntry.saudaEntries.set(key, newList); // Replace instead of append
+        existingEntry.saudaEntries.set(key, newList);
       }
+
       existingEntry.time = time || existingEntry.time;
       if (buyer) existingEntry.buyer = buyer.trim();
       if (seller) existingEntry.seller = seller.trim();
@@ -72,6 +77,7 @@ export async function POST(req) {
 
       await existingEntry.save();
     } else {
+      // ✅ New entry
       existingEntry = await SaudaEntry.create({
         company: company.trim(),
         date: date.trim(),

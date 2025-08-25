@@ -10,9 +10,9 @@ import { useRateData } from "@/hooks/ManageCompanyPopup/useRateData";
 import { useSaudaEntries } from "@/hooks/ManageCompanyPopup/useSaudaEntries";
 import { useToday } from "@/hooks/ManageCompanyPopup/useToday";
 import { useSaudaSave } from "@/hooks/ManageCompanyPopup/useSaudaSave";
-import { useDescriptionSuggestions } from "@/hooks/ManageCompanyPopup/useDescriptionSuggestions";
 import { useSaudaExport } from "@/hooks/ManageCompanyPopup/useSaudaExport";
 import { useFirstLoadBlocker } from "@/hooks/ManageCompanyPopup/useFirstLoadBlocker";
+import { useSellers } from "@/hooks/ManageCompanyPopup/useSellers";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   suspense: true,
@@ -47,9 +47,11 @@ export default function ManageCompanyPopup({ name, onClose }) {
     entries,
     handleChange,
     addRow,
+    removeRow,
     totalTons,
     loading: loadingSauda,
   } = useSaudaEntries(company, rateMap);
+  const { sellers, loading: loadingSellers } = useSellers();
 
   const [lastUpdated, setLastUpdated] = useState(null);
   const [tradeMode, setTradeMode] = useState("");
@@ -63,19 +65,14 @@ export default function ManageCompanyPopup({ name, onClose }) {
     lastUpdated,
     setLastUpdated
   );
-  const {
-    descSuggestions,
-    setDescSuggestions,
-    descKey,
-    fetchDescriptionSuggestions,
-  } = useDescriptionSuggestions();
   const exportHook = useSaudaExport({ company, today, rates, entries });
 
   const firstLoading = useFirstLoadBlocker([
-    !loadingCompany && !loadingRates && !loadingSauda,
+    !loadingCompany && !loadingRates && !loadingSauda && !loadingSellers,
     company,
     rates,
     entries,
+    sellers,
   ]);
 
   useEffect(() => {
@@ -107,7 +104,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
   if (firstLoading) return <Loading />;
 
-  const loading = loadingCompany || loadingRates || loadingSauda;
+  const loading = loadingCompany || loadingRates || loadingSauda || loadingSellers;
   if (!company) return null;
 
   return (
@@ -136,11 +133,9 @@ export default function ManageCompanyPopup({ name, onClose }) {
               handleChange={handleChange}
               handleUnitSave={handleUnitSave}
               addRow={addRow}
-              descKey={descKey}
-              descSuggestions={descSuggestions}
-              fetchDescriptionSuggestions={fetchDescriptionSuggestions}
-              setDescSuggestions={setDescSuggestions}
+              removeRow={removeRow}
               saveStatus={saveStatus}
+              sellers={sellers}
             />
           </div>
 

@@ -13,11 +13,9 @@ export default function SaudaTable({
   handleChange,
   handleUnitSave,
   addRow,
-  descKey,
-  descSuggestions,
-  fetchDescriptionSuggestions,
-  setDescSuggestions,
+  removeRow,
   saveStatus,
+  sellers,
 }) {
   let sl = 0;
 
@@ -79,8 +77,8 @@ export default function SaudaTable({
                     <td colSpan={2} className="space-y-1 px-3 py-2">
                       {list.map((e, idx) => {
                         const isFilled =
-                          e?.tons && e?.finalRate && e?.description;
-                        const isCurrent = descKey === `${key}-${idx}`;
+                          e?.tons && e?.finalRate && e?.sellerName && e?.sellerCompany;
+                        const entryId = `${key}-${idx}`;
 
                         return (
                           <div
@@ -98,6 +96,8 @@ export default function SaudaTable({
                             <span className="text-base font-semibold text-gray-600 dark:text-gray-300">
                               {String.fromCharCode(97 + idx)}.
                             </span>
+                            
+                            {/* Rate Input */}
                             <div className="flex items-center gap-1">
                               <span className="text-sm text-gray-500 dark:text-gray-400">
                                 ₹
@@ -109,7 +109,7 @@ export default function SaudaTable({
                                 bg-white dark:bg-gray-800 
                                 text-gray-800 dark:text-gray-200 
                                 px-2 py-1 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
-                                value={e.finalRate}
+                                value={e.finalRate || ""}
                                 onChange={(ev) =>
                                   handleChange(
                                     key,
@@ -120,6 +120,8 @@ export default function SaudaTable({
                                 }
                               />
                             </div>
+
+                            {/* Tons Input */}
                             <input
                               type="number"
                               placeholder="Tons"
@@ -127,56 +129,61 @@ export default function SaudaTable({
                               bg-white dark:bg-gray-800 
                               text-gray-800 dark:text-gray-200 
                               px-2 py-1 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
-                              value={e.tons}
+                              value={e.tons || ""}
                               onChange={(ev) =>
                                 handleChange(key, idx, "tons", ev.target.value)
                               }
                             />
-                            <div className="relative flex-grow">
-                              <input
-                                type="text"
-                                placeholder="Description"
+
+                            {/* Seller Selection */}
+                            <div className="flex flex-col sm:flex-row gap-3 flex-grow">
+                              <select
                                 className="w-full rounded border border-gray-300 dark:border-gray-700 
-                                bg-white dark:bg-gray-800 
-                                text-gray-800 dark:text-gray-200 
-                                px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
-                                value={e.description}
+      bg-white dark:bg-gray-800 
+      text-gray-800 dark:text-gray-200 
+      px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                                value={e.sellerName || ""}
                                 onChange={(ev) => {
                                   const val = ev.target.value;
-                                  handleChange(key, idx, "description", val);
-                                  fetchDescriptionSuggestions(val, key, idx);
+                                  handleChange(key, idx, "sellerName", val);
+                                  handleChange(key, idx, "sellerCompany", "");
                                 }}
-                              />
-                              {descSuggestions.length > 0 && isCurrent && (
-                                <ul
-                                  className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto 
-                                  border border-gray-300 dark:border-gray-700 
-                                  bg-white dark:bg-gray-800 
-                                  rounded shadow-lg"
-                                >
-                                  {descSuggestions.map((s, i) => (
-                                    <li
-                                      key={i}
-                                      className="cursor-pointer px-4 py-2 text-sm 
-                                      hover:bg-blue-100 dark:hover:bg-blue-900/40 
-                                      text-gray-700 dark:text-gray-200"
-                                      onClick={() => {
-                                        handleChange(
-                                          key,
-                                          idx,
-                                          "description",
-                                          s
-                                        );
-                                        setDescSuggestions([]);
-                                      }}
-                                    >
-                                      {s}
-                                    </li>
+                              >
+                                <option value="">Select Seller</option>
+                                {sellers.map((s) => (
+                                  <option key={s._id} value={s.sellerName}>
+                                    {s.sellerName}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                className="w-full rounded border border-gray-300 dark:border-gray-700 
+      bg-white dark:bg-gray-800 
+      text-gray-800 dark:text-gray-200 
+      px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                                value={e.sellerCompany || ""}
+                                onChange={(ev) =>
+                                  handleChange(
+                                    key,
+                                    idx,
+                                    "sellerCompany",
+                                    ev.target.value
+                                  )
+                                }
+                                disabled={!e.sellerName}
+                              >
+                                <option value="">Select Company</option>
+                                {sellers
+                                  .find((s) => s.sellerName === e.sellerName)
+                                  ?.companies?.map((c, i) => (
+                                    <option key={i} value={c}>
+                                      {c}
+                                    </option>
                                   ))}
-                                </ul>
-                              )}
+                              </select>
                             </div>
 
+                            {/* Others/Notes Input */}
                             {e.showOthers || e.others !== "" ? (
                               <input
                                 type="text"
@@ -206,14 +213,16 @@ export default function SaudaTable({
                                 + notes
                               </button>
                             )}
+
+                            {/* Sauda Number Input */}
                             <input
                               type="number"
                               placeholder="Sauda No"
                               className="w-24 rounded border border-orange-400 dark:border-orange-600 
                               bg-white dark:bg-gray-800 
                               text-gray-800 dark:text-gray-200 
-                              px-2 py-1 text-sm focus:ring-2 focus:ring-orange-500"
-                              value={e.saudaNo}
+                              px-3 py-1 text-sm focus:ring-2 focus:ring-orange-500"
+                              value={e.saudaNo || ""}
                               onChange={(ev) =>
                                 handleChange(
                                   key,
@@ -223,16 +232,41 @@ export default function SaudaTable({
                                 )
                               }
                             />
-                            <button
-                              type="button"
-                              onClick={() => handleUnitSave(key, idx)}
-                              className="ml-2 rounded bg-green-600 dark:bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
-                            >
-                              Save
-                            </button>
-                            {saveStatus[key] === "saving" && <span className="text-blue-500">Saving...</span>}
-                            {saveStatus[key] === "success" && <span className="text-green-500">Saved!</span>}
-                            {saveStatus[key] === "error" && <span className="text-red-500">Error saving!</span>}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleUnitSave(key, idx)}
+                                className="rounded bg-green-600 dark:bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeRow(key, idx)}
+                                className="rounded bg-red-600 dark:bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
+                              >
+                                Remove
+                              </button>
+                            </div>
+
+                            {/* Save Status */}
+                            {saveStatus[entryId] === "saving" && (
+                              <span className="text-blue-500 text-xs">
+                                Saving...
+                              </span>
+                            )}
+                            {saveStatus[entryId] === "success" && (
+                              <span className="text-green-500 text-xs">
+                                ✔ Saved
+                              </span>
+                            )}
+                            {saveStatus[entryId] === "error" && (
+                              <span className="text-red-500 text-xs">
+                                ✘ Error
+                              </span>
+                            )}
                           </div>
                         );
                       })}
@@ -263,4 +297,3 @@ export default function SaudaTable({
     </Suspense>
   );
 }
-<button onClick={() => removeRow(key, idx)} className="text-red-500">Remove</button>
