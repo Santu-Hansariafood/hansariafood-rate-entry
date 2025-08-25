@@ -30,7 +30,7 @@ export default function MobileNav({
     "Commodity",
     "Rate",
     "Sauda",
-    ...(allowedMobileNumbers.includes(currentUserMobile) ? ["Register","Category", "Commodity", "Company"] : []),
+    ...(allowedMobileNumbers.includes(currentUserMobile) ? ["Register","Category", "Commodity"] : []),
   ];
 
   useEffect(() => {
