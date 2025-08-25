@@ -34,8 +34,6 @@ export async function POST(req) {
     }
 
     let existingEntry = await SaudaEntry.findOne({ company, date });
-
-    // ✅ Handle conflict
     if (
       existingEntry &&
       clientLastUpdated &&
@@ -47,8 +45,6 @@ export async function POST(req) {
         { status: 409 }
       );
     }
-
-    // ✅ Normalize input
     const normalizedEntries = {};
     for (const [key, list] of Object.entries(saudaEntries)) {
       if (!Array.isArray(list)) continue;
@@ -65,7 +61,6 @@ export async function POST(req) {
     }
 
     if (existingEntry) {
-      // ✅ Replace old data with latest update only
       for (const [key, newList] of Object.entries(normalizedEntries)) {
         existingEntry.saudaEntries.set(key, newList);
       }
@@ -77,7 +72,6 @@ export async function POST(req) {
 
       await existingEntry.save();
     } else {
-      // ✅ New entry
       existingEntry = await SaudaEntry.create({
         company: company.trim(),
         date: date.trim(),

@@ -99,8 +99,6 @@ export default function SaudaTable({
                             <span className="text-base font-semibold text-gray-600 dark:text-gray-300">
                               {String.fromCharCode(97 + idx)}.
                             </span>
-
-                            {/* Rate Input */}
                             <div className="flex items-center gap-1">
                               <span className="text-sm text-gray-500 dark:text-gray-400">
                                 ₹
@@ -123,8 +121,6 @@ export default function SaudaTable({
                                 }
                               />
                             </div>
-
-                            {/* Tons Input */}
                             <input
                               type="number"
                               placeholder="Tons"
@@ -137,8 +133,6 @@ export default function SaudaTable({
                                 handleChange(key, idx, "tons", ev.target.value)
                               }
                             />
-
-                            {/* Seller Selection */}
                             <div className="flex flex-col sm:flex-row gap-3 flex-grow">
                               <select
                                 className="w-full rounded border border-gray-300 dark:border-gray-700 
@@ -185,8 +179,6 @@ export default function SaudaTable({
                                   ))}
                               </select>
                             </div>
-
-                            {/* Others/Notes Input */}
                             {e.showOthers || e.others !== "" ? (
                               <input
                                 type="text"
@@ -216,8 +208,6 @@ export default function SaudaTable({
                                 + notes
                               </button>
                             )}
-
-                            {/* Sauda Number Input */}
                             <input
                               type="number"
                               placeholder="Sauda No"
@@ -235,8 +225,6 @@ export default function SaudaTable({
                                 )
                               }
                             />
-
-                            {/* Action Buttons */}
                             <div className="flex gap-2">
                               <button
                                 type="button"
@@ -253,8 +241,6 @@ export default function SaudaTable({
                                 Remove
                               </button>
                             </div>
-
-                            {/* Save Status */}
                             {saveStatus[entryId] === "saving" && (
                               <span className="text-blue-500 text-xs">
                                 Saving...

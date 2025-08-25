@@ -72,12 +72,19 @@ export async function generateSaudaPDF({
 
       totalTons += tons;
 
+      const companyText = row.sellerCompany || "";
+      const notesText = row.others || "";
+      const detailsLine =
+        companyText && notesText
+          ? `${companyText} — ${notesText}`
+          : companyText || notesText || "";
+
       body.push([
         body.length + 1,
         `${unit}\n`,
         com,
         `${rate}`,
-        `${tons} Tons\n${row.description || ""}`,
+        `${tons} Tons\n${detailsLine}`,
         row.saudaNo || "",
       ]);
     });
