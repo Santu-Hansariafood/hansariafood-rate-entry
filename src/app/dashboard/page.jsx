@@ -65,9 +65,9 @@ const Page = () => {
       <section role="region" aria-label="Top Sauda List">
         <TopSaudaList />
       </section>
-      <section role="region" aria-label="Inactive Descriptions">
+      {/* <section role="region" aria-label="Inactive Descriptions">
         <InactiveDescriptions />
-      </section>
+      </section> */}
       <section role="region" aria-label="Rate Calendar">
         <RateCalendar />
       </section>
