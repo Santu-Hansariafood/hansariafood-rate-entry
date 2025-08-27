@@ -83,7 +83,7 @@ export async function GET(req) {
       dateFilter.date = { $regex: `^${selectedMonth}`, $options: "i" };
     }
 
-    const pipeline = [
+    const basePipeline = [
       {
         $match: {
           ...(companyName ? { company: companyName } : {}),
@@ -175,13 +175,26 @@ export async function GET(req) {
         },
       },
       { $sort: { latestDate: -1 } },
-      { $skip: skip },
-      { $limit: pageSize },
     ];
 
-    const data = await SaudaEntry.aggregate(pipeline);
+    const facetPipeline = [
+      ...basePipeline,
+      {
+        $facet: {
+          results: [{ $skip: skip }, { $limit: pageSize }],
+          total: [{ $count: "count" }],
+        },
+      },
+    ];
 
-    return NextResponse.json({ page, pageSize, data }, { status: 200 });
+    const facetResult = await SaudaEntry.aggregate(facetPipeline);
+    const results = facetResult?.[0]?.results || [];
+    const totalCount = facetResult?.[0]?.total?.[0]?.count || 0;
+
+    return NextResponse.json(
+      { page, pageSize, total: totalCount, data: results },
+      { status: 200 }
+    );
   } catch (err) {
     console.error("Error fetching sauda entries:", err);
     return NextResponse.json(

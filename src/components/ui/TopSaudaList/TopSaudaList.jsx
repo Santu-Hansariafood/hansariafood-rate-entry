@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
+import { XCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
-import Title from "@/components/common/Title/Title";
-import { XCircle, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+const Title = dynamic(() => import("@/components/common/Title/Title"));
+const Pagination = dynamic(() =>
+  import("@/components/common/Pagination/Pagination")
+);
 
 const TopSaudaList = () => {
   const [sellers, setSellers] = useState([]);
@@ -74,7 +78,6 @@ const TopSaudaList = () => {
           <Title text="Seller Dashboard" />
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Seller List */}
             <div className="lg:col-span-1 bg-gradient-to-b from-pink-50 to-rose-100 dark:from-gray-800 dark:to-gray-700 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
                 Sellers List ({sellers.length})
@@ -139,15 +142,11 @@ const TopSaudaList = () => {
                 })}
               </div>
             </div>
-
-            {/* Seller Details */}
             <div className="lg:col-span-3">
               {selectedSeller ? (
                 <div className="bg-gradient-to-br from-white via-blue-50 to-indigo-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
-                      {selectedSeller} - Sauda Details
-                    </h2>
+                    <Title text={`${selectedSeller} - Sauda Details`} />
                     <button
                       onClick={() => {
                         setSelectedSeller(null);
@@ -297,28 +296,13 @@ const TopSaudaList = () => {
               )}
             </div>
           </div>
-
-          {/* Pagination */}
           {selectedSeller && (
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                disabled={currentPage <= 1 || loading}
-                onClick={() => loadPage(Math.max(1, currentPage - 1))}
-                className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-sm disabled:opacity-50"
-              >
-                Prev
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Page {currentPage}
-              </span>
-              <button
-                disabled={loading}
-                onClick={() => loadPage(currentPage + 1)}
-                className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-sm"
-              >
-                Next
-              </button>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={saudaDetails?.total || 0}
+              itemsPerPage={10}
+              onPageChange={(p) => loadPage(Math.max(1, p))}
+            />
           )}
         </div>
       </div>
