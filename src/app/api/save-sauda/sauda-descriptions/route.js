@@ -18,11 +18,11 @@ export async function GET(req) {
     const selectedDate = searchParams.get("date");
     const selectedMonth = searchParams.get("month");
     const rawPage = Number(searchParams.get("page") || 1);
-    const page = Number.isFinite(rawPage) && rawPage > 0 ? Math.floor(rawPage) : 1;
+    const page =
+      Number.isFinite(rawPage) && rawPage > 0 ? Math.floor(rawPage) : 1;
     const pageSize = 10;
     const skip = (page - 1) * pageSize;
 
-    // If no seller/company → return just seller list
     if (!sellerName && !companyName) {
       const allSellers = await Seller.find({
         sellerName: { $nin: [null, ""] },
@@ -32,9 +32,44 @@ export async function GET(req) {
         .sort({ sellerName: 1 })
         .lean();
 
+      const sellerNames = allSellers.map((s) => s.sellerName);
+
+      const latestPerSeller = await SaudaEntry.aggregate([
+        {
+          $project: {
+            date: 1,
+            saudaEntries: {
+              $objectToArray: { $ifNull: ["$saudaEntries", {}] },
+            },
+          },
+        },
+        { $unwind: "$saudaEntries" },
+        { $unwind: "$saudaEntries.v" },
+        {
+          $match: {
+            "saudaEntries.v.sellerName": { $in: sellerNames },
+            "saudaEntries.v.finalRate": { $gt: 0 },
+            "saudaEntries.v.tons": { $gt: 0 },
+          },
+        },
+        {
+          $group: {
+            _id: "$saudaEntries.v.sellerName",
+            latestDate: { $max: "$date" },
+          },
+        },
+      ]);
+
+      const latestMap = new Map(
+        latestPerSeller.map((d) => [d._id, d.latestDate])
+      );
+
       return NextResponse.json(
         {
-          sellers: allSellers.map((s) => s.sellerName),
+          sellers: allSellers.map((s) => ({
+            name: s.sellerName,
+            latestDate: latestMap.get(s.sellerName) || null,
+          })),
           totalSellers: allSellers.length,
         },
         { status: 200 }
@@ -51,7 +86,6 @@ export async function GET(req) {
     const pipeline = [
       {
         $match: {
-          // Only match fields available at the document level here
           ...(companyName ? { company: companyName } : {}),
           ...dateFilter,
         },
@@ -69,7 +103,6 @@ export async function GET(req) {
       { $unwind: "$saudaEntries.v" },
       {
         $match: {
-          // Apply entry-level filters here
           ...(sellerName ? { "saudaEntries.v.sellerName": sellerName } : {}),
           "saudaEntries.v.finalRate": { $gt: 0 },
           "saudaEntries.v.tons": { $gt: 0 },
@@ -141,7 +174,6 @@ export async function GET(req) {
           latestDate: { $max: "$_id.date" },
         },
       },
-      // Sort companies by their latest available date for stable pagination
       { $sort: { latestDate: -1 } },
       { $skip: skip },
       { $limit: pageSize },

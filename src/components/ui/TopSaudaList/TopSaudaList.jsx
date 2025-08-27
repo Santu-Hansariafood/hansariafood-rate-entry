@@ -15,7 +15,13 @@ const TopSaudaList = () => {
     const fetchSellers = async () => {
       try {
         const res = await axiosInstance.get("/save-sauda/sauda-descriptions");
-        setSellers(res.data.sellers || []);
+        const sellersResp = Array.isArray(res.data.sellers)
+          ? res.data.sellers
+          : [];
+        const normalized = sellersResp.map((s) =>
+          typeof s === "string" ? { name: s, latestDate: null } : s
+        );
+        setSellers(normalized);
       } catch (err) {
         console.error("Error fetching sellers:", err);
       }
@@ -67,31 +73,62 @@ const TopSaudaList = () => {
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar: Sellers */}
           <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
               Sellers ({sellers.length})
             </h2>
             <div className="space-y-2 max-h-[70vh] overflow-y-auto">
-              {sellers.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => handleSellerClick(item)}
-                  className={`w-full text-left p-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
-                    selectedSeller === item
-                      ? "bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600"
-                      : "hover:border-blue-200 dark:hover:border-blue-700"
-                  }`}
-                >
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {item}
-                  </span>
-                </button>
-              ))}
+              {sellers.map((seller) => {
+                const name = seller.name || seller;
+                const latest = seller.latestDate || null;
+                let status = "neutral";
+                if (latest) {
+                  const [dd, mm, yyyy] = latest.split("-");
+                  const d = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+                  const diffDays = Math.floor(
+                    (new Date().setHours(0, 0, 0, 0) - d.setHours(0, 0, 0, 0)) /
+                      (1000 * 60 * 60 * 24)
+                  );
+                  if (diffDays <= 7) status = "active";
+                  else if (diffDays > 15) status = "inactive";
+                  else status = "neutral";
+                }
+
+                return (
+                  <button
+                    key={name}
+                    onClick={() => handleSellerClick(name)}
+                    className={`w-full flex items-center justify-between gap-3 text-left p-3 rounded-lg transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
+                      selectedSeller === name
+                        ? "bg-blue-100 dark:bg-blue-900/40 border border-blue-300 dark:border-blue-600"
+                        : "hover:border-blue-200 dark:hover:border-blue-700"
+                    }`}
+                  >
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {name}
+                    </span>
+                    <span className="shrink-0 inline-flex items-center gap-1 text-xs">
+                      {status === "active" && (
+                        <span className="text-green-600 dark:text-green-400 inline-flex items-center">
+                          ▲
+                        </span>
+                      )}
+                      {status === "inactive" && (
+                        <span className="text-red-600 dark:text-red-400 inline-flex items-center">
+                          ▼
+                        </span>
+                      )}
+                      {latest && (
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {latest}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
-
-          {/* Main Content */}
           <div className="lg:col-span-3">
             {selectedSeller ? (
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -132,72 +169,89 @@ const TopSaudaList = () => {
                         </div>
 
                         <div className="space-y-4">
-                          {company.days.map((day, i) => (
-                            <div
-                              key={`${day.date}-${i}`}
-                              className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
-                            >
-                              <div className="flex justify-between items-center mb-3">
-                                <h4 className="font-semibold text-gray-900 dark:text-white">
-                                  📅 {day.date}
-                                </h4>
-                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                  Day Total: {day.dayTotalTons?.toFixed(2) || 0}{" "}
-                                  Tons
-                                </span>
-                              </div>
+                          {[...company.days]
+                            .sort((a, b) => {
+                              const [da, ma, ya] = (a.date || "").split("-");
+                              const [db, mb, yb] = (b.date || "").split("-");
+                              const ta = new Date(
+                                Number(ya),
+                                Number(ma) - 1,
+                                Number(da)
+                              ).getTime();
+                              const tb = new Date(
+                                Number(yb),
+                                Number(mb) - 1,
+                                Number(db)
+                              ).getTime();
+                              return tb - ta;
+                            })
+                            .map((day, i) => (
+                              <div
+                                key={`${day.date}-${i}`}
+                                className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
+                              >
+                                <div className="flex justify-between items-center mb-3">
+                                  <h4 className="font-semibold text-gray-900 dark:text-white">
+                                    📅 {day.date}
+                                  </h4>
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    Day Total:{" "}
+                                    {day.dayTotalTons?.toFixed(2) || 0} Tons
+                                  </span>
+                                </div>
 
-                              <div className="space-y-4">
-                                {day.units.map((unitObj, uIdx) => (
-                                  <div
-                                    key={`${unitObj.unit}-${uIdx}`}
-                                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600"
-                                  >
-                                    <div className="flex justify-between items-center mb-2">
-                                      <h5 className="font-semibold text-gray-800 dark:text-gray-200">
-                                        🏷️ {unitObj.unit}
-                                      </h5>
-                                      <span className="text-xs text-gray-600 dark:text-gray-300">
-                                        Unit Total:{" "}
-                                        {unitObj.unitTotalTons?.toFixed(2) || 0}{" "}
-                                        Tons
-                                      </span>
-                                    </div>
-                                    <div className="space-y-3">
-                                      {unitObj.commodities.map((com, j) => (
-                                        <div
-                                          key={j}
-                                          className="bg-white dark:bg-gray-600 rounded-lg p-3"
-                                        >
-                                          <h6 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
-                                            🧺 {com.commodity} (
-                                            {com.totalTons?.toFixed(2) || 0}{" "}
-                                            tons)
-                                          </h6>
-                                          <div className="space-y-2">
-                                            {com.saudas.map((s, k) => (
-                                              <div
-                                                key={k}
-                                                className="flex items-center justify-between text-sm bg-gray-50 dark:bg-gray-500 rounded px-3 py-2"
-                                              >
-                                                <span className="text-gray-700 dark:text-gray-200">
-                                                  Sauda #{s.saudaNo || "—"}
-                                                </span>
-                                                <span className="text-gray-600 dark:text-gray-100">
-                                                  {s.tons} {s.unit} @ ₹
-                                                  {s.finalRate}
-                                                </span>
-                                              </div>
-                                            ))}
+                                <div className="space-y-4">
+                                  {day.units.map((unitObj, uIdx) => (
+                                    <div
+                                      key={`${unitObj.unit}-${uIdx}`}
+                                      className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600"
+                                    >
+                                      <div className="flex justify-between items-center mb-2">
+                                        <h5 className="font-semibold text-gray-800 dark:text-gray-200">
+                                          🏷️ {unitObj.unit}
+                                        </h5>
+                                        <span className="text-xs text-gray-600 dark:text-gray-300">
+                                          Unit Total:{" "}
+                                          {unitObj.unitTotalTons?.toFixed(2) ||
+                                            0}{" "}
+                                          Tons
+                                        </span>
+                                      </div>
+                                      <div className="space-y-3">
+                                        {unitObj.commodities.map((com, j) => (
+                                          <div
+                                            key={j}
+                                            className="bg-white dark:bg-gray-600 rounded-lg p-3"
+                                          >
+                                            <h6 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
+                                              🧺 {com.commodity} (
+                                              {com.totalTons?.toFixed(2) || 0}{" "}
+                                              tons)
+                                            </h6>
+                                            <div className="space-y-2">
+                                              {com.saudas.map((s, k) => (
+                                                <div
+                                                  key={k}
+                                                  className="flex items-center justify-between text-sm bg-gray-50 dark:bg-gray-500 rounded px-3 py-2"
+                                                >
+                                                  <span className="text-gray-700 dark:text-gray-200">
+                                                    Sauda #{s.saudaNo || "—"}
+                                                  </span>
+                                                  <span className="text-gray-600 dark:text-gray-100">
+                                                    {s.tons} {s.unit} @ ₹
+                                                    {s.finalRate}
+                                                  </span>
+                                                </div>
+                                              ))}
+                                            </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
                         </div>
                       </div>
                     ))}
