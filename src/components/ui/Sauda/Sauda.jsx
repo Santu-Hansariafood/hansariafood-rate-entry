@@ -60,8 +60,14 @@ const Sauda = () => {
       .filter((company) => hasRate(company.name))
       .filter((company) =>
         company.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-  }, [companies, rateData, searchTerm, hasRate]);
+      )
+      .filter((company) => {
+        if (filterType === "all") return true;
+        if (filterType === "buyer") return company.type?.includes("buyer");
+        if (filterType === "seller") return company.type?.includes("seller");
+        return true;
+      });
+  }, [companies, rateData, searchTerm, hasRate, filterType]);
 
   const handlePopupClose = useCallback(
     (companyName, status = null) => {
