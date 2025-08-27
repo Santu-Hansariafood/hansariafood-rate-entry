@@ -93,13 +93,10 @@ const Sauda = () => {
     };
   }, [selectedCompany, handlePopupClose]);
 
-  // Ensure default filter is buyer
   useEffect(() => {
     if (filterType !== "buyer") {
       setFilterType("buyer");
     }
-    // run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

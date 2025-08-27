@@ -16,6 +16,7 @@ const TopSaudaList = () => {
   const [saudaDetails, setSaudaDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sellerSearch, setSellerSearch] = useState("");
 
   useEffect(() => {
     const fetchSellers = async () => {
@@ -82,8 +83,21 @@ const TopSaudaList = () => {
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
                 Sellers List ({sellers.length})
               </h2>
-              <div className="space-y-2 max-h-[70vh] overflow-y-auto">
-                {sellers.map((seller) => {
+              <div className="mt-4">
+                <input
+                  value={sellerSearch}
+                  onChange={(e) => setSellerSearch(e.target.value)}
+                  placeholder="Search seller..."
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-600"
+                />
+              </div>
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                {sellers
+                  .filter((s) => {
+                    const name = (s.name || s).toLowerCase();
+                    return name.includes(sellerSearch.toLowerCase());
+                  })
+                  .map((seller) => {
                   const name = seller.name || seller;
                   const latest = seller.latestDate || null;
                   let status = "neutral";
