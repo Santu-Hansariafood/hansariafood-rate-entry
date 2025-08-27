@@ -93,6 +93,15 @@ const Sauda = () => {
     };
   }, [selectedCompany, handlePopupClose]);
 
+  // Ensure default filter is buyer
+  useEffect(() => {
+    if (filterType !== "buyer") {
+      setFilterType("buyer");
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <Suspense fallback={<Loading />}>
       <div className="p-4 space-y-6 min-h-screen flex flex-col items-center bg-gray-50 dark:bg-gray-900">

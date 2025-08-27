@@ -3,7 +3,6 @@
 import React from "react";
 
 const options = [
-  { label: "All", value: "all", gradient: "from-blue-500 to-blue-600" },
   { label: "Buyer", value: "buyer", gradient: "from-green-500 to-green-600" },
   { label: "Seller", value: "seller", gradient: "from-red-500 to-red-600" },
 ];

@@ -239,7 +239,7 @@ const TopSaudaList = () => {
                                               <h6 className="font-medium text-emerald-800 dark:text-emerald-200 mb-2">
                                                 🧺 {com.commodity} (
                                                 {com.totalTons?.toFixed(2) || 0}{" "}
-                                                tons)
+                                                Tons)
                                               </h6>
 
                                               <div className="space-y-2">
