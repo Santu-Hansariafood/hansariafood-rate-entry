@@ -1,9 +1,14 @@
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import atob from "atob";
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+
+const encodeBase64 = (str) =>
+  Buffer.from(str, "utf-8").toString("base64");
+
+const decodeBase64 = (str) =>
+  Buffer.from(str, "base64").toString("utf-8");
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -152,7 +157,8 @@ export async function PATCH(req) {
       );
     }
 
-    const encodedPassword = user.password ? btoa(user.password) : "";
+    // ✅ Use Buffer instead of btoa
+    const encodedPassword = user.password ? encodeBase64(user.password) : "";
 
     const var1 = (user.name || "").trim();
     const var2 = `Your password is ${encodedPassword}. Please login at https://hansariafood.site`;
