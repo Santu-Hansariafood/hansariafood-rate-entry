@@ -10,7 +10,7 @@ export default function useRateManagement() {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [completedCompanies, setCompletedCompanies] = useState({});
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ type: "all" });
+  const [filters, setFilters] = useState({ type: "buyer" });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -82,6 +82,8 @@ export default function useRateManagement() {
       });
       params.append("page", currentPage);
       params.append("limit", itemsPerPage);
+
+      params.append("excludeTodayNoBuying", "true");
 
       const { data } = await axiosInstance.get(`/managecompany?${params}`);
       setAllCompanies(data.companies);

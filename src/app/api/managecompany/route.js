@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
+import RateUpdate from "@/models/RateUpdate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
@@ -146,6 +147,9 @@ export async function GET(req) {
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
     const typeFilter = searchParams.get("type");
+    const excludeTodayNoBuying = ["1", "true", "yes"].includes(
+      (searchParams.get("excludeTodayNoBuying") || "").toLowerCase()
+    );
 
     const filter = {};
 
@@ -163,6 +167,18 @@ export async function GET(req) {
 
     if (["buyer", "seller"].includes(typeFilter)) {
       filter.type = typeFilter;
+    }
+
+    if (excludeTodayNoBuying) {
+      const today = new Date().toISOString().split("T")[0];
+      const todayUpdate = await RateUpdate.findOne({ date: today }).lean();
+      const excludedNames = todayUpdate?.companies || [];
+
+      if (excludedNames.length > 0) {
+        filter.name = filter.name
+          ? { ...filter.name, $nin: excludedNames }
+          : { $nin: excludedNames };
+      }
     }
 
     const [companies, total] = await Promise.all([

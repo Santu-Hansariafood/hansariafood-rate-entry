@@ -12,7 +12,7 @@ export default function useDebouncedSearch(query, url, delay = 300) {
         setLoading(true);
         try {
           const response = await axiosInstance.get(url, {
-            params: { search: searchTerm },
+            params: { search: searchTerm, excludeTodayNoBuying: true },
           });
           setResults(response.data.companies || []);
         } catch (error) {

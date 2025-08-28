@@ -66,15 +66,13 @@ export default function Rate() {
       transition={{ duration: 0.5 }}
       className="space-y-6"
     >
-      <div className="flex justify-center">
+      <div className="bg-white/80 dark:bg-gray-900/60 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
         <CompanyTypeFilter
           selectedType={filters.type}
           onChange={(type) => setFilters((prev) => ({ ...prev, type }))}
         />
+        <RateUpdatePopup />
       </div>
-
-      
-      <RateUpdatePopup />
 
       <Pagination
         totalItems={totalItems}
@@ -88,7 +86,6 @@ export default function Rate() {
         loading={loading}
         onCompanySelect={setSelectedCompany}
       />
-
     </motion.div>
   );
 
