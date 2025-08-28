@@ -55,14 +55,14 @@ const SellerList = ({
       key={item.name}
       onClick={() => onSellerClick(item.name)}
       className={`w-full flex items-center justify-between gap-3 text-left px-5 py-4 rounded-xl 
-			shadow-md transition-all duration-300 
-			${
-        selectedSeller === item.name
-          ? "bg-gradient-to-r from-green-500 to-yellow-400 text-white scale-[1.02]"
-          : item.status === "active"
-          ? "bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-800/40 border-2 border-yellow-300 dark:border-yellow-500"
-          : "bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-800/40 border border-green-200 dark:border-green-600"
-      }`}
+        shadow-md transition-all duration-300 
+        ${
+          selectedSeller === item.name
+            ? "bg-gradient-to-r from-green-500 to-yellow-400 text-white scale-[1.02]"
+            : item.status === "active"
+            ? "bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-800/40 border-2 border-yellow-300 dark:border-yellow-500"
+            : "bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-800/40 border border-green-200 dark:border-green-600"
+        }`}
     >
       <span className="flex items-center gap-1.5">
         {item.status === "active" && (
@@ -100,17 +100,6 @@ const SellerList = ({
             className="text-yellow-500 dark:text-yellow-400"
           />
         )}
-        {item.latest && (
-          <span
-            className={`ml-1 ${
-              selectedSeller === item.name
-                ? "text-white/90"
-                : "text-gray-700 dark:text-gray-300"
-            }`}
-          >
-            {item.latest}
-          </span>
-        )}
       </span>
     </button>
   );
@@ -134,10 +123,10 @@ const SellerList = ({
           onChange={(e) => onSellerSearch(e.target.value)}
           placeholder="🔍 Search seller..."
           className="w-full px-4 py-2.5 rounded-xl border border-green-300 dark:border-green-600 
-					bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 
-					placeholder-gray-500 dark:placeholder-gray-400 
-					focus:outline-none focus:ring-2 focus:ring-green-400 dark:focus:ring-yellow-500
-					shadow-sm transition-all"
+          bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 
+          placeholder-gray-500 dark:placeholder-gray-400 
+          focus:outline-none focus:ring-2 focus:ring-green-400 dark:focus:ring-yellow-500
+          shadow-sm transition-all"
         />
       </div>
 
