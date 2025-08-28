@@ -132,7 +132,7 @@ const SaudaDetails = ({
                                           }`}
                                         >
                                           <span className="text-gray-800 dark:text-gray-200 flex items-center gap-1">
-                                            <Hash size={14} /> Sauda No. {" "}
+                                            <Hash size={14} /> Sauda No.{" "}
                                             <span className="italic font-medium">
                                               {" "}
                                               — {s.saudaNo || "—"}
@@ -160,7 +160,14 @@ const SaudaDetails = ({
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400 text-lg italic">
-                No sauda entries found for {selectedSeller}
+                No sauda entries for {selectedSeller} yet.
+              </p>
+              <p className="text-gray-600 dark:text-gray-400 text-lg italic">
+                {selectedSeller} is not selling anything through Hansaria Food
+                Private Limited.
+              </p>
+              <p className="text-gray-600 dark:text-gray-400 text-lg italic">
+                please choose a different seller to view their sauda details.
               </p>
             </div>
           )}
