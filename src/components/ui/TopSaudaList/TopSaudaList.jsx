@@ -14,6 +14,7 @@ const Pagination = dynamic(() =>
 );
 const SellerList = dynamic(() => import("./SellerList/SellerList"));
 const SaudaDetails = dynamic(() => import("./SaudaDetails/SaudaDetails"));
+const ReportGraph = dynamic(() => import("./ReportGraph/ReportGraph"));
 
 const TopSaudaList = () => {
   const { sellers } = useSellerList();
@@ -78,6 +79,14 @@ const TopSaudaList = () => {
               onClearSelection={handleClearSelection}
             />
           </div>
+          {selectedSeller && saudaDetails && (
+            <div className="mt-8">
+              <ReportGraph
+                saudaDetails={saudaDetails}
+                selectedSeller={selectedSeller}
+              />
+            </div>
+          )}
 
           {selectedSeller && saudaDetails && (
             <Pagination
