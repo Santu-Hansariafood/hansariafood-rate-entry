@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import {
   Chart,
   CategoryScale,
@@ -256,119 +256,129 @@ const BarChartComponent = ({ data }) => {
   );
 
   return (
-    <div className="w-full">
-      <div className="h-96 mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-        <Bar
-          ref={chartRef}
-          data={chartData}
-          options={options}
-          className="max-w-full max-h-full"
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-          <h4 className="text-sm font-medium opacity-90">⚖️ Total Tons</h4>
-          <p className="text-2xl font-bold">{totalTons.toFixed(2)}</p>
-          <p className="text-sm opacity-75">Across all locations</p>
+    <Suspense fallback={<Loading />}>
+      <div className="w-full">
+        <div className="h-96 mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+          <Bar
+            ref={chartRef}
+            data={chartData}
+            options={options}
+            className="max-w-full max-h-full"
+          />
         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <h4 className="text-sm font-medium opacity-90">⚖️ Total Tons</h4>
+            <p className="text-2xl font-bold">{totalTons.toFixed(2)}</p>
+            <p className="text-sm opacity-75">Across all locations</p>
+          </div>
 
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-          <h4 className="text-sm font-medium opacity-90">💰 Total Value</h4>
-          <p className="text-2xl font-bold">₹{totalValue.toLocaleString()}</p>
-          <p className="text-sm opacity-75">Combined revenue</p>
-        </div>
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <h4 className="text-sm font-medium opacity-90">💰 Total Value</h4>
+            <p className="text-2xl font-bold">₹{totalValue.toLocaleString()}</p>
+            <p className="text-sm opacity-75">Combined revenue</p>
+          </div>
 
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-          <h4 className="text-sm font-medium opacity-90">
-            📊 Avg per Location
-          </h4>
-          <p className="text-2xl font-bold">{avgTonsPerLocation.toFixed(2)}</p>
-          <p className="text-sm opacity-75">Tons average</p>
-        </div>
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <h4 className="text-sm font-medium opacity-90">
+              📊 Avg per Location
+            </h4>
+            <p className="text-2xl font-bold">
+              {avgTonsPerLocation.toFixed(2)}
+            </p>
+            <p className="text-sm opacity-75">Tons average</p>
+          </div>
 
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-          <h4 className="text-sm font-medium opacity-90">🏆 Top Location</h4>
-          <p className="text-lg font-bold truncate">{topLocation?.location}</p>
-          <p className="text-sm opacity-75">
-            {topLocation?.tons.toFixed(2)} tons
-          </p>
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <h4 className="text-sm font-medium opacity-90">🏆 Top Location</h4>
+            <p className="text-lg font-bold truncate">
+              {topLocation?.location}
+            </p>
+            <p className="text-sm opacity-75">
+              {topLocation?.tons.toFixed(2)} tons
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            📍 Location Performance Details
-          </h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  📍 Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  ⚖️ Tons
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  💰 Value (₹)
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  📊 Performance
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {data.map((item, index) => {
-                const performance = ((item.tons / totalTons) * 100).toFixed(1);
-                return (
-                  <tr
-                    key={item.location}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      {item.location}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {item.tons.toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      ₹{item.value.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                            style={{ width: `${Math.min(performance, 100)}%` }}
-                          />
+        <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              📍 Location Performance Details
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    📍 Location
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    ⚖️ Tons
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    💰 Value (₹)
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    📊 Performance
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {data.map((item, index) => {
+                  const performance = ((item.tons / totalTons) * 100).toFixed(
+                    1
+                  );
+                  return (
+                    <tr
+                      key={item.location}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                        {item.location}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {item.tons.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        ₹{item.value.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                              style={{
+                                width: `${Math.min(performance, 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-sm text-gray-900 dark:text-white font-medium">
+                            {performance}%
+                          </span>
                         </div>
-                        <span className="text-sm text-gray-900 dark:text-white font-medium">
-                          {performance}%
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+            💡 Chart Instructions
+          </h4>
+          <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+            <li>
+              • Hover over bars to see detailed values and performance metrics
+            </li>
+            <li>• Blue bars show tons, red bars show value in thousands</li>
+            <li>• Performance bars show relative contribution to total</li>
+            <li>• Values are clearly labeled on both axes</li>
+          </ul>
         </div>
       </div>
-      <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-        <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-          💡 Chart Instructions
-        </h4>
-        <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-          <li>
-            • Hover over bars to see detailed values and performance metrics
-          </li>
-          <li>• Blue bars show tons, red bars show value in thousands</li>
-          <li>• Performance bars show relative contribution to total</li>
-          <li>• Values are clearly labeled on both axes</li>
-        </ul>
-      </div>
-    </div>
+    </Suspense>
   );
 };
 
