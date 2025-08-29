@@ -11,7 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-
+import Loading from "@/components/common/Loading/Loading";
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const BarChartComponent = ({ data }) => {
