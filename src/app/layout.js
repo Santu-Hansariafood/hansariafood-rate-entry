@@ -21,13 +21,49 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Hansaria Food Private Limited | Commodity & Brokerage Services",
+  title: "Hansaria Food Private Limited | Poultry Feed Commodities & Brokerage",
   description:
-    "Hansaria Food Private Limited is a leading supplier of high-quality raw materials for the poultry and animal feed industry in India. With a reputation for excellence, we specialize in sourcing and delivering premium feed ingredients that support healthy livestock growth. Our global commodity trading and brokerage services ensure consistent supply, competitive pricing, and unmatched reliability. Trusted by poultry farms, feed manufacturers, and agribusinesses, Hansaria Food is your dependable partner for feed solutions with assured quality and on-time delivery.",
-  keywords:
-    "Hansaria Food, raw material supply, poultry feed industry, commodity trading, brokerage services, supply chain, Kolkata, India, international trade",
+    "Hansaria Food Private Limited supplies premium poultry and animal feed raw materials across India. We specialize in reliable sourcing, competitive pricing, and on-time delivery of corn/maize, soya DOC, rice bran, and other feed ingredients. Our global commodity trading and brokerage services help feed manufacturers and poultry farms scale with quality, consistency, and trust.",
+  keywords: [
+    "Hansaria Food",
+    "poultry feed raw materials",
+    "animal feed ingredients",
+    "commodity trading India",
+    "brokerage services",
+    "maize suppliers",
+    "corn suppliers",
+    "soya DOC suppliers",
+    "rice bran suppliers",
+    "poultry feed Kolkata",
+    "feed manufacturers India",
+    "agribusiness supply chain",
+  ],
   authors: [{ name: "Hansaria Food Private Limited" }],
   metadataBase: new URL("https://www.hansariafood.site"),
+  themeColor: "#ffffff",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: false,
+      maxVideoPreview: -1,
+      maxImagePreview: "large",
+      maxSnippet: -1,
+    },
+  },
+  alternates: {
+    canonical: "/",
+  },
+  verification: {
+    google: "dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4",
+  },
   openGraph: {
     title: "Hansaria Food Private Limited",
     description:
@@ -50,8 +86,8 @@ export const metadata = {
     creator: "@hansaria_food_private_limited",
     title: "Hansaria Food Private Limited",
     description:
-      "Hansaria Food Private Limited is a leading supplier of high-quality raw materials for the poultry and animal feed industry in India. With a reputation for excellence, we specialize in sourcing and delivering premium feed ingredients that support healthy livestock growth. Our global commodity trading and brokerage services ensure consistent supply, competitive pricing, and unmatched reliability. Trusted by poultry farms, feed manufacturers, and agribusinesses, Hansaria Food is your dependable partner for feed solutions with assured quality and on-time delivery.",
-    images: ["/images/og-image.png"],
+      "Premium poultry and animal feed raw materials supplier in India. Reliable sourcing, competitive pricing, and on-time delivery for feed manufacturers and poultry farms.",
+    images: ["/images/og-image1.png"],
   },
   icons: {
     icon: "/favicon.ico",
@@ -62,15 +98,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <meta
-          name="google-site-verification"
-          content="dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="robots" content="index, follow" />
-        <meta name="theme-color" content="#ffffff" />
-        <meta name="author" content="Hansaria Food Private Limited" />
-        <link rel="canonical" href="https://www.hansariafood.site" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -120,6 +147,23 @@ export default function RootLayout({ children }) {
                 "https://www.linkedin.com/company/hansaria-food",
                 "https://www.x.com/hansariafood",
               ],
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Hansaria Food Private Limited",
+              url: "https://www.hansariafood.site",
+              potentialAction: {
+                "@type": "SearchAction",
+                target:
+                  "https://www.google.com/search?q=site%3Awww.hansariafood.site+{search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
             }),
           }}
         />
