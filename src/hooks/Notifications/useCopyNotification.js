@@ -43,7 +43,7 @@ export default function useCopyNotification() {
   const REQUIRED_SET = new Set(requiredCommodities.map(normalize));
 
   const handleCopy = async (notification) => {
-    const { company, quantity, location, newRate, newRateDate, updateTime } =
+    const { company, quantity, location, newRate, newRateDate, updateTime, payment, others } =
       notification;
 
     const todayDate = new Date().toLocaleDateString("en-IN");
@@ -67,8 +67,9 @@ export default function useCopyNotification() {
     const commodity = capitalizeWords(rawCommodityLower);
 
     const copyText = `*Today* ${todayDate} *${company}* ${label} 
- *${commodity}* - *${quantity}mt @${newRate}/-* 
+ *${commodity}* - *${quantity && quantity !== "" ? `${quantity}mt @` : ""}${newRate}/-* 
 for the *${location}* location 
+${payment && payment !== "" ? `*Payment Terms: ${payment} days*` : ''}${others && others !== "" ? `\n*Notes: ${others}*` : ''}
 (Updated on: ${time}).
 
  *Please Bid your RATE & QUANTITY

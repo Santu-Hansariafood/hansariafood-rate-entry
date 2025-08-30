@@ -76,53 +76,51 @@ export default function RateTableModal({
   );
 
   return (
-    <Suspense fallback={<Loading />}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-        onClick={(e) => e.target === e.currentTarget && onClose()}
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden"
       >
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden"
-        >
-          <div className="p-6 border-b">
-            <div className="flex justify-between items-start gap-4 flex-wrap">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800">
-                  Rates for {selectedCompany}
-                </h3>
-                {renderFilter()}
-              </div>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
+        <div className="p-6 border-b">
+          <div className="flex justify-between items-start gap-4 flex-wrap">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-800">
+                Rates for {selectedCompany}
+              </h3>
+              {renderFilter()}
             </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full transition"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
           </div>
+        </div>
 
-          <Suspense fallback={<Loading />}>
-            <RateTableBody
-              rates={rates}
-              allRatesFilled={allRatesFilled}
-              editIndex={editIndex}
-              handleEdit={handleEdit}
-              handleSave={handleSave}
-              setRates={setRates}
-              actualStartIndex={actualStartIndex}
-              commodity={commodity}
-            />
-          </Suspense>
+        <Suspense fallback={<Loading />}>
+          <RateTableBody
+            rates={rates}
+            allRatesFilled={allRatesFilled}
+            editIndex={editIndex}
+            handleEdit={handleEdit}
+            handleSave={handleSave}
+            setRates={setRates}
+            actualStartIndex={actualStartIndex}
+            commodity={commodity}
+          />
+        </Suspense>
 
-          <div className="p-4 border-t bg-white">{children}</div>
-        </motion.div>
+        <div className="p-4 border-t bg-white">{children}</div>
       </motion.div>
-    </Suspense>
+    </motion.div>
   );
 }

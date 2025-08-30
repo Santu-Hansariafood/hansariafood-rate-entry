@@ -104,9 +104,19 @@ export default function NotificationList({ notifications = [] }) {
                         <span className="font-semibold text-red-500 dark:text-red-400">
                           ₹{n.newRate}
                         </span>
-                        {n.quantity !== undefined && (
+                        {n.quantity !== undefined && n.quantity !== "" && (
                           <span className="text-orange-500 dark:text-orange-400 font-medium">
                             Qty: {n.quantity} Tons
+                          </span>
+                        )}
+                        {n.payment !== undefined && n.payment !== "" && (
+                          <span className="text-purple-500 dark:text-purple-400 font-medium">
+                            Payment: {n.payment} days
+                          </span>
+                        )}
+                        {n.others !== undefined && n.others !== "" && (
+                          <span className="text-indigo-500 dark:text-indigo-400 font-medium">
+                            Notes: {n.others}
                           </span>
                         )}
                         <button

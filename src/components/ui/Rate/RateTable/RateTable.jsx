@@ -27,7 +27,7 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
   const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [isPending, startTransition] = useTransition();
 
-  const allRatesFilled = rates.every((rate) => rate.newRate.toString().trim());
+  const allRatesFilled = rates.every((rate) => rate.newRate && rate.newRate.toString().trim());
 
   const fetchRates = useCallback(async () => {
     try {
@@ -83,6 +83,8 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
               oldRate: matched?.oldRates?.at(-1) || "—",
               newRate: matched?.newRate ?? "",
               quantity: matched?.quantity ?? "",
+              payment: matched?.payment ?? "",
+              others: matched?.others ?? "",
               isUpdated: !!matched?.newRate,
               lastUpdated: matched?.lastUpdated
                 ? new Date(matched.lastUpdated)
@@ -145,6 +147,8 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
         mobile,
         commodity: rateToSave.commodity,
         quantity: rateToSave.quantity || 0,
+        payment: rateToSave.payment || 0,
+        others: rateToSave.others || "",
       });
 
       toast.success("Rate saved!");

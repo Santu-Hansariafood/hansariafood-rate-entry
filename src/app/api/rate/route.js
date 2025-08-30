@@ -11,8 +11,16 @@ export async function POST(req) {
   }
 
   try {
-    const { company, location, newRate, mobile, commodity, quantity } =
-      await req.json();
+    const {
+      company,
+      location,
+      newRate,
+      mobile,
+      commodity,
+      quantity,
+      payment,
+      others,
+    } = await req.json();
 
     if (!company || !location || !commodity || newRate === undefined) {
       return NextResponse.json(
@@ -41,6 +49,8 @@ export async function POST(req) {
       rateEntry.newRateDate = today;
       rateEntry.mobile = mobile;
       rateEntry.quantity = quantity;
+      rateEntry.payment = payment;
+      rateEntry.others = others;
 
       await rateEntry.save();
 
@@ -59,6 +69,8 @@ export async function POST(req) {
       oldRates: [],
       mobile,
       quantity,
+      payment,
+      others,
     });
 
     await rateEntry.save();
@@ -109,6 +121,8 @@ export async function GET(req) {
         oldRates: oldRatesFormatted,
         newRate: isToday ? rate.newRate : "",
         quantity: isToday ? rate.quantity ?? "" : "",
+        payment: isToday ? rate.payment ?? "" : "",
+        others: isToday ? rate.others ?? "" : "",
         hasNewRateToday: isToday,
         lastUpdated: isToday
           ? rate.newRateDate
@@ -134,8 +148,16 @@ export async function PUT(req) {
   }
 
   try {
-    const { company, location, newRate, mobile, commodity, quantity } =
-      await req.json();
+    const {
+      company,
+      location,
+      newRate,
+      mobile,
+      commodity,
+      quantity,
+      payment,
+      others,
+    } = await req.json();
 
     if (!company || !location || !commodity || newRate === undefined) {
       return NextResponse.json(
@@ -153,6 +175,8 @@ export async function PUT(req) {
     rateToUpdate.newRateDate = new Date();
     rateToUpdate.mobile = mobile;
     rateToUpdate.quantity = quantity;
+    rateToUpdate.payment = payment;
+    rateToUpdate.others = others;
 
     await rateToUpdate.save();
 
