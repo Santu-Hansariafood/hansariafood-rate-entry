@@ -38,13 +38,20 @@ export default function useCopyNotification() {
     "wheat",
   ];
 
-
   const OFFERING_SET = new Set(offeringCommodities.map(normalize));
   const REQUIRED_SET = new Set(requiredCommodities.map(normalize));
 
   const handleCopy = async (notification) => {
-    const { company, quantity, location, newRate, newRateDate, updateTime, payment, others } =
-      notification;
+    const {
+      company,
+      quantity,
+      location,
+      newRate,
+      newRateDate,
+      updateTime,
+      payment,
+      others,
+    } = notification;
 
     const todayDate = new Date().toLocaleDateString("en-IN");
     const datePart = new Date(newRateDate || Date.now()).toLocaleDateString(
@@ -54,7 +61,6 @@ export default function useCopyNotification() {
 
     const rawCommodityLower = normalize(notification.commodity || "N/A");
 
-    // Decide label based on lowercase match
     let label = "";
     if (OFFERING_SET.has(rawCommodityLower)) {
       label = "is offering";
@@ -67,13 +73,17 @@ export default function useCopyNotification() {
     const commodity = capitalizeWords(rawCommodityLower);
 
     const copyText = `*Today* ${todayDate} *${company}* ${label} 
- *${commodity}* - *${quantity && quantity !== "" ? `${quantity}mt @` : ""}${newRate}/-* 
+ *${commodity}* - *${
+      quantity && quantity !== "" ? `${quantity}mt @` : ""
+    }${newRate}/-* 
 for the *${location}* location 
-${payment && payment !== "" ? `*Payment Terms: ${payment} days*` : ''}${others && others !== "" ? `\n*Notes: ${others}*` : ''}
+${payment && payment !== "" ? `*Payment Terms: ${payment} days*` : ""}${
+      others && others !== "" ? `\n*Notes: ${others}*` : ""
+    }
 (Updated on: ${time}).
 
- *Please Bid your RATE & QUANTITY
- Through Hansaria Food APP.*
+ *Please Bid your RATE & QUANTITY*
+ *Through Hansaria Food APP.*
  _https://vupix.in/hfood/auth/index.php_
 
 
