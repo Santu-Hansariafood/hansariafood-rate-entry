@@ -38,7 +38,9 @@ export default function useCompanyList() {
   const fetchCompanies = useCallback(async (page = 1, search = "") => {
     try {
       const res = await axiosInstance.get(
-        `/companies?page=${page}&limit=1000&search=${encodeURIComponent(search)}`
+        `/companies?page=${page}&limit=1000&search=${encodeURIComponent(
+          search
+        )}`
       );
       setCompanies(res.data.companies || []);
     } catch (error) {

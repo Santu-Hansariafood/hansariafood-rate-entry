@@ -28,9 +28,11 @@ const Button = ({
         disabled={isButtonDisabled}
         aria-busy={isLoading}
         className={`w-full flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-300 ease-in-out
-          ${isButtonDisabled
-            ? "bg-gray-400 text-white cursor-not-allowed"
-            : "bg-green-500 text-white hover:bg-white hover:text-green-600 shadow-lg"}
+          ${
+            isButtonDisabled
+              ? "bg-gray-400 text-white cursor-not-allowed"
+              : "bg-green-500 text-white hover:bg-white hover:text-green-600 shadow-lg"
+          }
           ${sizeClasses[size]} ${className}`}
       >
         {isLoading && (

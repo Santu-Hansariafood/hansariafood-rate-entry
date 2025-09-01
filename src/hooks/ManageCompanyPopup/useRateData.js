@@ -17,7 +17,9 @@ export function useRateData(companyName) {
     (async () => {
       setLoading(true);
       try {
-        const { data } = await axiosInstance.get(`/rate?company=${companyName}`);
+        const { data } = await axiosInstance.get(
+          `/rate?company=${companyName}`
+        );
         mounted && setRates(data ?? []);
       } catch {
         toast.error("Failed to load rate data");

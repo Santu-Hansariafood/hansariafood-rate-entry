@@ -15,13 +15,19 @@ export async function POST(req) {
   try {
     const { to } = await req.json();
     if (!to) {
-      return NextResponse.json({ error: "Missing 'to' email address" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing 'to' email address" },
+        { status: 400 }
+      );
     }
 
     const saudaEntries = await SaudaEntry.find({}).lean();
 
     if (saudaEntries.length === 0) {
-      return NextResponse.json({ error: "No sauda entries found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "No sauda entries found" },
+        { status: 404 }
+      );
     }
 
     const buffer = await generateSaudaExcel(saudaEntries);
@@ -32,7 +38,10 @@ export async function POST(req) {
       filename: "SaudaReport.xlsx",
     });
 
-    return NextResponse.json({ message: "Email sent successfully" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Email sent successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error in POST /send-sauda-email:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

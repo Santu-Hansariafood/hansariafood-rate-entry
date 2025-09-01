@@ -17,22 +17,30 @@ const Actions = dynamic(() => import("@/components/common/Actions/Actions"), {
 const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
   suspense: true,
 });
-const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"), {
-  suspense: true,
-});
-const SearchBox = dynamic(() =>
-  import("@/components/common/SearchBox/SearchBox"), {
+const InputBox = dynamic(
+  () => import("@/components/common/InputBox/InputBox"),
+  {
     suspense: true,
   }
 );
-const Pagination = dynamic(() =>
-  import("@/components/common/Pagination/Pagination"), {
+const SearchBox = dynamic(
+  () => import("@/components/common/SearchBox/SearchBox"),
+  {
     suspense: true,
   }
 );
-const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"), {
-  suspense: true,
-});
+const Pagination = dynamic(
+  () => import("@/components/common/Pagination/Pagination"),
+  {
+    suspense: true,
+  }
+);
+const Dropdown = dynamic(
+  () => import("@/components/common/Dropdown/Dropdown"),
+  {
+    suspense: true,
+  }
+);
 
 export default function SellerList() {
   const {

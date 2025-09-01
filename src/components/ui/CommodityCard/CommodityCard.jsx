@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { Suspense, useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
@@ -7,7 +7,8 @@ import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 
-const STORAGE_KEY = process.env.NEXT_PUBLIC_COMMODITY_STORAGE_KEY || "selectedCommodities";
+const STORAGE_KEY =
+  process.env.NEXT_PUBLIC_COMMODITY_STORAGE_KEY || "selectedCommodities";
 
 const getInitialFilters = () => {
   if (typeof window !== "undefined") {
@@ -89,11 +90,12 @@ const CommodityCard = ({ onFilterChange }) => {
                 <h3 className="text-sm font-medium text-gray-800 truncate">
                   {commodity.name}
                 </h3>
-                {commodity.subCategories && commodity.subCategories.length > 0 && (
-                  <p className="text-xs text-gray-500 truncate">
-                    {commodity.subCategories.join(", ")}
-                  </p>
-                )}
+                {commodity.subCategories &&
+                  commodity.subCategories.length > 0 && (
+                    <p className="text-xs text-gray-500 truncate">
+                      {commodity.subCategories.join(", ")}
+                    </p>
+                  )}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

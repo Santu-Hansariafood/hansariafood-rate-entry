@@ -3,7 +3,11 @@ export default async function sendWhatsAppMessage({ name, mobile, password }) {
 
   try {
     const res = await fetch(
-      `${apiUrl}?apikey=cdbcead5dfba4eb7a4b3f16b62dc2bb8&templatename=reset&mobile=${mobile}&var1=${encodeURIComponent(name)}&var2=${encodeURIComponent(mobile)}&var3=${encodeURIComponent(password)}`
+      `${apiUrl}?apikey=cdbcead5dfba4eb7a4b3f16b62dc2bb8&templatename=reset&mobile=${mobile}&var1=${encodeURIComponent(
+        name
+      )}&var2=${encodeURIComponent(mobile)}&var3=${encodeURIComponent(
+        password
+      )}`
     );
 
     const data = await res.json();

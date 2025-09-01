@@ -74,14 +74,16 @@ export async function generateSaudaPDF({
 
       const companyText = row.sellerCompany || "";
       const notesText = row.others || "";
-      
+
       const capitalizedCompany = companyText
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-        
+        .split(" ")
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ");
+
       const formattedNotes = notesText ? ` (${notesText})` : "";
-      
+
       const detailsLine = capitalizedCompany + formattedNotes;
 
       body.push([

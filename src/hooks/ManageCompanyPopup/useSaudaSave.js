@@ -27,7 +27,6 @@ export const useSaudaSave = (
       now.getMinutes()
     ).padStart(2, "0")}`;
 
-    // Filter out completely empty rows to avoid saving placeholders
     const rowsToPersist = entryList.filter((row) => {
       const hasTons = Number(row.tons) > 0;
       const hasRate = Number(row.finalRate) > 0;
@@ -37,7 +36,9 @@ export const useSaudaSave = (
     });
 
     if (rowsToPersist.length === 0) {
-      toast.warn("Please fill in tons, rate, seller name, and seller company before saving.");
+      toast.warn(
+        "Please fill in tons, rate, seller name, and seller company before saving."
+      );
       setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
       return;
     }
@@ -82,8 +83,6 @@ export const useSaudaSave = (
         toast.success(`Saved successfully for ${unit} - ${commodity}`);
         setLastUpdated(data.entry.lastUpdated);
         setSaveStatus((prev) => ({ ...prev, [entryId]: "success" }));
-        
-        // Clear success status after 3 seconds
         setTimeout(() => {
           setSaveStatus((prev) => ({ ...prev, [entryId]: "" }));
         }, 3000);

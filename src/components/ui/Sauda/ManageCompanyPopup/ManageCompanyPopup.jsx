@@ -104,7 +104,8 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
   if (firstLoading) return <Loading />;
 
-  const loading = loadingCompany || loadingRates || loadingSauda || loadingSellers;
+  const loading =
+    loadingCompany || loadingRates || loadingSauda || loadingSellers;
   if (!company) return null;
 
   return (

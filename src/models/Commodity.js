@@ -7,4 +7,5 @@ const commoditySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Commodity || mongoose.model("Commodity", commoditySchema);
+export default mongoose.models.Commodity ||
+  mongoose.model("Commodity", commoditySchema);

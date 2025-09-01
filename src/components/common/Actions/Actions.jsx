@@ -20,7 +20,11 @@ const Actions = ({ item }) => {
       {[
         { type: "view", icon: Eye, color: "text-green-500 hover:bg-green-100" },
         { type: "edit", icon: Edit, color: "text-blue-500 hover:bg-blue-100" },
-        { type: "delete", icon: Trash2, color: "text-red-500 hover:bg-red-100" },
+        {
+          type: "delete",
+          icon: Trash2,
+          color: "text-red-500 hover:bg-red-100",
+        },
       ].map(({ type, icon: Icon, color }) => (
         <button
           key={type}
@@ -53,15 +57,18 @@ const Actions = ({ item }) => {
             </h2>
             {modal.type === "view" ? (
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                <p><strong>ID:</strong> {item.id}</p>
-                <p><strong>Title:</strong> {item.title}</p>
-                {item.description && (
-                  <p className="mt-2">{item.description}</p>
-                )}
+                <p>
+                  <strong>ID:</strong> {item.id}
+                </p>
+                <p>
+                  <strong>Title:</strong> {item.title}
+                </p>
+                {item.description && <p className="mt-2">{item.description}</p>}
               </div>
             ) : (
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Are you sure you want to <strong>{modal.type}</strong> this item?
+                Are you sure you want to <strong>{modal.type}</strong> this
+                item?
               </p>
             )}
             {modal.type !== "view" && (

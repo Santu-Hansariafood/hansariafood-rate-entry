@@ -177,9 +177,7 @@ const CompanyList = () => {
                   <p className="text-sm mt-1">
                     Category: {selectedCompany.category}
                   </p>
-                  <p className="text-sm mt-1">
-                    Type: {selectedCompany.type}
-                  </p>
+                  <p className="text-sm mt-1">Type: {selectedCompany.type}</p>
                 </>
               )}
             </div>

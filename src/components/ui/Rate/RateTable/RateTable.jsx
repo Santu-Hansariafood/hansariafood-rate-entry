@@ -27,7 +27,9 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
   const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [isPending, startTransition] = useTransition();
 
-  const allRatesFilled = rates.every((rate) => rate.newRate && rate.newRate.toString().trim());
+  const allRatesFilled = rates.every(
+    (rate) => rate.newRate && rate.newRate.toString().trim()
+  );
 
   const fetchRates = useCallback(async () => {
     try {

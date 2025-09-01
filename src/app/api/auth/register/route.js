@@ -4,11 +4,9 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-const encodeBase64 = (str) =>
-  Buffer.from(str, "utf-8").toString("base64");
+const encodeBase64 = (str) => Buffer.from(str, "utf-8").toString("base64");
 
-const decodeBase64 = (str) =>
-  Buffer.from(str, "base64").toString("utf-8");
+const decodeBase64 = (str) => Buffer.from(str, "base64").toString("utf-8");
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -157,7 +155,6 @@ export async function PATCH(req) {
       );
     }
 
-    // ✅ Use Buffer instead of btoa
     const encodedPassword = user.password ? encodeBase64(user.password) : "";
 
     const var1 = (user.name || "").trim();
@@ -189,14 +186,14 @@ export async function PATCH(req) {
         { status: 200 }
       );
     } else {
-      console.error("❌ WhatsApp API Error:", result);
+      console.error("WhatsApp API Error:", result);
       return NextResponse.json(
         { message: "WhatsApp message failed to send", detail: result },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error("❌ Forgot Password Error:", error);
+    console.error("Forgot Password Error:", error);
     return NextResponse.json(
       { message: "Internal Server Error", error: error.message },
       { status: 500 }

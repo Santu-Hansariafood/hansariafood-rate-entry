@@ -2,12 +2,19 @@ import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-export function generateWeeklyRatePdf({ userName, weekDates, groupedCompanies }) {
+export function generateWeeklyRatePdf({
+  userName,
+  weekDates,
+  groupedCompanies,
+}) {
   const header = [
     { text: "Company", style: "tableHeader" },
     { text: "Location", style: "tableHeader" },
     ...weekDates.map((date) => ({
-      text: new Date(date).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit" }),
+      text: new Date(date).toLocaleDateString("en-GB", {
+        weekday: "short",
+        day: "2-digit",
+      }),
       style: "tableHeader",
     })),
   ];
@@ -21,7 +28,11 @@ export function generateWeeklyRatePdf({ userName, weekDates, groupedCompanies })
       const row = [];
 
       if (index === 0) {
-        row.push({ text: name, rowSpan: locations.length, style: "companyCell" });
+        row.push({
+          text: name,
+          rowSpan: locations.length,
+          style: "companyCell",
+        });
       } else {
         row.push({});
       }
@@ -41,9 +52,15 @@ export function generateWeeklyRatePdf({ userName, weekDates, groupedCompanies })
 
   const docDefinition = {
     content: [
-      { text: `Weekly Rate Sheet for ${userName}`, style: "title", margin: [0, 0, 0, 10] },
       {
-        text: `Week: ${new Date(weekDates[0]).toLocaleDateString()} - ${new Date(
+        text: `Weekly Rate Sheet for ${userName}`,
+        style: "title",
+        margin: [0, 0, 0, 10],
+      },
+      {
+        text: `Week: ${new Date(
+          weekDates[0]
+        ).toLocaleDateString()} - ${new Date(
           weekDates[6]
         ).toLocaleDateString()}`,
         style: "subtitle",
@@ -71,5 +88,7 @@ export function generateWeeklyRatePdf({ userName, weekDates, groupedCompanies })
     pageOrientation: "landscape",
   };
 
-  pdfMake.createPdf(docDefinition).download(`Weekly_Rate_Sheet_${userName}.pdf`);
+  pdfMake
+    .createPdf(docDefinition)
+    .download(`Weekly_Rate_Sheet_${userName}.pdf`);
 }

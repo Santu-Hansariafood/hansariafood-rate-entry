@@ -25,7 +25,7 @@ export default function DesktopNav({
       "Seller Company",
       "Rate",
       "Sauda",
-      "Company"
+      "Company",
     ];
 
     if (allowedMobileNumbers.includes(currentUserMobile)) {
@@ -33,7 +33,7 @@ export default function DesktopNav({
       links.push("Commodity");
       links.push("Location");
       links.push("Category");
-// links.push("Company");
+      // links.push("Company");
     }
 
     return links.map((label) => ({

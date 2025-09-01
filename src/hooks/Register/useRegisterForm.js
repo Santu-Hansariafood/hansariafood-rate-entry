@@ -40,11 +40,28 @@ export default function useRegisterForm() {
     setForm((prev) => ({ ...prev, [name]: value }));
 
     if (name === "name" && value && !validationPatterns.name.test(value)) {
-      setErrors((prev) => ({ ...prev, name: "Name should be 2-50 letters only" }));
-    } else if (name === "mobile" && value && !validationPatterns.mobile.test(value)) {
-      setErrors((prev) => ({ ...prev, mobile: "Enter a valid 10-digit mobile number" }));
-    } else if (name === "password" && value && !validationPatterns.password.test(value)) {
-      setErrors((prev) => ({ ...prev, password: "Password must be at least 6 characters long" }));
+      setErrors((prev) => ({
+        ...prev,
+        name: "Name should be 2-50 letters only",
+      }));
+    } else if (
+      name === "mobile" &&
+      value &&
+      !validationPatterns.mobile.test(value)
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        mobile: "Enter a valid 10-digit mobile number",
+      }));
+    } else if (
+      name === "password" &&
+      value &&
+      !validationPatterns.password.test(value)
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 6 characters long",
+      }));
     } else {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }

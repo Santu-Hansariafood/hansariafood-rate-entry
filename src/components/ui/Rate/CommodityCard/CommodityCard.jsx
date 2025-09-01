@@ -106,7 +106,9 @@ export default function CommodityCard({ onFilterChange, maxItems = 15 }) {
                 }`}
               >
                 <Plus className="w-3 h-3" />
-                {selectedFilters[commodity._id] ? "Remove Filter" : "Filter Commodity"}
+                {selectedFilters[commodity._id]
+                  ? "Remove Filter"
+                  : "Filter Commodity"}
               </motion.button>
             </div>
           </motion.div>

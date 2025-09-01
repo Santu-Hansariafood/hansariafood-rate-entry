@@ -23,7 +23,9 @@ export function useRateCountData() {
           });
 
           if (item.hasNewRateToday && item.newRate !== "") {
-            const today = new Date(item.lastUpdated).toLocaleDateString("en-GB");
+            const today = new Date(item.lastUpdated).toLocaleDateString(
+              "en-GB"
+            );
             allRates.push({ date: today, rate: parseFloat(item.newRate) });
           }
         });

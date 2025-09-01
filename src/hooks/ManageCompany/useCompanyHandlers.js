@@ -4,7 +4,11 @@ import { useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
-export const useCompanyHandlers = (companies, setEditingCompany, fetchAllData) => {
+export const useCompanyHandlers = (
+  companies,
+  setEditingCompany,
+  fetchAllData
+) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleView = async (id) => {
@@ -61,7 +65,10 @@ export const useCompanyHandlers = (companies, setEditingCompany, fetchAllData) =
         })),
       };
 
-      await axiosInstance.put(`/managecompany/${editingCompany._id}`, updatedData);
+      await axiosInstance.put(
+        `/managecompany/${editingCompany._id}`,
+        updatedData
+      );
       toast.success("Company updated");
       setEditingCompany(null);
       fetchAllData();

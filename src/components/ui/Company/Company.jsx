@@ -28,7 +28,9 @@ export default function CreateCompanyForm({ onClose, onCreated }) {
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [selectedCommodities, setSelectedCommodities] = useState([]);
   const [companyType, setCompanyType] = useState([]);
-  const [locationCommodityContacts, setLocationCommodityContacts] = useState({});
+  const [locationCommodityContacts, setLocationCommodityContacts] = useState(
+    {}
+  );
   const [loading, setLoading] = useState(false);
 
   const updateLocationCommodityContacts = (locs, cmds, prevData = {}) => {

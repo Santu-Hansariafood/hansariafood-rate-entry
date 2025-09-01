@@ -66,12 +66,12 @@ export default function UserTable({
 
   return (
     <Suspense fallback={<Loading />}>
-    <div
-      className="bg-white dark:bg-gray-800 rounded-lg shadow 
+      <div
+        className="bg-white dark:bg-gray-800 rounded-lg shadow 
                     text-gray-900 dark:text-gray-100 transition-colors"
-    >
-      <Table data={usersWithActions} columns={columns} />
-    </div>
+      >
+        <Table data={usersWithActions} columns={columns} />
+      </div>
     </Suspense>
   );
 }

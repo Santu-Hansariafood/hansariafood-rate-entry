@@ -18,9 +18,12 @@ const RateEntryList = dynamic(
     loading: () => <Loading />,
   }
 );
-const TopSaudaList = dynamic(() => import("@/components/ui/TopSaudaList/TopSaudaList"), {
-  loading: () => <Loading />,
-});
+const TopSaudaList = dynamic(
+  () => import("@/components/ui/TopSaudaList/TopSaudaList"),
+  {
+    loading: () => <Loading />,
+  }
+);
 const InactiveDescriptions = dynamic(
   () => import("@/components/ui/InactiveDescriptions/InactiveDescriptions"),
   {

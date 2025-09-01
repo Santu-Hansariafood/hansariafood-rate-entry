@@ -6,7 +6,9 @@ import { Building2, MapPin, IndianRupee, Clock4 } from "lucide-react";
 import useRateEntries from "@/hooks/RateEntries/useRateEntries";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
-const DownloadRateEntriesExcel = dynamic(()=> import("./DownloadRateEntriesExcel/DownloadRateEntriesExcel"));
+const DownloadRateEntriesExcel = dynamic(() =>
+  import("./DownloadRateEntriesExcel/DownloadRateEntriesExcel")
+);
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
 const RateEntryList = () => {
