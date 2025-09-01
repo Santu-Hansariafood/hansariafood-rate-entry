@@ -111,7 +111,7 @@ export default function NotificationList({ notifications = [] }) {
                         )}
                         {n.payment !== undefined && n.payment !== "" && (
                           <span className="text-purple-500 dark:text-purple-400 font-medium">
-                            Payment: {n.payment} days
+                            Payment: {n.payment} Days
                           </span>
                         )}
                         {n.others !== undefined && n.others !== "" && (

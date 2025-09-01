@@ -77,7 +77,7 @@ export default function useCopyNotification() {
       quantity && quantity !== "" ? `${quantity}mt @` : ""
     }${newRate}/-* 
 for the *${location}* location 
-${payment && payment !== "" ? `*Payment Terms: ${payment} days*` : ""}${
+${payment && payment !== "" ? `*Payment Terms: ${payment} Days*` : ""}${
       others && others !== "" ? `\n*Notes: ${others}*` : ""
     }
 (Updated on: ${time}).
