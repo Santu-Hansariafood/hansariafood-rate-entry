@@ -23,6 +23,7 @@ export default function DesktopNav({
     const links = [
       "Manage Company",
       "Seller Company",
+      "Self Company",
       "Rate",
       "Sauda",
       "Company",

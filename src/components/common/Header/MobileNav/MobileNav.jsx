@@ -24,6 +24,7 @@ export default function MobileNav({
   const navLinks = [
     "Manage Company",
     "Company",
+    "Self Company",
     "Seller Company",
     "Location",
     "Category",

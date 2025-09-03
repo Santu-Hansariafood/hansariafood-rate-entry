@@ -7,7 +7,6 @@ import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
 import useRateManagement from "@/hooks/Rate/useRateManagement";
-import SelfCompany from "../SelfCompany/SelfCompany";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
   loading: () => <Loading />,
@@ -120,7 +119,6 @@ export default function Rate() {
           {!selectedCompany && renderCompanySelector}
           {selectedCompany && renderRateTable}
         </div>
-        <SelfCompany />
       </div>
     </Suspense>
   );
