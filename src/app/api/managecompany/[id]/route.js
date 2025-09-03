@@ -47,6 +47,7 @@ export async function PUT(req, { params }) {
       subCommodities = [],
       mobileNumbers = [],
       type,
+      isSelfCompany,
     } = await req.json();
 
     if (
@@ -78,6 +79,7 @@ export async function PUT(req, { params }) {
         commodities,
         subCommodities,
         mobileNumbers,
+        ...(typeof isSelfCompany === "boolean" ? { isSelfCompany } : {}),
       },
       { new: true, runValidators: true }
     );

@@ -8,6 +8,7 @@ export default function useCreateCompany() {
   const [company, setCompany] = useState("");
   const [category, setCategory] = useState("");
   const [companyType, setCompanyType] = useState("");
+  const [isSelfCompany, setIsSelfCompany] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSave = useCallback(async () => {
@@ -27,6 +28,7 @@ export default function useCreateCompany() {
         name,
         category: categoryValue,
         type,
+        isSelfCompany,
       });
 
       if (status === 201) {
@@ -34,6 +36,7 @@ export default function useCreateCompany() {
         setCompany("");
         setCategory("");
         setCompanyType("");
+        setIsSelfCompany(false);
       }
     } catch (err) {
       toast.error(err?.response?.data?.error || "Failed to save company");
@@ -49,6 +52,8 @@ export default function useCreateCompany() {
     setCategory,
     companyType,
     setCompanyType,
+    isSelfCompany,
+    setIsSelfCompany,
     isLoading,
     handleSave,
   };

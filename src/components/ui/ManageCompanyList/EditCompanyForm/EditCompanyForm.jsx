@@ -32,6 +32,9 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     (company.commodities || []).map((c) => ({ label: c, value: c }))
   );
   const [companyType, setCompanyType] = useState(company.type || []);
+  const [isSelfCompany, setIsSelfCompany] = useState(
+    Boolean(company.isSelfCompany)
+  );
   const [loading, setLoading] = useState(false);
 
   const updateLocationCommodityContacts = (locs, cmds, prevData = {}) => {
@@ -155,6 +158,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
         type: companyType,
         commodities: selectedCommodities.map((c) => c.value),
         mobileNumbers,
+        isSelfCompany,
       };
 
       await axiosInstance.put(`/managecompany/${company._id}`, payload);
@@ -193,6 +197,16 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
             />
             <InputBox label="Category" value={category} readOnly />
             <InputBox label="State" value={state} readOnly />
+            <div className="flex items-center gap-2 mt-1">
+              <input
+                id="isSelfCompany"
+                type="checkbox"
+                className="h-4 w-4"
+                checked={isSelfCompany}
+                onChange={(e) => setIsSelfCompany(e.target.checked)}
+              />
+              <label htmlFor="isSelfCompany">Is Self Company</label>
+            </div>
             <Dropdown
               label="Commodities *"
               options={commodityOptions}

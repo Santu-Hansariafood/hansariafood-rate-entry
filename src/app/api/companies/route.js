@@ -44,7 +44,7 @@ export async function POST(req) {
   }
 
   try {
-    const { name, category, type } = await req.json();
+    const { name, category, type, isSelfCompany = false } = await req.json();
 
     const nameTrimmed = name?.trim();
     const categoryTrimmed = category?.trim();
@@ -92,6 +92,7 @@ export async function POST(req) {
       name: nameTrimmed,
       category: categoryTrimmed,
       type: selectedTypes,
+      isSelfCompany,
     });
 
     return NextResponse.json(

@@ -46,6 +46,8 @@ export default function CreateCompany() {
     setCategory,
     companyType,
     setCompanyType,
+    isSelfCompany,
+    setIsSelfCompany,
     isLoading,
     handleSave,
   } = useCreateCompany();
@@ -132,6 +134,18 @@ export default function CreateCompany() {
                   onChange={(e) => setCompanyType(e.target.value)}
                   className="dark:bg-gray-900 dark:text-gray-200"
                 />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  id="isSelfCompany"
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={isSelfCompany}
+                  onChange={(e) => setIsSelfCompany(e.target.checked)}
+                />
+                <label htmlFor="isSelfCompany" className="text-sm">
+                  Is Self Company
+                </label>
               </div>
               <div className="pt-4">
                 <Button

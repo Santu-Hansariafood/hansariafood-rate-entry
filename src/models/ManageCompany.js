@@ -13,6 +13,7 @@ const ManageCompanySchema = new mongoose.Schema(
     location: [{ type: String, required: true }],
     state: { type: String, required: true },
     category: { type: String, required: true },
+    isSelfCompany: { type: Boolean, default: false },
 
     type: {
       type: [String],

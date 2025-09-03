@@ -14,6 +14,7 @@ const CompanySchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    isSelfCompany: { type: Boolean, default: false },
     type: {
       type: [String],
       required: true,

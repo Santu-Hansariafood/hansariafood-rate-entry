@@ -21,6 +21,7 @@ export async function POST(req) {
       mobileNumbers = [],
       commodities = [],
       subCommodities = [],
+      isSelfCompany = false,
     } = await req.json();
 
     if (
@@ -103,6 +104,7 @@ export async function POST(req) {
       mobileNumbers,
       commodities,
       subCommodities,
+      isSelfCompany,
     });
 
     await newCompany.save();
