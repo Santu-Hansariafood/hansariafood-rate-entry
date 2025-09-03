@@ -149,6 +149,7 @@ export async function GET(req) {
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
     const typeFilter = searchParams.get("type");
+    const selfParam = (searchParams.get("self") || "").toLowerCase();
     const excludeTodayNoBuying = ["1", "true", "yes"].includes(
       (searchParams.get("excludeTodayNoBuying") || "").toLowerCase()
     );
@@ -169,6 +170,10 @@ export async function GET(req) {
 
     if (["buyer", "seller"].includes(typeFilter)) {
       filter.type = typeFilter;
+    }
+
+    if (["1", "true", "yes"].includes(selfParam)) {
+      filter.isSelfCompany = true;
     }
 
     if (excludeTodayNoBuying) {
@@ -193,6 +198,56 @@ export async function GET(req) {
     console.error("Error in GET /managecompany:", error);
     return NextResponse.json(
       { error: "Failed to fetch companies." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET_SELF(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
+    const search = searchParams.get("search") || searchParams.get("q") || "";
+    const categories = searchParams.getAll("category");
+    const subCommodities = searchParams.getAll("subCommodities");
+    const typeFilter = searchParams.get("type");
+
+    const filter = { isSelfCompany: true };
+
+    if (search.trim()) {
+      filter.name = { $regex: search.trim(), $options: "i" };
+    }
+
+    if (categories.length > 0) {
+      filter.category = { $in: categories };
+    }
+
+    if (subCommodities.length > 0) {
+      filter.subCommodities = { $in: subCommodities };
+    }
+
+    if (["buyer", "seller"].includes(typeFilter)) {
+      filter.type = typeFilter;
+    }
+
+    const [companies, total] = await Promise.all([
+      ManageCompany.find(filter).sort({ name: 1 }).skip(skip).limit(limit),
+      ManageCompany.countDocuments(filter),
+    ]);
+
+    return NextResponse.json({ companies, total }, { status: 200 });
+  } catch (error) {
+    console.error("Error in GET_SELF /managecompany:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch self companies." },
       { status: 500 }
     );
   }
