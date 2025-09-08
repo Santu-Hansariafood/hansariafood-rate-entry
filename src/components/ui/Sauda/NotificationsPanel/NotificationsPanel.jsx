@@ -24,8 +24,13 @@ const NotificationsPanel = ({ onClose }) => {
       item.saudaNo ? `*Sauda No:* ${item.saudaNo}` : null,
       item.buyerName ? `*Buyer:* ${item.buyerName}` : null,
       item.sellerCompany ? `*Seller Company:* ${item.sellerCompany}` : null,
+      item.payment !== null &&
+      item.payment !== undefined &&
+      String(item.payment).trim() !== ""
+        ? `*Payment Terms:* ${item.payment} *Days*`
+        : null,
       item.others ? `*Notes:* ${item.others}` : null,
-      `*Payment Terms:*`,
+      `*Delivery Days:*`,
       `*_Proper Sauda Contract will be Shared Shortly. Please Check Email_*`,
       ``,
       `*Thanks*,`,
@@ -124,6 +129,13 @@ const NotificationsPanel = ({ onClose }) => {
                     💰 Rate: ₹{item.rate}
                   </div>
                 )}
+                {item.payment !== null &&
+                  item.payment !== undefined &&
+                  String(item.payment).trim() !== "" && (
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      🧾 Payment Terms: {item.payment} Day's
+                    </div>
+                  )}
                 {item.buyerName && (
                   <div className="text-xs text-gray-600 dark:text-gray-400">
                     🧑‍💼 Buyer: {item.buyerName}

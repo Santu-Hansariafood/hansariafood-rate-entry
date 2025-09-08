@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
@@ -12,27 +12,30 @@ export default function useSaudaNotifications() {
   const [searchQuery, setSearchQuery] = useState("");
   const prevRawData = useRef("");
 
-  const getTodayString = () => {
+  const getTodayString = useCallback(() => {
     const today = new Date();
     return `${String(today.getDate()).padStart(2, "0")}-${String(
       today.getMonth() + 1
     ).padStart(2, "0")}-${today.getFullYear()}`;
-  };
+  }, []);
 
-  const filterAndSortToday = (items) => {
-    const todayString = getTodayString();
-    return items
-      .filter((item) => item.tons > 0 && item.date === todayString)
-      .sort((a, b) => {
-        if (!a.time) return 1;
-        if (!b.time) return -1;
-        if (a.time < b.time) return 1;
-        if (a.time > b.time) return -1;
-        return 0;
-      });
-  };
+  const filterAndSortToday = useCallback(
+    (items) => {
+      const todayString = getTodayString();
+      return items
+        .filter((item) => item.tons > 0 && item.date === todayString)
+        .sort((a, b) => {
+          if (!a.time) return 1;
+          if (!b.time) return -1;
+          if (a.time < b.time) return 1;
+          if (a.time > b.time) return -1;
+          return 0;
+        });
+    },
+    [getTodayString]
+  );
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await axiosInstance.get("/save-sauda/notifications");
       const all = res.data.notifications || [];
@@ -64,6 +67,8 @@ export default function useSaudaNotifications() {
             return {
               ...item,
               rate: item.rate ?? match?.newRate ?? null,
+              others: item.others || match?.others || "",
+              payment: match?.payment ?? null,
             };
           } catch {
             return item;
@@ -78,7 +83,7 @@ export default function useSaudaNotifications() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterAndSortToday]);
 
   useEffect(() => {
     const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -97,7 +102,7 @@ export default function useSaudaNotifications() {
 
     const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchNotifications, filterAndSortToday]);
 
   const filteredNotifications = useMemo(() => {
     if (!searchQuery) return notifications;
