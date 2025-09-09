@@ -20,12 +20,14 @@ export default function DesktopNav({
 }) {
   const allowedMobileNumbers = ["9830433535", "7029481930"];
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [bidDropdownOpen, setBidDropdownOpen] = useState(false);
 
   const navLinks = useMemo(() => {
     const links = [
       "Rate",
       "Sauda",
       "Company",
+      "Bid",
     ];
 
     if (allowedMobileNumbers.includes(currentUserMobile)) {
@@ -48,11 +50,25 @@ export default function DesktopNav({
     { label: "Self Company", path: "/selfcompany" },
   ]);
 
+  const [bidDropdownItems, setBidDropdownItems] = useState([
+    { label: "Bid", path: "/bid" },
+    { label: "Manage Bids", path: "/bid/manage" },
+    { label: "Participate", path: "/bid/participate" },
+    { label: "Participants", path: "/bid/participants" },
+  ]);
+
   const companyTitle = (() => {
     const found = companyDropdownItems.find(
       (i) => activeLink && activeLink.startsWith(i.path)
     );
     return found ? found.label : "Company";
+  })();
+
+  const bidTitle = (() => {
+    const found = bidDropdownItems.find(
+      (i) => activeLink && activeLink.startsWith(i.path)
+    );
+    return found ? found.label : "Bid";
   })();
 
   return (
@@ -105,6 +121,76 @@ export default function DesktopNav({
                               setActiveLink(path);
                               setOpenDropdown(false);
                               setCompanyDropdownItems((items) => {
+                                const idx = items.findIndex(
+                                  (i) => i.path === path
+                                );
+                                if (idx <= 0) return items;
+                                const next = [...items];
+                                const [picked] = next.splice(idx, 1);
+                                next.unshift(picked);
+                                return next;
+                              });
+                            }}
+                            className={`block px-4 py-2 text-sm transition-colors ${
+                              activeLink === path
+                                ? "bg-green-500 text-white"
+                                : "text-white/90 hover:bg-gray-700 hover:text-white"
+                            }`}
+                          >
+                            {label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </motion.li>
+              );
+            }
+            
+            if (label === "Bid") {
+              const isActive =
+                activeLink &&
+                [
+                  "/bid",
+                  "/bid/manage",
+                  "/bid/participate",
+                  "/bid/participants",
+                ].some((p) => activeLink.startsWith(p));
+
+              return (
+                <motion.li
+                  key="bid-dropdown"
+                  className="relative"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <div
+                    className={`flex items-center gap-1 cursor-pointer group ${
+                      isActive
+                        ? "text-green-400"
+                        : "text-white/90 hover:text-white"
+                    }`}
+                    onClick={() => setBidDropdownOpen((v) => !v)}
+                  >
+                    {bidTitle}
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${
+                        bidDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </div>
+
+                  {bidDropdownOpen && (
+                    <ul className="absolute left-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg overflow-hidden z-20">
+                      {bidDropdownItems.map(({ label, path }) => (
+                        <li key={path}>
+                          <Link
+                            href={path}
+                            onClick={() => {
+                              setActiveLink(path);
+                              setBidDropdownOpen(false);
+                              setBidDropdownItems((items) => {
                                 const idx = items.findIndex(
                                   (i) => i.path === path
                                 );

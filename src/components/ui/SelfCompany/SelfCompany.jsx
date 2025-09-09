@@ -11,7 +11,7 @@ const SelfCompany = () => {
   const [selfCompanies, setSelfCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [showSaudaType, setShowSaudaType] = useState(null); // "sale" | "purchase" | null
+  const [showSaudaType, setShowSaudaType] = useState(null);
 
   useEffect(() => {
     const fetchSelfCompanies = async () => {
@@ -60,7 +60,6 @@ const SelfCompany = () => {
         </div>
       )}
 
-      {/* Popup */}
       <AnimatePresence>
         {selectedCompany && (
           <motion.div
@@ -84,16 +83,16 @@ const SelfCompany = () => {
               {!showSaudaType ? (
                 <div className="flex gap-4">
                   <button
-                    onClick={() => setShowSaudaType("sale")}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-                  >
-                    Sale
-                  </button>
-                  <button
                     onClick={() => setShowSaudaType("purchase")}
                     className="px-4 py-2 bg-green-500 text-white rounded-lg"
                   >
                     Purchase
+                  </button>
+                  <button
+                    onClick={() => setShowSaudaType("sale")}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg"
+                  >
+                    Sale
                   </button>
                 </div>
               ) : (

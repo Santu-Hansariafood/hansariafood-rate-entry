@@ -119,6 +119,7 @@ export default function useSaudaNotifications() {
     loading,
     searchQuery,
     setSearchQuery,
+    notifications,
     filteredNotifications,
   };
 }

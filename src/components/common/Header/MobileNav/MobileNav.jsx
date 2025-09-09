@@ -29,6 +29,10 @@ export default function MobileNav({
     "Seller Company",
     "Location",
     "Self Company",
+    "Bid",
+    "Manage Bids",
+    "Participate",
+    "Participants",
   ];
 
   const extraLinks = allowedMobileNumbers.includes(currentUserMobile)
@@ -80,7 +84,16 @@ export default function MobileNav({
             <nav className="flex-1 overflow-auto">
               <ul className="flex flex-col p-4 gap-4">
                 {navLinks.map((label) => {
-                  const path = `/${label.toLowerCase().replace(/ /g, "")}`;
+                  let path = `/${label.toLowerCase().replace(/ /g, "")}`;  
+                  
+                  // Special handling for Bid section paths
+                  if (label === "Manage Bids") {
+                    path = "/bid/manage";
+                  } else if (label === "Participate") {
+                    path = "/bid/participate";
+                  } else if (label === "Participants") {
+                    path = "/bid/participants";
+                  }
                   return (
                     <motion.li
                       key={path}

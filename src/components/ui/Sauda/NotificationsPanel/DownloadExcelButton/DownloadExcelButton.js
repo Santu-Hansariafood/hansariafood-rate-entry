@@ -6,8 +6,8 @@ import { saveAs } from "file-saver";
 import { toast } from "react-toastify";
 import useSaudaNotifications from "@/hooks/SaudaData/useSaudaNotifications";
 
-const DownloadExcelButton = () => {
-  const { filteredNotifications } = useSaudaNotifications();
+const DownloadExcelButton = ({ data }) => {
+  const { filteredNotifications, notifications } = useSaudaNotifications();
 
   const handleDownloadExcel = async () => {
     const workbook = new ExcelJS.Workbook();
@@ -21,6 +21,7 @@ const DownloadExcelButton = () => {
       { header: "Commodity", key: "commodity", width: 20 },
       { header: "Tons", key: "tons", width: 10 },
       { header: "Rate", key: "rate", width: 15 },
+      { header: "Payment Terms", key: "payment", width: 18 },
       { header: "Seller", key: "seller", width: 25 },
       { header: "Seller Company", key: "sellerCompany", width: 25 },
       { header: "Sauda No", key: "saudaNo", width: 15 },
@@ -47,7 +48,9 @@ const DownloadExcelButton = () => {
       };
     });
 
-    filteredNotifications.forEach((item, index) => {
+    const rows = Array.isArray(data) && data.length > 0 ? data : notifications;
+
+    rows.forEach((item, index) => {
       const mode = item.sellerCompany === item.company ? "Seller" : "Buyer";
 
       const row = sheet.addRow({
@@ -58,6 +61,7 @@ const DownloadExcelButton = () => {
         commodity: item.commodity,
         tons: item.tons,
         rate: item.rate ?? "N/A",
+        payment: item.payment ?? "",
         seller: item.sellerName ?? "",
         sellerCompany: item.sellerCompany ?? "",
         saudaNo: item.saudaNo ?? "",
