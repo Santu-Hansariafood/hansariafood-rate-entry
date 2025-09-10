@@ -1,227 +1,164 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import Loading from "@/components/common/Loading/Loading";
-import { Plus, Trash2 } from "lucide-react";
-import { toast } from "react-toastify";
 
-const SaudaDetails = ({ company, type }) => {
-  const [saudas, setSaudas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [tagsByEntry, setTagsByEntry] = useState({});
-  const [inputByEntry, setInputByEntry] = useState({});
-
-  // Add a tag to a specific entry card
-  const handleAddTag = (entryKey) => {
-    const value = (inputByEntry[entryKey] || "").trim();
-    if (!value) return;
-    setTagsByEntry((prev) => {
-      const existing = prev[entryKey] || [];
-      if (existing.includes(value)) return prev;
-      return { ...prev, [entryKey]: [...existing, value] };
-    });
-    setInputByEntry((prev) => ({ ...prev, [entryKey]: "" }));
-  };
-
-  // Remove a tag from a specific entry card
-  const handleRemoveTag = (entryKey, tag) => {
-    setTagsByEntry((prev) => ({
-      ...prev,
-      [entryKey]: (prev[entryKey] || []).filter((t) => t !== tag),
-    }));
-  };
-
-  // Only display entries where quantity is greater than 0
-  const shouldDisplayEntry = (entry) => {
-    const qty = parseFloat(entry.tons);
-    return !isNaN(qty) && qty > 0;
-  };
-
-  // Function to check if weight is within ±5% tolerance
-  const isWeightInTolerance = (entry) => {
-    // If no expected weight, return true
-    if (!entry.expectedWeight) return true;
-    
-    const actualWeight = parseFloat(entry.tons);
-    const expectedWeight = parseFloat(entry.expectedWeight);
-    const tolerance = expectedWeight * 0.05; // 5% tolerance
-    
-    return Math.abs(actualWeight - expectedWeight) <= tolerance;
-  };
+const SaudaDetails = ({ companyName }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [data, setData] = useState([]);
 
   useEffect(() => {
-    const fetchSauda = async () => {
+    let mounted = true;
+    if (!companyName) return;
+    (async () => {
+      setLoading(true);
+      setError("");
       try {
-        const res = await axiosInstance.get(`/save-sauda?company=${company}`);
-        const entries = res.data?.entry?.saudaEntries || [];
-        
-        Object.keys(entries).forEach(commodity => {
-          if (entries[commodity] && Array.isArray(entries[commodity])) {
-            entries[commodity].sort((a, b) => {
-              const dateA = new Date(a.createdAt || a.date || 0);
-              const dateB = new Date(b.createdAt || b.date || 0);
-              return dateB - dateA;
-            });
-          }
-        });
-        
-        setSaudas(entries);
-      } catch (error) {
-        console.error("Error fetching sauda:", error);
+        const res = await axiosInstance.get(
+          `/save-sauda/sauda-descriptions?companyName=${encodeURIComponent(
+            companyName
+          )}&page=1`
+        );
+        const results = res?.data?.data?.[0];
+        const days = results?.days || [];
+        if (mounted) setData(days);
+      } catch (e) {
+        if (mounted) setError("Failed to load sauda details");
       } finally {
-        setLoading(false);
+        mounted && setLoading(false);
       }
+    })();
+    return () => {
+      mounted = false;
     };
+  }, [companyName]);
 
-    fetchSauda();
-  }, [company]);
+  const orderedDays = useMemo(() => {
+    return [...data].sort((a, b) => (a.date < b.date ? 1 : -1));
+  }, [data]);
+
+  if (loading)
+    return (
+      <div className="py-6 text-sm text-gray-500 dark:text-gray-400">
+        Loading...
+      </div>
+    );
+  if (error) return <div className="py-6 text-sm text-red-500">{error}</div>;
+  if (!orderedDays.length)
+    return (
+      <div className="py-6 text-sm text-gray-500 dark:text-gray-400">
+        No sauda found for this company.
+      </div>
+    );
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-3">
-        {type === "purchase" ? "Purchase" : "Sale"} Sauda Details
-      </h3>
-
-      {/* Removed global tagging UI; tagging is per-entry below */}
-
-      {loading ? (
-        <Loading />
-      ) : saudas.length === 0 ? (
-        <p className="text-gray-500">No sauda entries found.</p>
-      ) : (
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {Object.entries(saudas).map(([commodity, entries]) =>
-            entries
-              .filter(entry => shouldDisplayEntry(entry))
-              .map((entry, idx) => {
-                const amount = parseFloat(entry.tons) * parseFloat(entry.finalRate);
-                const isInTolerance = isWeightInTolerance(entry);
-                const entryKey = `${commodity}-${idx}-${entry.saudaNo || "NA"}`;
-                
-                return (
-                  <div
-                    key={idx}
-                    className={`p-4 border rounded-lg ${
-                      isInTolerance 
-                        ? 'bg-gray-50' 
-                        : 'bg-yellow-50'
-                    } shadow-sm`}
-                  >
-                    {/* Top section: Sauda No and Date */}
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">Sauda No</p>
-                        <p className="text-sm text-gray-700">{entry.saudaNo || "N/A"}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-800">Date</p>
-                        <p className="text-sm text-gray-700">
-                          {entry.createdAt
-                            ? new Date(entry.createdAt).toLocaleString()
-                            : (entry.date || "N/A")}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Buyer</p>
-                        <p className="text-sm text-gray-600">{entry.buyerName || company || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Seller</p>
-                        <p className="text-sm text-gray-600">{entry.sellerCompany || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Quantity</p>
-                        <p className="text-sm text-gray-600">{entry.tons} {entry.unit}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Rate</p>
-                        <p className="text-sm text-gray-600">₹{entry.finalRate || entry.rate || "N/A"}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">Amount</p>
-                        <p className="text-sm text-gray-800 font-semibold">₹{isNaN(amount) ? "0.00" : amount.toFixed(2)}</p>
-                      </div>
-                      <div></div>
-                    </div>
-                    
-                    {!isInTolerance && (
-                      <p className="text-xs text-yellow-700 mt-1">
-                        Weight outside ±5% tolerance of expected {entry.expectedWeight} {entry.unit}
-                      </p>
-                    )}
-                    
-                    {type === "purchase" && (
-                      <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-1">Tags</p>
-                        <div className="flex gap-2 mb-2">
-                          <input
-                            type="text"
-                            value={inputByEntry[entryKey] || ""}
-                            onChange={(e) =>
-                              setInputByEntry((prev) => ({
-                                ...prev,
-                                [entryKey]: e.target.value,
-                              }))
-                            }
-                            placeholder="Add tag for this sauda"
-                            className="px-3 py-2 border rounded-md text-sm flex-grow"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleAddTag(entryKey);
-                              }
-                            }}
-                          />
-                          <button
-                            onClick={() => handleAddTag(entryKey)}
-                            className="px-3 py-2 bg-green-500 text-white rounded-md text-sm flex items-center gap-1"
-                          >
-                            <Plus size={14} /> Add
-                          </button>
+    <div className="space-y-4 max-h-[72vh] overflow-auto pr-1">
+      {orderedDays.map((day) => (
+        <div
+          key={day.date}
+          className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50"
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">{day.date}</h3>
+            <span className="text-xs text-gray-500">
+              Total Tons: {day.dayTotalTons}
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-md border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-900">
+              <div className="text-sm font-semibold text-green-700 dark:text-green-300 mb-2">
+                Sauda History
+              </div>
+              {day.units.map((u, idx) => (
+                <div key={`buy-${idx}`} className="mb-3 last:mb-0">
+                  <div className="text-xs font-medium mb-1">Unit: {u.unit}</div>
+                  <div className="space-y-2">
+                    {u.commodities.map((co, cidx) => (
+                      <div key={`buy-${idx}-${cidx}`}>
+                        <div className="text-xs font-medium">
+                          {co.commodity}{" "}
+                          <span className="text-[10px] text-gray-500">
+                            ({co.totalTons} Tons)
+                          </span>
                         </div>
-                        {(tagsByEntry[entryKey] || []).length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {(tagsByEntry[entryKey] || []).map((tag) => (
-                              <div key={tag} className="flex items-center bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                                {tag}
-                                <button
-                                  onClick={() => handleRemoveTag(entryKey, tag)}
-                                  className="ml-1 text-green-800 hover:text-green-900 flex items-center"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
+                        <div className="mt-1 border-t border-gray-100 dark:border-gray-700 pt-1 space-y-1">
+                          {co.saudas.map((s, sidx) => {
+                            const totalPrice = (Number(s.finalRate) || 0) * (Number(s.tons) || 0);
+                            return (
+                              <div
+                                key={`buy-${idx}-${cidx}-${sidx}`}
+                                className="text-[11px] flex items-center justify-between"
+                              >
+                                <div className="truncate">
+                                  <span className="text-green-700 dark:text-green-300 font-semibold">#{s.saudaNo || "-"}</span>{" "}
+                                  • {s.sellerName || "-"}
+                                  {s.sellerCompany ? ` (${s.sellerCompany})` : ""}
+                                </div>
+                                <div className="text-right min-w-[160px]">
+                                  <span className="mr-2">{s.tons}Tons</span>
+                                  <span className="font-semibold text-green-700 dark:text-green-300">{s.finalRate}</span>
+                                  <span className="text-gray-500 ml-1">{s.unit}</span>
+                                  <div className="text-[10px] text-green-800 dark:text-green-300">= {totalPrice.toLocaleString()}</div>
+                                </div>
                               </div>
-                            ))}
-                          </div>
-                        )}
+                            );
+                          })}
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                );
-              })
-          )}
+                </div>
+              ))}
+            </div>
+            <div className="rounded-md border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-900">
+              <div className="text-sm font-semibold text-yellow-700 dark:text-yellow-300 mb-2">
+                Sales History
+              </div>
+              {day.units.map((u, idx) => (
+                <div key={`sell-${idx}`} className="mb-3 last:mb-0">
+                  <div className="text-xs font-medium mb-1">Unit: {u.unit}</div>
+                  <div className="space-y-2">
+                    {u.commodities.map((co, cidx) => (
+                      <div key={`sell-${idx}-${cidx}`}>
+                        <div className="text-xs font-medium">
+                          {co.commodity}{" "}
+                          <span className="text-[10px] text-gray-500">
+                            ({co.totalTons} Tons)
+                          </span>
+                        </div>
+                        <div className="mt-1 border-t border-gray-100 dark:border-gray-700 pt-1 space-y-1">
+                          {co.saudas.map((s, sidx) => {
+                            const totalPrice = (Number(s.finalRate) || 0) * (Number(s.tons) || 0);
+                            return (
+                              <div
+                                key={`sell-${idx}-${cidx}-${sidx}`}
+                                className="text-[11px] flex items-center justify-between"
+                              >
+                                <div className="truncate">
+                                  <span className="text-yellow-700 dark:text-yellow-300 font-semibold">#{s.saudaNo || "-"}</span>{" "}
+                                  • {s.sellerName || "-"}
+                                  {s.sellerCompany ? ` (${s.sellerCompany})` : ""}
+                                </div>
+                                <div className="text-right min-w-[160px]">
+                                  <span className="mr-2">{s.tons}Tons</span>
+                                  <span className="font-semibold text-yellow-700 dark:text-yellow-300">{s.finalRate}</span>
+                                  <span className="text-gray-500 ml-1">{s.unit}</span>
+                                  <div className="text-[10px] text-yellow-800 dark:text-yellow-300">= &#8377; {totalPrice.toLocaleString()}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      )}
-      {type === "purchase" && (
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={() => {
-              // Placeholder for persisting tags; currently just confirms save
-              toast.success("Saved successfully");
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-          >
-            Save
-          </button>
-        </div>
-      )}
+      ))}
     </div>
   );
 };
