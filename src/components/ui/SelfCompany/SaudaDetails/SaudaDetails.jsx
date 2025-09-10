@@ -35,7 +35,22 @@ const SaudaDetails = ({ companyName }) => {
   }, [companyName]);
 
   const orderedDays = useMemo(() => {
-    return [...data].sort((a, b) => (a.date < b.date ? 1 : -1));
+    const toTimestamp = (s) => {
+      // Try ISO or Date-parsable first
+      const t = Date.parse(s);
+      if (!Number.isNaN(t)) return t;
+      // Fallback: try DD/MM/YYYY
+      const m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/.exec(String(s));
+      if (m) {
+        const dd = parseInt(m[1], 10);
+        const mm = parseInt(m[2], 10) - 1;
+        const yyyy = parseInt(m[3].length === 2 ? `20${m[3]}` : m[3], 10);
+        const d = new Date(yyyy, mm, dd);
+        return d.getTime();
+      }
+      return -Infinity;
+    };
+    return [...data].sort((a, b) => toTimestamp(b.date) - toTimestamp(a.date));
   }, [data]);
 
   if (loading)
@@ -68,7 +83,7 @@ const SaudaDetails = ({ companyName }) => {
           <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-md border border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-900">
               <div className="text-sm font-semibold text-green-700 dark:text-green-300 mb-2">
-                Sauda History
+                Purchase History
               </div>
               {day.units.map((u, idx) => (
                 <div key={`buy-${idx}`} className="mb-3 last:mb-0">
@@ -84,22 +99,34 @@ const SaudaDetails = ({ companyName }) => {
                         </div>
                         <div className="mt-1 border-t border-gray-100 dark:border-gray-700 pt-1 space-y-1">
                           {co.saudas.map((s, sidx) => {
-                            const totalPrice = (Number(s.finalRate) || 0) * (Number(s.tons) || 0);
+                            const totalPrice =
+                              (Number(s.finalRate) || 0) *
+                              (Number(s.tons) || 0);
                             return (
                               <div
                                 key={`buy-${idx}-${cidx}-${sidx}`}
                                 className="text-[11px] flex items-center justify-between"
                               >
                                 <div className="truncate">
-                                  <span className="text-green-700 dark:text-green-300 font-semibold">#{s.saudaNo || "-"}</span>{" "}
+                                  <span className="text-green-700 dark:text-green-300 font-semibold">
+                                    #{s.saudaNo || "-"}
+                                  </span>{" "}
                                   • {s.sellerName || "-"}
-                                  {s.sellerCompany ? ` (${s.sellerCompany})` : ""}
+                                  {s.sellerCompany
+                                    ? ` (${s.sellerCompany})`
+                                    : ""}
                                 </div>
                                 <div className="text-right min-w-[160px]">
                                   <span className="mr-2">{s.tons}Tons</span>
-                                  <span className="font-semibold text-green-700 dark:text-green-300">{s.finalRate}</span>
-                                  <span className="text-gray-500 ml-1">{s.unit}</span>
-                                  <div className="text-[10px] text-green-800 dark:text-green-300">= {totalPrice.toLocaleString()}</div>
+                                  <span className="font-semibold text-green-700 dark:text-green-300">
+                                    {s.finalRate}
+                                  </span>
+                                  <span className="text-gray-500 ml-1">
+                                    {s.unit}
+                                  </span>
+                                  <div className="text-[10px] text-green-800 dark:text-green-300">
+                                    = {totalPrice.toLocaleString()}
+                                  </div>
                                 </div>
                               </div>
                             );
@@ -129,22 +156,34 @@ const SaudaDetails = ({ companyName }) => {
                         </div>
                         <div className="mt-1 border-t border-gray-100 dark:border-gray-700 pt-1 space-y-1">
                           {co.saudas.map((s, sidx) => {
-                            const totalPrice = (Number(s.finalRate) || 0) * (Number(s.tons) || 0);
+                            const totalPrice =
+                              (Number(s.finalRate) || 0) *
+                              (Number(s.tons) || 0);
                             return (
                               <div
                                 key={`sell-${idx}-${cidx}-${sidx}`}
                                 className="text-[11px] flex items-center justify-between"
                               >
                                 <div className="truncate">
-                                  <span className="text-yellow-700 dark:text-yellow-300 font-semibold">#{s.saudaNo || "-"}</span>{" "}
+                                  <span className="text-yellow-700 dark:text-yellow-300 font-semibold">
+                                    #{s.saudaNo || "-"}
+                                  </span>{" "}
                                   • {s.sellerName || "-"}
-                                  {s.sellerCompany ? ` (${s.sellerCompany})` : ""}
+                                  {s.sellerCompany
+                                    ? ` (${s.sellerCompany})`
+                                    : ""}
                                 </div>
                                 <div className="text-right min-w-[160px]">
                                   <span className="mr-2">{s.tons}Tons</span>
-                                  <span className="font-semibold text-yellow-700 dark:text-yellow-300">{s.finalRate}</span>
-                                  <span className="text-gray-500 ml-1">{s.unit}</span>
-                                  <div className="text-[10px] text-yellow-800 dark:text-yellow-300">= &#8377; {totalPrice.toLocaleString()}</div>
+                                  <span className="font-semibold text-yellow-700 dark:text-yellow-300">
+                                    {s.finalRate}
+                                  </span>
+                                  <span className="text-gray-500 ml-1">
+                                    {s.unit}
+                                  </span>
+                                  <div className="text-[10px] text-yellow-800 dark:text-yellow-300">
+                                    = &#8377; {totalPrice.toLocaleString()}
+                                  </div>
                                 </div>
                               </div>
                             );

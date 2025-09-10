@@ -193,11 +193,14 @@ const SelfCompany = () => {
       </div>
 
       {selectedCompany && (
-        <Modal onClose={() => setSelectedCompany(null)} className="w-[96vw] max-w-6xl">
+        <Modal
+          onClose={() => setSelectedCompany(null)}
+          className="w-[96vw] max-w-6xl"
+        >
           <div className="p-4 md:p-6 text-gray-900 dark:text-gray-100">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold">
-                Purchase History - {selectedCompany}
+                Sauda History - {selectedCompany}
               </h2>
               <button
                 className="text-sm px-3 py-1 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
