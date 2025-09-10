@@ -202,12 +202,6 @@ const SelfCompany = () => {
               <h2 className="text-lg font-semibold">
                 Sauda History - {selectedCompany}
               </h2>
-              <button
-                className="text-sm px-3 py-1 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => setSelectedCompany(null)}
-              >
-                Close
-              </button>
             </div>
             <SaudaDetails companyName={selectedCompany} />
           </div>
