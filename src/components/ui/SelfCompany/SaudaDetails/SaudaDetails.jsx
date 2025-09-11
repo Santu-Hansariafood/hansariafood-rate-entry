@@ -2,11 +2,14 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import Loading from "@/components/common/Loading/Loading";
 
 const SaudaDetails = ({ companyName }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -99,14 +102,21 @@ const SaudaDetails = ({ companyName }) => {
       return -Infinity;
     };
 
-    return [...data].sort((a, b) => toTimestamp(b.date) - toTimestamp(a.date));
-  }, [data]);
+    const startTs = startDate ? toTimestamp(startDate) : -Infinity;
+    const endTs = endDate ? toTimestamp(endDate) : Infinity;
+
+    const withinRange = (d) => {
+      const ts = toTimestamp(d.date);
+      return ts >= startTs && ts <= endTs;
+    };
+
+    const filtered = data.filter(withinRange);
+    return [...filtered].sort((a, b) => toTimestamp(b.date) - toTimestamp(a.date));
+  }, [data, startDate, endDate]);
 
   if (loading)
     return (
-      <div className="py-6 text-sm text-gray-500 dark:text-gray-400">
-        Loading...
-      </div>
+      <Loading/>
     );
   if (error) return <div className="py-6 text-sm text-red-500">{error}</div>;
   if (!orderedDays.length)
@@ -118,6 +128,38 @@ const SaudaDetails = ({ companyName }) => {
 
   return (
     <div className="space-y-4 max-h-[72vh] overflow-auto pr-1">
+      <div className="flex flex-wrap items-end gap-3 sticky top-0 bg-gray-50 dark:bg-gray-800/50 py-2 z-10">
+        <div className="flex flex-col">
+          <label className="text-xs text-gray-600 dark:text-gray-300 mb-1">From</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label className="text-xs text-gray-600 dark:text-gray-300 mb-1">To</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-1"
+          />
+        </div>
+        {(startDate || endDate) && (
+          <button
+            type="button"
+            onClick={() => {
+              setStartDate("");
+              setEndDate("");
+            }}
+            className="text-xs px-3 py-1 rounded bg-red-200 dark:bg-red-700 text-gray-800 dark:text-gray-200"
+          >
+            Clear
+          </button>
+        )}
+      </div>
       {orderedDays.map((day) => (
         <div
           key={day.date}
