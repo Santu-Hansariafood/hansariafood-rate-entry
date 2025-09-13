@@ -191,8 +191,64 @@ export async function GET(req) {
     const results = facetResult?.[0]?.results || [];
     const totalCount = facetResult?.[0]?.total?.[0]?.count || 0;
 
+    let sellerInfo = null;
+    if (companyName && results.length > 0) {
+      const sellerAggregation = await SaudaEntry.aggregate([
+        {
+          $match: {
+            company: companyName,
+            ...dateFilter,
+          },
+        },
+        {
+          $project: {
+            saudaEntries: {
+              $objectToArray: { $ifNull: ["$saudaEntries", {}] },
+            },
+          },
+        },
+        { $unwind: "$saudaEntries" },
+        { $unwind: "$saudaEntries.v" },
+        {
+          $match: {
+            "saudaEntries.v.finalRate": { $gt: 0 },
+            "saudaEntries.v.tons": { $gt: 0 },
+            "saudaEntries.v.sellerName": { $exists: true, $ne: null, $ne: "" },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              sellerName: "$saudaEntries.v.sellerName",
+              sellerCompany: "$saudaEntries.v.sellerCompany",
+            },
+            count: { $sum: 1 },
+            totalTons: { $sum: "$saudaEntries.v.tons" },
+            totalValue: { $sum: { $multiply: ["$saudaEntries.v.finalRate", "$saudaEntries.v.tons"] } },
+          },
+        },
+        { $sort: { count: -1, totalTons: -1 } },
+      ]);
+
+      if (sellerAggregation.length > 0) {
+        sellerInfo = {
+          sellers: sellerAggregation.map(seller => ({
+            sellerName: seller._id.sellerName,
+            sellerCompany: seller._id.sellerCompany,
+            transactionCount: seller.count,
+            totalTons: seller.totalTons,
+            totalValue: seller.totalValue,
+          })),
+          primarySeller: {
+            sellerName: sellerAggregation[0]._id.sellerName,
+            sellerCompany: sellerAggregation[0]._id.sellerCompany,
+          }
+        };
+      }
+    }
+
     return NextResponse.json(
-      { page, pageSize, total: totalCount, data: results },
+      { page, pageSize, total: totalCount, data: results, sellerInfo },
       { status: 200 }
     );
   } catch (err) {
