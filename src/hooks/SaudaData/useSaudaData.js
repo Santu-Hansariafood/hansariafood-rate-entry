@@ -49,10 +49,27 @@ const useSaudaData = () => {
 
         const companyNames = fetchedCompanies.map((c) => c.name);
         if (companyNames.length === 0) return;
-
-        const [rateRes, ...saudaRes] = await Promise.all([
-          axiosInstance.get(`/rate?companies=${companyNames.join(",")}`),
-          ...companyNames.map((company) =>
+        
+        // Process companies in batches to avoid 431 errors (header too large)
+        const BATCH_SIZE = 20;
+        let allRateData = [];
+        let allSaudaRes = [];
+        
+        // Process rates in batches
+        for (let i = 0; i < companyNames.length; i += BATCH_SIZE) {
+          const batchCompanies = companyNames.slice(i, i + BATCH_SIZE);
+          try {
+            const batchRateRes = await axiosInstance.get(`/rate?company=${batchCompanies[0]}&commodity=all`);
+            allRateData = [...allRateData, ...(batchRateRes.data || [])];
+          } catch (err) {
+            console.error(`Failed to fetch rates for batch ${i}:`, err);
+          }
+        }
+        
+        // Process sauda entries in batches
+        for (let i = 0; i < companyNames.length; i += BATCH_SIZE) {
+          const batchCompanies = companyNames.slice(i, i + BATCH_SIZE);
+          const batchPromises = batchCompanies.map(company =>
             axiosInstance
               .get(`/save-sauda?company=${company}&date=${today}`)
               .then((res) => ({
@@ -63,13 +80,16 @@ const useSaudaData = () => {
                 company,
                 entry: null,
               }))
-          ),
-        ]);
-
-        setRateData(rateRes.data || []);
+          );
+          
+          const batchResults = await Promise.all(batchPromises);
+          allSaudaRes = [...allSaudaRes, ...batchResults];
+        }
+        
+        setRateData(allRateData || []);
 
         const saudaStatuses = {};
-        saudaRes.forEach(({ company, entry }) => {
+        allSaudaRes.forEach(({ company, entry }) => {
           let status = "green";
           if (entry) {
             const values = Object.values(entry);

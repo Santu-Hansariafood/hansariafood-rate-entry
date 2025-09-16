@@ -68,6 +68,7 @@ export async function POST(req) {
       existingEntry.time = time || existingEntry.time;
       if (buyer) existingEntry.buyer = buyer.trim();
       if (seller) existingEntry.seller = seller.trim();
+      existingEntry.company = company.trim();
       existingEntry.lastUpdated = new Date();
 
       await existingEntry.save();

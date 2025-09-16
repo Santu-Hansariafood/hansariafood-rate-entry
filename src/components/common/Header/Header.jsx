@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import Loading from "../Loading/Loading";
 const Logo = dynamic(() => import("./Logo/Logo"));
 const DesktopNav = dynamic(() => import("./DesktopNav/DesktopNav"));
 const MobileNav = dynamic(() => import("./MobileNav/MobileNav"));
@@ -50,7 +49,6 @@ export default function Header() {
   if (!isMounted) return <div className="h-20 bg-black"></div>;
 
   return (
-    <Suspense fallback={<Loading />}>
       <header
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${
           isScrolled ? "bg-black shadow-lg" : "bg-black"
@@ -105,6 +103,5 @@ export default function Header() {
           )}
         </AnimatePresence>
       </header>
-    </Suspense>
   );
 }

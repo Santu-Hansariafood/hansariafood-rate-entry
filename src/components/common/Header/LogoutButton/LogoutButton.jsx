@@ -4,7 +4,10 @@ import { Suspense } from "react";
 import Loading from "../../Loading/Loading";
 
 export default function LogoutButton() {
-  const baseUrl = "https://hansariafood.site";
+  const baseUrl = process.env.NODE_ENV === "production" 
+    ? "https://hansariafood.site" 
+    : window.location.origin;
+    
   const handleLogout = () => {
     localStorage.clear();
     signOut({

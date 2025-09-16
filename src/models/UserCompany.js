@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-// import ManageCompany from "@/models/ManageCompany";
 
 const userCompanySchema = new mongoose.Schema(
   {
