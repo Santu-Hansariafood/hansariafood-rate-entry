@@ -34,6 +34,15 @@ const useSaudaData = () => {
     }));
   }, []);
 
+  // Helper function to chunk array into smaller arrays
+  const chunkArray = (array, chunkSize) => {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -50,26 +59,36 @@ const useSaudaData = () => {
         const companyNames = fetchedCompanies.map((c) => c.name);
         if (companyNames.length === 0) return;
 
-        const [rateRes, ...saudaRes] = await Promise.all([
-          axiosInstance.get(`/rate?companies=${companyNames.join(",")}`),
-          ...companyNames.map((company) =>
-            axiosInstance
-              .get(`/save-sauda?company=${company}&date=${today}`)
-              .then((res) => ({
-                company,
-                entry: res.data?.entry?.saudaEntries,
-              }))
-              .catch(() => ({
-                company,
-                entry: null,
-              }))
-          ),
-        ]);
+        // Chunk company names to avoid URL length issues
+        const companyChunks = chunkArray(companyNames, 50); // Adjust chunk size as needed
+        
+        // Fetch rates in chunks
+        const rateRequests = companyChunks.map(chunk => 
+          axiosInstance.get(`/rate?companies=${chunk.join(",")}`)
+        );
+        
+        const rateResponses = await Promise.all(rateRequests);
+        const allRates = rateResponses.flatMap(response => response.data || []);
+        setRateData(allRates);
 
-        setRateData(rateRes.data || []);
+        // Fetch sauda data for each company
+        const saudaRequests = companyNames.map((company) =>
+          axiosInstance
+            .get(`/save-sauda?company=${company}&date=${today}`)
+            .then((res) => ({
+              company,
+              entry: res.data?.entry?.saudaEntries,
+            }))
+            .catch(() => ({
+              company,
+              entry: null,
+            }))
+        );
+
+        const saudaResults = await Promise.all(saudaRequests);
 
         const saudaStatuses = {};
-        saudaRes.forEach(({ company, entry }) => {
+        saudaResults.forEach(({ company, entry }) => {
           let status = "green";
           if (entry) {
             const values = Object.values(entry);
