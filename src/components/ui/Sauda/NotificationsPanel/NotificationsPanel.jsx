@@ -15,6 +15,8 @@ const NotificationsPanel = ({ onClose }) => {
   const handleCopy = (item) => {
     const lines = [
       `*✅ Sauda Confirmed*`,
+      `\n`,
+      `*Sauda details are as follows:*`,
       `*Buyer Name:* ${item.company}`,
       `*Date:* ${item.date}`,
       `*Location:* ${item.location}`,
@@ -31,9 +33,10 @@ const NotificationsPanel = ({ onClose }) => {
         : null,
       item.others ? `*Notes:* ${item.others}` : null,
       `*Delivery Days:*`,
-      `*_Proper Sauda Contract will be Shared Shortly. Please Check Email_*`,
+      `*_Proper Sauda Contract will be Shared Shortly.\n Please Check Your Registered Email_*`,
       ``,
       `*Thanks*,`,
+      `*Purchasing Team*`,
       `*Hansaria Food Private Limited*`,
     ].filter(Boolean);
 

@@ -196,22 +196,16 @@ export default function SaudaTable({
                               </button>
                             )}
                             <input
-                              type="number"
+                              type="text"
                               placeholder="Sauda No"
                               className="w-24 rounded border border-orange-400 dark:border-orange-600 
-                              bg-white dark:bg-gray-800 
-                              text-gray-800 dark:text-gray-200 
-                              px-2 py-1 text-sm focus:ring-2 focus:ring-orange-500"
+                            bg-gray-100 dark:bg-gray-700 
+                            text-gray-500 dark:text-gray-400 
+                              px-2 py-1 text-sm cursor-not-allowed"
                               value={e.saudaNo || ""}
-                              onChange={(ev) =>
-                                handleChange(
-                                  key,
-                                  idx,
-                                  "saudaNo",
-                                  ev.target.value
-                                )
-                              }
+                              disabled
                             />
+
                             <div className="flex gap-2">
                               <button
                                 type="button"

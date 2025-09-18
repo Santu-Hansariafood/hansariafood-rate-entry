@@ -32,5 +32,40 @@ const SaudaEntrySchema = new mongoose.Schema(
   }
 );
 
+const CounterSchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  seq: { type: Number, default: 6000 },
+});
+
+const Counter =
+  mongoose.models.Counter || mongoose.model("Counter", CounterSchema);
+
+SaudaEntrySchema.statics.getNextSaudaNumber = async function () {
+  let counter = await Counter.findOne({ _id: "saudaNumber" });
+
+  if (!counter) {
+    counter = await Counter.create({
+      _id: "saudaNumber",
+      seq: 6000,
+    });
+  } else {
+    if (counter.seq < 6000) {
+      counter = await Counter.findByIdAndUpdate(
+        { _id: "saudaNumber" },
+        { $set: { seq: 6000 } },
+        { new: true }
+      );
+    } else {
+      counter = await Counter.findByIdAndUpdate(
+        { _id: "saudaNumber" },
+        { $inc: { seq: 1 } },
+        { new: true }
+      );
+    }
+  }
+
+  return counter.seq.toString();
+};
+
 export default mongoose.models.SaudaEntry ||
   mongoose.model("SaudaEntry", SaudaEntrySchema);

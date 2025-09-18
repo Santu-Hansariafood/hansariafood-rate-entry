@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
+import mongoose from "mongoose";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
@@ -48,16 +49,52 @@ export async function POST(req) {
     const normalizedEntries = {};
     for (const [key, list] of Object.entries(saudaEntries)) {
       if (!Array.isArray(list)) continue;
-      normalizedEntries[key] = list.map((entry) => ({
-        tons: Number(entry.tons) || 0,
-        others: (entry.others || "").trim(),
-        saudaNo: String(entry.saudaNo || "").trim(),
-        finalRate: Number(entry.finalRate) || 0,
-        unit: (entry.unit || "").trim(),
-        commodity: (entry.commodity || "").trim(),
-        sellerName: (entry.sellerName || "").trim(),
-        sellerCompany: (entry.sellerCompany || "").trim(),
-      }));
+
+      const processedEntries = [];
+      for (const entry of list) {
+        let saudaNumber = String(entry.saudaNo || "").trim();
+        if (!saudaNumber) {
+          let highestNumber = 0;
+          if (existingEntry && existingEntry.saudaEntries) {
+            for (const [
+              existingKey,
+              existingList,
+            ] of existingEntry.saudaEntries.entries()) {
+              if (Array.isArray(existingList)) {
+                for (const existingEntry of existingList) {
+                  if (existingEntry.saudaNo) {
+                    const numericPart = parseInt(existingEntry.saudaNo, 10);
+                    if (!isNaN(numericPart) && numericPart > highestNumber) {
+                      highestNumber = numericPart;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          const nextNumber = await SaudaEntry.getNextSaudaNumber(date);
+
+          if (highestNumber >= parseInt(nextNumber, 10)) {
+            saudaNumber = (highestNumber + 1).toString();
+          } else {
+            saudaNumber = nextNumber;
+          }
+        }
+
+        processedEntries.push({
+          tons: Number(entry.tons) || 0,
+          others: (entry.others || "").trim(),
+          saudaNo: saudaNumber,
+          finalRate: Number(entry.finalRate) || 0,
+          unit: (entry.unit || "").trim(),
+          commodity: (entry.commodity || "").trim(),
+          sellerName: (entry.sellerName || "").trim(),
+          sellerCompany: (entry.sellerCompany || "").trim(),
+        });
+      }
+
+      normalizedEntries[key] = processedEntries;
     }
 
     if (existingEntry) {
@@ -103,6 +140,28 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const company = searchParams.get("company");
     const date = searchParams.get("date");
+    const resetCounter = searchParams.get("resetCounter");
+    const newCounterValue = searchParams.get("newCounterValue");
+    if (resetCounter === "true" && newCounterValue) {
+      const Counter = mongoose.models.Counter;
+      if (!Counter) {
+        return NextResponse.json(
+          { error: "Counter model not found" },
+          { status: 500 }
+        );
+      }
+
+      await Counter.findByIdAndUpdate(
+        { _id: "saudaNumber" },
+        { seq: parseInt(newCounterValue) },
+        { upsert: true }
+      );
+
+      return NextResponse.json(
+        { message: `Sauda counter reset to ${newCounterValue}` },
+        { status: 200 }
+      );
+    }
 
     const query = {};
     if (company) query.company = company;

@@ -1,6 +1,6 @@
 import React from "react";
 
-const SaudaItem = ({ sauda, colorClass, prefix }) => {
+const SalesSaudaItem = ({ sauda, colorClass, prefix }) => {
   const totalPrice = (Number(sauda.finalRate) || 0) * (Number(sauda.tons) || 0);
 
   return (
@@ -9,17 +9,19 @@ const SaudaItem = ({ sauda, colorClass, prefix }) => {
         <span className={`${colorClass} font-semibold`}>
           #{sauda.saudaNo || "-"}
         </span>{" "}
-        • {sauda.consigneeName || sauda.sellerName || "-"}
-        {sauda.consigneeCompany ? ` (${sauda.consigneeCompany})` : sauda.sellerCompany ? ` (${sauda.sellerCompany})` : ""}
+        • {sauda.sellerName || sauda.consigneeName || "-"}
+        {sauda.sellerCompany
+          ? ` (${sauda.sellerCompany})`
+          : sauda.consigneeCompany
+          ? ` (${sauda.consigneeCompany})`
+          : ""}
       </div>
       <div className="text-right min-w-[160px]">
         <span className="mr-2">{sauda.tons}Tons</span>
         <span className={`font-semibold ${colorClass}`}>
           {sauda.finalRate}
         </span>
-        <span className="text-gray-500 ml-1">
-          {sauda.unit}
-        </span>
+        <span className="text-gray-500 ml-1">{sauda.unit}</span>
         <div className={`text-[10px] ${colorClass}`}>
           {prefix} {totalPrice.toLocaleString()}
         </div>
@@ -28,4 +30,4 @@ const SaudaItem = ({ sauda, colorClass, prefix }) => {
   );
 };
 
-export default SaudaItem;
+export default SalesSaudaItem;
