@@ -46,40 +46,44 @@ export async function POST(req) {
         { status: 409 }
       );
     }
+
     const normalizedEntries = {};
+    const existingSaudaNumbers = new Set();
+    if (existingEntry) {
+      for (const [, entries] of existingEntry.saudaEntries.entries()) {
+        for (const entry of entries) {
+          if (entry.saudaNo) {
+            existingSaudaNumbers.add(entry.saudaNo);
+          }
+        }
+      }
+    }
+
     for (const [key, list] of Object.entries(saudaEntries)) {
       if (!Array.isArray(list)) continue;
 
       const processedEntries = [];
       for (const entry of list) {
         let saudaNumber = String(entry.saudaNo || "").trim();
+
+        if (!saudaNumber && existingEntry) {
+          const existingList = existingEntry.saudaEntries.get(key) || [];
+
+          const matchingEntry = existingList.find(
+            (existingEntry) =>
+              existingEntry.commodity === (entry.commodity || "").trim() &&
+              existingEntry.sellerCompany ===
+                (entry.sellerCompany || "").trim() &&
+              Math.abs(existingEntry.tons - (Number(entry.tons) || 0)) < 0.001
+          );
+
+          if (matchingEntry && matchingEntry.saudaNo) {
+            saudaNumber = matchingEntry.saudaNo;
+          }
+        }
+
         if (!saudaNumber) {
-          let highestNumber = 0;
-          if (existingEntry && existingEntry.saudaEntries) {
-            for (const [
-              existingKey,
-              existingList,
-            ] of existingEntry.saudaEntries.entries()) {
-              if (Array.isArray(existingList)) {
-                for (const existingEntry of existingList) {
-                  if (existingEntry.saudaNo) {
-                    const numericPart = parseInt(existingEntry.saudaNo, 10);
-                    if (!isNaN(numericPart) && numericPart > highestNumber) {
-                      highestNumber = numericPart;
-                    }
-                  }
-                }
-              }
-            }
-          }
-
-          const nextNumber = await SaudaEntry.getNextSaudaNumber(date);
-
-          if (highestNumber >= parseInt(nextNumber, 10)) {
-            saudaNumber = (highestNumber + 1).toString();
-          } else {
-            saudaNumber = nextNumber;
-          }
+          saudaNumber = await SaudaEntry.getNextSaudaNumber(date);
         }
 
         processedEntries.push({

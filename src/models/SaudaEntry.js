@@ -40,7 +40,32 @@ const CounterSchema = new mongoose.Schema({
 const Counter =
   mongoose.models.Counter || mongoose.model("Counter", CounterSchema);
 
-SaudaEntrySchema.statics.getNextSaudaNumber = async function () {
+SaudaEntrySchema.statics.getNextSaudaNumber = async function (date) {
+  let highestExistingNumber = 0;
+
+  if (date) {
+    const existingEntries = await this.find({ date });
+    for (const entry of existingEntries) {
+      if (entry.saudaEntries) {
+        for (const [key, list] of entry.saudaEntries.entries()) {
+          if (Array.isArray(list)) {
+            for (const item of list) {
+              if (item.saudaNo) {
+                const numericPart = parseInt(item.saudaNo, 10);
+                if (
+                  !isNaN(numericPart) &&
+                  numericPart > highestExistingNumber
+                ) {
+                  highestExistingNumber = numericPart;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   let counter = await Counter.findOne({ _id: "saudaNumber" });
 
   if (!counter) {
@@ -48,23 +73,33 @@ SaudaEntrySchema.statics.getNextSaudaNumber = async function () {
       _id: "saudaNumber",
       seq: 6000,
     });
-  } else {
-    if (counter.seq < 6000) {
-      counter = await Counter.findByIdAndUpdate(
-        { _id: "saudaNumber" },
-        { $set: { seq: 6000 } },
-        { new: true }
-      );
-    } else {
-      counter = await Counter.findByIdAndUpdate(
-        { _id: "saudaNumber" },
-        { $inc: { seq: 1 } },
-        { new: true }
-      );
-    }
+  } else if (counter.seq < 6000) {
+    counter = await Counter.findByIdAndUpdate(
+      { _id: "saudaNumber" },
+      { $set: { seq: 6000 } },
+      { new: true }
+    );
   }
 
-  return counter.seq.toString();
+  let nextNumber;
+
+  if (highestExistingNumber >= counter.seq) {
+    nextNumber = highestExistingNumber + 1;
+    counter = await Counter.findByIdAndUpdate(
+      { _id: "saudaNumber" },
+      { $set: { seq: nextNumber } },
+      { new: true }
+    );
+  } else {
+    nextNumber = counter.seq;
+    counter = await Counter.findByIdAndUpdate(
+      { _id: "saudaNumber" },
+      { $inc: { seq: 1 } },
+      { new: true }
+    );
+  }
+
+  return nextNumber.toString();
 };
 
 export default mongoose.models.SaudaEntry ||

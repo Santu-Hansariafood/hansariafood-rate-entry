@@ -3,18 +3,26 @@ import React from "react";
 const SalesSaudaItem = ({ sauda, colorClass, prefix }) => {
   const totalPrice = (Number(sauda.finalRate) || 0) * (Number(sauda.tons) || 0);
 
+  // Format the display text to match the required format
+  const getDisplayText = () => {
+    if (sauda.sellerName && sauda.sellerCompany) {
+      return `${sauda.sellerName} (${sauda.sellerCompany})`;
+    } else if (sauda.sellerName) {
+      return sauda.sellerName;
+    } else if (sauda.sellerCompany) {
+      return sauda.sellerCompany;
+    } else {
+      return "-";
+    }
+  };
+
   return (
     <div className="text-[11px] flex items-center justify-between">
       <div className="truncate">
         <span className={`${colorClass} font-semibold`}>
           #{sauda.saudaNo || "-"}
         </span>{" "}
-        • {sauda.sellerName || sauda.consigneeName || "-"}
-        {sauda.sellerCompany
-          ? ` (${sauda.sellerCompany})`
-          : sauda.consigneeCompany
-          ? ` (${sauda.consigneeCompany})`
-          : ""}
+        • {getDisplayText()}
       </div>
       <div className="text-right min-w-[160px]">
         <span className="mr-2">{sauda.tons}Tons</span>

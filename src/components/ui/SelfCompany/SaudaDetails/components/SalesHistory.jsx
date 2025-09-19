@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import SalesSaudaItem from "./SalesSaudaItem";
 
 const SalesHistory = ({ units, filterUnitsBySeller, onSaveTag }) => {
-  // Track input values per consignee
+  // Track input values per seller
   const [tags, setTags] = useState({});
 
   const handleInputChange = (unit, value) => {
@@ -15,7 +15,14 @@ const SalesHistory = ({ units, filterUnitsBySeller, onSaveTag }) => {
     }
   };
 
-  const filteredUnits = filterUnitsBySeller(units);
+  // Filter units to only include those with seller information
+  const filteredUnits = filterUnitsBySeller ? filterUnitsBySeller(units) : 
+    units.filter(unit => {
+      // Check if any sauda in any commodity has seller information
+      return unit.commodities?.some(commodity => 
+        commodity.saudas?.some(sauda => sauda.sellerName || sauda.sellerCompany)
+      );
+    });
 
   if (!filteredUnits.length) {
     return (
@@ -68,28 +75,35 @@ const SalesHistory = ({ units, filterUnitsBySeller, onSaveTag }) => {
 
             {/* Commodities + saudas */}
             <div className="space-y-3">
-              {u.commodities.map((co, cidx) => (
-                <div key={`sell-${idx}-${cidx}`}>
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    <span className="inline-block bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300 px-2 py-0.5 rounded-full text-xs font-semibold">
-                      {co.commodity}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      ({co.totalTons} Tons)
-                    </span>
+              {u.commodities.map((co, cidx) => {
+                // Filter saudas to only include those with seller information
+                const sellerSaudas = co.saudas.filter(s => s.sellerName || s.sellerCompany);
+                
+                if (sellerSaudas.length === 0) return null;
+                
+                return (
+                  <div key={`sell-${idx}-${cidx}`}>
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <span className="inline-block bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300 px-2 py-0.5 rounded-full text-xs font-semibold">
+                        {co.commodity}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        ({co.totalTons} Tons)
+                      </span>
+                    </div>
+                    <div className="mt-2 border-t border-gray-400 dark:border-gray-600 pt-2 space-y-2">
+                      {sellerSaudas.map((s, sidx) => (
+                        <SalesSaudaItem
+                          key={`sell-${idx}-${cidx}-${sidx}`}
+                          sauda={s}
+                          colorClass="text-yellow-700 dark:text-yellow-300"
+                          prefix="= ₹"
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="mt-2 border-t border-gray-400 dark:border-gray-600 pt-2 space-y-2">
-                    {co.saudas.map((s, sidx) => (
-                      <SalesSaudaItem
-                        key={`sell-${idx}-${cidx}-${sidx}`}
-                        sauda={s}
-                        colorClass="text-yellow-700 dark:text-yellow-300"
-                        prefix="= ₹"
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
