@@ -94,78 +94,84 @@ const NotificationsPanel = ({ onClose }) => {
           </div>
         ) : filteredNotifications.length > 0 ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {filteredNotifications.map((item, index) => (
-              <li
-                key={`${item.company}-${item.date}-${item.location}-${index}`}
-                className="relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm space-y-1"
-              >
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center gap-1 font-semibold text-gray-800 dark:text-gray-200">
-                    🏢 {item.company}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {item.date}
-                  </span>
-                  <button
-                    onClick={() => handleCopy(item)}
-                    className="flex items-center gap-1 mt-2 text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
-                    title="Copy details"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded">
-                    📍 {item.location}
-                  </span>
-                  <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">
-                    🌾 {item.commodity}
-                  </span>
-                </div>
-
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                  🪶 Tons: {item.tons}
-                </div>
-                {item.rate && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    💰 Rate: ₹{item.rate}
+            {[...filteredNotifications]
+              .sort((a, b) => {
+                const saudaA = Number(a.saudaNo) || 0;
+                const saudaB = Number(b.saudaNo) || 0;
+                return saudaB - saudaA;
+              })
+              .map((item, index) => (
+                <li
+                  key={`${item.company}-${item.date}-${item.location}-${index}`}
+                  className="relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm space-y-1"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-1 font-semibold text-gray-800 dark:text-gray-200">
+                      🏢 {item.company}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {item.date}
+                    </span>
+                    <button
+                      onClick={() => handleCopy(item)}
+                      className="flex items-center gap-1 mt-2 text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                      title="Copy details"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
                   </div>
-                )}
-                {item.payment !== null &&
-                  item.payment !== undefined &&
-                  String(item.payment).trim() !== "" && (
+
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded">
+                      📍 {item.location}
+                    </span>
+                    <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">
+                      🌾 {item.commodity}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    🪶 Tons: {item.tons}
+                  </div>
+                  {item.rate && (
                     <div className="text-xs text-gray-600 dark:text-gray-400">
-                      🧾 Payment Terms: {item.payment} Day's
+                      💰 Rate: ₹{item.rate}
                     </div>
                   )}
-                {item.buyerName && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    🧑‍💼 Buyer: {item.buyerName}
-                  </div>
-                )}
-                {item.sellerName && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    🏭 Seller: {item.sellerName}
-                  </div>
-                )}
-                {item.sellerCompany && (
-                  <div className="text-xs text-gray-500 dark:text-gray-500">
-                    🏢 Company: {item.sellerCompany}
-                  </div>
-                )}
-                {item.saudaNo && (
-                  <div className="text-xs text-gray-500 dark:text-gray-500">
-                    # Sauda No: {item.saudaNo}
-                  </div>
-                )}
-                {item.others && (
-                  <div className="text-xs text-gray-500 dark:text-gray-500">
-                    ✍️ Notes: {item.others}
-                  </div>
-                )}
-              </li>
-            ))}
+                  {item.payment !== null &&
+                    item.payment !== undefined &&
+                    String(item.payment).trim() !== "" && (
+                      <div className="text-xs text-gray-600 dark:text-gray-400">
+                        🧾 Payment Terms: {item.payment} Day's
+                      </div>
+                    )}
+                  {item.buyerName && (
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      🧑‍💼 Buyer: {item.buyerName}
+                    </div>
+                  )}
+                  {item.sellerName && (
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      🏭 Seller: {item.sellerName}
+                    </div>
+                  )}
+                  {item.sellerCompany && (
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      🏢 Company: {item.sellerCompany}
+                    </div>
+                  )}
+                  {item.saudaNo && (
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      # Sauda No: {item.saudaNo}
+                    </div>
+                  )}
+                  {item.others && (
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      ✍️ Notes: {item.others}
+                    </div>
+                  )}
+                </li>
+              ))}
           </ul>
         ) : (
           <div className="p-4 text-gray-500 dark:text-gray-400">
