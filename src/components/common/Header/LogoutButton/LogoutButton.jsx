@@ -4,15 +4,15 @@ import { Suspense } from "react";
 import Loading from "../../Loading/Loading";
 
 export default function LogoutButton() {
-  const baseUrl = process.env.NODE_ENV === "production" 
+  const baseUrl = process.env.NEXT_PUBLIC_NODE_ENV === "production" 
     ? "https://hansariafood.site" 
-    : window.location.origin;
+    : typeof window !== "undefined" ? window.location.origin : "";
     
   const handleLogout = () => {
     localStorage.clear();
     signOut({
       redirect: true,
-      callbackUrl: baseUrl,
+      callbackUrl: "https://hansariafood.site",
     });
   };
 
