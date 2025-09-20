@@ -1,211 +1,141 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
+import React, { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-
-const Loading = dynamic(() => import("@/components/common/Loading/Loading"));
-const Title = dynamic(() => import("@/components/common/Title/Title"), {
-  loading: () => <Loading />,
-});
-const SearchBox = dynamic(
-  () => import("@/components/common/SearchBox/SearchBox"),
-  { ssr: false, loading: () => <Loading /> }
-);
-const Pagination = dynamic(
-  () => import("@/components/common/Pagination/Pagination"),
-  { loading: () => <Loading /> }
-);
-const Modal = dynamic(() => import("@/components/common/Modal/Modal"), {
-  loading: () => <Loading />,
-});
-const SaudaDetails = dynamic(
-  () => import("@/components/ui/SelfCompany/SaudaDetails/SaudaDetails"),
-  { loading: () => <Loading /> }
-);
-
-const ITEMS_PER_PAGE = 12;
-
-function useDebounce(value, delay = 600) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
-}
+import { toast } from "react-toastify";
+import { X } from "lucide-react";
+import Purchase from "./Purchase/Purchase";
 
 const SelfCompany = () => {
   const [companies, setCompanies] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [selectedCompany, setSelectedCompany] = useState(null);
 
-  const debouncedSearch = useDebounce(search, 700);
+  // filters
+  const [mode, setMode] = useState("combined"); // purchase | sell | combined
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
-  const fetchSelfCompanies = useCallback(async (p = 1, q = "") => {
+  const fetchSelfCompanies = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get(
-        `/managecompany?self=1&page=${p}&limit=${ITEMS_PER_PAGE}&search=${encodeURIComponent(
-          q
-        )}`
-      );
-      setCompanies(res?.data?.companies || []);
-      setTotal(res?.data?.total || 0);
+      const res = await axiosInstance.get("/managecompany?self=true&limit=50");
+      setCompanies(res.data?.companies || []);
     } catch (error) {
       console.error("Error fetching self companies:", error);
+      toast.error(error.response?.data?.error || "Failed to fetch companies");
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearFilters = () => {
+    setMode("combined");
+    setFromDate("");
+    setToDate("");
+  };
+
+  useEffect(() => {
+    fetchSelfCompanies();
   }, []);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
-
-  useEffect(() => {
-    fetchSelfCompanies(page, debouncedSearch);
-  }, [page, debouncedSearch, fetchSelfCompanies]);
-
-  const cards = useMemo(() => {
-    return (companies || []).map((c) => ({
-      id: c._id,
-      name: c.name,
-      state: c.state,
-      category: c.category,
-      types: Array.isArray(c.type) ? c.type : [c.type].filter(Boolean),
-      locations: Array.isArray(c.location) ? c.location : [],
-      commodities: Array.isArray(c.commodities) ? c.commodities : [],
-      subCommodities: Array.isArray(c.subCommodities) ? c.subCommodities : [],
-    }));
-  }, [companies]);
-
   return (
-    <div className="p-4 md:p-6 space-y-4 bg-gray-50 dark:bg-gray-900 min-h-screen text-gray-900 dark:text-gray-100 transition-colors">
-      <Title text="Self Companies" />
-
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 border border-green-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="text-sm text-green-900 dark:text-green-300">
-          Showing {Math.min(ITEMS_PER_PAGE, cards.length)} of {total}
-        </div>
-        <div className="w-full md:w-1/2">
-          <SearchBox
-            value={search}
-            onChange={setSearch}
-            placeholder="Search self company..."
-          />
-        </div>
-      </div>
+    <div className="p-4">
+      <h2 className="text-xl font-semibold mb-4">Self Companies</h2>
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loading />
-        </div>
-      ) : cards.length === 0 ? (
-        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-          No self companies found.
-        </div>
+        <p>Loading...</p>
+      ) : companies.length === 0 ? (
+        <p>No self companies found.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {cards.map((card) => (
-            <div
-              key={card.id}
-              className="group bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer"
-              onClick={() => setSelectedCompany(card.name)}
+        <div className="flex flex-wrap gap-3">
+          {companies.map((company) => (
+            <button
+              key={company._id}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600"
+              onClick={() => setSelectedCompany(company)}
             >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-                  {card.name}
-                </h3>
-                {card.state && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border border-green-200 dark:border-green-800">
-                    {card.state}
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {card.types.map((t) => (
-                  <span
-                    key={t}
-                    className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200 border border-blue-200 dark:border-blue-800"
-                  >
-                    {t}
-                  </span>
-                ))}
-                {card.category && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
-                    {card.category}
-                  </span>
-                )}
-              </div>
-
-              {!!card.locations.length && (
-                <div className="mt-3 text-xs text-gray-600 dark:text-gray-300">
-                  <span className="font-medium">Locations:</span>{" "}
-                  {card.locations.slice(0, 3).join(", ")}
-                  {card.locations.length > 3 && (
-                    <span className="ml-1 text-gray-400">
-                      +{card.locations.length - 3} more
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {!!card.commodities.length && (
-                <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                  <span className="font-medium">Commodities:</span>{" "}
-                  {card.commodities.slice(0, 3).join(", ")}
-                  {card.commodities.length > 3 && (
-                    <span className="ml-1 text-gray-400">
-                      +{card.commodities.length - 3} more
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {!!card.subCommodities.length && (
-                <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                  <span className="font-medium">Sub-commodities:</span>{" "}
-                  {card.subCommodities.slice(0, 3).join(", ")}
-                  {card.subCommodities.length > 3 && (
-                    <span className="ml-1 text-gray-400">
-                      +{card.subCommodities.length - 3} more
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
+              {company.name}
+            </button>
           ))}
         </div>
       )}
 
-      <div className="pt-4">
-        <Pagination
-          currentPage={page}
-          totalItems={total}
-          itemsPerPage={ITEMS_PER_PAGE}
-          onPageChange={setPage}
-        />
-      </div>
-
+      {/* Popup Modal */}
       {selectedCompany && (
-        <Modal
-          onClose={() => setSelectedCompany(null)}
-          className="w-[96vw] max-w-6xl"
-        >
-          <div className="p-4 md:p-6 text-gray-900 dark:text-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold">
-                Sauda History - {selectedCompany}
-              </h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white w-[90%] max-w-5xl h-[85%] rounded-xl shadow-2xl flex flex-col overflow-hidden">
+            {/* Header (Fixed) */}
+            <div className="flex justify-between items-center px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+              <h3 className="text-lg font-semibold">
+                Sauda History - {selectedCompany.name}
+              </h3>
+              <button
+                onClick={() => setSelectedCompany(null)}
+                className="hover:text-red-300"
+              >
+                <X size={22} />
+              </button>
             </div>
-            <SaudaDetails companyName={selectedCompany} />
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+              {/* Combined Filter Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6 bg-white p-4 rounded-lg shadow">
+                {/* Mode Selector */}
+                <div className="flex gap-2 flex-wrap">
+                  {["purchase", "sell", "combined"].map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setMode(opt)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                        mode === opt
+                          ? "bg-blue-500 text-white shadow"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Date Range + Clear */}
+                <div className="flex flex-wrap items-end gap-4">
+                  <div className="flex flex-col">
+                    <label className="text-sm text-gray-600 mb-1">From</label>
+                    <input
+                      type="date"
+                      value={fromDate}
+                      onChange={(e) => setFromDate(e.target.value)}
+                      className="border rounded-lg px-3 py-2"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-sm text-gray-600 mb-1">To</label>
+                    <input
+                      type="date"
+                      value={toDate}
+                      onChange={(e) => setToDate(e.target.value)}
+                      className="border rounded-lg px-3 py-2"
+                    />
+                  </div>
+                  <button
+                    onClick={clearFilters}
+                    className="px-5 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              {/* Sauda History Data Placeholder */}
+              {mode === "purchase" && (
+  <Purchase company={selectedCompany?.name} />
+)}
+
+            </div>
           </div>
-        </Modal>
+        </div>
       )}
     </div>
   );

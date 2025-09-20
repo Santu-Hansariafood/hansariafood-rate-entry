@@ -29,6 +29,7 @@ export default function MobileNav({
     "Seller Company",
     "Location",
     "Self Company",
+    "Previous Sauda",
     "Bid",
     "Manage Bids",
     "Participate",
@@ -84,8 +85,8 @@ export default function MobileNav({
             <nav className="flex-1 overflow-auto">
               <ul className="flex flex-col p-4 gap-4">
                 {navLinks.map((label) => {
-                  let path = `/${label.toLowerCase().replace(/ /g, "")}`;  
-                  
+                  let path = `/${label.toLowerCase().replace(/ /g, "")}`;
+
                   // Special handling for Bid section paths
                   if (label === "Manage Bids") {
                     path = "/bid/manage";

@@ -23,12 +23,7 @@ export default function DesktopNav({
   const [bidDropdownOpen, setBidDropdownOpen] = useState(false);
 
   const navLinks = useMemo(() => {
-    const links = [
-      "Rate",
-      "Sauda",
-      "Company",
-      "Bid",
-    ];
+    const links = ["Rate", "Sauda", "Company", "Bid"];
 
     if (allowedMobileNumbers.includes(currentUserMobile)) {
       links.push("Register");
@@ -48,6 +43,7 @@ export default function DesktopNav({
     { label: "Seller Company", path: "/sellercompany" },
     { label: "Location", path: "/location" },
     { label: "Self Company", path: "/selfcompany" },
+    { label: "Previous Sauda", path: "/previoussauda" },
   ]);
 
   const [bidDropdownItems, setBidDropdownItems] = useState([
@@ -85,6 +81,7 @@ export default function DesktopNav({
                   "/sellercompany",
                   "/location",
                   "/selfcompany",
+                  "/previoussauda",
                 ].some((p) => activeLink.startsWith(p));
 
               return (
@@ -146,7 +143,7 @@ export default function DesktopNav({
                 </motion.li>
               );
             }
-            
+
             if (label === "Bid") {
               const isActive =
                 activeLink &&
