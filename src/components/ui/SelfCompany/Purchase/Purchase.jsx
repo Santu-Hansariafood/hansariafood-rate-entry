@@ -4,26 +4,31 @@ import { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
+import {
+  Calendar,
+  Hash,
+  Package,
+  Leaf,
+  MapPin,
+  IndianRupee,
+  User,
+  Tag,
+  Save,
+} from "lucide-react";
 
 const parseDateString = (dateString) => {
   if (!dateString) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    const d = new Date(dateString);
-    return isNaN(d) ? null : d;
+    return new Date(dateString);
   }
-
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString)) {
-    const [day, month, year] = dateString.split("/").map(Number);
-    const d = new Date(year, month - 1, day);
-    return isNaN(d) ? null : d;
+    const [d, m, y] = dateString.split("/").map(Number);
+    return new Date(y, m - 1, d);
   }
-
   if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateString)) {
-    const [day, month, year] = dateString.split("-").map(Number);
-    const d = new Date(year, month - 1, day);
-    return isNaN(d) ? null : d;
+    const [d, m, y] = dateString.split("-").map(Number);
+    return new Date(y, m - 1, d);
   }
-
   return null;
 };
 
@@ -36,6 +41,7 @@ const formatDate = (dateString) => {
 const Purchase = ({ company, mode, fromDate, toDate }) => {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tagInputs, setTagInputs] = useState({});
 
   const fetchSaudaHistory = async () => {
     try {
@@ -47,8 +53,6 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
       );
 
       const entriesFromApi = res.data?.entries || [];
-      console.log("Raw API entries:", entriesFromApi);
-
       const allEntries = entriesFromApi.flatMap((doc) =>
         Object.entries(doc.saudaEntries).flatMap(([unit, list]) =>
           list.map((item) => ({
@@ -62,35 +66,27 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
         )
       );
 
-      let filteredEntries = allEntries;
-      filteredEntries = filteredEntries.filter((entry) => entry.tons > 0);
+      let filteredEntries = allEntries.filter((e) => e.tons > 0);
       if (mode !== "combined") {
-        filteredEntries = filteredEntries.filter(
-          (entry) => entry.type === mode
-        );
+        filteredEntries = filteredEntries.filter((e) => e.type === mode);
       }
 
       if (fromDate && toDate) {
-        filteredEntries = filteredEntries.filter((entry) => {
-          const entryDate = parseDateString(entry.date);
-          const startDate = new Date(fromDate);
-          const endDate = new Date(toDate);
+        const start = new Date(fromDate);
+        const end = new Date(toDate);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
 
-          startDate.setHours(0, 0, 0, 0);
-          endDate.setHours(23, 59, 59, 999);
-
-          return entryDate && entryDate >= startDate && entryDate <= endDate;
+        filteredEntries = filteredEntries.filter((e) => {
+          const d = parseDateString(e.date);
+          return d && d >= start && d <= end;
         });
       }
+
       filteredEntries.sort((a, b) => {
-        const dateA = parseDateString(a.date);
-        const dateB = parseDateString(b.date);
-
-        if (!dateA && !dateB) return 0;
-        if (!dateA) return 1;
-        if (!dateB) return -1;
-
-        return dateB.getTime() - dateA.getTime();
+        const da = parseDateString(a.date);
+        const db = parseDateString(b.date);
+        return (db?.getTime() || 0) - (da?.getTime() || 0);
       });
 
       setEntries(filteredEntries);
@@ -106,6 +102,22 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
     if (company) fetchSaudaHistory();
   }, [company, mode, fromDate, toDate]);
 
+  const handleTagChange = (idx, value) => {
+    setTagInputs((prev) => ({ ...prev, [idx]: value }));
+  };
+
+  const handleSaveTag = async (entry, idx) => {
+    try {
+      await axiosInstance.put(`/save-sauda/tag-sauda/${entry.saudaNo}`, {
+        tagSaudaNo: tagInputs[idx],
+      });
+      toast.success("Tag saved!");
+    } catch (err) {
+      console.error("Error saving tag:", err);
+      toast.error("Failed to save tag");
+    }
+  };
+
   const getModeTitle = () => {
     switch (mode) {
       case "purchase":
@@ -119,7 +131,10 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
 
   return (
     <div className="w-full">
-      <h3 className="text-lg font-semibold mb-4">{getModeTitle()}</h3>
+      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        <Tag className="w-5 h-5 text-blue-600" />
+        {getModeTitle()}
+      </h3>
 
       {loading ? (
         <Loading />
@@ -136,43 +151,73 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
                   : "border-l-4 border-l-red-500"
               }`}
             >
-              <span className="text-sm font-medium text-gray-700 w-28">
+              <span className="flex items-center text-sm font-medium text-gray-700 w-32">
+                <Calendar className="w-4 h-4 mr-1 text-gray-500" />
                 {formatDate(entry.date)}
               </span>
-              <span className="text-sm font-semibold text-blue-600 w-20">
-                #{entry.saudaNo}
+
+              <span className="flex items-center text-sm font-semibold text-blue-600 w-20">
+                <Hash className="w-4 h-4 mr-1 text-blue-400" />
+                {entry.saudaNo}
               </span>
+
               {entry.tons > 0 && (
-                <span className="text-sm text-gray-700 w-20">
+                <span className="flex items-center text-sm text-gray-700 w-24">
+                  <Package className="w-4 h-4 mr-1 text-gray-500" />
                   {entry.tons} Tons
                 </span>
               )}
-              <span className="text-sm text-gray-700 w-28 truncate">
+
+              <span className="flex items-center text-sm text-gray-700 w-28 truncate">
+                <Leaf className="w-4 h-4 mr-1 text-green-500" />
                 {entry.commodity}
               </span>
-              <span className="text-sm text-gray-600 w-16">{entry.unit}</span>
+
+              <span className="flex items-center text-sm text-gray-600 w-20">
+                <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                {entry.unit}
+              </span>
+
               <span
-                className={`text-sm font-medium w-20 ${
+                className={`flex items-center text-sm font-medium w-24 ${
                   entry.type === "purchase" ? "text-red-600" : "text-green-600"
                 }`}
               >
-                ₹{entry.finalRate}
+                <IndianRupee className="w-4 h-4 mr-1" />
+                {entry.finalRate}
               </span>
-              <span className="text-sm text-gray-600">
+
+              <span className="flex items-center text-sm text-gray-600">
+                <User className="w-4 h-4 mr-1 text-gray-500" />
                 {entry.sellerName} ({entry.sellerCompany})
               </span>
-              {(entry.buyer || entry.seller) && (
-                <span className="text-xs text-gray-500 italic">
-                  B: {entry.buyer || "-"} | S: {entry.seller || "-"}
-                </span>
-              )}
-              {entry.others && (
-                <span className="text-xs text-gray-500 italic">
-                  {entry.others}
-                </span>
-              )}
+              <span className="flex items-center text-sm text-purple-700 font-semibold w-32">
+                Purchase Amount
+                <IndianRupee className="w-4 h-4 mr-1 text-purple-500" />
+                {(
+                  (Number(entry.tons) || 0) * (Number(entry.finalRate) || 0)
+                ).toLocaleString()}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Tag Sauda No"
+                  value={tagInputs[idx] || ""}
+                  onChange={(e) => handleTagChange(idx, e.target.value)}
+                  className="border rounded px-2 py-1 text-sm"
+                />
+                <button
+                  onClick={() => handleSaveTag(entry, idx)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1"
+                >
+                  <Save className="w-4 h-4" />
+                  Save
+                </button>
+              </div>
+
               <span
-                className={`text-xs px-2 py-1 rounded ${
+                className={`text-xs px-2 py-1 rounded font-semibold ${
                   entry.type === "purchase"
                     ? "bg-blue-100 text-blue-800"
                     : "bg-red-100 text-red-800"
