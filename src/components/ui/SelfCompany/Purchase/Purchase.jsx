@@ -14,6 +14,8 @@ import {
   User,
   Tag,
   Save,
+  Plus,
+  X,
 } from "lucide-react";
 
 const parseDateString = (dateString) => {
@@ -102,19 +104,38 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
     if (company) fetchSaudaHistory();
   }, [company, mode, fromDate, toDate]);
 
-  const handleTagChange = (idx, value) => {
-    setTagInputs((prev) => ({ ...prev, [idx]: value }));
+  const handleAddTagInput = (idx) => {
+    setTagInputs((prev) => ({
+      ...prev,
+      [idx]: [...(prev[idx] || []), ""],
+    }));
   };
 
-  const handleSaveTag = async (entry, idx) => {
+  const handleTagChange = (idx, tagIdx, value) => {
+    setTagInputs((prev) => {
+      const updated = [...(prev[idx] || [])];
+      updated[tagIdx] = value;
+      return { ...prev, [idx]: updated };
+    });
+  };
+
+  const handleRemoveTagInput = (idx, tagIdx) => {
+    setTagInputs((prev) => {
+      const updated = [...(prev[idx] || [])];
+      updated.splice(tagIdx, 1);
+      return { ...prev, [idx]: updated };
+    });
+  };
+
+  const handleSaveTags = async (entry, idx) => {
     try {
       await axiosInstance.put(`/save-sauda/tag-sauda/${entry.saudaNo}`, {
-        tagSaudaNo: tagInputs[idx],
+        tagSaudaNo: tagInputs[idx] || [],
       });
-      toast.success("Tag saved!");
+      toast.success("Tags saved!");
     } catch (err) {
-      console.error("Error saving tag:", err);
-      toast.error("Failed to save tag");
+      console.error("Error saving tags:", err);
+      toast.error("Failed to save tags");
     }
   };
 
@@ -141,90 +162,122 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
       ) : entries.length === 0 ? (
         <p className="text-gray-500 text-center py-8">No entries found.</p>
       ) : (
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
           {entries.map((entry, idx) => (
             <div
               key={idx}
-              className={`flex flex-wrap items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm border ${
+              className={`flex flex-col gap-3 bg-white px-4 py-3 rounded-xl shadow-md border relative ${
                 entry.type === "purchase"
                   ? "border-l-4 border-l-blue-500"
                   : "border-l-4 border-l-red-500"
               }`}
             >
-              <span className="flex items-center text-sm font-medium text-gray-700 w-32">
-                <Calendar className="w-4 h-4 mr-1 text-gray-500" />
-                {formatDate(entry.date)}
-              </span>
-
-              <span className="flex items-center text-sm font-semibold text-blue-600 w-20">
-                <Hash className="w-4 h-4 mr-1 text-blue-400" />
-                {entry.saudaNo}
-              </span>
-
-              {entry.tons > 0 && (
-                <span className="flex items-center text-sm text-gray-700 w-24">
-                  <Package className="w-4 h-4 mr-1 text-gray-500" />
-                  {entry.tons} Tons
+              {/* Top Row Info */}
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                <span className="flex items-center text-gray-700">
+                  <Calendar className="w-4 h-4 mr-1 text-gray-500" />
+                  {formatDate(entry.date)}
                 </span>
-              )}
 
-              <span className="flex items-center text-sm text-gray-700 w-28 truncate">
-                <Leaf className="w-4 h-4 mr-1 text-green-500" />
-                {entry.commodity}
-              </span>
+                <span className="flex items-center font-semibold text-blue-600">
+                  <Hash className="w-4 h-4 mr-1 text-blue-400" />
+                  {entry.saudaNo}
+                </span>
 
-              <span className="flex items-center text-sm text-gray-600 w-20">
-                <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                {entry.unit}
-              </span>
+                {entry.tons > 0 && (
+                  <span className="flex items-center text-gray-700">
+                    <Package className="w-4 h-4 mr-1 text-gray-500" />
+                    {entry.tons} Tons
+                  </span>
+                )}
 
-              <span
-                className={`flex items-center text-sm font-medium w-24 ${
-                  entry.type === "purchase" ? "text-red-600" : "text-green-600"
-                }`}
-              >
-                <IndianRupee className="w-4 h-4 mr-1" />
-                {entry.finalRate}
-              </span>
+                <span className="flex items-center text-gray-700 truncate">
+                  <Leaf className="w-4 h-4 mr-1 text-green-500" />
+                  {entry.commodity}
+                </span>
 
-              <span className="flex items-center text-sm text-gray-600">
-                <User className="w-4 h-4 mr-1 text-gray-500" />
-                {entry.sellerName} ({entry.sellerCompany})
-              </span>
-              <span className="flex items-center text-sm text-purple-700 font-semibold w-32">
-                Purchase Amount
-                <IndianRupee className="w-4 h-4 mr-1 text-purple-500" />
-                {(
-                  (Number(entry.tons) || 0) * (Number(entry.finalRate) || 0)
-                ).toLocaleString()}
-              </span>
+                <span className="flex items-center text-gray-600">
+                  <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                  {entry.unit}
+                </span>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Tag Sauda No"
-                  value={tagInputs[idx] || ""}
-                  onChange={(e) => handleTagChange(idx, e.target.value)}
-                  className="border rounded px-2 py-1 text-sm"
-                />
-                <button
-                  onClick={() => handleSaveTag(entry, idx)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded flex items-center gap-1"
+                <span
+                  className={`flex items-center font-medium ${
+                    entry.type === "purchase"
+                      ? "text-red-600"
+                      : "text-green-600"
+                  }`}
                 >
-                  <Save className="w-4 h-4" />
-                  Save
-                </button>
+                  <IndianRupee className="w-4 h-4 mr-1" />
+                  {entry.finalRate}
+                </span>
+
+                <span className="flex items-center text-gray-600">
+                  <User className="w-4 h-4 mr-1 text-gray-500" />
+                  {entry.sellerName} ({entry.sellerCompany})
+                </span>
+
+                <span className="flex items-center text-purple-700 font-semibold">
+                  Purchase Amount
+                  <IndianRupee className="w-4 h-4 ml-1 text-purple-500" />
+                  {(
+                    (Number(entry.tons) || 0) * (Number(entry.finalRate) || 0)
+                  ).toLocaleString()}
+                </span>
               </div>
 
-              <span
-                className={`text-xs px-2 py-1 rounded font-semibold ${
-                  entry.type === "purchase"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-red-100 text-red-800"
-                }`}
-              >
-                {entry.type.toUpperCase()}
-              </span>
+              {/* Tag Inputs */}
+              <div className="space-y-2">
+                {(tagInputs[idx] || [""]).map((tag, tagIdx) => (
+                  <div key={tagIdx} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder={`Tag Sauda No ${tagIdx + 1}`}
+                      value={tag}
+                      onChange={(e) =>
+                        handleTagChange(idx, tagIdx, e.target.value)
+                      }
+                      className="border rounded-lg px-3 py-1 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                    <button
+                      onClick={() => handleRemoveTagInput(idx, tagIdx)}
+                      className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                      title="Remove"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    {tagIdx === (tagInputs[idx]?.length || 1) - 1 && (
+                      <button
+                        onClick={() => handleAddTagInput(idx)}
+                        className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                        title="Add new"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Save Button + Type Badge */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => handleSaveTags(entry, idx)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Tags
+                </button>
+                <span
+                  className={`text-xs px-2 py-1 rounded font-semibold ${
+                    entry.type === "purchase"
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {entry.type.toUpperCase()}
+                </span>
+              </div>
             </div>
           ))}
         </div>
