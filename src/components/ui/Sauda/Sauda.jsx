@@ -128,9 +128,7 @@ const Sauda = () => {
         <BuyerSellerFilter value={filterType} onChange={setFilterType} />
 
         {loading ? (
-          <div className="flex-1 flex items-center justify-center w-full h-60">
             <Loading />
-          </div>
         ) : (
           <>
             {filteredCompanies.length > 0 ? (
