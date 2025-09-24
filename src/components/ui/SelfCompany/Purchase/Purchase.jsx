@@ -48,31 +48,44 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
   const fetchSaudaHistory = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get(
-        `/save-sauda/self-sauda?company=${encodeURIComponent(company)}${
-          fromDate && toDate ? `&fromDate=${fromDate}&toDate=${toDate}` : ""
-        }`
+
+      const dateParams =
+        fromDate && toDate ? `&fromDate=${fromDate}&toDate=${toDate}` : "";
+
+      const purchaseReq = axiosInstance.get(
+        `/save-sauda/self-sauda?company=${encodeURIComponent(
+          company
+        )}${dateParams}`
       );
 
-      const entriesFromApi = res.data?.entries || [];
-      const allEntries = entriesFromApi.flatMap((doc) =>
+      const sellReq = axiosInstance.get(
+        `/save-sauda/sell-agarwal?${dateParams}`
+      );
+
+      const [purchaseRes, sellRes] = await Promise.all([purchaseReq, sellReq]);
+
+      const purchaseEntries = (purchaseRes.data?.entries || []).flatMap((doc) =>
         Object.entries(doc.saudaEntries).flatMap(([unit, list]) =>
           list.map((item) => ({
             date: doc.date,
             unit,
             buyer: doc.buyer || "",
             seller: doc.seller || "",
-            type: item.finalRate > 0 ? "purchase" : "sell",
+            type: "purchase",
             ...item,
           }))
         )
       );
+      const sellEntries = (sellRes.data?.entries || []).map((entry) => ({
+        ...entry,
+        type: "sell",
+      }));
 
+      let allEntries = [...purchaseEntries, ...sellEntries];
       let filteredEntries = allEntries.filter((e) => e.tons > 0);
       if (mode !== "combined") {
         filteredEntries = filteredEntries.filter((e) => e.type === mode);
       }
-
       if (fromDate && toDate) {
         const start = new Date(fromDate);
         const end = new Date(toDate);
@@ -84,7 +97,6 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
           return d && d >= start && d <= end;
         });
       }
-
       filteredEntries.sort((a, b) => {
         const da = parseDateString(a.date);
         const db = parseDateString(b.date);
@@ -172,7 +184,6 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
                   : "border-l-4 border-l-red-500"
               }`}
             >
-              {/* Top Row Info */}
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <span className="flex items-center text-gray-700">
                   <Calendar className="w-4 h-4 mr-1 text-gray-500" />
@@ -225,8 +236,6 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
                   ).toLocaleString()}
                 </span>
               </div>
-
-              {/* Tag Inputs */}
               <div className="space-y-2">
                 {(tagInputs[idx] || [""]).map((tag, tagIdx) => (
                   <div key={tagIdx} className="flex items-center gap-2">
@@ -258,8 +267,6 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
                   </div>
                 ))}
               </div>
-
-              {/* Save Button + Type Badge */}
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => handleSaveTags(entry, idx)}

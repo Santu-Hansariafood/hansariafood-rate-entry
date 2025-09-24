@@ -82,8 +82,8 @@ const PreviousSauda = () => {
     { header: "Company", accessor: "sellerCompany" },
     { header: "Tons", accessor: "tons" },
     { header: "Final Rate", accessor: "finalRate" },
-    { header: "Others", accessor: "others" },
     { header: "Status", accessor: "status" },
+    { header: "Others", accessor: "others" },
   ];
 
   return (
