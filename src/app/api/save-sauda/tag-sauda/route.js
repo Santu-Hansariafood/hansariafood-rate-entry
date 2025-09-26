@@ -5,7 +5,6 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
-// GET all tag sauda
 export async function GET(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,7 +19,6 @@ export async function GET(req) {
   }
 }
 
-// POST create new tag sauda entry
 export async function POST(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

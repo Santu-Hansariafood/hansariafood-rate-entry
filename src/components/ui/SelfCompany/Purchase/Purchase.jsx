@@ -157,7 +157,6 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
 
   const handleSaveTags = async (entry, idx) => {
     try {
-      // Filter out empty strings and ensure we have valid sauda numbers
       const saudaNumbers = (tagInputs[idx] || []).filter(
         (tag) => tag.trim() !== ""
       );
@@ -166,8 +165,6 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
         toast.error("Please enter at least one valid sauda number");
         return;
       }
-
-      // Create a payload with all necessary information from the entry
       const payload = {
         saudaNo: entry.saudaNo,
         date: entry.date,
@@ -291,13 +288,15 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
                 {(tagInputs[idx] || [""]).map((tag, tagIdx) => (
                   <div key={tagIdx} className="flex items-center gap-2">
                     <input
-  type="text"
-  list="sauda-options"
-  placeholder={`Tag Sauda No ${tagIdx + 1}`}
-  value={tag}
-  onChange={(e) => handleTagChange(idx, tagIdx, e.target.value)}
-  className="border rounded-lg px-3 py-1 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
-/>
+                      type="text"
+                      list="sauda-options"
+                      placeholder={`Tag Sauda No ${tagIdx + 1}`}
+                      value={tag}
+                      onChange={(e) =>
+                        handleTagChange(idx, tagIdx, e.target.value)
+                      }
+                      className="border rounded-lg px-3 py-1 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
 
                     <button
                       onClick={() => handleRemoveTagInput(idx, tagIdx)}
