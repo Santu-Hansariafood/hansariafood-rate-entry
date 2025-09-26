@@ -4,7 +4,13 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Calendar } from "lucide-react";
 
-export default function DateSelector({ value, onChange, label = "Select Date" }) {
+export default function DateSelector({
+  value,
+  onChange,
+  label = "Select Date",
+}) {
+  const todayISO = new Date().toISOString().split("T")[0];
+
   return (
     <motion.div
       className="w-full flex items-center gap-3 
@@ -28,7 +34,15 @@ export default function DateSelector({ value, onChange, label = "Select Date" })
       <input
         type="date"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          const selected = e.target.value;
+          if (selected > todayISO) {
+            onChange(todayISO);
+          } else {
+            onChange(selected);
+          }
+        }}
+        max={todayISO}
         className="flex-1 bg-transparent focus:outline-none text-base 
                    text-gray-900 dark:text-white"
       />

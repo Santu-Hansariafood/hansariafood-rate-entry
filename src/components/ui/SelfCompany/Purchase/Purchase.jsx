@@ -44,6 +44,22 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tagInputs, setTagInputs] = useState({});
+  const [allSaudaNos, setAllSaudaNos] = useState([]);
+
+  const fetchAllTaggedSauda = async () => {
+    try {
+      const res = await axiosInstance.get("/save-sauda/tag-sauda");
+      if (Array.isArray(res.data)) {
+        setAllSaudaNos(res.data.map((t) => t.saudaNo));
+      }
+    } catch (err) {
+      console.error("Error fetching all tag sauda:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllTaggedSauda();
+  }, []);
 
   const fetchSaudaHistory = async () => {
     try {
@@ -141,13 +157,48 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
 
   const handleSaveTags = async (entry, idx) => {
     try {
-      await axiosInstance.put(`/save-sauda/tag-sauda/${entry.saudaNo}`, {
-        tagSaudaNo: tagInputs[idx] || [],
-      });
-      toast.success("Tags saved!");
+      // Filter out empty strings and ensure we have valid sauda numbers
+      const saudaNumbers = (tagInputs[idx] || []).filter(
+        (tag) => tag.trim() !== ""
+      );
+
+      if (saudaNumbers.length === 0) {
+        toast.error("Please enter at least one valid sauda number");
+        return;
+      }
+
+      // Create a payload with all necessary information from the entry
+      const payload = {
+        saudaNo: entry.saudaNo,
+        date: entry.date,
+        unit: entry.unit,
+        buyer: entry.buyer || "",
+        seller: entry.seller || "",
+        sellerName: entry.sellerName || "",
+        sellerCompany: entry.sellerCompany || "",
+        commodity: entry.commodity,
+        tons: entry.tons,
+        finalRate: entry.finalRate,
+        type: entry.type,
+        tagSaudaNo: saudaNumbers,
+        taggedBy: company || "system",
+      };
+
+      const res = await axiosInstance.put(
+        `/save-sauda/tag-sauda/${entry.saudaNo}`,
+        payload
+      );
+
+      toast.success("Tags saved successfully!");
+
+      const updated = [...entries];
+      updated[idx].taggedDetails = res.data.entry;
+      setEntries(updated);
     } catch (err) {
       console.error("Error saving tags:", err);
-      toast.error("Failed to save tags");
+      toast.error(
+        "Failed to save tags: " + (err.response?.data?.error || err.message)
+      );
     }
   };
 
@@ -240,14 +291,14 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
                 {(tagInputs[idx] || [""]).map((tag, tagIdx) => (
                   <div key={tagIdx} className="flex items-center gap-2">
                     <input
-                      type="text"
-                      placeholder={`Tag Sauda No ${tagIdx + 1}`}
-                      value={tag}
-                      onChange={(e) =>
-                        handleTagChange(idx, tagIdx, e.target.value)
-                      }
-                      className="border rounded-lg px-3 py-1 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
+  type="text"
+  list="sauda-options"
+  placeholder={`Tag Sauda No ${tagIdx + 1}`}
+  value={tag}
+  onChange={(e) => handleTagChange(idx, tagIdx, e.target.value)}
+  className="border rounded-lg px-3 py-1 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
+/>
+
                     <button
                       onClick={() => handleRemoveTagInput(idx, tagIdx)}
                       className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
@@ -275,6 +326,27 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
                   <Save className="w-4 h-4" />
                   Save Tags
                 </button>
+                {Array.isArray(entry.taggedDetails) &&
+                  entry.taggedDetails.map((detail, dIdx) => (
+                    <div
+                      key={dIdx}
+                      className="text-xs text-gray-700 border-t pt-2"
+                    >
+                      <p>
+                        <strong>Sauda:</strong> {detail.saudaNo}
+                      </p>
+                      <p>
+                        <strong>Commodity:</strong> {detail.commodity}
+                      </p>
+                      <p>
+                        <strong>Pending:</strong> {detail.pendingTons} Tons
+                      </p>
+                      <p>
+                        <strong>Status:</strong> {detail.status}
+                      </p>
+                    </div>
+                  ))}
+
                 <span
                   className={`text-xs px-2 py-1 rounded font-semibold ${
                     entry.type === "purchase"

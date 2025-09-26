@@ -27,11 +27,19 @@ const PreviousSauda = () => {
     search,
     setSearch,
     statuses,
+    setStatuses,
     fetchStatuses,
   } = usePreviousSauda();
 
   const handleMarkDone = async (item) => {
     try {
+      setStatuses((prev) => ({
+        ...prev,
+        [item.saudaNo]: "Done",
+      }));
+
+      toast.success(`Sauda ${item.saudaNo} marked as Done`);
+
       await axiosInstance.post("/sauda-status", {
         saudaNo: item.saudaNo,
         status: "Done",
@@ -40,8 +48,8 @@ const PreviousSauda = () => {
         sellerName: item.sellerName,
         sellerCompany: item.sellerCompany,
       });
+
       fetchStatuses();
-      toast.success(`Sauda ${item.saudaNo} marked as Done`);
     } catch (err) {
       toast.error("Failed to update status");
       console.error(err);

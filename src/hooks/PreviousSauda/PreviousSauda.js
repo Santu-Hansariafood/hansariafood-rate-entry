@@ -65,6 +65,19 @@ const usePreviousSauda = () => {
     }
   }, []);
 
+  const fetchStatuses = useCallback(async () => {
+    try {
+      const res = await axiosInstance.get("/sauda-status");
+      const statusMap = {};
+      (res.data.statuses || []).forEach((s) => {
+        statusMap[s.saudaNo] = s.status;
+      });
+      setStatuses(statusMap);
+    } catch (err) {
+      console.error("Failed to fetch statuses:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData(date);
   }, [date, fetchData]);
@@ -84,7 +97,9 @@ const usePreviousSauda = () => {
     search,
     setSearch,
     statuses,
+    setStatuses,
     fetchData,
+    fetchStatuses,
   };
 };
 
