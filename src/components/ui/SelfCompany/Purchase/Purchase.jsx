@@ -61,6 +61,16 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
     fetchAllTaggedSauda();
   }, []);
 
+  const fetchTagSaudaDetail = async (saudaNo) => {
+    try {
+      const res = await axiosInstance.get(`/save-sauda/tag-sauda/${saudaNo}`);
+      return res.data;
+    } catch (err) {
+      console.error("No tag sauda found for:", saudaNo, err);
+      return null;
+    }
+  };
+
   const fetchSaudaHistory = async () => {
     try {
       setLoading(true);
@@ -139,12 +149,36 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
     }));
   };
 
-  const handleTagChange = (idx, tagIdx, value) => {
+  const handleTagChange = async (idx, tagIdx, value) => {
+    // Update the raw input state first
     setTagInputs((prev) => {
       const updated = [...(prev[idx] || [])];
       updated[tagIdx] = value;
       return { ...prev, [idx]: updated };
     });
+
+    // Only trigger fetch if at least 4 digits entered
+    if (value.trim().length >= 4) {
+      const detail = await fetchTagSaudaDetail(value.trim());
+
+      setEntries((prev) => {
+        const updated = [...prev];
+        if (!updated[idx].taggedBoxDetails) {
+          updated[idx].taggedBoxDetails = {};
+        }
+        updated[idx].taggedBoxDetails[tagIdx] = detail; // can be null if not found
+        return updated;
+      });
+    } else {
+      // Clear the detail if input is less than 4 digits
+      setEntries((prev) => {
+        const updated = [...prev];
+        if (updated[idx]?.taggedBoxDetails) {
+          updated[idx].taggedBoxDetails[tagIdx] = null;
+        }
+        return updated;
+      });
+    }
   };
 
   const handleRemoveTagInput = (idx, tagIdx) => {
@@ -285,34 +319,64 @@ const Purchase = ({ company, mode, fromDate, toDate }) => {
                 </span>
               </div>
               <div className="space-y-2">
+                <datalist id="sauda-options">
+                  {allSaudaNos.map((saudaNo) => (
+                    <option key={saudaNo} value={saudaNo} />
+                  ))}
+                </datalist>
                 {(tagInputs[idx] || [""]).map((tag, tagIdx) => (
-                  <div key={tagIdx} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      list="sauda-options"
-                      placeholder={`Tag Sauda No ${tagIdx + 1}`}
-                      value={tag}
-                      onChange={(e) =>
-                        handleTagChange(idx, tagIdx, e.target.value)
-                      }
-                      className="border rounded-lg px-3 py-1 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
+                  <div key={tagIdx} className="flex flex-col gap-1 w-full">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder={`Tag Sauda No ${tagIdx + 1}`}
+                        value={tag}
+                        onChange={(e) =>
+                          handleTagChange(idx, tagIdx, e.target.value)
+                        }
+                        className="border rounded-lg px-3 py-1 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
 
-                    <button
-                      onClick={() => handleRemoveTagInput(idx, tagIdx)}
-                      className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                      title="Remove"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    {tagIdx === (tagInputs[idx]?.length || 1) - 1 && (
                       <button
-                        onClick={() => handleAddTagInput(idx)}
-                        className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
-                        title="Add new"
+                        onClick={() => handleRemoveTagInput(idx, tagIdx)}
+                        className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                       >
-                        <Plus className="w-4 h-4" />
+                        <X className="w-4 h-4" />
                       </button>
+
+                      {tagIdx === (tagInputs[idx]?.length || 1) - 1 && (
+                        <button
+                          onClick={() => handleAddTagInput(idx)}
+                          className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {entries[idx]?.taggedBoxDetails?.[tagIdx] ? (
+                      <div className="ml-2 text-xs text-gray-700 border rounded p-2 bg-gray-50">
+                        <p>
+                          <strong>Sauda:</strong>{" "}
+                          {entries[idx].taggedBoxDetails[tagIdx].saudaNo}
+                        </p>
+                        <p>
+                          <strong>Commodity:</strong>{" "}
+                          {entries[idx].taggedBoxDetails[tagIdx].commodity}
+                        </p>
+                        <p>
+                          <strong>Total Tons:</strong>{" "}
+                          {entries[idx].taggedBoxDetails[tagIdx].tons}
+                        </p>
+                        <p>
+                          <strong>Pending:</strong>{" "}
+                          {entries[idx].taggedBoxDetails[tagIdx].pendingTons}
+                        </p>
+                      </div>
+                    ) : (
+                      tag && (
+                        <p className="ml-2 text-xs text-red-500">Not found</p>
+                      )
                     )}
                   </div>
                 ))}
