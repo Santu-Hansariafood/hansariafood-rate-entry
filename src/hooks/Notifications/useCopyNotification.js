@@ -84,19 +84,13 @@ ${payment && payment !== "" ? `*Payment Terms: ${payment} Days*` : ""}${
 (Updated on: ${time}).  
 
 👉 *For rates and orders, please click the link below to participate in the bid.*
-🔗 _Web App:_ https://vupix.in/hfood/auth/index.php  
-📱 _Play Store:_ https://play.google.com/store/apps/details?id=com.hansaria.food  
  
-Hindi (हिन्दी):
-
 👉 *रेट और ऑर्डर के लिए कृपया नीचे दिए गए लिंक पर क्लिक करें और बोली में भाग लें।*
-🔗 _वेब ऐप:_ https://vupix.in/hfood/auth/index.php  
-📱 _प्ले स्टोर:_ https://play.google.com/store/apps/details?id=com.hansaria.food  
 
-👉 *Bengali (বাংলা):*  
-*রেট এবং অর্ডারের জন্য অনুগ্রহ করে নিচের লিঙ্কে ক্লিক করে বিডে অংশগ্রহণ করুন।*
-🔗 _ওয়েব অ্যাপ:_ https://vupix.in/hfood/auth/index.php  
-📱 _প্লে স্টোর:_ https://play.google.com/store/apps/details?id=com.hansaria.food  
+👉 *রেট এবং অর্ডারের জন্য অনুগ্রহ করে নিচের লিঙ্কে ক্লিক করে বিডে অংশগ্রহণ করুন।*
+
+🌐 *Web App:* _https://vupix.in/hfood/auth/index.php_  
+📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansaria.food_  
 
 
 *Thanks,*  
