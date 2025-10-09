@@ -129,56 +129,6 @@ const SelfCompany = () => {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6 bg-white p-4 rounded-lg shadow">
-                <div className="flex gap-2 flex-wrap">
-                  {["purchase", "sell", "combined"].map((opt) => (
-                    <motion.button
-                      key={opt}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setMode(opt)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        mode === opt
-                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                    </motion.button>
-                  ))}
-                </div>
-
-                <div className="flex flex-wrap items-end gap-4">
-                  <div className="flex flex-col">
-                    <label className="text-sm text-gray-600 mb-1">From</label>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                      className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-400"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-sm text-gray-600 mb-1">To</label>
-                    <input
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                      className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-400"
-                    />
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={clearFilters}
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 
-                               text-white font-medium shadow hover:from-gray-700 hover:to-gray-800 
-                               transform transition-all duration-200"
-                  >
-                    Clear
-                  </motion.button>
-                </div>
-              </div>
               <Purchase
                 company={selectedCompany?.name}
                 mode={mode}
