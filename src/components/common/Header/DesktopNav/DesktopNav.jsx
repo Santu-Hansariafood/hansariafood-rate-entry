@@ -20,10 +20,9 @@ export default function DesktopNav({
 }) {
   const allowedMobileNumbers = ["9830433535", "7029481930"];
   const [openDropdown, setOpenDropdown] = useState(false);
-  const [bidDropdownOpen, setBidDropdownOpen] = useState(false);
 
   const navLinks = useMemo(() => {
-    const links = ["Rate", "Sauda", "Company", "Bid"];
+    const links = ["Rate", "Sauda", "Company"];
 
     if (allowedMobileNumbers.includes(currentUserMobile)) {
       links.push("Register");
@@ -46,13 +45,6 @@ export default function DesktopNav({
     { label: "Previous Sauda", path: "/previoussauda" },
   ]);
 
-  const [bidDropdownItems, setBidDropdownItems] = useState([
-    { label: "Bid", path: "/bid" },
-    { label: "Manage Bids", path: "/bid/manage" },
-    { label: "Participate", path: "/bid/participate" },
-    { label: "Participants", path: "/bid/participants" },
-  ]);
-
   const companyTitle = (() => {
     const found = companyDropdownItems.find(
       (i) => activeLink && activeLink.startsWith(i.path)
@@ -60,194 +52,115 @@ export default function DesktopNav({
     return found ? found.label : "Company";
   })();
 
-  const bidTitle = (() => {
-    const found = bidDropdownItems.find(
-      (i) => activeLink && activeLink.startsWith(i.path)
-    );
-    return found ? found.label : "Bid";
-  })();
-
   return (
-    <Suspense fallback={<Loading />}>
-      <nav className="hidden md:flex items-center gap-8">
-        <ul className="flex items-center gap-8 text-sm md:text-base relative">
-          {navLinks.map(({ label, path }) => {
-            if (label === "Company") {
-              const isActive =
-                activeLink &&
-                [
-                  "/company",
-                  "/managecompany",
-                  "/sellercompany",
-                  "/location",
-                  "/selfcompany",
-                  "/previoussauda",
-                ].some((p) => activeLink.startsWith(p));
-
-              return (
-                <motion.li
-                  key="company-dropdown"
-                  className="relative"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div
-                    className={`flex items-center gap-1 cursor-pointer group ${
-                      isActive
-                        ? "text-green-400"
-                        : "text-white/90 hover:text-white"
-                    }`}
-                    onClick={() => setOpenDropdown((v) => !v)}
-                  >
-                    {companyTitle}
-                    <ChevronDown
-                      size={16}
-                      className={`transition-transform ${
-                        openDropdown ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-
-                  {openDropdown && (
-                    <ul className="absolute left-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg overflow-hidden z-20">
-                      {companyDropdownItems.map(({ label, path }) => (
-                        <li key={path}>
-                          <Link
-                            href={path}
-                            onClick={() => {
-                              setActiveLink(path);
-                              setOpenDropdown(false);
-                              setCompanyDropdownItems((items) => {
-                                const idx = items.findIndex(
-                                  (i) => i.path === path
-                                );
-                                if (idx <= 0) return items;
-                                const next = [...items];
-                                const [picked] = next.splice(idx, 1);
-                                next.unshift(picked);
-                                return next;
-                              });
-                            }}
-                            className={`block px-4 py-2 text-sm transition-colors ${
-                              activeLink === path
-                                ? "bg-green-500 text-white"
-                                : "text-white/90 hover:bg-gray-700 hover:text-white"
-                            }`}
-                          >
-                            {label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </motion.li>
-              );
-            }
-
-            if (label === "Bid") {
-              const isActive =
-                activeLink &&
-                [
-                  "/bid",
-                  "/bid/manage",
-                  "/bid/participate",
-                  "/bid/participants",
-                ].some((p) => activeLink.startsWith(p));
-
-              return (
-                <motion.li
-                  key="bid-dropdown"
-                  className="relative"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div
-                    className={`flex items-center gap-1 cursor-pointer group ${
-                      isActive
-                        ? "text-green-400"
-                        : "text-white/90 hover:text-white"
-                    }`}
-                    onClick={() => setBidDropdownOpen((v) => !v)}
-                  >
-                    {bidTitle}
-                    <ChevronDown
-                      size={16}
-                      className={`transition-transform ${
-                        bidDropdownOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-
-                  {bidDropdownOpen && (
-                    <ul className="absolute left-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg overflow-hidden z-20">
-                      {bidDropdownItems.map(({ label, path }) => (
-                        <li key={path}>
-                          <Link
-                            href={path}
-                            onClick={() => {
-                              setActiveLink(path);
-                              setBidDropdownOpen(false);
-                              setBidDropdownItems((items) => {
-                                const idx = items.findIndex(
-                                  (i) => i.path === path
-                                );
-                                if (idx <= 0) return items;
-                                const next = [...items];
-                                const [picked] = next.splice(idx, 1);
-                                next.unshift(picked);
-                                return next;
-                              });
-                            }}
-                            className={`block px-4 py-2 text-sm transition-colors ${
-                              activeLink === path
-                                ? "bg-green-500 text-white"
-                                : "text-white/90 hover:bg-gray-700 hover:text-white"
-                            }`}
-                          >
-                            {label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </motion.li>
-              );
-            }
+    <nav className="hidden md:flex items-center gap-8">
+      <ul className="flex items-center gap-8 text-sm md:text-base relative">
+        {navLinks.map(({ label, path }) => {
+          if (label === "Company") {
+            const isActive =
+              activeLink &&
+              [
+                "/company",
+                "/managecompany",
+                "/sellercompany",
+                "/location",
+                "/selfcompany",
+                "/previoussauda",
+              ].some((p) => activeLink.startsWith(p));
 
             return (
               <motion.li
-                key={path}
+                key="company-dropdown"
                 className="relative"
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Link
-                  href={path}
-                  onClick={() => setActiveLink(path)}
-                  className={`relative group ${
-                    activeLink === path
+                <div
+                  className={`flex items-center gap-1 cursor-pointer group ${
+                    isActive
                       ? "text-green-400"
                       : "text-white/90 hover:text-white"
                   }`}
+                  onClick={() => setOpenDropdown((v) => !v)}
                 >
-                  {label}
-                  <span
-                    className={`absolute -bottom-1 left-0 h-0.5 bg-green-400 transition-all duration-300 ${
-                      activeLink === path ? "w-full" : "w-0 group-hover:w-full"
+                  {companyTitle}
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${
+                      openDropdown ? "rotate-180" : ""
                     }`}
                   />
-                </Link>
+                </div>
+
+                {openDropdown && (
+                  <ul className="absolute left-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg overflow-hidden z-20">
+                    {companyDropdownItems.map(({ label, path }) => (
+                      <li key={path}>
+                        <Link
+                          href={path}
+                          onClick={() => {
+                            setActiveLink(path);
+                            setOpenDropdown(false);
+                            setCompanyDropdownItems((items) => {
+                              const idx = items.findIndex(
+                                (i) => i.path === path
+                              );
+                              if (idx <= 0) return items;
+                              const next = [...items];
+                              const [picked] = next.splice(idx, 1);
+                              next.unshift(picked);
+                              return next;
+                            });
+                          }}
+                          className={`block px-4 py-2 text-sm transition-colors ${
+                            activeLink === path
+                              ? "bg-green-500 text-white"
+                              : "text-white/90 hover:bg-gray-700 hover:text-white"
+                          }`}
+                        >
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </motion.li>
             );
-          })}
+          }
 
-          <NotificationBell notifications={notifications} />
+          return (
+            <motion.li
+              key={path}
+              className="relative"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                href={path}
+                onClick={() => setActiveLink(path)}
+                className={`relative group ${
+                  activeLink === path
+                    ? "text-green-400"
+                    : "text-white/90 hover:text-white"
+                }`}
+              >
+                {label}
+                <span
+                  className={`absolute -bottom-1 left-0 h-0.5 bg-green-400 transition-all duration-300 ${
+                    activeLink === path ? "w-full" : "w-0 group-hover:w-full"
+                  }`}
+                />
+              </Link>
+            </motion.li>
+          );
+        })}
 
-          <motion.li whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <LogoutButton />
-          </motion.li>
-        </ul>
-      </nav>
-    </Suspense>
+        <NotificationBell notifications={notifications} />
+
+        <motion.li whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <LogoutButton />
+        </motion.li>
+      </ul>
+    </nav>
   );
 }

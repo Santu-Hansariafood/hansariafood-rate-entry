@@ -30,10 +30,6 @@ export default function MobileNav({
     "Location",
     "Self Company",
     "Previous Sauda",
-    "Bid",
-    "Manage Bids",
-    "Participate",
-    "Participants",
   ];
 
   const extraLinks = allowedMobileNumbers.includes(currentUserMobile)
@@ -48,7 +44,6 @@ export default function MobileNav({
     window.history.pushState({ mobileNavOpen: true }, "");
 
     const handlePopState = () => setIsOpen(false);
-
     window.addEventListener("popstate", handlePopState);
 
     return () => window.removeEventListener("popstate", handlePopState);
@@ -62,72 +57,61 @@ export default function MobileNav({
   };
 
   return (
-    <Suspense fallback={<Loading />}>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "tween" }}
-            className="fixed top-0 right-0 w-64 h-full bg-gray-900 text-white z-50 shadow-lg flex flex-col"
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-              <h2 className="text-lg font-semibold">Menu</h2>
-              <button
-                onClick={handleCloseDrawer}
-                className="text-gray-400 hover:text-white text-xl"
-              >
-                ✕
-              </button>
-            </div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
+          transition={{ type: "tween" }}
+          className="fixed top-0 right-0 w-64 h-full bg-gray-900 text-white z-50 shadow-lg flex flex-col"
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+            <h2 className="text-lg font-semibold">Menu</h2>
+            <button
+              onClick={handleCloseDrawer}
+              className="text-gray-400 hover:text-white text-xl"
+            >
+              ✕
+            </button>
+          </div>
 
-            <nav className="flex-1 overflow-auto">
-              <ul className="flex flex-col p-4 gap-4">
-                {navLinks.map((label) => {
-                  let path = `/${label.toLowerCase().replace(/ /g, "")}`;
-
-                  // Special handling for Bid section paths
-                  if (label === "Manage Bids") {
-                    path = "/bid/manage";
-                  } else if (label === "Participate") {
-                    path = "/bid/participate";
-                  } else if (label === "Participants") {
-                    path = "/bid/participants";
-                  }
-                  return (
-                    <motion.li
-                      key={path}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        setActiveLink(path);
-                        setIsOpen(false);
-                      }}
+          <nav className="flex-1 overflow-auto">
+            <ul className="flex flex-col p-4 gap-4">
+              {navLinks.map((label) => {
+                const path = `/${label.toLowerCase().replace(/ /g, "")}`;
+                return (
+                  <motion.li
+                    key={path}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setActiveLink(path);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <Link
+                      href={path}
+                      className={`block px-2 py-1 rounded ${
+                        activeLink === path
+                          ? "bg-green-500 text-white"
+                          : "hover:bg-gray-800"
+                      }`}
                     >
-                      <Link
-                        href={path}
-                        className={`block px-2 py-1 rounded ${
-                          activeLink === path
-                            ? "bg-green-500 text-white"
-                            : "hover:bg-gray-800"
-                        }`}
-                      >
-                        {label}
-                      </Link>
-                    </motion.li>
-                  );
-                })}
+                      {label}
+                    </Link>
+                  </motion.li>
+                );
+              })}
 
-                <NotificationBell notifications={notifications} />
+              <NotificationBell notifications={notifications} />
 
-                <li>
-                  <LogoutButton />
-                </li>
-              </ul>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </Suspense>
+              <li>
+                <LogoutButton />
+              </li>
+            </ul>
+          </nav>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
