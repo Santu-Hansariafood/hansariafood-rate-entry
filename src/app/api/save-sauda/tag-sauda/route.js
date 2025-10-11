@@ -3,12 +3,12 @@ import { connectDB } from "@/lib/mongodb";
 import TagSauda from "@/models/TagSauda";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
-
 export async function GET(req) {
-  if (!verifyApiKey(req)) {
+  await connectDB();
+
+  const authorized = await verifyApiKey(req);
+  if (!authorized)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   try {
     const allTags = await TagSauda.find().sort({ createdAt: -1 });
@@ -20,22 +20,32 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  if (!verifyApiKey(req)) {
+  await connectDB();
+
+  const authorized = await verifyApiKey(req);
+  if (!authorized)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   try {
     const body = await req.json();
 
-    if (!body.saudaNo || !body.date || !body.unit || !body.commodity) {
+    const { saudaNo, date, unit, commodity, tons, finalRate, type } = body;
+
+    if (!saudaNo || !date || !unit || !commodity || !tons || !finalRate || !type) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    const created = await TagSauda.create(body);
+    const existing = await TagSauda.findOne({ saudaNo });
+    if (existing)
+      return NextResponse.json(
+        { error: "Sauda already exists" },
+        { status: 400 }
+      );
 
+    const created = await TagSauda.create(body);
     return NextResponse.json(
       { message: "Tag sauda created successfully", entry: created },
       { status: 201 }

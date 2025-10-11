@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
-import { Calendar, Package, Leaf, MapPin, Hash, X } from "lucide-react";
+import { Package, Leaf, MapPin } from "lucide-react";
+import StockDetailsModal from "./StockDetailsModal/StockDetailsModal";
 
-// --- Utility functions ---
 const parseDateString = (dateString) => {
   if (!dateString) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) return new Date(dateString);
@@ -27,13 +27,12 @@ const formatDate = (dateString) => {
   return parsed.toLocaleDateString("en-GB");
 };
 
-const StockBook = ({ company, fromDate, toDate }) => {
+const Purchase = ({ company, fromDate, toDate }) => {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stockData, setStockData] = useState([]);
   const [selectedDetails, setSelectedDetails] = useState(null);
 
-  // --- Fetch entries ---
   const fetchSaudaHistory = async () => {
     try {
       setLoading(true);
@@ -65,7 +64,6 @@ const StockBook = ({ company, fromDate, toDate }) => {
         type: "sell",
       }));
 
-      // Filter and sort by Sauda No (descending)
       const filtered = [...purchaseEntries, ...sellEntries]
         .filter((e) => e.tons > 0)
         .sort((a, b) => {
@@ -88,7 +86,6 @@ const StockBook = ({ company, fromDate, toDate }) => {
     if (company) fetchSaudaHistory();
   }, [company, fromDate, toDate]);
 
-  // --- Calculate Stock Data ---
   const calculateStock = (data) => {
     const grouped = {};
 
@@ -122,9 +119,6 @@ const StockBook = ({ company, fromDate, toDate }) => {
 
     setStockData(Object.values(grouped));
   };
-
-  // --- Modal ---
-  const closeModal = () => setSelectedDetails(null);
 
   return (
     <div className="w-full">
@@ -224,66 +218,15 @@ const StockBook = ({ company, fromDate, toDate }) => {
         </div>
       )}
 
-      {/* --- Improved Modal --- */}
+      {/* Popup Component */}
       {selectedDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-5xl p-6 relative animate-fadeIn">
-            <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition"
-              onClick={closeModal}
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            <h4 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b pb-2">
-              {selectedDetails.type === "purchase" ? "Purchase" : "Sale"}{" "}
-              Details – {selectedDetails.commodity} ({selectedDetails.unit})
-            </h4>
-
-            <div className="max-h-[480px] overflow-y-auto rounded-md border border-gray-100">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100 sticky top-0">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium text-gray-600">
-                      <Calendar className="w-4 h-4 inline mr-1" /> Date
-                    </th>
-                    <th className="px-3 py-2 text-left font-medium text-gray-600">
-                      <Hash className="w-4 h-4 inline mr-1" /> Sauda No
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium text-gray-600">
-                      Tons
-                    </th>
-                    <th className="px-3 py-2 text-right font-medium text-gray-600">
-                      Rate
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedDetails.entries.map((e, i) => (
-                    <tr
-                      key={i}
-                      className="border-t hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-3 py-2">{formatDate(e.date)}</td>
-                      <td className="px-3 py-2 text-blue-600 font-medium flex items-center gap-1">
-                        <Hash className="w-4 h-4 text-blue-400" /> {e.saudaNo}
-                      </td>
-                      <td className="px-3 py-2 text-right text-gray-700">
-                        {e.tons}
-                      </td>
-                      <td className="px-3 py-2 text-right font-semibold text-gray-800">
-                        {e.finalRate || "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <StockDetailsModal
+          details={selectedDetails}
+          onClose={() => setSelectedDetails(null)}
+        />
       )}
     </div>
   );
 };
 
-export default StockBook;
+export default Purchase;

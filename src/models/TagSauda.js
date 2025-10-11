@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const TagSaudaSchema = new mongoose.Schema(
   {
-    saudaNo: { type: String, required: true, unique: true },
+    saudaNo: { type: String, required: true },
     date: { type: String, required: true },
     unit: { type: String, required: true },
     buyer: { type: String, default: "" },
@@ -13,18 +13,23 @@ const TagSaudaSchema = new mongoose.Schema(
     tons: { type: Number, required: true },
     finalRate: { type: Number, required: true },
     type: { type: String, enum: ["purchase", "sell"], required: true },
-    tagSaudaNo: [{ type: String }],
-    purchaseLinkedSauda: {
-      type: [String],
-      default: [],
-    },
-    sellLinkedSauda: {
-      type: [String],
-      default: [],
+    tagSaudaNo: [
+      {
+        saudaNo: { type: String },
+        qty: { type: Number, default: 0 },
+      },
+    ],
+
+    purchaseLinkedSauda: [{ type: String, default: [] }],
+    sellLinkedSauda: [{ type: String, default: [] }],
+
+    status: {
+      type: String,
+      enum: ["Pending", "Complete"],
+      default: "Pending",
     },
 
     taggedBy: { type: String, default: "system" },
-    createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

@@ -13,16 +13,12 @@ export async function GET(req, { params }) {
   try {
     const { id } = params;
 
-    const entry = await TagSauda.findOne({
-      saudaNo: isNaN(id) ? id : Number(id),
-    });
-
-    if (!entry) {
+    const entry = await TagSauda.findOne({ saudaNo: id });
+    if (!entry)
       return NextResponse.json(
         { error: "Tag sauda not found" },
         { status: 404 }
       );
-    }
 
     return NextResponse.json(entry, { status: 200 });
   } catch (error) {
@@ -42,20 +38,18 @@ export async function PUT(req, { params }) {
     const { id } = params;
     const body = await req.json();
 
-    const saudaNo = isNaN(id) ? id : Number(id);
     const {
       type, // "purchase" or "sell"
       sellLinkedSauda = [],
       purchaseLinkedSauda = [],
-      taggedBy,
+      taggedBy = "system",
     } = body;
 
-    // Fetch or create the main entry
-    let mainEntry = await TagSauda.findOne({ saudaNo });
+    let mainEntry = await TagSauda.findOne({ saudaNo: id });
 
     if (!mainEntry) {
       mainEntry = await TagSauda.create({
-        saudaNo,
+        saudaNo: id,
         type,
         taggedBy,
         sellLinkedSauda: [],
@@ -63,36 +57,35 @@ export async function PUT(req, { params }) {
       });
     }
 
-    // Update directional link
+    // Purchase links sell side
     if (type === "purchase" && sellLinkedSauda.length > 0) {
-      // Link sells to this purchase
       mainEntry.sellLinkedSauda = [...new Set(sellLinkedSauda)];
 
-      // Also ensure each sell points back to this purchase
       await Promise.all(
         sellLinkedSauda.map(async (sellNo) => {
           await TagSauda.findOneAndUpdate(
             { saudaNo: sellNo },
             {
               $setOnInsert: { type: "sell", taggedBy },
-              $addToSet: { purchaseLinkedSauda: saudaNo },
+              $addToSet: { purchaseLinkedSauda: id },
             },
             { new: true, upsert: true }
           );
         })
       );
-    } else if (type === "sell" && purchaseLinkedSauda.length > 0) {
-      // Link purchases to this sell
+    }
+
+    // Sell links purchase side
+    if (type === "sell" && purchaseLinkedSauda.length > 0) {
       mainEntry.purchaseLinkedSauda = [...new Set(purchaseLinkedSauda)];
 
-      // Ensure each purchase points to this sell
       await Promise.all(
         purchaseLinkedSauda.map(async (purchaseNo) => {
           await TagSauda.findOneAndUpdate(
             { saudaNo: purchaseNo },
             {
               $setOnInsert: { type: "purchase", taggedBy },
-              $addToSet: { sellLinkedSauda: saudaNo },
+              $addToSet: { sellLinkedSauda: id },
             },
             { new: true, upsert: true }
           );
@@ -103,10 +96,7 @@ export async function PUT(req, { params }) {
     await mainEntry.save();
 
     return NextResponse.json(
-      {
-        message: "Sauda tags updated successfully",
-        entry: mainEntry,
-      },
+      { message: "Sauda tags updated successfully", entry: mainEntry },
       { status: 200 }
     );
   } catch (error) {
@@ -124,29 +114,28 @@ export async function DELETE(req, { params }) {
 
   try {
     const { id } = params;
-    const saudaNo = isNaN(id) ? id : Number(id);
 
-    const entry = await TagSauda.findOne({ saudaNo });
+    const entry = await TagSauda.findOne({ saudaNo: id });
     if (!entry)
       return NextResponse.json(
         { error: "Tag sauda not found" },
         { status: 404 }
       );
 
-    // Remove linkage in opposite saudas
+    // Unlink opposite references
     if (entry.type === "purchase" && entry.sellLinkedSauda?.length) {
       await TagSauda.updateMany(
         { saudaNo: { $in: entry.sellLinkedSauda } },
-        { $pull: { purchaseLinkedSauda: saudaNo } }
+        { $pull: { purchaseLinkedSauda: id } }
       );
     } else if (entry.type === "sell" && entry.purchaseLinkedSauda?.length) {
       await TagSauda.updateMany(
         { saudaNo: { $in: entry.purchaseLinkedSauda } },
-        { $pull: { sellLinkedSauda: saudaNo } }
+        { $pull: { sellLinkedSauda: id } }
       );
     }
 
-    await TagSauda.deleteOne({ saudaNo });
+    await TagSauda.deleteOne({ saudaNo: id });
 
     return NextResponse.json(
       { message: "Tag sauda deleted successfully" },
