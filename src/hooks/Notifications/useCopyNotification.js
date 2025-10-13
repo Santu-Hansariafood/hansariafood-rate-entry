@@ -89,9 +89,8 @@ ${payment && payment !== "" ? `*Payment Terms: ${payment} Days*` : ""}${
 
 👉 *রেট এবং অর্ডারের জন্য অনুগ্রহ করে নিচের লিঙ্কে ক্লিক করে বিডে অংশগ্রহণ করুন।*
 
+📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.agriv2_  
 🌐 *Web App:* _https://vupix.in/hfood/auth/index.php_  
-📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansaria.food_  
-
 
 *Thanks,*  
 *Purchase Team*  
