@@ -35,7 +35,6 @@ const StockDetailsModal = ({ details, onClose }) => {
   const [loadingIndex, setLoadingIndex] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
 
-  // Fetch existing tag data for each entry
   useEffect(() => {
     const fetchTagData = async () => {
       setLoadingData(true);
@@ -45,14 +44,12 @@ const StockDetailsModal = ({ details, onClose }) => {
           if (saudaNo === "-") return null;
 
           try {
-            // Use the correct query parameter format for the API
             const res = await axiosInstance.get(
               `/save-sauda/tag-sauda?saudaNo=${saudaNo}`
             );
             if (res.data && res.data.length > 0) {
-              const tagData = res.data[0]; // Get the first matching entry
+              const tagData = res.data[0];
 
-              // Set linked saudas from existing data
               const linkedData =
                 type === "purchase"
                   ? tagData.sellLinkedSauda || []
@@ -64,7 +61,6 @@ const StockDetailsModal = ({ details, onClose }) => {
                   [index]: linkedData,
                 }));
 
-                // Calculate tagged quantity for this entry
                 const linkedEntries = entries.filter((e) => {
                   const entryNo = getSaudaNumber(e);
                   return linkedData.includes(entryNo) && entryNo !== "-";
@@ -103,73 +99,60 @@ const StockDetailsModal = ({ details, onClose }) => {
     return "-";
   };
 
-  // Add tag on comma or Enter
   const handleTagInput = (index, value) => {
     const parts = value
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
     if (parts.length > 0) {
-      // Update linked saudas
       const newLinkedSaudas = {
         ...linkedSaudas,
         [index]: [...(linkedSaudas[index] || []), ...parts],
       };
       setLinkedSaudas(newLinkedSaudas);
 
-      // Calculate tagged quantity
       updateTaggedQuantity(index, newLinkedSaudas[index]);
 
       document.getElementById(`tagInput-${index}`).value = "";
     }
   };
 
-  // Remove tag
   const handleRemoveTag = (index, tag) => {
     const updatedTags = (linkedSaudas[index] || []).filter((t) => t !== tag);
 
-    // Update linked saudas
     setLinkedSaudas((prev) => ({
       ...prev,
       [index]: updatedTags,
     }));
 
-    // Recalculate tagged quantity
     updateTaggedQuantity(index, updatedTags);
   };
 
-  // Update tagged quantity based on linked saudas
   const updateTaggedQuantity = (index, tags) => {
-    // Find matching entries for the tags
     const matchingEntries = entries.filter((e) => {
       const saudaNo = getSaudaNumber(e);
       return tags.includes(saudaNo);
     });
 
-    // Calculate total tons from matching entries
     const totalTons = matchingEntries.reduce(
       (sum, e) => sum + (e.tons || 0),
       0
     );
 
-    // Store as negative value to display with minus sign
     setTaggedQuantities((prev) => ({
       ...prev,
       [index]: -Math.abs(totalTons),
     }));
   };
 
-  // Calculate ±10% completion
   const getStatus = (entry, taggedQty) => {
     if (!taggedQty) return "Pending";
-    // Use absolute value of taggedQty since it's stored as negative
     const absTaggedQty = Math.abs(taggedQty);
     const diff = Math.abs(absTaggedQty - entry.tons);
     const tolerance = entry.tons * 0.1;
     return diff <= tolerance ? "Complete" : "Pending";
   };
 
-  // --- 🧠 Save Tag Sauda to API ---
   const handleSave = async (entry, index) => {
     const tagSaudaNo = linkedSaudas[index] || [];
     if (tagSaudaNo.length === 0) {
@@ -177,7 +160,6 @@ const StockDetailsModal = ({ details, onClose }) => {
       return;
     }
 
-    // Get the current tagged quantity for status calculation
     const currentTaggedQty = taggedQuantities[index] || 0;
     const currentStatus = getStatus(entry, currentTaggedQty);
 
@@ -207,7 +189,6 @@ const StockDetailsModal = ({ details, onClose }) => {
       if (res.data.entry) {
         toast.success("Tag Sauda saved successfully!");
 
-        // Update the UI with the latest status
         if (currentStatus === "Complete") {
           toast.info("This sauda is now marked as Complete!");
         }
@@ -230,7 +211,6 @@ const StockDetailsModal = ({ details, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-6xl p-6 relative animate-fadeIn">
-        {/* Close */}
         <button
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition"
           onClick={onClose}
@@ -238,13 +218,11 @@ const StockDetailsModal = ({ details, onClose }) => {
           <X className="w-6 h-6" />
         </button>
 
-        {/* Title */}
         <h4 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b pb-2">
           {type === "purchase" ? "Purchase" : "Sale"} Details – {commodity} (
           {unit})
         </h4>
 
-        {/* Table */}
         <div className="max-h-[500px] overflow-y-auto rounded-md border border-gray-100 relative">
           <table className="w-full text-sm">
             <thead className="bg-gray-100 sticky top-0">
@@ -289,7 +267,6 @@ const StockDetailsModal = ({ details, onClose }) => {
                   const percentComplete =
                     e.tons > 0 ? Math.min(100, (taggedQty / e.tons) * 100) : 0;
 
-                  // Calculate if within 10% tolerance
                   const diff = Math.abs(taggedQty - e.tons);
                   const tolerance = e.tons * 0.1;
                   const isWithinTolerance = diff <= tolerance;
@@ -303,7 +280,6 @@ const StockDetailsModal = ({ details, onClose }) => {
                     >
                       <td className="px-3 py-2">{formatDate(e.date)}</td>
 
-                      {/* Sauda No Hover */}
                       <td
                         className="px-3 py-2 text-blue-600 font-medium relative"
                         onMouseEnter={() => setHoveredIndex(i)}
@@ -339,7 +315,6 @@ const StockDetailsModal = ({ details, onClose }) => {
                         )}
                       </td>
 
-                      {/* Tags Input */}
                       <td className="px-3 py-2">
                         <div className="flex flex-wrap gap-1 mb-1">
                           {tags.map((tag, tIdx) => (
@@ -368,7 +343,6 @@ const StockDetailsModal = ({ details, onClose }) => {
                           className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
 
-                        {/* Progress bar and quantity display */}
                         <div className="mt-2">
                           <div className="flex justify-between text-xs mb-1">
                             <span className="text-gray-600">

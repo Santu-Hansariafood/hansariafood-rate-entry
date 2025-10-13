@@ -218,7 +218,6 @@ const Purchase = ({ company, fromDate, toDate }) => {
         </div>
       )}
 
-      {/* Popup Component */}
       {selectedDetails && (
         <StockDetailsModal
           details={selectedDetails}

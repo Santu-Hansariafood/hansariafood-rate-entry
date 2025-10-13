@@ -39,7 +39,7 @@ export async function PUT(req, { params }) {
     const body = await req.json();
 
     const {
-      type, // "purchase" or "sell"
+      type,
       sellLinkedSauda = [],
       purchaseLinkedSauda = [],
       taggedBy = "system",
@@ -57,7 +57,6 @@ export async function PUT(req, { params }) {
       });
     }
 
-    // Purchase links sell side
     if (type === "purchase" && sellLinkedSauda.length > 0) {
       mainEntry.sellLinkedSauda = [...new Set(sellLinkedSauda)];
 
@@ -75,7 +74,6 @@ export async function PUT(req, { params }) {
       );
     }
 
-    // Sell links purchase side
     if (type === "sell" && purchaseLinkedSauda.length > 0) {
       mainEntry.purchaseLinkedSauda = [...new Set(purchaseLinkedSauda)];
 
@@ -122,7 +120,6 @@ export async function DELETE(req, { params }) {
         { status: 404 }
       );
 
-    // Unlink opposite references
     if (entry.type === "purchase" && entry.sellLinkedSauda?.length) {
       await TagSauda.updateMany(
         { saudaNo: { $in: entry.sellLinkedSauda } },
