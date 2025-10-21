@@ -32,8 +32,12 @@ const StockDetailsModal = ({ details, onClose }) => {
   const [linkedSaudas, setLinkedSaudas] = useState({});
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [taggedQuantities, setTaggedQuantities] = useState({});
+  const [saudaStatuses, setSaudaStatuses] = useState({});
   const [loadingIndex, setLoadingIndex] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
+
+  const [saudaDetails, setSaudaDetails] = useState({});
+  const [detailsBySaudaNo, setDetailsBySaudaNo] = useState({});
 
   useEffect(() => {
     const fetchTagData = async () => {
@@ -49,6 +53,30 @@ const StockDetailsModal = ({ details, onClose }) => {
             );
             if (res.data && res.data.length > 0) {
               const tagData = res.data[0];
+              setSaudaStatuses((prev) => ({
+                ...prev,
+                [index]: tagData.status || "Pending",
+              }));
+              try {
+                const detailRes = await axiosInstance.get(
+                  `/sauda/getSaudaByNumber`,
+                  {
+                    params: { saudaNumber: saudaNo },
+                  }
+                );
+                const primaryData = detailRes.data?.data || null;
+                if (primaryData) {
+                  setDetailsBySaudaNo((prev) => ({
+                    ...prev,
+                    [saudaNo]: primaryData,
+                  }));
+                }
+              } catch (primaryErr) {
+                console.error(
+                  `Error fetching primary sauda details for ${saudaNo}:`,
+                  primaryErr
+                );
+              }
 
               const linkedData =
                 type === "purchase"
@@ -56,20 +84,69 @@ const StockDetailsModal = ({ details, onClose }) => {
                   : tagData.purchaseLinkedSauda || [];
 
               if (linkedData.length > 0) {
-                setLinkedSaudas((prev) => ({
-                  ...prev,
-                  [index]: linkedData,
-                }));
-
-                const linkedEntries = entries.filter((e) => {
-                  const entryNo = getSaudaNumber(e);
-                  return linkedData.includes(entryNo) && entryNo !== "-";
+                const sortedLinkedData = [...linkedData].sort((a, b) => {
+                  const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+                  const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+                  return numA - numB;
                 });
 
-                const totalQty = linkedEntries.reduce(
+                setLinkedSaudas((prev) => ({
+                  ...prev,
+                  [index]: sortedLinkedData,
+                }));
+
+                const detailsPromises = sortedLinkedData.map(
+                  async (linkedSauda) => {
+                    try {
+                      const detailRes = await axiosInstance.get(
+                        `/sauda/getSaudaByNumber`,
+                        {
+                          params: { saudaNumber: linkedSauda },
+                        }
+                      );
+                      const data = detailRes.data?.data || null;
+                      if (data) {
+                        setDetailsBySaudaNo((prev) => ({
+                          ...prev,
+                          [linkedSauda]: data,
+                        }));
+                        return { saudaNo: linkedSauda, details: data };
+                      }
+                      return { saudaNo: linkedSauda, details: null };
+                    } catch (error) {
+                      console.error(
+                        `Error fetching details for ${linkedSauda}:`,
+                        error
+                      );
+                      return { saudaNo: linkedSauda, details: null };
+                    }
+                  }
+                );
+
+                const detailsResults = await Promise.all(detailsPromises);
+                const detailsMap = {};
+                detailsResults.forEach((result) => {
+                  if (result.details) {
+                    detailsMap[result.saudaNo] = result.details;
+                  }
+                });
+
+                setSaudaDetails((prev) => ({
+                  ...prev,
+                  [index]: detailsMap,
+                }));
+
+                const oppositeEntries = entries.filter((e) => {
+                  if (e === entry) return false;
+                  const entryNo = getSaudaNumber(e);
+                  return sortedLinkedData.includes(entryNo) && entryNo !== "-";
+                });
+
+                const totalQty = oppositeEntries.reduce(
                   (sum, e) => sum + (e.tons || 0),
                   0
                 );
+
                 setTaggedQuantities((prev) => ({
                   ...prev,
                   [index]: totalQty,
@@ -103,17 +180,54 @@ const StockDetailsModal = ({ details, onClose }) => {
     const parts = value
       .split(",")
       .map((t) => t.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+        return numA - numB;
+      });
+
     if (parts.length > 0) {
+      const existingTags = linkedSaudas[index] || [];
+      const newTags = parts.filter((tag) => !existingTags.includes(tag));
+
+      if (newTags.length === 0) {
+        toast.warning("This sauda number is already added.");
+        document.getElementById(`tagInput-${index}`).value = "";
+        return;
+      }
+
       const newLinkedSaudas = {
         ...linkedSaudas,
-        [index]: [...(linkedSaudas[index] || []), ...parts],
+        [index]: [...existingTags, ...newTags].sort((a, b) => {
+          const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+          const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+          return numA - numB;
+        }),
       };
+
       setLinkedSaudas(newLinkedSaudas);
-
       updateTaggedQuantity(index, newLinkedSaudas[index]);
-
       document.getElementById(`tagInput-${index}`).value = "";
+
+      newTags.forEach(async (tag) => {
+        try {
+          const res = await axiosInstance.get(`/sauda/getSaudaByNumber`, {
+            params: { saudaNumber: tag },
+          });
+          const data = res.data?.data;
+          if (data) {
+            setDetailsBySaudaNo((prev) => ({ ...prev, [tag]: data }));
+            setSaudaDetails((prev) => {
+              const currentIndexMap = prev[index] ? { ...prev[index] } : {};
+              currentIndexMap[tag] = data;
+              return { ...prev, [index]: currentIndexMap };
+            });
+          }
+        } catch (err) {
+          console.error(`Failed to fetch sauda details for ${tag}:`, err);
+        }
+      });
     }
   };
 
@@ -129,26 +243,28 @@ const StockDetailsModal = ({ details, onClose }) => {
   };
 
   const updateTaggedQuantity = (index, tags) => {
-    const matchingEntries = entries.filter((e) => {
+    const currentEntry = entries[index];
+
+    const oppositeEntries = entries.filter((e) => {
+      if (e === currentEntry) return false;
+
       const saudaNo = getSaudaNumber(e);
       return tags.includes(saudaNo);
     });
 
-    const totalTons = matchingEntries.reduce(
+    const totalTons = oppositeEntries.reduce(
       (sum, e) => sum + (e.tons || 0),
       0
     );
-
     setTaggedQuantities((prev) => ({
       ...prev,
-      [index]: -Math.abs(totalTons),
+      [index]: totalTons,
     }));
   };
 
   const getStatus = (entry, taggedQty) => {
     if (!taggedQty) return "Pending";
-    const absTaggedQty = Math.abs(taggedQty);
-    const diff = Math.abs(absTaggedQty - entry.tons);
+    const diff = Math.abs(taggedQty - entry.tons);
     const tolerance = entry.tons * 0.1;
     return diff <= tolerance ? "Complete" : "Pending";
   };
@@ -188,9 +304,52 @@ const StockDetailsModal = ({ details, onClose }) => {
 
       if (res.data.entry) {
         toast.success("Tag Sauda saved successfully!");
+        setSaudaStatuses((prev) => ({
+          ...prev,
+          [index]: res.data.entry.status || currentStatus,
+        }));
 
         if (currentStatus === "Complete") {
           toast.info("This sauda is now marked as Complete!");
+        }
+
+        const saudaNo = getSaudaNumber(entry);
+        try {
+          const refreshRes = await axiosInstance.get(
+            `/save-sauda/tag-sauda?saudaNo=${saudaNo}`
+          );
+
+          if (refreshRes.data && refreshRes.data.length > 0) {
+            const tagData = refreshRes.data[0];
+
+            setSaudaStatuses((prev) => ({
+              ...prev,
+              [index]: tagData.status || "Pending",
+            }));
+
+            const linkedData =
+              type === "purchase"
+                ? tagData.sellLinkedSauda || []
+                : tagData.purchaseLinkedSauda || [];
+
+            if (linkedData.length > 0) {
+              const sortedLinkedData = [...linkedData].sort((a, b) => {
+                const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+                const numB = parseInt(b.match(/\d+/)?.[0] || 0);
+                return numA - numB;
+              });
+
+              setLinkedSaudas((prev) => ({
+                ...prev,
+                [index]: sortedLinkedData,
+              }));
+            }
+          }
+        } catch (refreshError) {
+          console.error(
+            `Error refreshing tag data for ${saudaNo}:`,
+            refreshError
+          );
         }
       } else {
         toast.error(res.data.message || "Failed to save tag.");
@@ -263,13 +422,15 @@ const StockDetailsModal = ({ details, onClose }) => {
                 entries.map((e, i) => {
                   const tags = linkedSaudas[i] || [];
                   const taggedQty = taggedQuantities[i] || 0;
-                  const status = getStatus(e, taggedQty);
+                  const status = saudaStatuses[i] || getStatus(e, taggedQty);
                   const percentComplete =
                     e.tons > 0 ? Math.min(100, (taggedQty / e.tons) * 100) : 0;
 
                   const diff = Math.abs(taggedQty - e.tons);
                   const tolerance = e.tons * 0.1;
-                  const isWithinTolerance = diff <= tolerance;
+                  const isWithinTolerance =
+                    diff <= tolerance || status === "Complete";
+                  const mainDetails = detailsBySaudaNo[getSaudaNumber(e)];
 
                   return (
                     <tr
@@ -291,26 +452,68 @@ const StockDetailsModal = ({ details, onClose }) => {
                         </div>
 
                         {hoveredIndex === i && (
-                          <div className="absolute left-0 top-8 bg-white border border-gray-300 shadow-lg rounded-lg p-3 text-xs w-60 z-50 animate-fadeIn">
+                          <div className="absolute left-0 top-8 bg-white border border-gray-300 shadow-lg rounded-lg p-3 text-xs w-64 z-50 animate-fadeIn">
                             <p className="font-semibold text-gray-700 mb-1">
                               Sauda Details
                             </p>
-                            <p>
-                              <span className="font-medium">Date:</span>{" "}
-                              {formatDate(e.date)}
-                            </p>
-                            <p>
-                              <span className="font-medium">Tons:</span>{" "}
-                              {e.tons}
-                            </p>
-                            <p>
-                              <span className="font-medium">Rate:</span>{" "}
-                              {e.finalRate || "-"}
-                            </p>
-                            <p>
-                              <span className="font-medium">Type:</span>{" "}
-                              {type.charAt(0).toUpperCase() + type.slice(1)}
-                            </p>
+                            <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                              <span className="text-gray-500">Date:</span>
+                              <span className="font-medium">
+                                {formatDate(mainDetails?.date ?? e.date)}
+                              </span>
+
+                              <span className="text-gray-500">Tons:</span>
+                              <span className="font-medium">
+                                {(mainDetails?.tons ?? e.tons)?.toFixed
+                                  ? (mainDetails?.tons ?? e.tons)?.toFixed(2)
+                                  : mainDetails?.tons ?? e.tons}
+                              </span>
+
+                              <span className="text-gray-500">Rate:</span>
+                              <span className="font-medium">
+                                {mainDetails?.finalRate ?? e.finalRate ?? "-"}
+                              </span>
+
+                              <span className="text-gray-500">Commodity:</span>
+                              <span className="font-medium">
+                                {mainDetails?.commodity ?? e.commodity ?? "-"}
+                              </span>
+
+                              <span className="text-gray-500">Unit:</span>
+                              <span className="font-medium">
+                                {mainDetails?.unit ?? e.unit ?? "-"}
+                              </span>
+
+                              {mainDetails?.sellerName && (
+                                <>
+                                  <span className="text-gray-500">Seller:</span>
+                                  <span className="font-medium">
+                                    {mainDetails.sellerName}
+                                  </span>
+                                </>
+                              )}
+                              {mainDetails?.sellerCompany && (
+                                <>
+                                  <span className="text-gray-500">
+                                    Seller Co.:
+                                  </span>
+                                  <span className="font-medium">
+                                    {mainDetails.sellerCompany}
+                                  </span>
+                                </>
+                              )}
+
+                              <span className="text-gray-500">Status:</span>
+                              <span
+                                className={`font-medium ${
+                                  status === "Complete"
+                                    ? "text-green-600"
+                                    : "text-blue-600"
+                                }`}
+                              >
+                                {mainDetails?.status ?? status}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </td>
@@ -320,7 +523,11 @@ const StockDetailsModal = ({ details, onClose }) => {
                           {tags.map((tag, tIdx) => (
                             <span
                               key={tIdx}
-                              className="flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium"
+                              className={`flex items-center ${
+                                status === "Complete"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-blue-100 text-blue-700"
+                              } px-2 py-1 rounded-full text-xs font-medium`}
                             >
                               {tag}
                               <X
@@ -333,7 +540,9 @@ const StockDetailsModal = ({ details, onClose }) => {
                         <input
                           id={`tagInput-${i}`}
                           type="text"
-                          placeholder="Enter Sauda No and press comma"
+                          placeholder={`Enter ${
+                            type === "purchase" ? "Sale" : "Purchase"
+                          } Sauda No and press Enter`}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === ",") {
                               e.preventDefault();
@@ -347,8 +556,12 @@ const StockDetailsModal = ({ details, onClose }) => {
                           <div className="flex justify-between text-xs mb-1">
                             <span className="text-gray-600">
                               Tagged:{" "}
-                              <span className="font-medium">
-                                -{Math.abs(taggedQty).toFixed(2)}
+                              <span
+                                className={`font-medium ${
+                                  status === "Complete" ? "text-green-600" : ""
+                                }`}
+                              >
+                                {taggedQty.toFixed(2)}
                               </span>{" "}
                               of{" "}
                               <span className="font-medium">
@@ -359,23 +572,97 @@ const StockDetailsModal = ({ details, onClose }) => {
                             <span
                               className={
                                 isWithinTolerance
-                                  ? "text-green-600 font-medium"
+                                  ? "text-green-600 font-bold"
                                   : "text-gray-600"
                               }
                             >
-                              {Math.abs(percentComplete).toFixed(0)}%
+                              Status: {status}
                             </span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1.5">
-                            <div
-                              className={`h-1.5 rounded-full ${
-                                isWithinTolerance
-                                  ? "bg-green-500"
-                                  : "bg-blue-500"
-                              }`}
-                              style={{ width: `${Math.abs(percentComplete)}%` }}
-                            ></div>
-                          </div>
+                          {tags.length > 0 && (
+                            <div className="mt-2 border rounded-md p-2 bg-gray-50">
+                              <p className="text-xs font-medium text-gray-700 mb-2 border-b pb-1">
+                                Linked Sauda Details:
+                              </p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {tags.map((tag, idx) => {
+                                  const details = saudaDetails[i]?.[tag];
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="text-xs bg-white p-1 rounded border border-gray-200 shadow-sm"
+                                    >
+                                      <div className="flex justify-between items-center mb-1">
+                                        <span className="text-gray-500 text-[10px]">
+                                          Sauda No.
+                                        </span>
+                                        <span className="font-medium text-blue-600">
+                                          {tag}
+                                        </span>
+                                      </div>
+                                      {details && (
+                                        <div className="mt-1 pt-1 border-t border-gray-100">
+                                          <div className="grid grid-cols-2 gap-1">
+                                            <div className="text-gray-500">
+                                              Date:
+                                            </div>
+                                            <div className="font-medium">
+                                              {formatDate(details.date)}
+                                            </div>
+                                            <div className="text-gray-500">
+                                              Company:
+                                            </div>
+                                            <div className="font-medium">
+                                              {details.company || "-"}
+                                            </div>
+                                            <div className="text-gray-500">
+                                              Buyer:
+                                            </div>
+                                            <div className="font-medium">
+                                              {details.buyer || "-"}
+                                            </div>
+                                            <div className="text-gray-500">
+                                              Seller:
+                                            </div>
+                                            <div className="font-medium">
+                                              {details.seller || "-"}
+                                            </div>
+
+                                            <div className="text-gray-500">
+                                              Tons:
+                                            </div>
+                                            <div className="font-medium">
+                                              {details.tons?.toFixed(2) || "-"}
+                                            </div>
+
+                                            <div className="text-gray-500">
+                                              Rate:
+                                            </div>
+                                            <div className="font-medium">
+                                              {details.finalRate || "-"}
+                                            </div>
+
+                                            <div className="text-gray-500">
+                                              Status:
+                                            </div>
+                                            <div
+                                              className={`font-medium ${
+                                                details.status === "Complete"
+                                                  ? "text-green-600"
+                                                  : "text-blue-600"
+                                              }`}
+                                            >
+                                              {details.status || "Pending"}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </td>
 

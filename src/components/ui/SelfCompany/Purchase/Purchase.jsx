@@ -5,7 +5,8 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import { Package, Leaf, MapPin } from "lucide-react";
-import StockDetailsModal from "./StockDetailsModal/StockDetailsModal";
+import dynamic from "next/dynamic";
+const StockDetailsModal = dynamic(() => import("./StockDetailsModal/StockDetailsModal"));
 
 const parseDateString = (dateString) => {
   if (!dateString) return null;
