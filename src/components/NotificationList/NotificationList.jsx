@@ -26,10 +26,10 @@ export default function NotificationList({ notifications = [] }) {
     <button
       onClick={() => setFilter(type)}
       aria-label={title}
-      className={`p-2 rounded-full border transition-all duration-200 ${
+      className={`p-2 rounded-full border backdrop-blur-sm transition-all duration-300 shadow-md hover:shadow-lg ${
         filter === type
-          ? "bg-green-500 text-white border-green-500"
-          : "bg-white text-gray-700 hover:bg-gray-200 border-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-green-600 scale-110"
+          : "bg-white/70 text-gray-700 hover:bg-gray-200 border-gray-300 dark:bg-gray-800/70 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
       }`}
     >
       <Icon className="w-4 h-4" />
@@ -38,10 +38,19 @@ export default function NotificationList({ notifications = [] }) {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl overflow-hidden max-h-[500px] overflow-y-auto border border-gray-200 dark:border-gray-700">
-        <div className="flex justify-between items-center px-4 py-2 border-b bg-gray-100 dark:bg-gray-800">
-          <h2 className="text-gray-800 dark:text-gray-200 font-semibold text-lg">
-            <span className="sr-only">Notifications</span>🔔
+      <div
+        className="relative bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-700 max-h-[500px] overflow-y-auto 
+        no-scrollbar transition-all duration-500 hover:scale-[1.01]"
+        style={{
+          backgroundImage:
+            "linear-gradient(135deg, rgba(255,255,255,0.05) 25%, transparent 25%), linear-gradient(225deg, rgba(255,255,255,0.05) 25%, transparent 25%), linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%), linear-gradient(315deg, rgba(255,255,255,0.05) 25%, transparent 25%)",
+          backgroundPosition: "10px 0, 10px 0, 0 0, 0 0",
+          backgroundSize: "20px 20px",
+        }}
+      >
+        <div className="flex justify-between items-center px-4 py-2 border-b bg-white/60 dark:bg-gray-800/60 backdrop-blur-md sticky top-0 z-10">
+          <h2 className="text-gray-800 dark:text-gray-200 font-semibold text-lg flex items-center gap-2">
+            🔔 <span>Notifications</span>
           </h2>
           <div className="space-x-2 flex items-center">
             <FilterButton title="All" icon={List} type="all" />
@@ -75,11 +84,15 @@ export default function NotificationList({ notifications = [] }) {
                       n.newRateDate || "no-date"
                     }-${index}`
                   }
-                  className={`p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-1 ${alignment}`}
+                  className={`group p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-1 ${alignment} transition-all duration-300 hover:bg-gradient-to-r hover:from-gray-100/80 hover:to-gray-50/60 dark:hover:from-gray-800/50 dark:hover:to-gray-900/50`}
+                  style={{
+                    transform: "perspective(1000px) translateZ(0)",
+                    transition: "transform 0.4s ease",
+                  }}
                 >
                   <div className="flex items-center gap-2">
                     <Icon
-                      className={`w-5 h-5 ${
+                      className={`w-5 h-5 transition-transform duration-300 group-hover:scale-125 ${
                         isRead
                           ? "text-green-500"
                           : "text-blue-500 dark:text-blue-400"
@@ -104,31 +117,41 @@ export default function NotificationList({ notifications = [] }) {
                         <span className="font-semibold text-red-500 dark:text-red-400">
                           ₹{n.newRate}
                         </span>
-                        {n.quantity !== undefined && n.quantity !== "" && (
+                        {n.quantity && (
                           <span className="text-orange-500 dark:text-orange-400 font-medium">
                             Qty: {n.quantity} Tons
                           </span>
                         )}
-                        {n.payment !== undefined && n.payment !== "" && (
+                        {n.payment && (
                           <span className="text-purple-500 dark:text-purple-400 font-medium">
                             Payment: {n.payment} Days
                           </span>
                         )}
-                        {n.others !== undefined && n.others !== "" && (
-                          <span className="text-indigo-500 dark:text-indigo-400 font-medium">
+                        {n.others && (
+                          <span
+                            className="text-indigo-500 dark:text-indigo-400 font-medium line-clamp-2"
+                            style={{
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: "280px",
+                            }}
+                          >
                             Notes: {n.others}
                           </span>
                         )}
                         <button
                           onClick={() => handleCopy(n)}
-                          className="hover:text-blue-600 dark:hover:text-blue-400"
+                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-transform duration-200 hover:scale-110"
                           aria-label="Copy notification"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
 
-                      <div className="text-xs text-gray-400 dark:text-gray-500">
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         Updated: {time}
                       </div>
                     </div>
