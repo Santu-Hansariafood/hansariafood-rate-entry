@@ -1,11 +1,14 @@
 "use client";
-import { Suspense } from "react";
+import { useEffect, Suspense, useRef } from "react";
 import { CheckCircle, Info, List, Copy } from "lucide-react";
 import Loading from "@/components/common/Loading/Loading";
 import useNotificationFilter from "@/hooks/Notifications/useNotificationFilter";
 import useCopyNotification from "@/hooks/Notifications/useCopyNotification";
 
 export default function NotificationList({ notifications = [] }) {
+  const lastShownRef = useRef([]); // Avoid duplicate browser notifications
+  const audioRef = useRef(null); // ✅ Ref for sound
+
   const parseUpdateTime = (timeStr) => {
     if (!timeStr) return 0;
     const [time, modifier] = timeStr.split(" ");
@@ -21,6 +24,46 @@ export default function NotificationList({ notifications = [] }) {
     parseUpdateTime
   );
   const { handleCopy, capitalizeFirst } = useCopyNotification();
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    audioRef.current = new Audio("/notification/notification.wav");
+    audioRef.current.volume = 0.7;
+  }, []);
+
+  useEffect(() => {
+    if (!("Notification" in window) || Notification.permission !== "granted")
+      return;
+
+    filteredNotifications.forEach((n) => {
+      const uniqueId = `${n.company}-${n.location}-${n.newRateDate}-${n.newRate}`;
+      if (!lastShownRef.current.includes(uniqueId)) {
+        lastShownRef.current.push(uniqueId);
+
+        const title = `${n.company} (${n.location})`;
+        const body = `New rate for ${n.commodity}: ₹${n.newRate}`;
+        const icon = "/favicon.ico";
+
+        new Notification(title, {
+          body,
+          icon,
+          vibrate: [100, 50, 100],
+        });
+
+        if (audioRef.current) {
+          const sound = audioRef.current.cloneNode();
+          sound.play().catch(() => {
+            console.warn("Sound playback failed. May need user interaction.");
+          });
+        }
+      }
+    });
+  }, [filteredNotifications]);
 
   const FilterButton = ({ title, icon: Icon, type }) => (
     <button
