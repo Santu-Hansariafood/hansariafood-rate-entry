@@ -1,11 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import useRateManagement from "@/hooks/Rate/useRateManagement";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
@@ -29,7 +29,6 @@ const RateUpdatePopup = dynamic(
   () => import("@/components/ui/Rate/RateUpdatePopup/RateUpdatePopup"),
   { loading: () => <Loading /> }
 );
-
 const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
   { loading: () => <Loading /> }
@@ -51,6 +50,8 @@ export default function Rate() {
     itemsPerPage,
   } = useRateManagement();
 
+  const [showRatePopup, setShowRatePopup] = useState(false);
+
   const handleFilterChange = useCallback((newFilters) => {
     const selectedCategories = Object.values(newFilters);
     setFilters((prev) => ({
@@ -71,7 +72,16 @@ export default function Rate() {
           selectedType={filters.type}
           onChange={(type) => setFilters((prev) => ({ ...prev, type }))}
         />
-        <RateUpdatePopup />
+
+        {/* Direct Update Rate Button */}
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => setShowRatePopup(true)}
+          className="bg-gradient-to-r from-teal-600 to-cyan-500 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
+        >
+          + Update Rate
+        </motion.button>
       </div>
 
       <Pagination
@@ -80,6 +90,7 @@ export default function Rate() {
         currentPage={currentPage}
         onPageChange={setCurrentPage}
       />
+
       <CompanyList
         companies={companies}
         completedCompanies={completedCompanies}
@@ -119,6 +130,40 @@ export default function Rate() {
           {!selectedCompany && renderCompanySelector}
           {selectedCompany && renderRateTable}
         </div>
+
+        {/* Direct Rate Update Popup */}
+        <AnimatePresence>
+          {showRatePopup && (
+            <>
+              <motion.div
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                onClick={() => setShowRatePopup(false)}
+              />
+              <motion.div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-6 w-full max-w-3xl relative">
+                  <button
+                    onClick={() => setShowRatePopup(false)}
+                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 dark:hover:text-white transition"
+                  >
+                    ✕
+                  </button>
+                  {/* Directly show RateUpdatePopup content */}
+                  <RateUpdatePopup />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </Suspense>
   );
