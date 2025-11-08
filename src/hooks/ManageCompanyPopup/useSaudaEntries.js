@@ -70,7 +70,12 @@ export function useSaudaEntries(company, rateMap) {
   const handleChange = useCallback((key, idx, field, val) => {
     setEntries((prev) => {
       const list = [...prev[key]];
-      list[idx] = { ...list[idx], [field]: val };
+      const currentEntry = list[idx];
+      if (field === "saudaNo" && currentEntry.saudaNo) {
+        return prev;
+      }
+
+      list[idx] = { ...currentEntry, [field]: val };
       return { ...prev, [key]: list };
     });
   }, []);
