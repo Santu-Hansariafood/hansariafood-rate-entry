@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import { Suspense, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import Loading from "../../Loading/Loading";
 
 const NotificationBell = dynamic(() =>
   import("../NotificationBell/NotificationBell")
@@ -43,6 +42,8 @@ export default function DesktopNav({
     { label: "Location", path: "/location" },
     { label: "Self Company", path: "/selfcompany" },
     { label: "Previous Sauda", path: "/previoussauda" },
+    { label: "Buyer Company", path: "/buyercompany" },
+    { label: "Seller", path: "/seller" },
   ]);
 
   const companyTitle = (() => {

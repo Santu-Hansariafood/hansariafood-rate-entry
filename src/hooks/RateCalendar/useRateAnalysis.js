@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 
 function parseOldRate(s) {
   if (!s) return { rate: null, date: null };
@@ -19,7 +19,7 @@ export default function useRateAnalysis({
   searchTerm,
   filterType,
 }) {
-  const companyStats = useMemo(() => {
+  const getCompanyStats = useCallback(() => {
     const now = new Date();
     const byCompany = {};
     for (const r of allRates) {
@@ -60,7 +60,9 @@ export default function useRateAnalysis({
     return byCompany;
   }, [allRates]);
 
-  const filteredCompanies = useMemo(() => {
+  const companyStats = useMemo(() => getCompanyStats(), [getCompanyStats]);
+
+  const getFilteredCompanies = useCallback(() => {
     const term = (searchTerm || "").trim().toLowerCase();
     const list = companies.filter((company) => {
       const matchesType =
@@ -89,7 +91,12 @@ export default function useRateAnalysis({
     });
   }, [companies, searchTerm, filterType, companyStats]);
 
-  const topRatesByCommodity = useMemo(() => {
+  const filteredCompanies = useMemo(
+    () => getFilteredCompanies(),
+    [getFilteredCompanies]
+  );
+
+  const getTopRatesByCommodity = useCallback(() => {
     const now = new Date();
     const grouped = {};
     for (const r of allRates) {
@@ -151,7 +158,12 @@ export default function useRateAnalysis({
     return sorted;
   }, [allRates]);
 
-  const availableCommodities = useMemo(() => {
+  const topRatesByCommodity = useMemo(
+    () => getTopRatesByCommodity(),
+    [getTopRatesByCommodity]
+  );
+
+  const getAvailableCommodities = useCallback(() => {
     if (!selectedCompany) return [];
     const companyData = companies.find(
       (company) => company.name === selectedCompany
@@ -167,7 +179,12 @@ export default function useRateAnalysis({
     );
   }, [companies, selectedCompany, scopedRates]);
 
-  const availableLocations = useMemo(() => {
+  const availableCommodities = useMemo(
+    () => getAvailableCommodities(),
+    [getAvailableCommodities]
+  );
+
+  const getAvailableLocations = useCallback(() => {
     if (!selectedCompany) return [];
     const companyData = companies.find(
       (company) => company.name === selectedCompany
@@ -187,6 +204,11 @@ export default function useRateAnalysis({
     );
   }, [companies, selectedCompany, selectedCommodity, scopedRates]);
 
+  const availableLocations = useMemo(
+    () => getAvailableLocations(),
+    [getAvailableLocations]
+  );
+
   const selectedEntry = useMemo(() => {
     return scopedRates.find(
       (d) =>
@@ -196,7 +218,7 @@ export default function useRateAnalysis({
     );
   }, [scopedRates, selectedCompany, selectedCommodity, selectedLocation]);
 
-  const analysis = useMemo(() => {
+  const getAnalysis = useCallback(() => {
     if (!selectedEntry) return null;
     const old = Array.isArray(selectedEntry.oldRates)
       ? selectedEntry.oldRates
@@ -240,7 +262,9 @@ export default function useRateAnalysis({
     };
   }, [selectedEntry]);
 
-  const dateWiseRates = useMemo(() => {
+  const analysis = useMemo(() => getAnalysis(), [getAnalysis]);
+
+  const getDateWiseRates = useCallback(() => {
     if (!selectedEntry) return [];
     const rows = [];
     if (selectedEntry.hasNewRateToday && selectedEntry.newRate !== "") {
@@ -275,6 +299,8 @@ export default function useRateAnalysis({
     rows.sort((a, b) => b.date - a.date);
     return rows;
   }, [selectedEntry]);
+
+  const dateWiseRates = useMemo(() => getDateWiseRates(), [getDateWiseRates]);
 
   return {
     companyStats,
