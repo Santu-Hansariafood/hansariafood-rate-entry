@@ -17,7 +17,6 @@ const NotificationsPanel = ({ onClose }) => {
       `*✅ Sauda Confirmed*`,
       `\n`,
       `*Sauda details are as follows:*`,
-      `*Buyer Name:* ${item.company}`,
       `*Date:* ${item.date}`,
       `*Location:* ${item.location}`,
       `*Commodity:* ${item.commodity}`,
@@ -52,20 +51,22 @@ const NotificationsPanel = ({ onClose }) => {
   };
 
   return (
-    <div className="absolute top-14 right-0 w-80 max-h-[30rem] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-xl z-50 flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-green-700 rounded-t-xl sticky top-0 z-10">
+    <>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800 sticky top-0 z-10">
         <h3 className="text-base font-semibold text-white">
           🗂️ Sauda Notifications
         </h3>
         <div className="flex items-center gap-2">
           <DownloadExcelButton data={filteredNotifications} />
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="text-white hover:text-gray-200"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="text-white hover:text-gray-200 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
       <ToastContainer
@@ -79,26 +80,26 @@ const NotificationsPanel = ({ onClose }) => {
         pauseOnHover
         theme="dark"
       />
-      <div className="flex-1 overflow-auto">
-        <div className="p-2 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-900 z-10">
+      <div className="flex-1 overflow-y-auto flex flex-col">
+        <div className="p-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <input
             type="text"
             placeholder="Search company, location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md 
-              bg-white dark:bg-gray-800 
+            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
+              bg-white dark:bg-gray-700 
               text-gray-900 dark:text-gray-100
               placeholder-gray-400 dark:placeholder-gray-500
-              focus:outline-none focus:ring-1 focus:ring-green-400"
+              focus:outline-none focus:ring-2 focus:ring-green-400 dark:focus:ring-green-500"
           />
         </div>
         {loading ? (
-          <div className="p-4 text-gray-500 dark:text-gray-400">
+          <div className="flex-1 flex justify-center items-center p-8">
             <Loading />
           </div>
         ) : filteredNotifications.length > 0 ? (
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          <ul className="divide-y divide-gray-200 dark:divide-gray-700 flex-1">
             {[...filteredNotifications]
               .sort((a, b) => {
                 const saudaA = Number(a.saudaNo) || 0;
@@ -108,18 +109,20 @@ const NotificationsPanel = ({ onClose }) => {
               .map((item, index) => (
                 <li
                   key={`${item.company}-${item.date}-${item.location}-${index}`}
-                  className="relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm space-y-1"
+                  className="relative px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm space-y-2"
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-1 font-semibold text-gray-800 dark:text-gray-200">
-                      🏢 {item.company}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {item.date}
-                    </span>
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex-1">
+                      <span className="flex items-center gap-1 font-semibold text-gray-800 dark:text-gray-200">
+                        🏢 {item.company}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 block mt-1">
+                        {item.date}
+                      </span>
+                    </div>
                     <button
                       onClick={() => handleCopy(item)}
-                      className="flex items-center gap-1 mt-2 text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                      className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition-colors p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/20"
                       title="Copy details"
                     >
                       <Copy className="w-4 h-4" />
@@ -127,69 +130,66 @@ const NotificationsPanel = ({ onClose }) => {
                   </div>
 
                   <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded">
+                    <span className="font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded">
                       📍 {item.location}
                     </span>
-                    <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">
+                    <span className="font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">
                       🌾 {item.commodity}
                     </span>
                   </div>
 
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    🪶 Tons: {item.tons}
-                  </div>
-                  {item.rate && (
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
-                      💰 Rate: ₹{item.rate}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-gray-600 dark:text-gray-400">
+                      🪶 Tons:{" "}
+                      <span className="font-semibold">{item.tons}</span>
                     </div>
-                  )}
+                    {item.rate && (
+                      <div className="text-gray-600 dark:text-gray-400">
+                        💰 Rate:{" "}
+                        <span className="font-semibold">₹{item.rate}</span>
+                      </div>
+                    )}
+                  </div>
+
                   {item.payment !== null &&
                     item.payment !== undefined &&
                     String(item.payment).trim() !== "" && (
                       <div className="text-xs text-gray-600 dark:text-gray-400">
-                        🧾 Payment Terms: {item.payment} Day's
+                        🧾 Payment Terms:{" "}
+                        <span className="font-semibold">
+                          {item.payment} Days
+                        </span>
                       </div>
                     )}
-                  {item.buyerName && (
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
-                      🧑‍💼 Buyer: {item.buyerName}
-                    </div>
-                  )}
-                  {item.sellerName && (
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
-                      🏭 Seller: {item.sellerName}
-                    </div>
-                  )}
-                  {item.sellerCompany && (
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                      🏢 Company: {item.sellerCompany}
-                    </div>
-                  )}
-                  {item.saudaNo && (
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                      # Sauda No: {item.saudaNo}
-                    </div>
-                  )}
-                  {item.others && (
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                      ✍️ Notes: {item.others}
-                    </div>
-                  )}
+
                   {item.deliveryDate && (
-                    <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 rounded inline-block">
+                    <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-1 rounded inline-block">
                       📦 Delivery Date: {item.deliveryDate}
                     </div>
                   )}
+
+                  <div className="space-y-1 text-xs text-gray-500 dark:text-gray-500">
+                    {item.buyerName && <div>🧑‍💼 Buyer: {item.buyerName}</div>}
+                    {item.sellerName && <div>🏭 Seller: {item.sellerName}</div>}
+                    {item.sellerCompany && (
+                      <div>🏢 Company: {item.sellerCompany}</div>
+                    )}
+                    {item.saudaNo && <div># Sauda No: {item.saudaNo}</div>}
+                    {item.others && <div>✍️ Notes: {item.others}</div>}
+                  </div>
                 </li>
               ))}
           </ul>
         ) : (
-          <div className="p-4 text-gray-500 dark:text-gray-400">
-            No notifications found
+          <div className="flex-1 flex justify-center items-center p-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center">
+              <p className="font-medium">No notifications found</p>
+              <p className="text-xs mt-2">No sauda entries for today</p>
+            </div>
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 

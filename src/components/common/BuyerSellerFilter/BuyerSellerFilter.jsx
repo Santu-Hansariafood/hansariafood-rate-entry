@@ -10,19 +10,19 @@ const options = [
 
 export default function BuyerSellerFilter({ value, onChange }) {
   return (
-    <div className="mt-4 flex items-center gap-4 flex-wrap justify-center">
-      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 tracking-wide">
-        Filter by:
+    <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+      <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 tracking-wide whitespace-nowrap">
+        Filter:
       </span>
 
-      <div className="flex gap-3">
+      <div className="flex gap-2 sm:gap-3">
         {options.map((opt) => {
           const isSelected = value === opt.value;
           return (
             <button
               key={opt.value}
               onClick={() => onChange(opt.value)}
-              className={`px-5 py-2.5 text-sm font-semibold rounded-full transition-all duration-300 border-2 shadow-sm
+              className={`px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-300 border-2 shadow-sm
                 ${
                   isSelected
                     ? `bg-gradient-to-r ${opt.gradient} text-white border-transparent shadow-lg scale-105 transform`
