@@ -47,6 +47,7 @@ export async function GET(req) {
             unit: item.unit || "",
             time: time || "00:00",
             company: company,
+            deliveryDate: item.deliveryDate || "",
           };
 
           if (item.others) {

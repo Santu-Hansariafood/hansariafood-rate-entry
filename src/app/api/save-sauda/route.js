@@ -95,6 +95,7 @@ export async function POST(req) {
           commodity: (entry.commodity || "").trim(),
           sellerName: (entry.sellerName || "").trim(),
           sellerCompany: (entry.sellerCompany || "").trim(),
+          deliveryDate: (entry.deliveryDate || "").trim(),
         });
       }
 
@@ -143,9 +144,11 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const company = searchParams.get("company");
+    const companies = searchParams.get("companies"); // Support multiple companies
     const date = searchParams.get("date");
     const resetCounter = searchParams.get("resetCounter");
     const newCounterValue = searchParams.get("newCounterValue");
+    
     if (resetCounter === "true" && newCounterValue) {
       const Counter = mongoose.models.Counter;
       if (!Counter) {
@@ -167,6 +170,24 @@ export async function GET(req) {
       );
     }
 
+    // Support batch query for multiple companies
+    if (companies && date) {
+      const companyList = companies.split(",").map(c => c.trim()).filter(Boolean);
+      const entries = await SaudaEntry.find({
+        company: { $in: companyList },
+        date: date
+      });
+      
+      // Return as object keyed by company name for easy lookup
+      const entriesMap = {};
+      entries.forEach(entry => {
+        entriesMap[entry.company] = entry;
+      });
+      
+      return NextResponse.json({ entries: entriesMap }, { status: 200 });
+    }
+
+    // Single company query (backward compatible)
     const query = {};
     if (company) query.company = company;
     if (date) query.date = date;

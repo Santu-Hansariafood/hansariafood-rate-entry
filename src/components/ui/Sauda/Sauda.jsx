@@ -63,11 +63,10 @@ const Sauda = () => {
       )
       .filter((company) => {
         if (filterType === "all") return true;
-        if (filterType === "buyer") return company.type?.includes("buyer");
-        if (filterType === "seller") return company.type?.includes("seller");
-        return true;
+        const types = Array.isArray(company.type) ? company.type : [company.type];
+        return types.some(t => t?.toLowerCase() === filterType.toLowerCase());
       });
-  }, [companies, rateData, searchTerm, hasRate, filterType]);
+  }, [companies, searchTerm, hasRate, filterType]);
 
   const handlePopupClose = useCallback(
     (companyName, status = null) => {
@@ -93,18 +92,14 @@ const Sauda = () => {
     };
   }, [selectedCompany, handlePopupClose]);
 
-  useEffect(() => {
-    if (filterType !== "buyer") {
-      setFilterType("buyer");
-    }
-  }, []);
+  // Remove forced filter - let user choose
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 space-y-6 min-h-screen flex flex-col items-center bg-gray-50 dark:bg-gray-900">
+      <div className="p-4 space-y-6 min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <Title text="Check Sauda List" />
 
-        <div className="w-full max-w-md flex items-center gap-4 relative bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm">
+        <div className="w-full max-w-md flex items-center gap-4 relative bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <InputBox
             name="company-search"
             placeholder="Search by company name…"
@@ -114,7 +109,7 @@ const Sauda = () => {
 
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-full bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 transition border border-green-300 dark:border-green-700 group"
+            className="relative p-2 rounded-full bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 transition-all duration-200 border border-green-300 dark:border-green-700 group shadow-sm hover:shadow-md"
             aria-label="Notifications"
           >
             <Handshake className="w-6 h-6 text-green-700 dark:text-green-300 transform transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" />
@@ -128,19 +123,21 @@ const Sauda = () => {
         <BuyerSellerFilter value={filterType} onChange={setFilterType} />
 
         {loading ? (
+          <div className="w-full flex justify-center py-12">
             <Loading />
+          </div>
         ) : (
           <>
             {filteredCompanies.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 w-full animate-in fade-in duration-300">
                 {filteredCompanies.map((company) => {
                   const statusColor = saudaStatusMap[company.name] || "green";
                   const bgColor =
                     statusColor === "blue"
-                      ? "bg-blue-50 border-blue-400 dark:bg-blue-900/40 dark:border-blue-600"
+                      ? "bg-gradient-to-br from-blue-50 to-blue-100/50 border-2 border-blue-400 dark:from-blue-900/40 dark:to-blue-800/30 dark:border-blue-600"
                       : statusColor === "yellow"
-                      ? "bg-yellow-50 border-yellow-400 dark:bg-yellow-900/40 dark:border-yellow-600"
-                      : "bg-green-50 border-green-400 dark:bg-green-900/40 dark:border-green-600";
+                      ? "bg-gradient-to-br from-yellow-50 to-yellow-100/50 border-2 border-yellow-400 dark:from-yellow-900/40 dark:to-yellow-800/30 dark:border-yellow-600"
+                      : "bg-gradient-to-br from-green-50 to-green-100/50 border-2 border-green-400 dark:from-green-900/40 dark:to-green-800/30 dark:border-green-600";
                   const textColor =
                     statusColor === "blue"
                       ? "text-blue-700 dark:text-blue-300"
@@ -152,9 +149,9 @@ const Sauda = () => {
                     <div
                       key={company._id}
                       onClick={() => setSelectedCompany(company.name)}
-                      className={`p-4 rounded-xl shadow-md cursor-pointer hover:scale-[1.02] transition-transform border ${bgColor}`}
+                      className={`p-5 rounded-xl shadow-md hover:shadow-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:-translate-y-1 ${bgColor}`}
                     >
-                      <h2 className={`text-lg font-bold ${textColor}`}>
+                      <h2 className={`text-lg font-bold ${textColor} mb-1`}>
                         {company.name}
                       </h2>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -165,8 +162,13 @@ const Sauda = () => {
                 })}
               </div>
             ) : (
-              <div className="text-gray-500 dark:text-gray-400 text-center py-4">
-                No companies found. Please Update Rate.
+              <div className="text-gray-500 dark:text-gray-400 text-center py-8 px-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <p className="text-lg font-medium">No companies found</p>
+                <p className="text-sm mt-2">
+                  {searchTerm
+                    ? "Try adjusting your search or filter"
+                    : "Please Update Rate for companies"}
+                </p>
               </div>
             )}
           </>

@@ -41,6 +41,7 @@ export function useSaudaEntries(company, rateMap) {
               others: entry.others || "",
               sellerName: entry.sellerName || "",
               sellerCompany: entry.sellerCompany || "",
+              deliveryDate: entry.deliveryDate || "",
             })) ?? [
               {
                 tons: "",
@@ -49,6 +50,7 @@ export function useSaudaEntries(company, rateMap) {
                 others: "",
                 sellerName: "",
                 sellerCompany: "",
+                deliveryDate: "",
               },
             ];
           })
@@ -93,6 +95,7 @@ export function useSaudaEntries(company, rateMap) {
             others: "",
             sellerName: "",
             sellerCompany: "",
+            deliveryDate: "",
           },
         ],
       })),

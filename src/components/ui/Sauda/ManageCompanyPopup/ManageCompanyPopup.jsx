@@ -67,12 +67,10 @@ export default function ManageCompanyPopup({ name, onClose }) {
   );
   const exportHook = useSaudaExport({ company, today, rates, entries });
 
+  // Show popup immediately, don't block on all data
   const firstLoading = useFirstLoadBlocker([
-    !loadingCompany && !loadingRates && !loadingSauda && !loadingSellers,
+    !loadingCompany,
     company,
-    rates,
-    entries,
-    sellers,
   ]);
 
   useEffect(() => {
@@ -100,44 +98,53 @@ export default function ManageCompanyPopup({ name, onClose }) {
     if (!tradeMode && (role === "buyer" || role === "seller")) {
       setTradeMode(role === "buyer" ? "buying" : "selling");
     }
-  }, [role]);
+  }, [role, tradeMode]);
 
-  if (firstLoading) return <Loading />;
+  if (firstLoading || !company) return <Loading />;
 
   const loading =
-    loadingCompany || loadingRates || loadingSauda || loadingSellers;
-  if (!company) return null;
+    loadingRates || loadingSauda || loadingSellers;
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/70">
-        <div className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm">
+        <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto rounded-2xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
           <button
             aria-label="Close"
             onClick={() => onClose("red")}
-            className="absolute right-3 top-2 rounded-full p-1 text-gray-500 dark:text-gray-300 hover:text-red-500 transition-colors"
+            className="absolute right-4 top-4 rounded-full p-2 text-gray-500 dark:text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
           >
             <X className="h-5 w-5" />
           </button>
 
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
             <Title text={company.name} />
-            <p className="text-red-600 dark:text-red-400">Date: {today}</p>
+            <div className="flex items-center gap-4">
+              <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                📅 Date: <span className="text-red-600 dark:text-red-400">{today}</span>
+              </p>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
-            <SaudaTable
-              company={company}
-              rateMap={rateMap}
-              entries={entries}
-              totalTons={totalTons}
-              handleChange={handleChange}
-              handleUnitSave={handleUnitSave}
-              addRow={addRow}
-              removeRow={removeRow}
-              saveStatus={saveStatus}
-              sellers={sellers}
-            />
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loading />
+              </div>
+            ) : (
+              <SaudaTable
+                company={company}
+                rateMap={rateMap}
+                entries={entries}
+                totalTons={totalTons}
+                handleChange={handleChange}
+                handleUnitSave={handleUnitSave}
+                addRow={addRow}
+                removeRow={removeRow}
+                saveStatus={saveStatus}
+                sellers={sellers}
+              />
+            )}
           </div>
 
           {exportHook.showSharePopup && (

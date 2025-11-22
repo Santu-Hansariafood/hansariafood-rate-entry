@@ -55,6 +55,7 @@ export const useSaudaSave = (
           commodity,
           sellerName: entry.sellerName || "",
           sellerCompany: entry.sellerCompany || "",
+          deliveryDate: entry.deliveryDate || "",
         })),
       },
       lastUpdated,

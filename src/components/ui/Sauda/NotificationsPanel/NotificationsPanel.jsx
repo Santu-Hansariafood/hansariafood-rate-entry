@@ -31,8 +31,8 @@ const NotificationsPanel = ({ onClose }) => {
       String(item.payment).trim() !== ""
         ? `*Payment Terms:* ${item.payment} *Days*`
         : null,
+      item.deliveryDate ? `*Delivery Date:* ${item.deliveryDate}` : null,
       item.others ? `*Notes:* ${item.others}` : null,
-      `*Delivery Days:*`,
       `\n`,
       `*We are pleased to inform you that the Proper Sauda Contract will be shared with you shortly.*`,
       `*Kindly check your registered email address for the contract details.*`,
@@ -173,6 +173,11 @@ const NotificationsPanel = ({ onClose }) => {
                   {item.others && (
                     <div className="text-xs text-gray-500 dark:text-gray-500">
                       ✍️ Notes: {item.others}
+                    </div>
+                  )}
+                  {item.deliveryDate && (
+                    <div className="text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 rounded inline-block">
+                      📦 Delivery Date: {item.deliveryDate}
                     </div>
                   )}
                 </li>

@@ -23,17 +23,17 @@ export default function SaudaTable({
   return (
     <Suspense fallback={<Loading />}>
       <div className="overflow-x-auto">
-        <table className="min-w-full overflow-hidden rounded-lg border border-gray-300 dark:border-gray-700 text-sm md:text-base shadow-sm">
+        <table className="min-w-full overflow-hidden rounded-xl border-2 border-gray-300 dark:border-gray-700 text-sm md:text-base shadow-lg">
           <thead>
-            <tr className="bg-green-600 dark:bg-green-700 text-white text-left">
-              <th className="px-4 py-3">Sl.</th>
-              <th className="px-4 py-3">Unit</th>
-              <th className="px-4 py-3">Commodity</th>
-              <th className="px-4 py-3">Target Quantity</th>
-              <th className="px-4 py-3">Rate</th>
+            <tr className="bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800 text-white text-left shadow-md">
+              <th className="px-4 py-3 font-semibold">Sl.</th>
+              <th className="px-4 py-3 font-semibold">Unit</th>
+              <th className="px-4 py-3 font-semibold">Commodity</th>
+              <th className="px-4 py-3 font-semibold">Target Quantity</th>
+              <th className="px-4 py-3 font-semibold">Rate</th>
               <th className="px-4 py-3"></th>
-              <th className="px-4 py-3">Sauda Details</th>
-              <th className="px-4 py-3">Total Tons</th>
+              <th className="px-4 py-3 font-semibold">Sauda Details</th>
+              <th className="px-4 py-3 font-semibold">Total Tons</th>
             </tr>
           </thead>
 
@@ -88,13 +88,14 @@ export default function SaudaTable({
                           <div
                             key={idx}
                             className={`
-                            flex flex-col sm:flex-row flex-wrap gap-3 p-4 rounded-xl shadow-md transition-colors
-                            border
+                            flex flex-col sm:flex-row flex-wrap gap-3 p-4 rounded-xl shadow-md transition-all duration-200
+                            border-2
                             ${
                               isFilled
-                                ? "border-green-400 bg-green-50 dark:bg-green-900/20"
-                                : "border-red-300 bg-red-50 dark:bg-red-900/20"
+                                ? "border-green-400 bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20"
+                                : "border-red-300 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/30 dark:to-red-800/20"
                             }
+                            hover:shadow-lg
                           `}
                           >
                             <span className="text-base font-semibold text-gray-600 dark:text-gray-300">
@@ -204,6 +205,60 @@ export default function SaudaTable({
                               px-2 py-1 text-sm cursor-not-allowed"
                               value={e.saudaNo || ""}
                               disabled
+                            />
+                            <input
+                              type="text"
+                              placeholder="Delivery Date (221125)"
+                              maxLength={8}
+                              className="w-28 rounded border border-purple-400 dark:border-purple-600 
+    bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 
+    px-2 py-1 text-sm focus:ring-2 focus:ring-purple-400 dark:focus:ring-purple-500"
+                              value={e.deliveryDate || ""}
+                              onChange={(ev) => {
+                                let raw = ev.target.value.replace(/\D/g, "");
+
+                                const isDeleting =
+                                  ev.nativeEvent.inputType ===
+                                  "deleteContentBackward";
+
+                                if (!isDeleting && raw.length === 4) {
+                                  const day = raw.slice(0, 2);
+                                  const month = Number(raw.slice(2, 4));
+
+                                  const now = new Date();
+                                  const shortYear = now.getFullYear() % 100; // e.g. 25
+                                  const currentMonth = now.getMonth() + 1;
+
+                                  let year = shortYear;
+
+                                  if (month < currentMonth) {
+                                    year = shortYear + 1;
+                                  }
+
+                                  raw = `${day}${raw.slice(2, 4)}${year
+                                    .toString()
+                                    .padStart(2, "0")}`;
+                                }
+
+                                let formatted = raw;
+                                if (formatted.length >= 2)
+                                  formatted =
+                                    formatted.slice(0, 2) +
+                                    "/" +
+                                    formatted.slice(2);
+                                if (formatted.length >= 5)
+                                  formatted =
+                                    formatted.slice(0, 5) +
+                                    "/" +
+                                    formatted.slice(5, 7);
+
+                                handleChange(
+                                  key,
+                                  idx,
+                                  "deliveryDate",
+                                  formatted
+                                );
+                              }}
                             />
 
                             <div className="flex gap-2">

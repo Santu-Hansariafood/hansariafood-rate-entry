@@ -11,16 +11,13 @@ const Title = dynamic(() => import("@/components/common/Title/Title"), {
 const Legend = () => {
   return (
     <Suspense fallback={<Loading />}>
-      <div className="mt-10 w-full max-w-4xl px-4">
+      <div className="mt-10 w-full flex flex-col items-center px-4">
         <Title text="Legend" />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-4 justify-center">
           <LegendItem
             color="bg-green-400 dark:bg-green-500"
             text="Green: No Sauda entered yet"
-          />
-          <LegendItem
-            color="bg-yellow-400 dark:bg-yellow-500"
-            text="Yellow: Partial Sauda filled"
           />
           <LegendItem
             color="bg-blue-400 dark:bg-blue-500"
