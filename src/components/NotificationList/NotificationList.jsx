@@ -6,16 +6,22 @@ import useNotificationFilter from "@/hooks/Notifications/useNotificationFilter";
 import useCopyNotification from "@/hooks/Notifications/useCopyNotification";
 
 export default function NotificationList({ notifications = [] }) {
-  const lastShownRef = useRef([]); // Avoid duplicate browser notifications
-  const audioRef = useRef(null); // ✅ Ref for sound
+  const lastShownRef = useRef([]);
+  const audioRef = useRef(null);
 
   const parseUpdateTime = (timeStr) => {
     if (!timeStr) return 0;
-    const [time, modifier] = timeStr.split(" ");
-    if (!time || !modifier) return 0;
-    let [hours, minutes] = time.split(":").map(Number);
-    if (modifier.toLowerCase() === "pm" && hours !== 12) hours += 12;
-    if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
+    const parts = timeStr.split(" ");
+    if (!parts[0] || !parts[1]) return 0;
+
+    const [hoursStr, minutesStr] = parts[0].split(":");
+    let hours = Number(hoursStr);
+    let minutes = Number(minutesStr);
+    const modifier = parts[1].toLowerCase();
+
+    if (modifier === "pm" && hours !== 12) hours += 12;
+    if (modifier === "am" && hours === 12) hours = 0;
+
     return (hours * 60 + minutes) * 60 * 1000;
   };
 
@@ -26,22 +32,35 @@ export default function NotificationList({ notifications = [] }) {
   const { handleCopy, capitalizeFirst } = useCopyNotification();
 
   useEffect(() => {
-    if ("Notification" in window) {
-      Notification.requestPermission();
+    try {
+      if (typeof window !== "undefined" && "Notification" in window) {
+        Notification.requestPermission().catch(() => {});
+      }
+    } catch (err) {
+      console.warn("Notification permission error:", err);
     }
   }, []);
 
   useEffect(() => {
-    audioRef.current = new Audio("/notification/notification.wav");
-    audioRef.current.volume = 0.7;
+    try {
+      audioRef.current = new Audio("/notification/notification.wav");
+      audioRef.current.volume = 0.7;
+    } catch (err) {
+      console.warn("Audio init error:", err);
+    }
   }, []);
 
   useEffect(() => {
-    if (!("Notification" in window) || Notification.permission !== "granted")
+    if (
+      typeof window === "undefined" ||
+      !("Notification" in window) ||
+      Notification.permission !== "granted"
+    )
       return;
 
     filteredNotifications.forEach((n) => {
       const uniqueId = `${n.company}-${n.location}-${n.newRateDate}-${n.newRate}`;
+
       if (!lastShownRef.current.includes(uniqueId)) {
         lastShownRef.current.push(uniqueId);
 
@@ -49,17 +68,23 @@ export default function NotificationList({ notifications = [] }) {
         const body = `New rate for ${n.commodity}: ₹${n.newRate}`;
         const icon = "/favicon.ico";
 
-        new Notification(title, {
-          body,
-          icon,
-          vibrate: [100, 50, 100],
-        });
-
-        if (audioRef.current) {
-          const sound = audioRef.current.cloneNode();
-          sound.play().catch(() => {
-            console.warn("Sound playback failed. May need user interaction.");
+        try {
+          new Notification(title, {
+            body,
+            icon,
+            vibrate: [100, 50, 100],
           });
+        } catch (err) {
+          console.warn("Mobile notification blocked:", err);
+        }
+
+        try {
+          if (audioRef.current) {
+            const sound = audioRef.current.cloneNode();
+            sound.play().catch(() => {});
+          }
+        } catch (err) {
+          console.warn("Sound playback error:", err);
         }
       }
     });
@@ -86,7 +111,10 @@ export default function NotificationList({ notifications = [] }) {
         no-scrollbar transition-all duration-500 hover:scale-[1.01]"
         style={{
           backgroundImage:
-            "linear-gradient(135deg, rgba(255,255,255,0.05) 25%, transparent 25%), linear-gradient(225deg, rgba(255,255,255,0.05) 25%, transparent 25%), linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%), linear-gradient(315deg, rgba(255,255,255,0.05) 25%, transparent 25%)",
+            "linear-gradient(135deg, rgba(255,255,255,0.05) 25%, transparent 25%), " +
+            "linear-gradient(225deg, rgba(255,255,255,0.05) 25%, transparent 25%), " +
+            "linear-gradient(45deg, rgba(255,255,255,0.05) 25%, transparent 25%), " +
+            "linear-gradient(315deg, rgba(255,255,255,0.05) 25%, transparent 25%)",
           backgroundPosition: "10px 0, 10px 0, 0 0, 0 0",
           backgroundSize: "20px 20px",
         }}
@@ -95,6 +123,7 @@ export default function NotificationList({ notifications = [] }) {
           <h2 className="text-gray-800 dark:text-gray-200 font-semibold text-lg flex items-center gap-2">
             🔔 <span>Notifications</span>
           </h2>
+
           <div className="space-x-2 flex items-center">
             <FilterButton title="All" icon={List} type="all" />
             <FilterButton title="Unread" icon={Info} type="unread" />
@@ -111,27 +140,22 @@ export default function NotificationList({ notifications = [] }) {
             {filteredNotifications.map((n, index) => {
               const isRead = n.read;
               const Icon = isRead ? CheckCircle : Info;
-              const alignment = isRead
-                ? "items-end text-right"
-                : "items-start text-left";
+
               const datePart = new Date(
                 n.newRateDate || n.updatedAt || Date.now()
               ).toLocaleDateString("en-IN");
+
               const time = `${datePart}, ${n.updateTime || "N/A"}`;
 
               return (
                 <div
                   key={
                     n.id ||
-                    `${n.company}-${n.location}-${
-                      n.newRateDate || "no-date"
-                    }-${index}`
+                    `${n.company}-${n.location}-${n.newRateDate || "no-date"}-${index}`
                   }
-                  className={`group p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-1 ${alignment} transition-all duration-300 hover:bg-gradient-to-r hover:from-gray-100/80 hover:to-gray-50/60 dark:hover:from-gray-800/50 dark:hover:to-gray-900/50`}
-                  style={{
-                    transform: "perspective(1000px) translateZ(0)",
-                    transition: "transform 0.4s ease",
-                  }}
+                  className={`group p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-1 ${
+                    isRead ? "items-end text-right" : "items-start text-left"
+                  } transition-all duration-300 hover:bg-gradient-to-r hover:from-gray-100/80 hover:to-gray-50/60 dark:hover:from-gray-800/50 dark:hover:to-gray-900/50`}
                 >
                   <div className="flex items-center gap-2">
                     <Icon
@@ -152,7 +176,6 @@ export default function NotificationList({ notifications = [] }) {
                         </span>
                         )
                       </div>
-
                       <div className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-blue-600 dark:text-blue-400">
                           {capitalizeFirst(n.commodity || "N/A")}
@@ -193,7 +216,6 @@ export default function NotificationList({ notifications = [] }) {
                           <Copy className="w-4 h-4" />
                         </button>
                       </div>
-
                       <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                         Updated: {time}
                       </div>

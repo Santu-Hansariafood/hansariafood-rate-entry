@@ -1,4 +1,20 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+import withPWA from "next-pwa";
 
-export default nextConfig;
+const nextConfig = {
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["*"],
+    },
+  },
+  images: {
+    dangerouslyAllowSVG: true,
+    domains: ["cdn.jsdelivr.net", "res.cloudinary.com"],
+  },
+  reactStrictMode: true,
+};
+
+export default withPWA({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+})(nextConfig);

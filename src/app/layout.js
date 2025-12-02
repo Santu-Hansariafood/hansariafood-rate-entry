@@ -21,12 +21,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Hansaria Food Private Limited | Commodity & Brokerage Services",
+  title: "Hansaria Food Private Limited",
   description:
     "Hansaria Food Private Limited is a leading supplier of high-quality raw materials for the poultry and animal feed industry in India. With a reputation for excellence, we specialize in sourcing and delivering premium feed ingredients that support healthy livestock growth. Our global commodity trading and brokerage services ensure consistent supply, competitive pricing, and unmatched reliability. Trusted by poultry farms, feed manufacturers, and agribusinesses, Hansaria Food is your dependable partner for feed solutions with assured quality and on-time delivery.",
   keywords:
     "Hansaria Food, raw material supply, poultry feed industry, commodity trading, brokerage services, supply chain, Kolkata, India, international trade",
-  authors: [{ name: "Hansaria Food Private Limited" }],
+  authors: [{ name: "Santu De" }],
   metadataBase: new URL("https://www.hansariafood.site"),
   openGraph: {
     title: "Hansaria Food Private Limited",
@@ -71,6 +71,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#ffffff" />
         <meta name="author" content="Hansaria Food Private Limited" />
         <link rel="canonical" href="https://www.hansariafood.site" />
+        <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
