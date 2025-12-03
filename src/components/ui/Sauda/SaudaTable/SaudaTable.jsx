@@ -226,7 +226,7 @@ export default function SaudaTable({
                                   const month = Number(raw.slice(2, 4));
 
                                   const now = new Date();
-                                  const shortYear = now.getFullYear() % 100; // e.g. 25
+                                  const shortYear = now.getFullYear() % 100;
                                   const currentMonth = now.getMonth() + 1;
 
                                   let year = shortYear;

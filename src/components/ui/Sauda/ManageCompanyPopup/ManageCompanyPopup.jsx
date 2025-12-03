@@ -67,7 +67,6 @@ export default function ManageCompanyPopup({ name, onClose }) {
   );
   const exportHook = useSaudaExport({ company, today, rates, entries });
 
-  // Show popup immediately, don't block on all data
   const firstLoading = useFirstLoadBlocker([
     !loadingCompany,
     company,

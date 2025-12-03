@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
@@ -10,7 +10,6 @@ export default function useSaudaNotifications() {
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const prevRawData = useRef("");
 
   const getTodayString = useCallback(() => {
     const today = new Date();
@@ -41,12 +40,7 @@ export default function useSaudaNotifications() {
       const all = res.data.notifications || [];
 
       const filtered = filterAndSortToday(all);
-
-      const rawDataString = JSON.stringify(filtered);
-      if (rawDataString === prevRawData.current) return;
-
-      prevRawData.current = rawDataString;
-      localStorage.setItem(LOCAL_STORAGE_KEY, rawDataString);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtered));
 
       const enriched = await Promise.all(
         filtered.map(async (item) => {
@@ -58,12 +52,14 @@ export default function useSaudaNotifications() {
                 commodity: item.commodity,
               },
             });
+
             const match = rateRes.data.find(
               (r) =>
                 r.company === item.company &&
                 r.location === item.location &&
                 r.commodity === item.commodity
             );
+
             return {
               ...item,
               rate: item.rate ?? match?.newRate ?? null,
@@ -92,9 +88,7 @@ export default function useSaudaNotifications() {
         const cachedData = JSON.parse(cached);
         const filteredCache = filterAndSortToday(cachedData);
         setNotifications(filteredCache);
-      } catch (e) {
-        console.warn("Invalid cache format:", e);
-      }
+      } catch {}
       setLoading(false);
     }
 
@@ -103,6 +97,12 @@ export default function useSaudaNotifications() {
     const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchNotifications, filterAndSortToday]);
+
+  useEffect(() => {
+    const handler = () => fetchNotifications();
+    window.addEventListener("sauda_updated", handler);
+    return () => window.removeEventListener("sauda_updated", handler);
+  }, [fetchNotifications]);
 
   const filteredNotifications = useMemo(() => {
     if (!searchQuery) return notifications;
