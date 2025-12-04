@@ -54,9 +54,7 @@ export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
     });
   });
-
   const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-
   saveAs(
     new Blob([excelBuffer], { type: "application/octet-stream" }),
     `Weekly_Rate_Sheet_${userName || "User"}.xlsx`
