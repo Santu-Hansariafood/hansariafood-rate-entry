@@ -17,6 +17,7 @@ export default function useLocationList(itemsPerPage = 10) {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
   const states = useMemo(() => stateData.map((item) => item.state), []);
+  const blocked = /[\[\]\{\}\(\)\.,&\?%#@_+\-=\/]/g;
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -88,10 +89,15 @@ export default function useLocationList(itemsPerPage = 10) {
     setShowModal(true);
   }, []);
 
-  const handleInputChange = useCallback((e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (e) => {
+    let { name, value } = e.target;
+
+    if (name === "name") {
+      value = value.replace(blocked, "");
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
-  }, []);
+  };
 
   return {
     states,
