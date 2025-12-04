@@ -91,23 +91,23 @@ export default function CreateLocation() {
           </div>
           <div className="mb-6">
             <InputBox
-              label="Location"
-              name="location"
-              type="text"
-              value={location}
-              onChange={(e) => {
-                const value = e.target.value;
-                const blocked = /[\[\]\{\}\(\)\.,&\?%#@_+-=\/]/g;
-                if (!blocked.test(value)) {
-                  setLocation(value);
-                }
-              }}
-              placeholder="Enter location name"
-              icon={
-                <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-              }
-              className="dark:bg-gray-900 dark:text-gray-200"
-            />
+  label="Location"
+  name="location"
+  type="text"
+  value={location}
+  onChange={(e) => {
+    const value = e.target.value;
+    const blocked = /[\[\]\{\}\(\)\.,&\?%#@_+-=\/]/g;
+
+    if (!blocked.test(value)) {
+      setLocation(value);
+    }
+  }}
+  placeholder="Enter location name"
+  icon={<MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500" />}
+  className="dark:bg-gray-900 dark:text-gray-200"
+/>
+
           </div>
           <Button
             text="Save Location"
