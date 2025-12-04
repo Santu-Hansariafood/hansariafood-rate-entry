@@ -98,7 +98,6 @@ export default function CreateLocation() {
               onChange={(e) => {
                 const value = e.target.value;
                 const blocked = /[\[\]\{\}\(\)\.,&\?%#@_+-=\/]/g;
-
                 if (!blocked.test(value)) {
                   setLocation(value);
                 }
