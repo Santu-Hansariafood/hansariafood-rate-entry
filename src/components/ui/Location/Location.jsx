@@ -95,7 +95,14 @@ export default function CreateLocation() {
               name="location"
               type="text"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                const blocked = /[\[\]\{\}\(\)\.,&\?%#@_+-=\/]/g;
+
+                if (!blocked.test(value)) {
+                  setLocation(value);
+                }
+              }}
               placeholder="Enter location name"
               icon={
                 <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500" />
