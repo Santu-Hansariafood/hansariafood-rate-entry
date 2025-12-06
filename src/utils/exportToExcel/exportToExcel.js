@@ -8,13 +8,23 @@ export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
 
   let rowIndex = 0;
 
+  const topDateRow = [
+    "",
+    ...weekDates.map((d) => XLSX.SSF.format("dd-mm-yy", d)),
+  ];
+  rows.push(topDateRow);
+  rowIndex++;
+
+  rows.push([""]);
+  rowIndex++;
+
   groupedCompanies.forEach((company, cIndex) => {
     const companyName =
       company?.name && typeof company.name === "string"
         ? company.name
         : `Company_${cIndex + 1}`;
 
-    rows.push([`Company: ${companyName}`]);
+    rows.push([`${companyName}`]);
 
     merges.push({
       s: { r: rowIndex, c: 0 },
@@ -23,28 +33,9 @@ export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
 
     rowIndex++;
 
-    rows.push([""]);
-    rowIndex++;
-
     (company.locations || []).forEach((location) => {
-      rows.push([`Location: ${location}`]);
-
-      merges.push({
-        s: { r: rowIndex, c: 0 },
-        e: { r: rowIndex, c: weekDates.length },
-      });
-
-      rowIndex++;
-
-      const dateRow = weekDates.map((date) =>
-        XLSX.SSF.format("dd-mm-yyyy", date)
-      );
-      rows.push(dateRow);
-      rowIndex++;
-
       const rateRow = weekDates.map((date) => {
-        const formatted = XLSX.SSF.format("dd-mm-yyyy", date);
-
+        const formatted = XLSX.SSF.format("dd-mm-yy", date);
         return (
           company?.rates?.[location]?.[formatted]?.rate ??
           company?.rates?.[location]?.[formatted] ??
@@ -52,10 +43,7 @@ export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
         );
       });
 
-      rows.push(rateRow);
-      rowIndex++;
-
-      rows.push([""]);
+      rows.push([`${location}`, ...rateRow]);
       rowIndex++;
     });
 
@@ -75,12 +63,12 @@ export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
     if (value.startsWith("Company:")) {
       cellObj.s = {
         font: { bold: true, sz: 16 },
-        alignment: { horizontal: "center" },
+        alignment: { horizontal: "left" },
       };
     } else if (value.startsWith("Location:")) {
       cellObj.s = {
         font: { bold: true, sz: 13 },
-        alignment: { horizontal: "center" },
+        alignment: { horizontal: "left" },
       };
     } else if (/\d{2}-\d{2}-\d{4}/.test(value)) {
       cellObj.s = {
