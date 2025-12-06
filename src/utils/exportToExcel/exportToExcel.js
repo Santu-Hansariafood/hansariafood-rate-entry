@@ -3,7 +3,10 @@ import { saveAs } from "file-saver";
 
 export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
   const wb = XLSX.utils.book_new();
-  const usedSheetNames = new Set();
+  const rows = [];
+  const merges = [];
+
+  let rowIndex = 0;
 
   groupedCompanies.forEach((company, cIndex) => {
     const companyName =
@@ -11,52 +14,97 @@ export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
         ? company.name
         : `Company_${cIndex + 1}`;
 
-    (company.locations || []).forEach((location, lIndex) => {
-      const rows = [];
+    rows.push([`Company: ${companyName}`]);
 
-      rows.push(["Company Name:", companyName]);
-      rows.push(["Location:", location]);
-      rows.push(["User:", userName || "User"]);
-      rows.push([]);
+    merges.push({
+      s: { r: rowIndex, c: 0 },
+      e: { r: rowIndex, c: weekDates.length },
+    });
 
-      rows.push(["Date", "Rate"]);
+    rowIndex++;
 
-      weekDates.forEach((date) => {
-        const formatted = XLSX.SSF.format("dd-mm-yyyy", date);
+    rows.push([""]);
+    rowIndex++;
 
-        const rate =
-          company?.rates?.[location]?.[formatted]?.rate ??
-          company?.rates?.[location]?.[formatted] ??
-          "";
+    (company.locations || []).forEach((location) => {
+      rows.push([`Location: ${location}`]);
 
-        rows.push([formatted, rate]);
+      merges.push({
+        s: { r: rowIndex, c: 0 },
+        e: { r: rowIndex, c: weekDates.length },
       });
 
-      const ws = XLSX.utils.aoa_to_sheet(rows);
+      rowIndex++;
 
-      let sheetName = `${companyName}-${location}`.trim();
+      const dateRow = weekDates.map((date) =>
+        XLSX.SSF.format("dd-mm-yyyy", date)
+      );
+      rows.push(dateRow);
+      rowIndex++;
 
-      sheetName = sheetName.replace(/[:\\/?*\[\]]/g, "");
+      const rateRow = weekDates.map((date) => {
+        const formatted = XLSX.SSF.format("dd-mm-yyyy", date);
 
-      sheetName = sheetName.slice(0, 31);
+        return (
+          company?.rates?.[location]?.[formatted]?.rate ??
+          company?.rates?.[location]?.[formatted] ??
+          ""
+        );
+      });
 
-      if (!sheetName) sheetName = `Sheet_${cIndex + 1}_${lIndex + 1}`;
+      rows.push(rateRow);
+      rowIndex++;
 
-      let originalName = sheetName;
-      let counter = 1;
-      while (usedSheetNames.has(sheetName)) {
-        sheetName = `${originalName}_${counter}`;
-        sheetName = sheetName.slice(0, 31);
-        counter++;
-      }
-      usedSheetNames.add(sheetName);
-
-      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      rows.push([""]);
+      rowIndex++;
     });
+
+    rows.push([""]);
+    rowIndex++;
   });
-  const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws["!merges"] = merges;
+
+  Object.keys(ws).forEach((cell) => {
+    if (cell[0] === "!") return;
+
+    const cellObj = ws[cell];
+    const value = cellObj.v?.toString() || "";
+
+    if (value.startsWith("Company:")) {
+      cellObj.s = {
+        font: { bold: true, sz: 16 },
+        alignment: { horizontal: "center" },
+      };
+    } else if (value.startsWith("Location:")) {
+      cellObj.s = {
+        font: { bold: true, sz: 13 },
+        alignment: { horizontal: "center" },
+      };
+    } else if (/\d{2}-\d{2}-\d{4}/.test(value)) {
+      cellObj.s = {
+        font: { bold: true, color: { rgb: "FF0000" } },
+        alignment: { horizontal: "center" },
+      };
+    } else if (!isNaN(parseFloat(value))) {
+      cellObj.s = {
+        font: { bold: true },
+        alignment: { horizontal: "center" },
+      };
+    }
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws, "Weekly Rates");
+
+  const buffer = XLSX.write(wb, {
+    bookType: "xlsx",
+    type: "array",
+    cellStyles: true,
+  });
+
   saveAs(
-    new Blob([excelBuffer], { type: "application/octet-stream" }),
+    new Blob([buffer], { type: "application/octet-stream" }),
     `Weekly_Rate_Sheet_${userName || "User"}.xlsx`
   );
 }
