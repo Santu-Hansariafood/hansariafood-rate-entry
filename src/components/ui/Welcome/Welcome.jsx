@@ -42,20 +42,7 @@ export default function Welcome() {
         localStorage.setItem("mobile", userData.mobile);
       }
 
-      let companies = companyResponse.data.companies || [];
-
-      const uniqueCompanies = Array.from(
-        new Map(companies.map((c) => [c.companyId?._id, c])).values()
-      ).sort((a, b) => a.companyId?.name.localeCompare(b.companyId?.name));
-
-      const cleanedCompanies = uniqueCompanies.map((c) => ({
-        ...c,
-        locations: Array.from(new Set(c.locations)).sort((a, b) =>
-          a.localeCompare(b)
-        ),
-      }));
-
-      setAssignedCompanies(cleanedCompanies);
+      setAssignedCompanies(companyResponse.data.companies || []);
     } catch (error) {
       console.error("Error fetching data:", error);
       setName("Guest");
@@ -90,7 +77,6 @@ export default function Welcome() {
                   <h3 className="font-bold text-lg bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
                     {company.companyId.name}
                   </h3>
-
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-3">
                     {company.locations.map((loc, index) => (
                       <span
@@ -130,14 +116,12 @@ export default function Welcome() {
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-green-500 to-teal-400 bg-clip-text text-transparent mb-4">
             Welcome, {name}
           </h1>
-
           <Link
             href="/resetpassword"
             className="inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
             Reset Your Password
           </Link>
-
           {assignedCompaniesList}
         </motion.div>
       </div>
