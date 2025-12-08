@@ -18,11 +18,21 @@ export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
   rows.push([""]);
   rowIndex++;
 
-  groupedCompanies.forEach((company, cIndex) => {
+  const uniqueCompanies = Array.from(
+    new Map(
+      groupedCompanies.map((c) => [(c?.name || "").trim().toLowerCase(), c])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
+
+  uniqueCompanies.forEach((company, cIndex) => {
     const companyName =
       company?.name && typeof company.name === "string"
         ? company.name
         : `Company_${cIndex + 1}`;
+
+    const uniqueLocations = Array.from(
+      new Set((company.locations || []).map((loc) => loc.toString().trim()))
+    ).sort((a, b) => a.localeCompare(b));
 
     rows.push([`${companyName}`]);
 
@@ -33,7 +43,7 @@ export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
 
     rowIndex++;
 
-    (company.locations || []).forEach((location) => {
+    uniqueLocations.forEach((location) => {
       const rateRow = weekDates.map((date) => {
         const formatted = XLSX.SSF.format("dd-mm-yy", date);
         return (
