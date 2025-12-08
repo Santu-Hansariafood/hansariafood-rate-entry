@@ -144,7 +144,7 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const company = searchParams.get("company");
-    const companies = searchParams.get("companies"); // Support multiple companies
+    const companies = searchParams.get("companies");
     const date = searchParams.get("date");
     const resetCounter = searchParams.get("resetCounter");
     const newCounterValue = searchParams.get("newCounterValue");
@@ -170,7 +170,6 @@ export async function GET(req) {
       );
     }
 
-    // Support batch query for multiple companies
     if (companies && date) {
       const companyList = companies.split(",").map(c => c.trim()).filter(Boolean);
       const entries = await SaudaEntry.find({
@@ -178,7 +177,6 @@ export async function GET(req) {
         date: date
       });
       
-      // Return as object keyed by company name for easy lookup
       const entriesMap = {};
       entries.forEach(entry => {
         entriesMap[entry.company] = entry;
@@ -187,7 +185,6 @@ export async function GET(req) {
       return NextResponse.json({ entries: entriesMap }, { status: 200 });
     }
 
-    // Single company query (backward compatible)
     const query = {};
     if (company) query.company = company;
     if (date) query.date = date;

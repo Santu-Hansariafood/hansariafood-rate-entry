@@ -4,11 +4,11 @@ import { toast } from "react-toastify";
 
 const useSaudaData = () => {
   const [companies, setCompanies] = useState([]);
-  const [allCompanies, setAllCompanies] = useState([]); // Store all companies
+  const [allCompanies, setAllCompanies] = useState([]);
   const [rateData, setRateData] = useState([]);
   const [saudaStatusMap, setSaudaStatusMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState("all"); // Start with "all" to show everything initially
+  const [filterType, setFilterType] = useState("all");
 
   const today = useMemo(() => {
     return new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
@@ -35,7 +35,6 @@ const useSaudaData = () => {
     }));
   }, []);
 
-  // Helper function to chunk array into smaller arrays
   const chunkArray = (array, chunkSize) => {
     const chunks = [];
     for (let i = 0; i < array.length; i += chunkSize) {
@@ -44,12 +43,10 @@ const useSaudaData = () => {
     return chunks;
   };
 
-  // Fetch all data upfront - only runs once on mount
   useEffect(() => {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        // Step 1: Fetch ALL companies (no filter) upfront
         const companiesRes = await axiosInstance.get(`/companies?limit=10000`);
         const fetchedAllCompanies = companiesRes.data.companies || [];
         setAllCompanies(fetchedAllCompanies);
@@ -60,13 +57,11 @@ const useSaudaData = () => {
           return;
         }
 
-        // Step 2: Fetch all rates at once (no company filter = all rates)
         const ratesRes = await axiosInstance.get(`/rate`);
         const allRates = ratesRes.data || [];
         setRateData(allRates);
 
-        // Step 3: Fetch all sauda data in parallel batches (using new batch endpoint)
-        const saudaChunks = chunkArray(companyNames, 100); // Larger chunks for sauda
+        const saudaChunks = chunkArray(companyNames, 100);
         const saudaRequests = saudaChunks.map((chunk) =>
           axiosInstance
             .get(
@@ -82,7 +77,6 @@ const useSaudaData = () => {
         const saudaResponses = await Promise.all(saudaRequests);
         const allSaudaEntries = Object.assign({}, ...saudaResponses);
 
-        // Process sauda statuses
         const saudaStatuses = {};
         companyNames.forEach((company) => {
           let status = "green";
@@ -124,9 +118,7 @@ const useSaudaData = () => {
     };
 
     fetchAllData();
-  }, [today]); // Only depend on today, not filterType
-
-  // Filter companies based on filterType (client-side filtering, no API call)
+  }, [today]);
   useEffect(() => {
     if (allCompanies.length === 0) {
       setCompanies([]);

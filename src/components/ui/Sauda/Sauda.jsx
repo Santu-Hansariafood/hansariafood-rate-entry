@@ -29,9 +29,7 @@ const Title = dynamic(() => import("@/components/common/Title/Title"), {
 });
 const InputBox = dynamic(
   () => import("@/components/common/InputBox/InputBox"),
-  {
-    suspense: true,
-  }
+  { suspense: true }
 );
 const Legend = dynamic(() => import("@/components/ui/Sauda/Legend/Legend"), {
   suspense: true,
@@ -44,36 +42,29 @@ const Sauda = () => {
 
   const {
     companies,
-    rateData,
     saudaStatusMap,
     loading,
     hasRate,
-    updateCompanyStatus,
     filterType,
     setFilterType,
+    updateCompanyStatus,
   } = useSaudaData();
 
   const filteredCompanies = useMemo(() => {
     return companies
-      .filter((company) => hasRate(company.name))
-      .filter((company) =>
-        company.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .filter((company) => {
+      .filter((c) => hasRate(c.name))
+      .filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter((c) => {
         if (filterType === "all") return true;
-        const types = Array.isArray(company.type)
-          ? company.type
-          : [company.type];
+        const types = Array.isArray(c.type) ? c.type : [c.type];
         return types.some((t) => t?.toLowerCase() === filterType.toLowerCase());
       });
-  }, [companies, searchTerm, hasRate, filterType]);
+  }, [companies, searchTerm, filterType, hasRate]);
 
   const handlePopupClose = useCallback(
     (companyName, status = null) => {
       setSelectedCompany(null);
-      if (status) {
-        updateCompanyStatus(companyName, status);
-      }
+      if (status) updateCompanyStatus(companyName, status);
       clearTimeout(inactivityTimer.current);
     },
     [updateCompanyStatus]
@@ -86,59 +77,63 @@ const Sauda = () => {
         handlePopupClose(selectedCompany);
       }, 5 * 60 * 1000);
     }
-
-    return () => {
-      clearTimeout(inactivityTimer.current);
-    };
+    return () => clearTimeout(inactivityTimer.current);
   }, [selectedCompany, handlePopupClose]);
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="w-full py-4 px-4 sm:px-6">
           <Title text="Check Sauda List" />
         </div>
 
         <div className="w-full px-4 sm:px-6 pb-4">
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-            <div className="flex-1">
-              <InputBox
-                name="company-search"
-                placeholder="Search by company name…"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex-shrink-0">
-              <BuyerSellerFilter value={filterType} onChange={setFilterType} />
-            </div>
+            <InputBox
+              name="company-search"
+              placeholder="Search by company name…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+
+            <BuyerSellerFilter value={filterType} onChange={setFilterType} />
           </div>
         </div>
+
         <div className="w-full px-4 sm:px-6 pb-4">
-          <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-220px)] min-h-[500px]">
-            <div className="w-full lg:w-3/4 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[400px] lg:min-h-0">
+          <div className="flex flex-col lg:flex-row gap-4 h-full min-h-[540px]">
+            <div className="w-full lg:w-3/4 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800">
                 <h3 className="text-base font-semibold text-white">
                   📋 Companies ({filteredCompanies.length})
                 </h3>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-3 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+              <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
                 {loading ? (
-                  <div className="flex justify-center items-center py-8">
+                  <div className="flex justify-center items-center py-10">
                     <Loading />
                   </div>
                 ) : filteredCompanies.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div
+                    className="
+                    grid gap-3
+                    grid-cols-1
+                    sm:grid-cols-2
+                    md:grid-cols-3
+                    xl:grid-cols-4
+                  "
+                  >
                     {filteredCompanies.map((company) => {
                       const statusColor =
                         saudaStatusMap[company.name] || "green";
+
                       const bgColor =
                         statusColor === "blue"
-                          ? "bg-gradient-to-br from-blue-50 to-blue-100/50 border-2 border-blue-400 dark:from-blue-900/40 dark:to-blue-800/30 dark:border-blue-600"
+                          ? "bg-blue-50 border-blue-400 dark:bg-blue-900/40 dark:border-blue-600"
                           : statusColor === "yellow"
-                          ? "bg-gradient-to-br from-yellow-50 to-yellow-100/50 border-2 border-yellow-400 dark:from-yellow-900/40 dark:to-yellow-800/30 dark:border-yellow-600"
-                          : "bg-gradient-to-br from-green-50 to-green-100/50 border-2 border-green-400 dark:from-green-900/40 dark:to-green-800/30 dark:border-green-600";
+                          ? "bg-yellow-50 border-yellow-400 dark:bg-yellow-900/40 dark:border-yellow-600"
+                          : "bg-green-50 border-green-400 dark:bg-green-900/40 dark:border-green-600";
 
                       const textColor =
                         statusColor === "blue"
@@ -151,10 +146,15 @@ const Sauda = () => {
                         <div
                           key={company._id}
                           onClick={() => setSelectedCompany(company.name)}
-                          className={`p-3 rounded-lg shadow-sm hover:shadow-md cursor-pointer transform transition-all duration-200 hover:scale-[1.02] ${bgColor}`}
+                          className={`
+                            p-3 rounded-lg border shadow-sm cursor-pointer
+                            transition-transform duration-200
+                            hover:shadow-md hover:scale-[1.02]
+                            ${bgColor}
+                          `}
                         >
                           <h4
-                            className={`text-sm font-bold ${textColor} mb-1 truncate`}
+                            className={`text-sm font-bold mb-1 truncate ${textColor}`}
                           >
                             {company.name}
                           </h4>
@@ -166,19 +166,20 @@ const Sauda = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="text-gray-500 dark:text-gray-400 text-center py-8 text-sm">
+                  <div className="text-gray-500 dark:text-gray-400 text-center py-10">
                     <p className="font-medium">No companies found</p>
                     <p className="text-xs mt-2">
                       {searchTerm
                         ? "Try adjusting your search or filter"
-                        : "Please Update Rate for companies"}
+                        : "Please update rate for companies"}
                     </p>
                   </div>
                 )}
               </div>
             </div>
-            <div className="w-full lg:w-1/4 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[400px] lg:min-h-0">
-              <NotificationsPanel onClose={null} />
+
+            <div className="w-full lg:w-1/4 min-h-[400px] flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <NotificationsPanel />
             </div>
           </div>
         </div>
@@ -190,7 +191,7 @@ const Sauda = () => {
           />
         )}
 
-        <div className="w-full px-4 sm:px-6 pb-4">
+        <div className="w-full px-4 sm:px-6 pb-6 hidden sm:block">
           <Legend />
         </div>
       </div>
