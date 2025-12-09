@@ -18,22 +18,21 @@ export default function DesktopNav({
   currentUserMobile,
 }) {
   const allowedMobileNumbers = ["9830433535", "7029481930"];
-  const [openDropdown, setOpenDropdown] = useState(false);
 
-  const navLinks = useMemo(() => {
-    const links = ["Rate", "Sauda", "Company"];
+  const [openCompanyDropdown, setOpenCompanyDropdown] = useState(false);
+  const [openRateDropdown, setOpenRateDropdown] = useState(false);
 
-    if (allowedMobileNumbers.includes(currentUserMobile)) {
-      links.push("Register");
-      links.push("Commodity");
-      links.push("Category");
-    }
+  const [rateDropdownItems, setRateDropdownItems] = useState([
+    { label: "Rate", path: "/rate" },
+    { label: "Soya Rate", path: "/soyarate" },
+  ]);
 
-    return links.map((label) => ({
-      label,
-      path: `/${label.toLowerCase().replace(/ /g, "")}`,
-    }));
-  }, [currentUserMobile]);
+  const rateTitle = (() => {
+    const found = rateDropdownItems.find(
+      (i) => activeLink && activeLink.startsWith(i.path)
+    );
+    return found ? found.label : "Rate";
+  })();
 
   const [companyDropdownItems, setCompanyDropdownItems] = useState([
     { label: "Company", path: "/company" },
@@ -53,21 +52,98 @@ export default function DesktopNav({
     return found ? found.label : "Company";
   })();
 
+  const navLinks = useMemo(() => {
+    const links = ["Rate", "Sauda", "Company"];
+
+    if (allowedMobileNumbers.includes(currentUserMobile)) {
+      links.push("Register");
+      links.push("Commodity");
+      links.push("Category");
+    }
+
+    return links.map((label) => ({
+      label,
+      path: `/${label.toLowerCase().replace(/ /g, "")}`,
+    }));
+  }, [currentUserMobile]);
+
   return (
     <nav className="hidden md:flex items-center gap-8">
       <ul className="flex items-center gap-8 text-sm md:text-base relative">
         {navLinks.map(({ label, path }) => {
+          if (label === "Rate") {
+            const isActive =
+              activeLink &&
+              ["/rate", "/soyarate"].some((p) => activeLink.startsWith(p));
+
+            return (
+              <motion.li
+                key="rate-dropdown"
+                className="relative"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div
+                  className={`flex items-center gap-1 cursor-pointer group ${
+                    isActive
+                      ? "text-green-400"
+                      : "text-white/90 hover:text-white"
+                  }`}
+                  onClick={() => {
+                    setOpenRateDropdown((v) => !v);
+                    setOpenCompanyDropdown(false);
+                  }}
+                >
+                  {rateTitle}
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform ${
+                      openRateDropdown ? "rotate-180" : ""
+                    }`}
+                  />
+                </div>
+
+                {openRateDropdown && (
+                  <ul className="absolute left-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg overflow-hidden z-30">
+                    {rateDropdownItems.map(({ label, path }) => (
+                      <li key={path}>
+                        <Link
+                          href={path}
+                          onClick={() => {
+                            setActiveLink(path);
+                            setOpenRateDropdown(false);
+
+                            setRateDropdownItems((items) => {
+                              const idx = items.findIndex(
+                                (i) => i.path === path
+                              );
+                              if (idx <= 0) return items;
+                              const next = [...items];
+                              const [picked] = next.splice(idx, 1);
+                              next.unshift(picked);
+                              return next;
+                            });
+                          }}
+                          className={`block px-4 py-2 text-sm transition-colors ${
+                            activeLink === path
+                              ? "bg-green-500 text-white"
+                              : "text-white/90 hover:bg-gray-700 hover:text-white"
+                          }`}
+                        >
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </motion.li>
+            );
+          }
+
           if (label === "Company") {
             const isActive =
               activeLink &&
-              [
-                "/company",
-                "/managecompany",
-                "/sellercompany",
-                "/location",
-                "/selfcompany",
-                "/previoussauda",
-              ].some((p) => activeLink.startsWith(p));
+              companyDropdownItems.some((i) => activeLink.startsWith(i.path));
 
             return (
               <motion.li
@@ -82,18 +158,21 @@ export default function DesktopNav({
                       ? "text-green-400"
                       : "text-white/90 hover:text-white"
                   }`}
-                  onClick={() => setOpenDropdown((v) => !v)}
+                  onClick={() => {
+                    setOpenCompanyDropdown((v) => !v);
+                    setOpenRateDropdown(false);
+                  }}
                 >
                   {companyTitle}
                   <ChevronDown
                     size={16}
                     className={`transition-transform ${
-                      openDropdown ? "rotate-180" : ""
+                      openCompanyDropdown ? "rotate-180" : ""
                     }`}
                   />
                 </div>
 
-                {openDropdown && (
+                {openCompanyDropdown && (
                   <ul className="absolute left-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg overflow-hidden z-20">
                     {companyDropdownItems.map(({ label, path }) => (
                       <li key={path}>
@@ -101,7 +180,8 @@ export default function DesktopNav({
                           href={path}
                           onClick={() => {
                             setActiveLink(path);
-                            setOpenDropdown(false);
+                            setOpenCompanyDropdown(false);
+
                             setCompanyDropdownItems((items) => {
                               const idx = items.findIndex(
                                 (i) => i.path === path
@@ -138,7 +218,11 @@ export default function DesktopNav({
             >
               <Link
                 href={path}
-                onClick={() => setActiveLink(path)}
+                onClick={() => {
+                  setActiveLink(path);
+                  setOpenCompanyDropdown(false);
+                  setOpenRateDropdown(false);
+                }}
                 className={`relative group ${
                   activeLink === path
                     ? "text-green-400"
