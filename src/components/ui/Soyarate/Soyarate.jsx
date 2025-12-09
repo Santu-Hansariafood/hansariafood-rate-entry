@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { motion } from "framer-motion";
 import { Building2 } from "lucide-react";
-import SoyaCompanyPopup from "../SoyaCompanyPopup/SoyaCompanyPopup";
+import dynamic from "next/dynamic";
+import Title from "@/components/common/Title/Title";
+import Loading from "@/components/common/Loading/Loading";
+const SoyaCompanyPopup = dynamic(() => import("../SoyaCompanyPopup/SoyaCompanyPopup"));
 
 export default function Soyarate() {
   const [companies, setCompanies] = useState([]);
@@ -26,7 +29,6 @@ export default function Soyarate() {
     }
   };
 
-  // fetch single company data
   const openPopup = async (id) => {
     try {
       const res = await axiosInstance.get(`/soyacompany/${id}`)
@@ -43,12 +45,10 @@ export default function Soyarate() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <h1 className="text-xl md:text-2xl font-semibold mb-6">
-        Soya Commodity Company List
-      </h1>
+      <Title text={"Soya Commodity Company List"}/>
 
       {loading ? (
-        <p className="text-green-400">Loading...</p>
+        <Loading/>
       ) : (
         <motion.div
           initial={{ opacity: 0 }}
@@ -101,7 +101,6 @@ export default function Soyarate() {
         <p className="text-green-400 mt-6">No companies found.</p>
       )}
 
-      {/* Popup */}
       <SoyaCompanyPopup
         isOpen={popupOpen}
         onClose={() => setPopupOpen(false)}

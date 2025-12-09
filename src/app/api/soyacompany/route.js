@@ -18,29 +18,28 @@ export async function GET(req) {
       "SBM 49%",
       "SBM 50%",
       "SBM 51%",
-      "H Soya"
+      "H Soya",
     ];
 
     const companies = await ManageCompany.find({
-      commodities: { $in: targetCommodities }
+      commodities: { $in: targetCommodities },
     })
       .select("_id name commodities")
       .sort({ name: 1 })
       .lean();
 
-    const result = companies.map(c => ({
+    const result = companies.map((c) => ({
       _id: c._id,
       name: c.name,
-      commodities: c.commodities.filter(item =>
+      commodities: c.commodities.filter((item) =>
         targetCommodities.includes(item)
-      )
+      ),
     }));
 
     return NextResponse.json(
       { companies: result, total: result.length },
       { status: 200 }
     );
-
   } catch (error) {
     console.error("Error in GET /soyacompany:", error);
     return NextResponse.json(
