@@ -86,7 +86,6 @@ const Sauda = () => {
         <div className="w-full py-4 px-4 sm:px-6">
           <Title text="Check Sauda List" />
         </div>
-
         <div className="w-full px-4 sm:px-6 pb-4">
           <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
             <InputBox
@@ -95,20 +94,17 @@ const Sauda = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-
             <BuyerSellerFilter value={filterType} onChange={setFilterType} />
           </div>
         </div>
-
         <div className="w-full px-4 sm:px-6 pb-4">
-          <div className="flex flex-col lg:flex-row gap-4 h-full min-h-[540px]">
-            <div className="w-full lg:w-3/4 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="flex flex-col lg:flex-row gap-4 h-[78vh] min-h-[540px]">
+            <div className="w-full lg:w-3/4 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
               <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800">
                 <h3 className="text-base font-semibold text-white">
                   📋 Companies ({filteredCompanies.length})
                 </h3>
               </div>
-
               <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
                 {loading ? (
                   <div className="flex justify-center items-center py-10">
@@ -117,12 +113,12 @@ const Sauda = () => {
                 ) : filteredCompanies.length > 0 ? (
                   <div
                     className="
-                    grid gap-3
-                    grid-cols-1
-                    sm:grid-cols-2
-                    md:grid-cols-3
-                    xl:grid-cols-4
-                  "
+                      grid gap-3
+                      grid-cols-1
+                      sm:grid-cols-2
+                      md:grid-cols-3
+                      xl:grid-cols-4
+                    "
                   >
                     {filteredCompanies.map((company) => {
                       const statusColor =
@@ -177,20 +173,19 @@ const Sauda = () => {
                 )}
               </div>
             </div>
-
-            <div className="w-full lg:w-1/4 min-h-[400px] flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <NotificationsPanel />
+            <div className="w-full lg:w-1/4 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
+              <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                <NotificationsPanel />
+              </div>
             </div>
           </div>
         </div>
-
         {selectedCompany && (
           <ManageCompanyPopup
             name={selectedCompany}
             onClose={(status) => handlePopupClose(selectedCompany, status)}
           />
         )}
-
         <div className="w-full px-4 sm:px-6 pb-6 hidden sm:block">
           <Legend />
         </div>
