@@ -7,7 +7,9 @@ import { Building2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Title from "@/components/common/Title/Title";
 import Loading from "@/components/common/Loading/Loading";
-const SoyaCompanyPopup = dynamic(() => import("../SoyaCompanyPopup/SoyaCompanyPopup"));
+const SoyaCompanyPopup = dynamic(() =>
+  import("../SoyaCompanyPopup/SoyaCompanyPopup")
+);
 
 export default function Soyarate() {
   const [companies, setCompanies] = useState([]);
@@ -31,7 +33,7 @@ export default function Soyarate() {
 
   const openPopup = async (id) => {
     try {
-      const res = await axiosInstance.get(`/soyacompany/${id}`)
+      const res = await axiosInstance.get(`/soyacompany/${id}`);
       setSelectedCompany(res.data);
       setPopupOpen(true);
     } catch (err) {
@@ -45,10 +47,10 @@ export default function Soyarate() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <Title text={"Soya Commodity Company List"}/>
+      <Title text={"Soya Commodity Company List"} />
 
       {loading ? (
-        <Loading/>
+        <Loading />
       ) : (
         <motion.div
           initial={{ opacity: 0 }}

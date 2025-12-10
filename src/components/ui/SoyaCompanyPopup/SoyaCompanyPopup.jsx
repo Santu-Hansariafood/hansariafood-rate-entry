@@ -97,8 +97,10 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
     const oldNum = parseFloat(oldRate) || 0;
     const newNum = parseFloat(newRate) || 0;
     if (!newRate) return null;
-    if (newNum > oldNum) return <span className="text-green-600 font-semibold">↑</span>;
-    if (newNum < oldNum) return <span className="text-red-600 font-semibold">↓</span>;
+    if (newNum > oldNum)
+      return <span className="text-green-600 font-semibold">↑</span>;
+    if (newNum < oldNum)
+      return <span className="text-red-600 font-semibold">↓</span>;
     return <span className="text-gray-400">–</span>;
   };
 
@@ -116,27 +118,45 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
       >
         <div className="flex items-center justify-between px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
           <h2 className="text-lg font-semibold text-gray-800">{data.name}</h2>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-gray-200"
+          >
             <X size={20} className="text-gray-600" />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
-          <p className="text-sm font-semibold text-gray-700">Locations & Commodity Rates</p>
+          <p className="text-sm font-semibold text-gray-700">
+            Locations & Commodity Rates
+          </p>
 
           {loadingFetch ? (
             <Loading />
           ) : (
-            <div className={`space-y-3 ${isScrollable ? "max-h-[400px] overflow-y-auto pr-2 custom-scroll" : ""}`}>
+            <div
+              className={`space-y-3 ${
+                isScrollable
+                  ? "max-h-[400px] overflow-y-auto pr-2 custom-scroll"
+                  : ""
+              }`}
+            >
               {data.location.length ? (
                 data.location.map((loc) => (
-                  <div key={loc} className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                  <div
+                    key={loc}
+                    className="border border-gray-200 rounded-xl shadow-sm overflow-hidden"
+                  >
                     <button
                       onClick={() => toggleLocation(loc)}
                       className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100"
                     >
                       <span className="font-medium text-gray-800">{loc}</span>
-                      {expandedLocations.includes(loc) ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      {expandedLocations.includes(loc) ? (
+                        <ChevronUp size={18} />
+                      ) : (
+                        <ChevronDown size={18} />
+                      )}
                     </button>
 
                     {expandedLocations.includes(loc) && (
@@ -151,8 +171,12 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
                               className="border border-gray-200 rounded-lg p-4 bg-gray-50 shadow-sm"
                             >
                               <div className="flex items-center mb-3">
-                                <span className="font-medium text-gray-800 text-sm">{item.commodity}</span>
-                                <span className="ml-2">{renderArrow(item.oldRate, item.newRate)}</span>
+                                <span className="font-medium text-gray-800 text-sm">
+                                  {item.commodity}
+                                </span>
+                                <span className="ml-2">
+                                  {renderArrow(item.oldRate, item.newRate)}
+                                </span>
 
                                 <div className="ml-auto">
                                   {!isEditing ? (
@@ -164,7 +188,9 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
                                     </button>
                                   ) : (
                                     <button
-                                      onClick={() => handleSaveCommodity(loc, index)}
+                                      onClick={() =>
+                                        handleSaveCommodity(loc, index)
+                                      }
                                       className="px-3 py-1 text-xs rounded-md bg-green-600 text-white"
                                     >
                                       {loadingSave ? "Saving..." : "Save"}
@@ -174,19 +200,37 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
                               </div>
 
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                <InputBox label="Old Rate" value={item.oldRate} readOnly />
+                                <InputBox
+                                  label="Old Rate"
+                                  value={item.oldRate}
+                                  readOnly
+                                />
                                 <InputBox
                                   label="New Rate"
                                   type="number"
                                   value={item.newRate}
                                   readOnly={!isEditing}
-                                  onChange={(e) => handleInputChange(loc, index, "newRate", e.target.value)}
+                                  onChange={(e) =>
+                                    handleInputChange(
+                                      loc,
+                                      index,
+                                      "newRate",
+                                      e.target.value
+                                    )
+                                  }
                                 />
                                 <InputBox
                                   label="Others"
                                   value={item.others}
                                   readOnly={!isEditing}
-                                  onChange={(e) => handleInputChange(loc, index, "others", e.target.value)}
+                                  onChange={(e) =>
+                                    handleInputChange(
+                                      loc,
+                                      index,
+                                      "others",
+                                      e.target.value
+                                    )
+                                  }
                                 />
                               </div>
                             </motion.div>
@@ -197,7 +241,9 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-400 italic">No locations added.</p>
+                <p className="text-sm text-gray-400 italic">
+                  No locations added.
+                </p>
               )}
             </div>
           )}
