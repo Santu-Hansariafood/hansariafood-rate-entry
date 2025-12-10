@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import Loading from "@/components/common/Loading/Loading";
 
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 
@@ -15,7 +16,6 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
   const [loadingSave, setLoadingSave] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(false);
 
-  // ------------------ Load existing rate history ------------------
   useEffect(() => {
     if (!isOpen || !data?._id) return;
     loadExistingHistory();
@@ -26,7 +26,7 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
       setLoadingFetch(true);
 
       const res = await axiosInstance.get(`/ratehistory/${data._id}`);
-      const saved = res.data; // array of RateHistory docs
+      const saved = res.data;
 
       const initial = {};
       data.location.forEach((loc) => {
@@ -51,7 +51,6 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
     }
   };
 
-  // ------------------ Toggle ------------------
   const toggleLocation = (loc) => {
     setExpandedLocations((prev) =>
       prev.includes(loc) ? prev.filter((x) => x !== loc) : [...prev, loc]
@@ -73,7 +72,6 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
     });
   };
 
-  // ------------------ Save individual rate ------------------
   const handleSaveCommodity = async (loc, index) => {
     try {
       setLoadingSave(true);
@@ -95,7 +93,6 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
     }
   };
 
-  // ------------------ Render arrow ------------------
   const renderArrow = (oldRate, newRate) => {
     const oldNum = parseFloat(oldRate) || 0;
     const newNum = parseFloat(newRate) || 0;
@@ -117,7 +114,6 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
         transition={{ duration: 0.25 }}
         className="bg-white w-full max-w-4xl rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
       >
-        {/* HEADER */}
         <div className="flex items-center justify-between px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
           <h2 className="text-lg font-semibold text-gray-800">{data.name}</h2>
           <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200">
@@ -125,12 +121,11 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
           </button>
         </div>
 
-        {/* BODY */}
         <div className="p-5 space-y-4">
           <p className="text-sm font-semibold text-gray-700">Locations & Commodity Rates</p>
 
           {loadingFetch ? (
-            <p className="text-gray-600 text-sm italic">Loading...</p>
+            <Loading />
           ) : (
             <div className={`space-y-3 ${isScrollable ? "max-h-[400px] overflow-y-auto pr-2 custom-scroll" : ""}`}>
               {data.location.length ? (
@@ -182,6 +177,7 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
                                 <InputBox label="Old Rate" value={item.oldRate} readOnly />
                                 <InputBox
                                   label="New Rate"
+                                  type="number"
                                   value={item.newRate}
                                   readOnly={!isEditing}
                                   onChange={(e) => handleInputChange(loc, index, "newRate", e.target.value)}

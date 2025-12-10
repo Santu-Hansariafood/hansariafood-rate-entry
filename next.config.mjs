@@ -1,6 +1,7 @@
+/** @type {import('next').NextConfig} */
 import withPWA from "next-pwa";
 
-const nextConfig = {
+const baseConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: ["*"],
@@ -13,8 +14,13 @@ const nextConfig = {
   reactStrictMode: true,
 };
 
-export default withPWA({
-  dest: "public",
-  register: true,
-  skipWaiting: true,
-})(nextConfig);
+const nextConfig =
+  process.env.NODE_ENV === "production"
+    ? withPWA({
+        dest: "public",
+        register: true,
+        skipWaiting: true,
+      })(baseConfig)
+    : baseConfig;
+
+export default nextConfig;

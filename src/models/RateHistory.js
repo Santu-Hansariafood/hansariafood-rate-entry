@@ -2,11 +2,16 @@ import mongoose from "mongoose";
 
 const RateHistorySchema = new mongoose.Schema(
   {
-    companyId: { type: mongoose.Schema.Types.ObjectId, ref: "ManageCompany", required: true },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ManageCompany",
+      required: true,
+    },
     location: { type: String, required: true },
     commodity: { type: String, required: true },
     newRate: { type: Number, default: 0 },
     oldRate: { type: Number, default: 0 },
+    others: { type: String, default: "" },
     history: [
       {
         date: { type: String },
