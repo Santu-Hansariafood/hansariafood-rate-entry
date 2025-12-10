@@ -22,15 +22,17 @@ export async function GET(req) {
     ];
 
     const companies = await ManageCompany.find({
+      type: { $in: ["seller"] },
       commodities: { $in: targetCommodities },
     })
-      .select("_id name commodities")
+      .select("_id name commodities type")
       .sort({ name: 1 })
       .lean();
 
     const result = companies.map((c) => ({
       _id: c._id,
       name: c.name,
+      type: c.type,
       commodities: c.commodities.filter((item) =>
         targetCommodities.includes(item)
       ),

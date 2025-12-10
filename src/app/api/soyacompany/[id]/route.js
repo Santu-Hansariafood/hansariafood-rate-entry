@@ -7,6 +7,7 @@ export async function GET(req, { params }) {
     await connectDB();
 
     const awaitedParams = await params;
+
     if (!awaitedParams?.id) {
       return NextResponse.json(
         { error: "Company ID is missing" },
@@ -14,24 +15,33 @@ export async function GET(req, { params }) {
       );
     }
 
-    const company = await ManageCompany.findById(awaitedParams.id)
-      .select("name location commodities mobileNumbers")
+    const targetCommodities = [
+      "SBM 46%",
+      "SBM 47%",
+      "SBM 48%",
+      "SBM 49%",
+      "SBM 50%",
+      "SBM 51%",
+      "H Soya",
+    ];
+
+    const company = await ManageCompany.findOne({
+      _id: awaitedParams.id,
+
+      type: { $in: ["seller"] },
+    })
+      .select("name location commodities mobileNumbers type")
       .lean();
 
     if (!company) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Company not found or not a seller" },
+        { status: 404 }
+      );
     }
 
     company.commodities = company.commodities.filter((c) =>
-      [
-        "SBM 46%",
-        "SBM 47%",
-        "SBM 48%",
-        "SBM 49%",
-        "SBM 50%",
-        "SBM 51%",
-        "H Soya",
-      ].includes(c)
+      targetCommodities.includes(c)
     );
 
     return NextResponse.json(company);

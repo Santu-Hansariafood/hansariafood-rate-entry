@@ -2,168 +2,208 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { X, ArrowUp, ArrowDown } from "lucide-react";
+import dynamic from "next/dynamic";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+
+const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 
 export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
   const [expandedLocations, setExpandedLocations] = useState([]);
   const [rates, setRates] = useState({});
+  const [editing, setEditing] = useState({});
+  const [loadingSave, setLoadingSave] = useState(false);
+  const [loadingFetch, setLoadingFetch] = useState(false);
 
+  // ------------------ Load existing rate history ------------------
   useEffect(() => {
-    if (data?.location && data?.commodities) {
-      const initialRates = data.location.reduce((acc, loc) => {
-        acc[loc] = data.commodities.map((c) => ({
-          commodity: c,
-          oldRate: 0, // replace with real old rate if available
-          newRate: "",
-          quantity: "",
-          payments: "",
-          others: "",
-        }));
-        return acc;
-      }, {});
-      setRates(initialRates);
-    }
-  }, [data]);
+    if (!isOpen || !data?._id) return;
+    loadExistingHistory();
+  }, [isOpen, data]);
 
+  const loadExistingHistory = async () => {
+    try {
+      setLoadingFetch(true);
+
+      const res = await axiosInstance.get(`/ratehistory/${data._id}`);
+      const saved = res.data; // array of RateHistory docs
+
+      const initial = {};
+      data.location.forEach((loc) => {
+        initial[loc] = data.commodities.map((c) => {
+          const match = saved.find(
+            (r) => r.location === loc && r.commodity === c
+          );
+          return {
+            commodity: c,
+            oldRate: match?.oldRate || 0,
+            newRate: match?.newRate || "",
+            others: match?.others || "",
+          };
+        });
+      });
+
+      setRates(initial);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoadingFetch(false);
+    }
+  };
+
+  // ------------------ Toggle ------------------
   const toggleLocation = (loc) => {
     setExpandedLocations((prev) =>
-      prev.includes(loc)
-        ? prev.filter((l) => l !== loc)
-        : [...prev, loc]
+      prev.includes(loc) ? prev.filter((x) => x !== loc) : [...prev, loc]
     );
+  };
+
+  const toggleEdit = (loc, index) => {
+    setEditing((prev) => ({
+      ...prev,
+      [`${loc}_${index}`]: !prev[`${loc}_${index}`],
+    }));
   };
 
   const handleInputChange = (loc, index, field, value) => {
     setRates((prev) => {
-      const updated = { ...prev };
-      if (!updated[loc]) updated[loc] = [];
-      updated[loc][index][field] = value;
-      return updated;
+      const copy = { ...prev };
+      copy[loc][index][field] = value;
+      return copy;
     });
   };
 
-  const handleSave = (loc) => {
-    console.log(`Save rates for ${loc}:`, rates[loc]);
-    // Call API to save rates[loc] only
+  // ------------------ Save individual rate ------------------
+  const handleSaveCommodity = async (loc, index) => {
+    try {
+      setLoadingSave(true);
+
+      const payload = {
+        locationName: loc,
+        commodityName: rates[loc][index].commodity,
+        oldRate: rates[loc][index].oldRate,
+        newRate: rates[loc][index].newRate,
+        others: rates[loc][index].others,
+      };
+
+      await axiosInstance.post(`/ratehistory/${data._id}`, payload);
+      toggleEdit(loc, index);
+    } catch (error) {
+      console.error("Saving error:", error);
+    } finally {
+      setLoadingSave(false);
+    }
   };
 
+  // ------------------ Render arrow ------------------
   const renderArrow = (oldRate, newRate) => {
     const oldNum = parseFloat(oldRate) || 0;
     const newNum = parseFloat(newRate) || 0;
-    if (newNum > oldNum) return <ArrowUp className="text-green-600 ml-2" size={20} />;
-    if (newNum < oldNum) return <ArrowDown className="text-red-600 ml-2" size={20} />;
-    return <span className="ml-2 text-gray-400">–</span>; // no change
+    if (!newRate) return null;
+    if (newNum > oldNum) return <span className="text-green-600 font-semibold">↑</span>;
+    if (newNum < oldNum) return <span className="text-red-600 font-semibold">↓</span>;
+    return <span className="text-gray-400">–</span>;
   };
 
   if (!isOpen || !data) return null;
+  const isScrollable = data.location.length > 8;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-[9999] overflow-auto py-10">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-[9999] p-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        exit={{ opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.25 }}
-        className="bg-white w-full max-w-5xl rounded-3xl p-6 shadow-2xl"
+        className="bg-white w-full max-w-4xl rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
       >
-        {/* Header */}
-        <div className="flex justify-between items-center border-b border-gray-200 pb-3 mb-5">
-          <h2 className="text-2xl font-bold text-green-700 truncate">{data.name}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-red-500 transition">
-            <X size={24} />
+        {/* HEADER */}
+        <div className="flex items-center justify-between px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+          <h2 className="text-lg font-semibold text-gray-800">{data.name}</h2>
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200">
+            <X size={20} className="text-gray-600" />
           </button>
         </div>
 
-        {/* Main Content */}
-        <div className="space-y-4">
-          <h3 className="font-semibold text-green-600 mb-2">📍 Locations & Commodities</h3>
-          {data.location?.length ? (
-            <div className="space-y-3">
-              {data.location.map((loc) => (
-                <div key={loc} className="border rounded-lg p-3 shadow-sm">
-                  {/* Location Header */}
-                  <div
-                    className="flex justify-between items-center cursor-pointer"
-                    onClick={() => toggleLocation(loc)}
-                  >
-                    <h4 className="font-medium text-gray-700">{loc}</h4>
-                    <span className="text-gray-500">
-                      {expandedLocations.includes(loc) ? "▲" : "▼"}
-                    </span>
-                  </div>
+        {/* BODY */}
+        <div className="p-5 space-y-4">
+          <p className="text-sm font-semibold text-gray-700">Locations & Commodity Rates</p>
 
-                  {/* Commodity Inputs */}
-                  {expandedLocations.includes(loc) && rates[loc]?.length ? (
-                    <div className="mt-3 space-y-2">
-                      {rates[loc].map((r, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 border rounded-lg p-2 bg-gray-50"
-                        >
-                          <span className="w-32 font-medium text-gray-700">{r.commodity}</span>
-                          <input
-                            type="text"
-                            value={r.oldRate}
-                            readOnly
-                            className="w-20 border border-gray-300 rounded-md p-1 bg-gray-100 text-gray-600"
-                          />
-                          <input
-                            type="number"
-                            placeholder="New Rate"
-                            value={r.newRate}
-                            onChange={(e) =>
-                              handleInputChange(loc, i, "newRate", e.target.value)
-                            }
-                            className="w-20 border border-gray-300 rounded-md p-1"
-                          />
-                          <input
-                            type="number"
-                            placeholder="Quantity"
-                            value={r.quantity}
-                            onChange={(e) =>
-                              handleInputChange(loc, i, "quantity", e.target.value)
-                            }
-                            className="w-20 border border-gray-300 rounded-md p-1"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Payments"
-                            value={r.payments}
-                            onChange={(e) =>
-                              handleInputChange(loc, i, "payments", e.target.value)
-                            }
-                            className="w-24 border border-gray-300 rounded-md p-1"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Others"
-                            value={r.others}
-                            onChange={(e) =>
-                              handleInputChange(loc, i, "others", e.target.value)
-                            }
-                            className="w-24 border border-gray-300 rounded-md p-1"
-                          />
-                          {/* Arrow Indicator */}
-                          {renderArrow(r.oldRate, r.newRate)}
-                        </div>
-                      ))}
-
-                      {/* Save Button per location */}
-                      <div className="flex justify-end mt-2">
-                        <button
-                          onClick={() => handleSave(loc)}
-                          className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-1 rounded-xl shadow-md transition"
-                        >
-                          Save {loc}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
+          {loadingFetch ? (
+            <p className="text-gray-600 text-sm italic">Loading...</p>
           ) : (
-            <p className="text-gray-400 italic">No locations added.</p>
+            <div className={`space-y-3 ${isScrollable ? "max-h-[400px] overflow-y-auto pr-2 custom-scroll" : ""}`}>
+              {data.location.length ? (
+                data.location.map((loc) => (
+                  <div key={loc} className="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    <button
+                      onClick={() => toggleLocation(loc)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100"
+                    >
+                      <span className="font-medium text-gray-800">{loc}</span>
+                      {expandedLocations.includes(loc) ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </button>
+
+                    {expandedLocations.includes(loc) && (
+                      <div className="p-4 space-y-3 bg-white">
+                        {rates[loc]?.map((item, index) => {
+                          const isEditing = editing[`${loc}_${index}`];
+                          return (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="border border-gray-200 rounded-lg p-4 bg-gray-50 shadow-sm"
+                            >
+                              <div className="flex items-center mb-3">
+                                <span className="font-medium text-gray-800 text-sm">{item.commodity}</span>
+                                <span className="ml-2">{renderArrow(item.oldRate, item.newRate)}</span>
+
+                                <div className="ml-auto">
+                                  {!isEditing ? (
+                                    <button
+                                      onClick={() => toggleEdit(loc, index)}
+                                      className="px-3 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-100"
+                                    >
+                                      Edit
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleSaveCommodity(loc, index)}
+                                      className="px-3 py-1 text-xs rounded-md bg-green-600 text-white"
+                                    >
+                                      {loadingSave ? "Saving..." : "Save"}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                <InputBox label="Old Rate" value={item.oldRate} readOnly />
+                                <InputBox
+                                  label="New Rate"
+                                  value={item.newRate}
+                                  readOnly={!isEditing}
+                                  onChange={(e) => handleInputChange(loc, index, "newRate", e.target.value)}
+                                />
+                                <InputBox
+                                  label="Others"
+                                  value={item.others}
+                                  readOnly={!isEditing}
+                                  onChange={(e) => handleInputChange(loc, index, "others", e.target.value)}
+                                />
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-400 italic">No locations added.</p>
+              )}
+            </div>
           )}
         </div>
       </motion.div>
