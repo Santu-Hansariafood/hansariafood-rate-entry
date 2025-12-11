@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import RateHistory from "@/models/RateHistory";
 import { connectDB } from "@/lib/mongodb";
 
-export async function GET(req, { params }) {
+export async function GET(req, context) {
   await connectDB();
-  const { id } = params;
+  const { id } = await context.params;
 
   try {
     const history = await RateHistory.find({ companyId: id });
@@ -18,13 +18,13 @@ export async function GET(req, { params }) {
   }
 }
 
-export async function POST(req, { params }) {
+export async function POST(req, context) {
   await connectDB();
-  const { id } = params;
+  const { id } = await context.params;
 
   try {
     const body = await req.json();
-    const { locationName, commodityName, oldRate, newRate, others } = body;
+    const { locationName, commodityName, newRate, others } = body;
 
     if (!locationName || !commodityName) {
       return NextResponse.json(
@@ -33,17 +33,41 @@ export async function POST(req, { params }) {
       );
     }
 
+    const today = new Date().toISOString().split("T")[0];
+
+    const existing = await RateHistory.findOne({
+      companyId: id,
+      location: locationName,
+      commodity: commodityName,
+    });
+
+    let oldRateToSet = 0;
+
+    if (existing) {
+      const lastEntry = existing.history?.[existing.history.length - 1];
+
+      if (lastEntry?.date !== today) {
+        oldRateToSet = existing.newRate;
+      } else {
+        oldRateToSet = existing.oldRate;
+      }
+    }
+
     const updated = await RateHistory.findOneAndUpdate(
-      { companyId: id, location: locationName, commodity: commodityName },
+      {
+        companyId: id,
+        location: locationName,
+        commodity: commodityName,
+      },
       {
         $set: {
-          oldRate: oldRate || 0,
+          oldRate: oldRateToSet,
           newRate: newRate || 0,
           others: others || "",
         },
         $push: {
           history: {
-            date: new Date().toISOString().split("T")[0],
+            date: today,
             rate: newRate,
           },
         },

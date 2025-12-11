@@ -3,9 +3,8 @@ import { connectDB } from "@/lib/mongodb";
 import Company from "@/models/Company";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
-
 export async function GET(req, { params }) {
+  await connectDB(); // <-- FIXED
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -28,6 +27,7 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
+  await connectDB(); // <-- FIXED
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -88,6 +88,7 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
