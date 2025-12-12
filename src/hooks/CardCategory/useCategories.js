@@ -1,27 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
-const STORAGE_KEY = process.env.NEXT_PUBLIC_STORAGE_KEY;
+const STORAGE_KEY = "CATEGORY_FILTERS_STORAGE";
 
 export default function useCategories(onFilterChange) {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedFilters, setSelectedFilters] = useState(() => {
+  const [selectedFilters, setSelectedFilters] = useState({});
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setSelectedFilters(JSON.parse(saved));
+      }
     }
-    return {};
-  });
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setIsLoading(true);
-        const response = await axiosInstance.get("/categories");
-        setCategories(response.data.categories);
+        const res = await axiosInstance.get("/categories");
+        setCategories(res.data.categories || []);
       } catch (error) {
         console.error("Error fetching categories:", error);
         toast.error("Failed to load categories");
@@ -29,6 +33,7 @@ export default function useCategories(onFilterChange) {
         setIsLoading(false);
       }
     };
+
     fetchCategories();
   }, []);
 
@@ -36,33 +41,27 @@ export default function useCategories(onFilterChange) {
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedFilters));
     }
-    if (onFilterChange) {
+
+    if (typeof onFilterChange === "function") {
       onFilterChange(selectedFilters);
     }
   }, [selectedFilters]);
 
-  const handleFilterClick = (category) => {
+  const handleFilterClick = useCallback((category) => {
     setSelectedFilters((prev) => {
       const newFilters = { ...prev };
-      const isRemoving = newFilters[category._id];
 
-      if (isRemoving) {
+      if (newFilters[category._id]) {
         delete newFilters[category._id];
+        toast.info(`Filter removed: ${category.name}`);
       } else {
         newFilters[category._id] = category.name;
+        toast.success(`Filter added: ${category.name}`);
       }
 
       return newFilters;
     });
-
-    setTimeout(() => {
-      if (selectedFilters[category._id]) {
-        toast.info(`Filter removed: ${category.name}`);
-      } else {
-        toast.success(`Filter added: ${category.name}`);
-      }
-    }, 0);
-  };
+  }, []);
 
   return {
     categories,

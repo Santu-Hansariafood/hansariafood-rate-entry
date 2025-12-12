@@ -14,8 +14,16 @@ const useRateEntries = () => {
           axiosInstance.get("/rate"),
           axiosInstance.get("/auth/register"),
         ]);
-        setRates(ratesRes.data.filter((r) => r.newRate && r.mobile));
-        setUsers(usersRes.data);
+
+        const safeRates = Array.isArray(ratesRes.data) ? ratesRes.data : [];
+
+        setRates(
+          safeRates.filter((r) => r?.newRate && r?.mobile)
+        );
+
+        const safeUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
+
+        setUsers(safeUsers);
       } catch (error) {
         toast.error("Failed to fetch rate entries");
         console.error("Error fetching data:", error);
@@ -31,13 +39,18 @@ const useRateEntries = () => {
     const safeUsers = Array.isArray(users) ? users : [];
 
     return safeUsers.reduce((acc, user) => {
-      acc[user.mobile] = user.name;
+      if (user.mobile) {
+        acc[user.mobile] = user.name || "Unknown User";
+      }
       return acc;
     }, {});
   }, [users]);
 
   const groupedRates = useMemo(() => {
-    return rates.reduce((acc, rate) => {
+    const safeRates = Array.isArray(rates) ? rates : [];
+
+    return safeRates.reduce((acc, rate) => {
+      if (!rate.mobile) return acc;
       if (!acc[rate.mobile]) acc[rate.mobile] = [];
       acc[rate.mobile].push(rate);
       return acc;

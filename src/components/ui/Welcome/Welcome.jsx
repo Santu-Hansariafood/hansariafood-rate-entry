@@ -16,6 +16,7 @@ export default function Welcome() {
   const [assignedCompanies, setAssignedCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Capitalize Name
   const formatName = useCallback((str) => {
     return str
       .split(" ")
@@ -23,6 +24,7 @@ export default function Welcome() {
       .join(" ");
   }, []);
 
+  // Fetch user + company data
   const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
@@ -32,9 +34,15 @@ export default function Welcome() {
         axiosInstance.get(`/user-companies?mobile=${mobile}`),
       ]);
 
-      const users = Array.isArray(userResponse.data) ? userResponse.data : [];
+      // ✅ FIXED: Extract correct array from API
+      const users = Array.isArray(userResponse.data?.users)
+        ? userResponse.data.users
+        : [];
 
-      const userData = users.find((user) => user.mobile.toString() === mobile);
+      // Find logged-in user
+      const userData = users.find(
+        (user) => user.mobile.toString() === mobile?.toString()
+      );
 
       if (userData) {
         const formattedName = formatName(userData.name);
@@ -44,6 +52,7 @@ export default function Welcome() {
         setName("Guest");
       }
 
+      // Assigned companies
       setAssignedCompanies(companyResponse.data?.companies ?? []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -54,76 +63,92 @@ export default function Welcome() {
   }, [mobile, formatName]);
 
   useEffect(() => {
-    if (mobile) {
-      fetchUserData();
-    }
-  }, [fetchUserData, mobile]);
+    if (mobile) fetchUserData();
+  }, [mobile, fetchUserData]);
 
+  // Render assigned companies
   const assignedCompaniesList = useMemo(() => {
-    if (assignedCompanies.length > 0) {
-      return (
-        <div className="mt-8 text-left">
-          <Title text="Assigned Companies" />
-          <div className="space-y-5 mt-4">
-            {assignedCompanies.map((company) => {
-              if (!company?.companyId) return null;
-
-              return (
-                <motion.div
-                  key={company.companyId._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md hover:shadow-lg p-5"
-                >
-                  <h3 className="font-bold text-lg bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
-                    {company.companyId.name}
-                  </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-3">
-                    {company.locations.map((loc, index) => (
-                      <span
-                        key={`${company.companyId._id}-${index}`}
-                        className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 text-xs px-3 py-1 rounded-full text-center font-medium shadow-sm"
-                      >
-                        {loc}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    } else {
+    if (assignedCompanies.length === 0) {
       return (
         <p className="text-gray-500 dark:text-gray-400 mt-6">
           No assigned companies found.
         </p>
       );
     }
+
+    return (
+      <div className="mt-8 text-left">
+        <Title text="Assigned Companies" />
+        <div className="space-y-5 mt-4">
+          {assignedCompanies.map((company) => {
+            if (!company?.companyId) return null;
+
+            return (
+              <motion.div
+                key={company.companyId._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-gradient-to-br from-blue-50 to-blue-100
+                           dark:from-gray-800 dark:to-gray-900
+                           border border-gray-200 dark:border-gray-700
+                           rounded-lg shadow-md hover:shadow-lg p-5"
+              >
+                <h3 className="font-bold text-lg bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
+                  {company.companyId.name}
+                </h3>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-3">
+                  {company.locations.map((loc, idx) => (
+                    <span
+                      key={`${company.companyId._id}-${idx}`}
+                      className="bg-blue-100 dark:bg-blue-900/40
+                                 text-blue-800 dark:text-blue-200
+                                 text-xs px-3 py-1 rounded-full
+                                 text-center font-medium shadow-sm"
+                    >
+                      {loc}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    );
   }, [assignedCompanies]);
 
   if (loading) return <Loading />;
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-950 p-4">
+      <div
+        className="flex items-center justify-center min-h-screen
+                      bg-gray-100 dark:bg-gray-950 p-4"
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-8 max-w-4xl w-full text-center"
+          className="bg-white dark:bg-gray-900 shadow-lg rounded-2xl
+                     p-8 max-w-4xl w-full text-center"
         >
-          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-green-500 to-teal-400 bg-clip-text text-transparent mb-4">
+          <h1
+            className="text-3xl font-extrabold
+                         bg-gradient-to-r from-green-500 to-teal-400
+                         bg-clip-text text-transparent mb-4"
+          >
             Welcome, {name}
           </h1>
+
           <Link
             href="/resetpassword"
             className="inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
             Reset Your Password
           </Link>
+
           {assignedCompaniesList}
         </motion.div>
       </div>

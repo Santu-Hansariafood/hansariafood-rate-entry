@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const uri = process.env.MONGODB_URI;
 
 if (!uri) {
-  throw new Error("❌ MONGODB_URI is missing from environment variables");
+  throw new Error("MONGODB_URI is missing from environment variables");
 }
 
 let cached = global._mongoose;
@@ -23,11 +23,11 @@ export async function connectDB() {
         socketTimeoutMS: 45000,
       })
       .then((conn) => {
-        console.log("✅ MongoDB Connected:", conn.connection.host);
+        console.log("MongoDB Connected:", conn.connection.host);
         return conn;
       })
       .catch((err) => {
-        console.error("❌ MongoDB Connection Failed:", err.message);
+        console.error("MongoDB Connection Failed:", err.message);
         throw err;
       });
   }
