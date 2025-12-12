@@ -28,7 +28,9 @@ const useRateEntries = () => {
   }, []);
 
   const mobileToName = useMemo(() => {
-    return users.reduce((acc, user) => {
+    const safeUsers = Array.isArray(users) ? users : [];
+
+    return safeUsers.reduce((acc, user) => {
       acc[user.mobile] = user.name;
       return acc;
     }, {});

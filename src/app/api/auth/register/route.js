@@ -4,199 +4,135 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-const encodeBase64 = (str) => Buffer.from(str, "utf-8").toString("base64");
+const success = (msg, data = {}) =>
+  NextResponse.json({ success: true, message: msg, ...data }, { status: 200 });
 
-const decodeBase64 = (str) => Buffer.from(str, "base64").toString("utf-8");
+const error = (msg, status = 500, extra = {}) =>
+  NextResponse.json({ success: false, message: msg, ...extra }, { status });
 
 export async function POST(req) {
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
     await connectDB();
     const { name, mobile, password } = await req.json();
 
-    if (!name || !mobile || !password) {
-      return NextResponse.json(
-        { message: "All fields are required" },
-        { status: 400 }
-      );
-    }
+    if (!name || !mobile || !password)
+      return error("All fields are required", 400);
 
-    const existingUser = await User.findOne({ mobile });
-    if (existingUser) {
-      return NextResponse.json(
-        { message: "Mobile number already registered" },
-        { status: 400 }
-      );
-    }
+    const existing = await User.findOne({ mobile });
+    if (existing) return error("Mobile number already registered", 400);
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ name, mobile, password: hashedPassword });
-    await newUser.save();
+    const hash = await bcrypt.hash(password, 10);
+    await User.create({ name, mobile, password: hash });
 
-    return NextResponse.json(
-      { message: "User registered successfully" },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Registration Error:", error);
-    return NextResponse.json(
-      { message: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    return success("User registered successfully");
+  } catch (err) {
+    console.error("Registration Error:", err);
+    return error("Internal Server Error", 500, { detail: err.message });
   }
 }
 
 export async function GET(req) {
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
     await connectDB();
-    const users = await User.find({}, { password: 0 });
-    return NextResponse.json(users, { status: 200 });
-  } catch (error) {
-    console.error("Fetch Users Error:", error);
-    return NextResponse.json(
-      { message: "Failed to fetch users" },
-      { status: 500 }
-    );
+    const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 });
+
+    return NextResponse.json({ success: true, users }, { status: 200 });
+  } catch (err) {
+    console.error("Fetch Users Error:", err);
+    return error("Failed to fetch users");
   }
 }
 
 export async function PUT(req) {
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
     await connectDB();
     const { mobile, password } = await req.json();
 
-    if (!mobile || !password) {
-      return NextResponse.json(
-        { message: "Mobile and new password are required" },
-        { status: 400 }
-      );
-    }
+    if (!mobile || !password)
+      return error("Mobile & password are required", 400);
 
     const user = await User.findOne({ mobile });
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
+    if (!user) return error("User not found", 404);
 
     user.password = await bcrypt.hash(password, 10);
     await user.save();
 
-    return NextResponse.json(
-      { message: "Password updated successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Reset Password Error:", error);
-    return NextResponse.json(
-      { message: "Failed to reset password" },
-      { status: 500 }
-    );
+    return success("Password updated successfully");
+  } catch (err) {
+    console.error("Reset Password Error:", err);
+    return error("Failed to reset password");
   }
 }
 
 export async function DELETE(req) {
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
     await connectDB();
     const { id } = await req.json();
 
-    const user = await User.findByIdAndDelete(id);
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
+    if (!id) return error("User ID is required", 400);
 
-    return NextResponse.json(
-      { message: "User deleted successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Delete User Error:", error);
-    return NextResponse.json(
-      { message: "Failed to delete user" },
-      { status: 500 }
-    );
+    const deleted = await User.findByIdAndDelete(id);
+    if (!deleted) return error("User not found", 404);
+
+    return success("User deleted successfully");
+  } catch (err) {
+    console.error("Delete User Error:", err);
+    return error("Failed to delete user");
   }
 }
 
 export async function PATCH(req) {
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
     await connectDB();
     const { mobile } = await req.json();
 
-    if (!mobile) {
-      return NextResponse.json(
-        { message: "Mobile number is required" },
-        { status: 400 }
-      );
-    }
+    if (!mobile) return error("Mobile number is required", 400);
 
     const user = await User.findOne({ mobile });
-    if (!user) {
-      return NextResponse.json(
-        { message: "Mobile number not registered" },
-        { status: 404 }
-      );
-    }
+    if (!user) return error("Mobile not registered", 404);
 
-    const encodedPassword = user.password ? encodeBase64(user.password) : "";
+    const tempPassword = Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase();
+    user.password = await bcrypt.hash(tempPassword, 10);
+    await user.save();
 
-    const var1 = (user.name || "").trim();
-    const var2 = `Your password is ${encodedPassword}. Please login at https://hansariafood.site`;
+    const var1 = user.name.trim();
+    const var2 = `Your temporary login password is ${tempPassword}. Please login and change it immediately. https://hansariafood.site`;
 
-    if (!var1 || !var2) {
-      console.error("Template vars missing", { var1, var2 });
-      return NextResponse.json(
-        { message: "WhatsApp template variables are blank", var1, var2 },
-        { status: 400 }
-      );
-    }
+    const apiKey = process.env.WHATSAPP_API_KEY;
+    const template = "details_confirmation";
 
-    const apiKey = "cdbcead5dfba4eb7a4b3f16b62dc2bb8";
-    const templateName = "details_confirmation";
-
-    const whatsappUrl = `http://official.nkinfo.in/wapp/api/v2/send/bytemplate/json?apikey=${apiKey}&templatename=${templateName}&mobile=${mobile}&var1=${encodeURIComponent(
+    const whatsappUrl = `http://official.nkinfo.in/wapp/api/v2/send/bytemplate/json?apikey=${apiKey}&templatename=${template}&mobile=${mobile}&var1=${encodeURIComponent(
       var1
     )}&var2=${encodeURIComponent(var2)}`;
 
-    console.log("📨 Sending WhatsApp:", whatsappUrl);
+    console.log("📨 Sending WhatsApp Request:", whatsappUrl);
 
-    const response = await fetch(whatsappUrl);
-    const result = await response.json();
+    const wpRes = await fetch(whatsappUrl);
+    const result = await wpRes.json();
 
-    if (response.ok && result.status === "success") {
-      return NextResponse.json(
-        { message: "Details sent via WhatsApp", name: user.name },
-        { status: 200 }
-      );
+    if (wpRes.ok && result.status === "success") {
+      return success("Temporary password sent via WhatsApp", {
+        name: user.name,
+      });
     } else {
       console.error("WhatsApp API Error:", result);
-      return NextResponse.json(
-        { message: "WhatsApp message failed to send", detail: result },
-        { status: 500 }
-      );
+      return error("Failed to send WhatsApp message", 500, { detail: result });
     }
-  } catch (error) {
-    console.error("Forgot Password Error:", error);
-    return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("Forgot Password Error:", err);
+    return error("Internal Server Error", 500, { detail: err.message });
   }
 }

@@ -32,17 +32,19 @@ export default function Welcome() {
         axiosInstance.get(`/user-companies?mobile=${mobile}`),
       ]);
 
-      const userData = userResponse.data.find(
-        (user) => user.mobile.toString() === mobile
-      );
+      const users = Array.isArray(userResponse.data) ? userResponse.data : [];
+
+      const userData = users.find((user) => user.mobile.toString() === mobile);
 
       if (userData) {
         const formattedName = formatName(userData.name);
         setName(formattedName);
         localStorage.setItem("mobile", userData.mobile);
+      } else {
+        setName("Guest");
       }
 
-      setAssignedCompanies(companyResponse.data.companies || []);
+      setAssignedCompanies(companyResponse.data?.companies ?? []);
     } catch (error) {
       console.error("Error fetching data:", error);
       setName("Guest");
