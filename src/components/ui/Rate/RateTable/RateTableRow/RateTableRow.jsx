@@ -1,7 +1,5 @@
-import Loading from "@/components/common/Loading/Loading";
 import { motion } from "framer-motion";
 import { Edit2, Save, X, UserCircle, PhoneCall } from "lucide-react";
-import { Suspense } from "react";
 
 export default function RateTableRow({
   rate,
@@ -104,7 +102,6 @@ export default function RateTableRow({
         )}
       </td>
 
-      {/* Payment Column - Days */}
       <td className="px-6 py-4 border-b whitespace-nowrap align-middle">
         {editIndex === index ? (
           <input
@@ -128,7 +125,6 @@ export default function RateTableRow({
         )}
       </td>
 
-      {/* Others Column - Text */}
       <td className="px-6 py-4 border-b whitespace-nowrap align-middle">
         {editIndex === index ? (
           <input
