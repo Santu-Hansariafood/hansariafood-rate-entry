@@ -1,15 +1,11 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
-import Loading from "@/components/common/Loading/Loading";
 
-const RateTableRow = dynamic(
-  () => import("@/components/ui/Rate/RateTable/RateTableRow/RateTableRow"),
-  {
-    loading: () => <Loading />,
-  }
+const RateTableRow = dynamic(() =>
+  import("@/components/ui/Rate/RateTable/RateTableRow/RateTableRow")
 );
 
 export default function RateTableBody({
