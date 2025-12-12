@@ -10,7 +10,8 @@ export async function POST(req) {
 
   try {
     const { name } = await req.json();
-    if (!name) {
+
+    if (!name?.trim()) {
       return NextResponse.json(
         { error: "Category name is required" },
         { status: 400 }
@@ -19,22 +20,31 @@ export async function POST(req) {
 
     await connectDB();
 
-    const existingCategory = await Category.findOne({ name });
-    if (existingCategory) {
+    const trimmedName = name.trim();
+
+    const existing = await Category.findOne({
+      name: { $regex: `^${trimmedName}$`, $options: "i" },
+    });
+
+    if (existing) {
       return NextResponse.json(
         { error: "Category already exists" },
         { status: 409 }
       );
     }
 
-    const newCategory = new Category({ name });
+    const newCategory = new Category({ name: trimmedName });
     await newCategory.save();
 
     return NextResponse.json(
-      { message: "Category created successfully", category: newCategory },
+      {
+        message: "Category created successfully",
+        category: newCategory,
+      },
       { status: 201 }
     );
   } catch (error) {
+    console.error("POST /category error:", error);
     return NextResponse.json(
       { error: "Failed to create category" },
       { status: 500 }
@@ -51,16 +61,22 @@ export async function GET(req) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
+
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const search = searchParams.get("search")?.trim() || "";
+
     const skip = (page - 1) * limit;
 
-    const query = search ? { name: { $regex: search, $options: "i" } } : {};
+    const filter = search
+      ? {
+          name: { $regex: search, $options: "i" },
+        }
+      : {};
 
     const [categories, total] = await Promise.all([
-      Category.find(query).sort({ name: 1 }).skip(skip).limit(limit),
-      Category.countDocuments(query),
+      Category.find(filter).sort({ name: 1 }).skip(skip).limit(limit),
+      Category.countDocuments(filter),
     ]);
 
     return NextResponse.json(
@@ -73,6 +89,7 @@ export async function GET(req) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("GET /category error:", error);
     return NextResponse.json(
       { error: "Failed to fetch categories" },
       { status: 500 }

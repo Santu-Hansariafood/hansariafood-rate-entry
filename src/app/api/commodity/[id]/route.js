@@ -10,7 +10,9 @@ export async function PUT(req, { params }) {
 
   try {
     const { id } = params;
-    const { name } = await req.json();
+    const { name, subcommodities } = await req.json();
+
+    await connectDB();
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -19,23 +21,51 @@ export async function PUT(req, { params }) {
       );
     }
 
-    await connectDB();
+    const trimmedName = name.trim();
 
-    const existingCommodity = await Commodity.findById(id);
-    if (!existingCommodity) {
-      return NextResponse.json({ error: "Commodity not found" }, { status: 404 });
+    const duplicate = await Commodity.findOne({
+      _id: { $ne: id },
+      name: trimmedName,
+    });
+
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "Another commodity with this name already exists" },
+        { status: 409 }
+      );
     }
 
-    existingCommodity.name = name.trim();
-    await existingCommodity.save();
+    const commodity = await Commodity.findById(id);
+    if (!commodity) {
+      return NextResponse.json(
+        { error: "Commodity not found" },
+        { status: 404 }
+      );
+    }
+
+    commodity.name = trimmedName;
+
+    if (Array.isArray(subcommodities)) {
+      commodity.subcommodities = subcommodities
+        .map((s) => s?.trim())
+        .filter((s) => s && s.length > 0);
+    }
+
+    await commodity.save();
 
     return NextResponse.json(
-      { message: "Commodity updated", commodity: existingCommodity },
+      {
+        message: "Commodity updated successfully",
+        commodity,
+      },
       { status: 200 }
     );
   } catch (err) {
-    console.error("PUT /commodity error:", err);
-    return NextResponse.json({ error: "Failed to update commodity" }, { status: 500 });
+    console.error("PUT /commodity/:id error:", err);
+    return NextResponse.json(
+      { error: "Failed to update commodity" },
+      { status: 500 }
+    );
   }
 }
 
@@ -52,12 +82,21 @@ export async function DELETE(req, { params }) {
     const deletedCommodity = await Commodity.findByIdAndDelete(id);
 
     if (!deletedCommodity) {
-      return NextResponse.json({ error: "Commodity not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Commodity not found" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ message: "Commodity deleted" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Commodity deleted successfully" },
+      { status: 200 }
+    );
   } catch (err) {
-    console.error("DELETE /commodity error:", err);
-    return NextResponse.json({ error: "Failed to delete commodity" }, { status: 500 });
+    console.error("DELETE /commodity/:id error:", err);
+    return NextResponse.json(
+      { error: "Failed to delete commodity" },
+      { status: 500 }
+    );
   }
 }

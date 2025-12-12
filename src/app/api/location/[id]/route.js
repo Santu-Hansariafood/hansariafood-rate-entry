@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
 import { NextResponse } from "next/server";
@@ -10,6 +12,7 @@ export async function PUT(req, { params }) {
 
   try {
     const { state, name } = await req.json();
+
     if (!state || !name) {
       return NextResponse.json(
         { error: "State and location name are required" },
@@ -37,6 +40,7 @@ export async function PUT(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("PUT /location/[id] error:", error);
     return NextResponse.json(
       { error: "Failed to update location" },
       { status: 500 }
@@ -66,6 +70,7 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("DELETE /location/[id] error:", error);
     return NextResponse.json(
       { error: "Failed to delete location" },
       { status: 500 }
@@ -92,6 +97,7 @@ export async function GET(req, { params }) {
 
     return NextResponse.json({ location }, { status: 200 });
   } catch (error) {
+    console.error("GET /location/[id] error:", error);
     return NextResponse.json(
       { error: "Failed to fetch location" },
       { status: 500 }

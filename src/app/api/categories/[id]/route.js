@@ -11,22 +11,22 @@ export async function GET(req, { params }) {
   try {
     await connectDB();
 
-    if (params?.id) {
-      const category = await Category.findById(params.id);
-      if (!category) {
-        return NextResponse.json(
-          { error: "Category not found" },
-          { status: 404 }
-        );
-      }
-      return NextResponse.json({ category }, { status: 200 });
+    const { id } = params;
+
+    const category = await Category.findById(id);
+
+    if (!category) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 }
+      );
     }
 
-    const categories = await Category.find({});
-    return NextResponse.json({ categories }, { status: 200 });
+    return NextResponse.json({ category }, { status: 200 });
   } catch (error) {
+    console.error("GET /category/:id error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch categories" },
+      { error: "Failed to fetch category" },
       { status: 500 }
     );
   }
@@ -39,7 +39,9 @@ export async function PUT(req, { params }) {
 
   try {
     const { name } = await req.json();
-    if (!name) {
+    const { id } = params;
+
+    if (!name?.trim()) {
       return NextResponse.json(
         { error: "Category name is required" },
         { status: 400 }
@@ -48,9 +50,23 @@ export async function PUT(req, { params }) {
 
     await connectDB();
 
+    const trimmedName = name.trim();
+
+    const duplicate = await Category.findOne({
+      _id: { $ne: id },
+      name: { $regex: `^${trimmedName}$`, $options: "i" },
+    });
+
+    if (duplicate) {
+      return NextResponse.json(
+        { error: "Another category with this name already exists" },
+        { status: 409 }
+      );
+    }
+
     const updatedCategory = await Category.findByIdAndUpdate(
-      params.id,
-      { name },
+      id,
+      { name: trimmedName },
       { new: true }
     );
 
@@ -62,10 +78,14 @@ export async function PUT(req, { params }) {
     }
 
     return NextResponse.json(
-      { message: "Category updated successfully", category: updatedCategory },
+      {
+        message: "Category updated successfully",
+        category: updatedCategory,
+      },
       { status: 200 }
     );
   } catch (error) {
+    console.error("PUT /category/:id error:", error);
     return NextResponse.json(
       { error: "Failed to update category" },
       { status: 500 }
@@ -79,8 +99,11 @@ export async function DELETE(req, { params }) {
   }
 
   try {
+    const { id } = params;
+
     await connectDB();
-    const deletedCategory = await Category.findByIdAndDelete(params.id);
+
+    const deletedCategory = await Category.findByIdAndDelete(id);
 
     if (!deletedCategory) {
       return NextResponse.json(
@@ -94,6 +117,7 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("DELETE /category/:id error:", error);
     return NextResponse.json(
       { error: "Failed to delete category" },
       { status: 500 }

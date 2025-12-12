@@ -4,12 +4,13 @@ import Company from "@/models/Company";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 export async function GET(req, { params }) {
-  await connectDB(); // <-- FIXED
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    await connectDB();
+
     const { id } = params;
     const company = await Company.findById(id);
 
@@ -17,8 +18,9 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    return NextResponse.json(company, { status: 200 });
+    return NextResponse.json({ company }, { status: 200 });
   } catch (error) {
+    console.error("GET /company/:id error:", error);
     return NextResponse.json(
       { error: "Failed to fetch company" },
       { status: 500 }
@@ -27,17 +29,19 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
-  await connectDB(); // <-- FIXED
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    await connectDB();
+
     const { id } = params;
-    const { name, category, type } = await req.json();
+    const { name, category, type, isSelfCompany } = await req.json();
 
     const nameTrimmed = name?.trim();
     const categoryTrimmed = category?.trim();
+
     const typeArray = Array.isArray(type)
       ? type.map((t) => t.toLowerCase().trim())
       : [type?.toLowerCase().trim()];
@@ -47,19 +51,22 @@ export async function PUT(req, { params }) {
 
     if (!nameTrimmed || !categoryTrimmed || selectedTypes.length === 0) {
       return NextResponse.json(
-        { error: "Name, category, and at least one valid type are required" },
+        {
+          error:
+            "Name, category, and at least one valid type (buyer/seller) are required",
+        },
         { status: 400 }
       );
     }
 
-    const duplicateCompany = await Company.findOne({
+    const duplicate = await Company.findOne({
       _id: { $ne: id },
       name: nameTrimmed,
     });
 
-    if (duplicateCompany) {
+    if (duplicate) {
       return NextResponse.json(
-        { error: "Another company with the same name already exists" },
+        { error: "Another company with this name already exists" },
         { status: 400 }
       );
     }
@@ -70,6 +77,7 @@ export async function PUT(req, { params }) {
         name: nameTrimmed,
         category: categoryTrimmed,
         type: selectedTypes,
+        ...(isSelfCompany !== undefined && { isSelfCompany }),
       },
       { new: true }
     );
@@ -78,8 +86,12 @@ export async function PUT(req, { params }) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    return NextResponse.json(updatedCompany, { status: 200 });
+    return NextResponse.json(
+      { message: "Company updated successfully", company: updatedCompany },
+      { status: 200 }
+    );
   } catch (error) {
+    console.error("PUT /company/:id error:", error);
     return NextResponse.json(
       { error: "Failed to update company" },
       { status: 500 }
@@ -88,13 +100,15 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
-  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    await connectDB();
+
     const { id } = params;
+
     const deletedCompany = await Company.findByIdAndDelete(id);
 
     if (!deletedCompany) {
@@ -106,6 +120,7 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("DELETE /company/:id error:", error);
     return NextResponse.json(
       { error: "Failed to delete company" },
       { status: 500 }

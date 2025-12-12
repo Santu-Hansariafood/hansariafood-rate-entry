@@ -1,9 +1,9 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
-
-await connectDB();
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -11,6 +11,8 @@ export async function POST(req) {
   }
 
   try {
+    await connectDB();
+
     const { state, name } = await req.json();
 
     if (!state || !name) {
@@ -51,6 +53,8 @@ export async function GET(req) {
   }
 
   try {
+    await connectDB();
+
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);

@@ -4,12 +4,12 @@ import ManageCompany from "@/models/ManageCompany";
 import RateUpdate from "@/models/RateUpdate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
-
 export async function POST(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  await connectDB();
 
   try {
     let {
@@ -33,9 +33,7 @@ export async function POST(req) {
       !type.every((t) => ["buyer", "seller"].includes(t))
     ) {
       return NextResponse.json(
-        {
-          error: "Name, location, and valid type (Buyer/Seller) are required.",
-        },
+        { error: "Name, location & valid type (buyer/seller) are required." },
         { status: 400 }
       );
     }
@@ -45,19 +43,6 @@ export async function POST(req) {
     const existingCompany = await ManageCompany.findOne({ name, type });
 
     if (existingCompany) {
-      const allLocationsExist = location.every((loc) =>
-        existingCompany.location.includes(loc)
-      );
-
-      if (allLocationsExist) {
-        return NextResponse.json(
-          {
-            error: "Company with this name, type, and location already exists.",
-          },
-          { status: 409 }
-        );
-      }
-
       existingCompany.location = Array.from(
         new Set([...existingCompany.location, ...location])
       );
@@ -70,16 +55,13 @@ export async function POST(req) {
         new Set([...existingCompany.subCommodities, ...subCommodities])
       );
 
-      const existingMobile = existingCompany.mobileNumbers || [];
-      const mergedMobile = [...existingMobile];
+      const mergedMobile = [...existingCompany.mobileNumbers];
 
-      mobileNumbers.forEach((newNum) => {
-        const exists = existingMobile.some(
-          (oldNum) =>
-            oldNum.location === newNum.location &&
-            oldNum.commodity === newNum.commodity
+      mobileNumbers.forEach((m) => {
+        const exists = mergedMobile.some(
+          (old) => old.location === m.location && old.commodity === m.commodity
         );
-        if (!exists) mergedMobile.push(newNum);
+        if (!exists) mergedMobile.push(m);
       });
 
       existingCompany.mobileNumbers = mergedMobile;
@@ -114,14 +96,11 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error in POST /managecompany:", error);
+    console.error("POST /managecompany Error:", error);
 
     if (error.code === 11000) {
       return NextResponse.json(
-        {
-          error:
-            "A company with this name and type already exists. Use a different name or type.",
-        },
+        { error: "Company with same name & type already exists." },
         { status: 409 }
       );
     }
@@ -138,18 +117,22 @@ export async function GET(req) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  await connectDB();
+
   try {
     const { searchParams } = new URL(req.url);
 
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const page = Number(searchParams.get("page") || 1);
+    const limit = Number(searchParams.get("limit") || 10);
     const skip = (page - 1) * limit;
 
     const search = searchParams.get("search") || searchParams.get("q") || "";
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
     const typeFilter = searchParams.get("type");
-    const selfParam = (searchParams.get("self") || "").toLowerCase();
+    const selfFilter = ["1", "true", "yes"].includes(
+      (searchParams.get("self") || "").toLowerCase()
+    );
     const excludeTodayNoBuying = ["1", "true", "yes"].includes(
       (searchParams.get("excludeTodayNoBuying") || "").toLowerCase()
     );
@@ -159,20 +142,16 @@ export async function GET(req) {
     if (search.trim()) {
       filter.name = { $regex: search.trim(), $options: "i" };
     }
-
     if (categories.length > 0) {
       filter.category = { $in: categories };
     }
-
     if (subCommodities.length > 0) {
       filter.subCommodities = { $in: subCommodities };
     }
-
     if (["buyer", "seller"].includes(typeFilter)) {
       filter.type = typeFilter;
     }
-
-    if (["1", "true", "yes"].includes(selfParam)) {
+    if (selfFilter) {
       filter.isSelfCompany = true;
     }
 
@@ -195,7 +174,7 @@ export async function GET(req) {
 
     return NextResponse.json({ companies, total }, { status: 200 });
   } catch (error) {
-    console.error("Error in GET /managecompany:", error);
+    console.error("GET /managecompany Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch companies." },
       { status: 500 }
@@ -208,14 +187,16 @@ export async function GET_SELF(req) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  await connectDB();
+
   try {
     const { searchParams } = new URL(req.url);
 
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const page = Number(searchParams.get("page") || 1);
+    const limit = Number(searchParams.get("limit") || 10);
     const skip = (page - 1) * limit;
 
-    const search = searchParams.get("search") || searchParams.get("q") || "";
+    const search = searchParams.get("search") || "";
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
     const typeFilter = searchParams.get("type");
@@ -225,15 +206,12 @@ export async function GET_SELF(req) {
     if (search.trim()) {
       filter.name = { $regex: search.trim(), $options: "i" };
     }
-
     if (categories.length > 0) {
       filter.category = { $in: categories };
     }
-
     if (subCommodities.length > 0) {
       filter.subCommodities = { $in: subCommodities };
     }
-
     if (["buyer", "seller"].includes(typeFilter)) {
       filter.type = typeFilter;
     }
@@ -245,7 +223,7 @@ export async function GET_SELF(req) {
 
     return NextResponse.json({ companies, total }, { status: 200 });
   } catch (error) {
-    console.error("Error in GET_SELF /managecompany:", error);
+    console.error("GET_SELF /managecompany Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch self companies." },
       { status: 500 }

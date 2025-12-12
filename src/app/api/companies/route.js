@@ -3,24 +3,23 @@ import { connectDB } from "@/lib/mongodb";
 import Company from "@/models/Company";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
-
 export async function GET(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    await connectDB();
+
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
-    const search = searchParams.get("search") || "";
-    const type = searchParams.get("type") || "all";
+    const search = searchParams.get("search")?.trim() || "";
+    const type = searchParams.get("type")?.toLowerCase() || "all";
     const skip = (page - 1) * limit;
 
-    const searchRegex = new RegExp(search, "i");
     const query = {
-      ...(search ? { name: { $regex: searchRegex } } : {}),
+      ...(search ? { name: { $regex: search, $options: "i" } } : {}),
       ...(type !== "all" ? { type: type.toLowerCase() } : {}),
     };
 
@@ -29,8 +28,17 @@ export async function GET(req) {
       Company.countDocuments(query),
     ]);
 
-    return NextResponse.json({ companies, total }, { status: 200 });
+    return NextResponse.json(
+      {
+        companies,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+      },
+      { status: 200 }
+    );
   } catch (error) {
+    console.error("GET /company error:", error);
     return NextResponse.json(
       { error: "Failed to fetch companies" },
       { status: 500 }
@@ -44,10 +52,13 @@ export async function POST(req) {
   }
 
   try {
+    await connectDB();
+
     const { name, category, type, isSelfCompany = false } = await req.json();
 
-    const nameTrimmed = name?.trim();
-    const categoryTrimmed = category?.trim();
+    const nameTrim = name?.trim();
+    const categoryTrim = category?.trim();
+
     const typeArray = Array.isArray(type)
       ? type.map((t) => t.toLowerCase().trim())
       : [type?.toLowerCase().trim()];
@@ -55,7 +66,7 @@ export async function POST(req) {
     const validTypes = ["buyer", "seller"];
     const selectedTypes = typeArray.filter((t) => validTypes.includes(t));
 
-    if (!nameTrimmed || !categoryTrimmed || selectedTypes.length === 0) {
+    if (!nameTrim || !categoryTrim || selectedTypes.length === 0) {
       return NextResponse.json(
         {
           error:
@@ -65,7 +76,7 @@ export async function POST(req) {
       );
     }
 
-    const existingCompany = await Company.findOne({ name: nameTrimmed });
+    const existingCompany = await Company.findOne({ name: nameTrim });
 
     if (existingCompany) {
       const newTypes = selectedTypes.filter(
@@ -83,23 +94,31 @@ export async function POST(req) {
       await existingCompany.save();
 
       return NextResponse.json(
-        { message: "Company type(s) updated", updatedCompany: existingCompany },
+        {
+          message: "Company type(s) updated",
+          updatedCompany: existingCompany,
+        },
         { status: 200 }
       );
     }
 
+    // Create new company
     const newCompany = await Company.create({
-      name: nameTrimmed,
-      category: categoryTrimmed,
+      name: nameTrim,
+      category: categoryTrim,
       type: selectedTypes,
       isSelfCompany,
     });
 
     return NextResponse.json(
-      { message: "Company created", createdCompany: newCompany },
+      {
+        message: "Company created successfully",
+        createdCompany: newCompany,
+      },
       { status: 201 }
     );
   } catch (error) {
+    console.error("POST /company error:", error);
     return NextResponse.json(
       { error: "Failed to create or update company" },
       { status: 500 }

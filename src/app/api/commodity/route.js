@@ -9,7 +9,7 @@ export async function POST(req) {
   }
 
   try {
-    const { name } = await req.json();
+    const { name, subcommodities } = await req.json();
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -31,11 +31,22 @@ export async function POST(req) {
       );
     }
 
-    const newCommodity = new Commodity({ name: trimmedName });
+    const formattedSubcommodities = Array.isArray(subcommodities)
+      ? subcommodities.map((s) => s?.trim()).filter((s) => s && s.length > 0)
+      : [];
+
+    const newCommodity = new Commodity({
+      name: trimmedName,
+      subcommodities: formattedSubcommodities,
+    });
+
     await newCommodity.save();
 
     return NextResponse.json(
-      { message: "Commodity created", commodity: newCommodity },
+      {
+        message: "Commodity created successfully",
+        commodity: newCommodity,
+      },
       { status: 201 }
     );
   } catch (err) {
@@ -56,12 +67,18 @@ export async function GET(req) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
+    const limit = Math.max(parseInt(searchParams.get("limit") || "10", 10), 1);
     const query = searchParams.get("q")?.trim() || "";
+
     const skip = (page - 1) * limit;
 
-    const filter = query ? { name: { $regex: query, $options: "i" } } : {};
+    const filter =
+      query.length > 0
+        ? {
+            name: { $regex: query, $options: "i" },
+          }
+        : {};
 
     const [commodities, total] = await Promise.all([
       Commodity.find(filter).sort({ name: 1 }).skip(skip).limit(limit),
