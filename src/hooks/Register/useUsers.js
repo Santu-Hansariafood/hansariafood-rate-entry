@@ -11,7 +11,8 @@ export default function useUsers() {
     try {
       setLoadingUsers(true);
       const { data } = await axiosInstance.get("/auth/register");
-      setUsers(data);
+
+      setUsers(Array.isArray(data?.users) ? data.users : []);
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch users");

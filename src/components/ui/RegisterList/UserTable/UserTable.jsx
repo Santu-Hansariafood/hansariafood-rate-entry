@@ -2,9 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Plus, Trash2, Eye } from "lucide-react";
-import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
-import { Suspense } from "react";
 
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 
@@ -20,7 +18,9 @@ export default function UserTable({
     { header: "Action", accessor: "action" },
   ];
 
-  const usersWithActions = users.map((user) => ({
+  const safeUsers = Array.isArray(users) ? users : [];
+
+  const usersWithActions = safeUsers.map((user) => ({
     ...user,
     action: (
       <div className="flex flex-wrap gap-2">
@@ -36,6 +36,7 @@ export default function UserTable({
           <Plus size={16} />
           Add Company
         </motion.button>
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -48,6 +49,7 @@ export default function UserTable({
           <Trash2 size={16} />
           Remove
         </motion.button>
+
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -65,13 +67,11 @@ export default function UserTable({
   }));
 
   return (
-    <Suspense fallback={<Loading />}>
-      <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow 
+    <div
+      className="bg-white dark:bg-gray-800 rounded-lg shadow 
                     text-gray-900 dark:text-gray-100 transition-colors"
-      >
-        <Table data={usersWithActions} columns={columns} />
-      </div>
-    </Suspense>
+    >
+      <Table data={usersWithActions} columns={columns} />
+    </div>
   );
 }
