@@ -39,7 +39,7 @@ const TradeModeSelector = dynamic(
   { suspense: true }
 );
 
-export default function ManageCompanyPopup({ name, onClose }) {
+export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
   const today = useToday();
   const { company, loading: loadingCompany, role } = useCompanyData(name);
   const { rates, rateMap, loading: loadingRates } = useRateData(company?.name);
@@ -67,10 +67,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
   );
   const exportHook = useSaudaExport({ company, today, rates, entries });
 
-  const firstLoading = useFirstLoadBlocker([
-    !loadingCompany,
-    company,
-  ]);
+  const firstLoading = useFirstLoadBlocker([!loadingCompany, company]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -101,8 +98,17 @@ export default function ManageCompanyPopup({ name, onClose }) {
 
   if (firstLoading || !company) return <Loading />;
 
-  const loading =
-    loadingRates || loadingSauda || loadingSellers;
+  const loading = loadingRates || loadingSauda || loadingSellers;
+
+  const handleUnitSaveWithRefresh = async (...args) => {
+    const result = await handleUnitSave(...args);
+
+    if (result !== false) {
+      onSaudaAdded?.();
+    }
+
+    return result;
+  };
 
   return (
     <Suspense fallback={<Loading />}>
@@ -120,7 +126,8 @@ export default function ManageCompanyPopup({ name, onClose }) {
             <Title text={company.name} />
             <div className="flex items-center gap-4">
               <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
-                📅 Date: <span className="text-red-600 dark:text-red-400">{today}</span>
+                📅 Date:{" "}
+                <span className="text-red-600 dark:text-red-400">{today}</span>
               </p>
             </div>
           </div>
@@ -137,7 +144,7 @@ export default function ManageCompanyPopup({ name, onClose }) {
                 entries={entries}
                 totalTons={totalTons}
                 handleChange={handleChange}
-                handleUnitSave={handleUnitSave}
+                handleUnitSave={handleUnitSaveWithRefresh}
                 addRow={addRow}
                 removeRow={removeRow}
                 saveStatus={saveStatus}

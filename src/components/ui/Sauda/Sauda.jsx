@@ -48,6 +48,7 @@ const Sauda = () => {
     filterType,
     setFilterType,
     updateCompanyStatus,
+    refreshSaudaData,
   } = useSaudaData();
 
   const filteredCompanies = useMemo(() => {
@@ -107,9 +108,7 @@ const Sauda = () => {
               </div>
               <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
                 {loading ? (
-                  <div className="flex justify-center items-center py-10">
-                    <Loading />
-                  </div>
+                  <Loading />
                 ) : filteredCompanies.length > 0 ? (
                   <div
                     className="
@@ -184,6 +183,7 @@ const Sauda = () => {
           <ManageCompanyPopup
             name={selectedCompany}
             onClose={(status) => handlePopupClose(selectedCompany, status)}
+            onSaudaAdded={refreshSaudaData}
           />
         )}
         <div className="w-full px-4 sm:px-6 pb-6 hidden sm:block">

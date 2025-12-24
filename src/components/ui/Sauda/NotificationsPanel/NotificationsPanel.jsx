@@ -95,9 +95,7 @@ const NotificationsPanel = ({ onClose }) => {
           />
         </div>
         {loading ? (
-          <div className="flex-1 flex justify-center items-center p-8">
             <Loading />
-          </div>
         ) : filteredNotifications.length > 0 ? (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700 flex-1">
             {[...filteredNotifications]
