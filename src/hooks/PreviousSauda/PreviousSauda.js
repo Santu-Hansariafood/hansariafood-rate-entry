@@ -35,6 +35,9 @@ const usePreviousSauda = () => {
       const flatEntries = docs.flatMap((doc) =>
         Object.entries(doc.saudaEntries || {}).flatMap(([unit, list]) =>
           list.map((item) => ({
+            buyerName: doc.buyer || "",
+            buyerCompany: doc.company || "",
+            consignee: unit,
             unit: unit.split("-")[0],
             saudaNo: item.saudaNo,
             commodity: item.commodity,
@@ -42,6 +45,7 @@ const usePreviousSauda = () => {
             sellerCompany: item.sellerCompany,
             tons: item.tons,
             finalRate: item.finalRate,
+            deliveryDate: item.deliveryDate,
             others: item.others,
           }))
         )
