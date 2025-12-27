@@ -20,10 +20,12 @@ const usePreviousSauda = () => {
   const [search, setSearch] = useState("");
 
   const fetchData = useCallback(async (selectedDate) => {
-    try {
-      setLoading(true);
+    if (!selectedDate) return;
 
+    setLoading(true);
+    try {
       const formattedDate = formatDateForAPI(selectedDate);
+
       const [saudaRes, statusRes] = await Promise.all([
         axiosInstance.get(
           `/save-sauda/get-by-date?date=${encodeURIComponent(formattedDate)}`
@@ -31,39 +33,48 @@ const usePreviousSauda = () => {
         axiosInstance.get("/sauda-status"),
       ]);
 
-      const docs = saudaRes.data.entries || [];
-      const flatEntries = docs.flatMap((doc) =>
-        Object.entries(doc.saudaEntries || {}).flatMap(([unit, list]) =>
-          list.map((item) => ({
-            buyerName: doc.buyer || "",
-            buyerCompany: doc.company || "",
+      const docs = saudaRes?.data?.entries || [];
+
+      const flatEntries = docs.flatMap((doc) => {
+        const buyerName = doc?.buyer || "";
+        const buyerCompany = doc?.company || "";
+
+        return Object.entries(doc?.saudaEntries || {}).flatMap(([unit, list]) =>
+          (list || []).map((item) => ({
+            buyerName,
+            buyerCompany,
             consignee: unit,
-            unit: unit.split("-")[0],
-            saudaNo: item.saudaNo,
-            commodity: item.commodity,
-            sellerName: item.sellerName,
-            sellerCompany: item.sellerCompany,
-            tons: item.tons,
-            finalRate: item.finalRate,
-            deliveryDate: item.deliveryDate,
-            others: item.others,
+            unit: unit?.split("-")[0] || "",
+            saudaNo: item?.saudaNo || "",
+            commodity: item?.commodity || "",
+            sellerName: item?.sellerName || "",
+            sellerCompany: item?.sellerCompany || "",
+            tons: item?.tons || "",
+            finalRate: item?.finalRate || "",
+            deliveryDate: item?.deliveryDate || "",
+            others: item?.others || "",
           }))
-        )
-      );
+        );
+      });
 
       const withSerial = flatEntries
         .sort((a, b) => Number(a.saudaNo) - Number(b.saudaNo))
-        .map((entry, index) => ({ sl: index + 1, ...entry }));
+        .map((entry, index) => ({
+          sl: index + 1,
+          ...entry,
+        }));
 
       setEntries(withSerial);
+
       const statusMap = {};
-      (statusRes.data.statuses || []).forEach((s) => {
+      (statusRes?.data?.statuses || []).forEach((s) => {
         statusMap[s.saudaNo] = s.status;
       });
+
       setStatuses(statusMap);
-    } catch (err) {
+    } catch (error) {
       toast.error("Failed to fetch Sauda data");
-      console.error("Error fetching:", err);
+      console.error("Fetch error:", error);
     } finally {
       setLoading(false);
     }
@@ -73,12 +84,14 @@ const usePreviousSauda = () => {
     try {
       const res = await axiosInstance.get("/sauda-status");
       const statusMap = {};
-      (res.data.statuses || []).forEach((s) => {
+
+      (res?.data?.statuses || []).forEach((s) => {
         statusMap[s.saudaNo] = s.status;
       });
+
       setStatuses(statusMap);
-    } catch (err) {
-      console.error("Failed to fetch statuses:", err);
+    } catch (error) {
+      console.error("Failed to fetch statuses:", error);
     }
   }, []);
 
@@ -88,8 +101,10 @@ const usePreviousSauda = () => {
 
   const filteredEntries = useMemo(() => {
     if (!search) return entries;
+
+    const term = search.toLowerCase();
     return entries.filter((item) =>
-      item.saudaNo?.toLowerCase().includes(search.toLowerCase())
+      item.saudaNo?.toString().toLowerCase().includes(term)
     );
   }, [entries, search]);
 
