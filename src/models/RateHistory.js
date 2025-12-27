@@ -9,13 +9,12 @@ const RateHistorySchema = new mongoose.Schema(
     },
     location: { type: String, required: true },
     commodity: { type: String, required: true },
-    newRate: { type: Number, default: 0 },
-    oldRate: { type: Number, default: 0 },
-    others: { type: String, default: "" },
+
     history: [
       {
-        date: { type: String },
-        rate: { type: Number },
+        date: { type: String, required: true },
+        rate: { type: Number, required: true },
+        others: { type: String, default: "" },
       },
     ],
   },

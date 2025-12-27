@@ -1,14 +1,46 @@
 import { NextResponse } from "next/server";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import RateHistory from "@/models/RateHistory";
 import { connectDB } from "@/lib/mongodb";
 
 export async function GET(req, context) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   await connectDB();
   const { id } = await context.params;
 
   try {
-    const history = await RateHistory.find({ companyId: id });
-    return NextResponse.json(history || []);
+    const today = new Date().toISOString().split("T")[0];
+    const docs = await RateHistory.find({ companyId: id });
+
+    const result = [];
+
+    for (const doc of docs) {
+      const history = doc.history || [];
+
+      const sortedHistory = [...history].sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      );
+
+      const todayEntry = sortedHistory.find((h) => h.date === today);
+
+      const previousEntry = sortedHistory.find((h) => h.date < today);
+
+      const visibleEntry = todayEntry || previousEntry;
+
+      result.push({
+        location: doc.location,
+        commodity: doc.commodity,
+        newRate: todayEntry ? todayEntry.rate : "",
+        oldRate: previousEntry ? previousEntry.rate : 0,
+        others: visibleEntry?.others || "",
+        date: visibleEntry?.date || today,
+      });
+    }
+
+    return NextResponse.json(result, { status: 200 });
   } catch (err) {
     console.error("GET /ratehistory error:", err);
     return NextResponse.json(
@@ -19,6 +51,10 @@ export async function GET(req, context) {
 }
 
 export async function POST(req, context) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   await connectDB();
   const { id } = await context.params;
 
@@ -35,47 +71,49 @@ export async function POST(req, context) {
 
     const today = new Date().toISOString().split("T")[0];
 
-    const existing = await RateHistory.findOne({
+    const existsToday = await RateHistory.findOne({
       companyId: id,
       location: locationName,
       commodity: commodityName,
+      "history.date": today,
     });
 
-    let oldRateToSet = 0;
-
-    if (existing) {
-      const lastEntry = existing.history?.[existing.history.length - 1];
-
-      if (lastEntry?.date !== today) {
-        oldRateToSet = existing.newRate;
-      } else {
-        oldRateToSet = existing.oldRate;
-      }
-    }
-
-    const updated = await RateHistory.findOneAndUpdate(
-      {
-        companyId: id,
-        location: locationName,
-        commodity: commodityName,
-      },
-      {
-        $set: {
-          oldRate: oldRateToSet,
-          newRate: newRate || 0,
-          others: others || "",
+    if (existsToday) {
+      await RateHistory.updateOne(
+        {
+          companyId: id,
+          location: locationName,
+          commodity: commodityName,
+          "history.date": today,
         },
-        $push: {
-          history: {
-            date: today,
-            rate: newRate,
+        {
+          $set: {
+            "history.$.rate": Number(newRate),
+            "history.$.others": others || "",
+          },
+        }
+      );
+    } else {
+      await RateHistory.findOneAndUpdate(
+        {
+          companyId: id,
+          location: locationName,
+          commodity: commodityName,
+        },
+        {
+          $push: {
+            history: {
+              date: today,
+              rate: Number(newRate),
+              others: others || "",
+            },
           },
         },
-      },
-      { new: true, upsert: true }
-    );
+        { upsert: true }
+      );
+    }
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
     console.error("POST /ratehistory error:", err);
     return NextResponse.json(

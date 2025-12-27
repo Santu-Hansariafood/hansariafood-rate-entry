@@ -5,8 +5,8 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { motion } from "framer-motion";
 import { Building2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import Title from "@/components/common/Title/Title";
 import Loading from "@/components/common/Loading/Loading";
+const Title = dynamic(() => import("@/components/common/Title/Title"));
 const SoyaCompanyPopup = dynamic(() =>
   import("../SoyaCompanyPopup/SoyaCompanyPopup")
 );
