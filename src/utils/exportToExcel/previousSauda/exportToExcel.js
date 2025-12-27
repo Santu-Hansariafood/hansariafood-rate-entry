@@ -5,14 +5,11 @@ export const downloadSaudaExcel = (rows, fileName = "Previous_Sauda.xlsx") => {
 
   const excelData = rows.map((row) => ({
     "S.No": row.sl,
-    "Buyer Name": row.buyerName,
     "Buyer Company": row.buyerCompany,
     Consignee: row.consigneeName || row.consignee?.split("-")[0] || "",
-    // Unit: row.unit,
     "Sauda No": row.saudaNo,
     Commodity: row.commodity,
     "Delivery Date": row.deliveryDate,
-    "Seller Name": row.sellerName,
     "Seller Company": row.sellerCompany,
     Tons: row.tons,
     "Final Rate": row.finalRate,
