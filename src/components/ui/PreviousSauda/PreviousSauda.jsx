@@ -91,13 +91,13 @@ const PreviousSauda = () => {
   const columns = useMemo(
     () => [
       { header: "S.No", accessor: "sl" },
-      { header: "Buyer Name", accessor: "buyerName" },
+      // { header: "Buyer Name", accessor: "buyerName" },
       { header: "Buyer Company", accessor: "buyerCompany" },
       { header: "Consignee", accessor: "consigneeName" },
       { header: "Sauda No", accessor: "saudaNo" },
       { header: "Commodity", accessor: "commodity" },
       { header: "Delivery Date", accessor: "deliveryDate" },
-      { header: "Seller Name", accessor: "sellerName" },
+      // { header: "Seller Name", accessor: "sellerName" },
       { header: "Seller Company", accessor: "sellerCompany" },
       { header: "Tons", accessor: "tons" },
       { header: "Final Rate", accessor: "finalRate" },

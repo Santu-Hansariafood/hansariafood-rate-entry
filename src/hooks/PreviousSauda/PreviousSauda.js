@@ -41,13 +41,13 @@ const usePreviousSauda = () => {
 
         return Object.entries(doc?.saudaEntries || {}).flatMap(([unit, list]) =>
           (list || []).map((item) => ({
-            buyerName,
+            // buyerName,
             buyerCompany,
             consignee: unit,
             unit: unit?.split("-")[0] || "",
             saudaNo: item?.saudaNo || "",
             commodity: item?.commodity || "",
-            sellerName: item?.sellerName || "",
+            // sellerName: item?.sellerName || "",
             sellerCompany: item?.sellerCompany || "",
             tons: item?.tons || "",
             finalRate: item?.finalRate || "",
