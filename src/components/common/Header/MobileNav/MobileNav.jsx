@@ -31,6 +31,7 @@ export default function MobileNav({
     "Location",
     "Self Company",
     "Previous Sauda",
+    "Soya"
   ];
 
   const extraLinks = allowedMobileNumbers.includes(currentUserMobile)
@@ -39,7 +40,6 @@ export default function MobileNav({
 
   const navLinks = [...baseLinks, ...extraLinks];
 
-  // Drawer Close Logic
   useEffect(() => {
     if (!isOpen) return;
 
@@ -80,8 +80,6 @@ export default function MobileNav({
 
           <nav className="flex-1 overflow-auto">
             <ul className="flex flex-col p-4 gap-4">
-
-              {/* 🔽 RATE DROPDOWN */}
               <li>
                 <div
                   className="flex justify-between items-center cursor-pointer px-2 py-1 rounded hover:bg-gray-800"
@@ -129,7 +127,6 @@ export default function MobileNav({
                 </AnimatePresence>
               </li>
 
-              {/* 🔗 OTHER LINKS */}
               {navLinks.map((label) => {
                 const path = `/${label.toLowerCase().replace(/ /g, "")}`;
                 return (
@@ -155,10 +152,8 @@ export default function MobileNav({
                 );
               })}
 
-              {/* 🔔 Notifications */}
               <NotificationBell notifications={notifications} />
 
-              {/* 🔒 Logout */}
               <li>
                 <LogoutButton />
               </li>

@@ -43,6 +43,7 @@ export default function DesktopNav({
     { label: "Previous Sauda", path: "/previoussauda" },
     { label: "Buyer Company", path: "/buyercompany" },
     { label: "Seller", path: "/seller" },
+    { label: "Soya", path: "/soya" },
   ]);
 
   const companyTitle = (() => {

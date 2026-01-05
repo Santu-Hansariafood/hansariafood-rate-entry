@@ -12,34 +12,45 @@ export async function GET(req, { params }) {
   const { id } = params;
 
   try {
-    const today = new Date().toISOString().split("T")[0];
-    const docs = await RateHistory.find({ companyId: id });
+    const { searchParams } = new URL(req.url);
+    const selectedDate =
+      searchParams.get("date") ||
+      new Date().toISOString().split("T")[0];
 
+    const docs = await RateHistory.find({ companyId: id }).lean();
     const result = [];
 
     for (const doc of docs) {
-      const sorted = [...(doc.history || [])].sort(
+      const history = doc.history || [];
+
+      const sortedHistory = [...history].sort(
         (a, b) => new Date(b.date) - new Date(a.date)
       );
 
-      const todayEntry = sorted.find((h) => h.date === today);
-      const previousEntry = sorted.find((h) => h.date < today);
+      const sameDayEntry = sortedHistory.find(
+        (h) => h.date === selectedDate
+      );
 
-      const visibleEntry = todayEntry || previousEntry;
+      const previousEntry = sortedHistory.find(
+        (h) => h.date < selectedDate
+      );
+
+      const visibleEntry = sameDayEntry || previousEntry;
 
       result.push({
         location: doc.location,
         commodity: doc.commodity,
-        newRate: todayEntry ? todayEntry.rate : "",
+        newRate: sameDayEntry ? sameDayEntry.rate : "",
         oldRate: previousEntry ? previousEntry.rate : "",
         others: visibleEntry?.others || "",
-        date: visibleEntry?.date || today,
+
+        date: visibleEntry?.date || selectedDate,
       });
     }
 
     return NextResponse.json(result, { status: 200 });
-  } catch (err) {
-    console.error("GET /ratehistory error:", err);
+  } catch (error) {
+    console.error("GET /ratehistory error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -83,7 +94,6 @@ export async function POST(req, { params }) {
       "history.date": today,
     });
 
-    // 🔁 SAME DAY → UPDATE
     if (existsToday) {
       await RateHistory.updateOne(
         {
@@ -99,7 +109,8 @@ export async function POST(req, { params }) {
           },
         }
       );
-    } else {
+    }
+    else {
       await RateHistory.findOneAndUpdate(
         {
           companyId: id,
@@ -123,8 +134,8 @@ export async function POST(req, { params }) {
       { success: true, message: "Rate updated successfully" },
       { status: 200 }
     );
-  } catch (err) {
-    console.error("POST /ratehistory error:", err);
+  } catch (error) {
+    console.error("POST /ratehistory error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
