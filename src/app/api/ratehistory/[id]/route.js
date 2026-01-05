@@ -3,13 +3,13 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import RateHistory from "@/models/RateHistory";
 import { connectDB } from "@/lib/mongodb";
 
-export async function GET(req, context) {
+export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   await connectDB();
-  const { id } = await context.params;
+  const { id } = params;
 
   try {
     const today = new Date().toISOString().split("T")[0];
@@ -18,15 +18,12 @@ export async function GET(req, context) {
     const result = [];
 
     for (const doc of docs) {
-      const history = doc.history || [];
-
-      const sortedHistory = [...history].sort(
+      const sorted = [...(doc.history || [])].sort(
         (a, b) => new Date(b.date) - new Date(a.date)
       );
 
-      const todayEntry = sortedHistory.find((h) => h.date === today);
-
-      const previousEntry = sortedHistory.find((h) => h.date < today);
+      const todayEntry = sorted.find((h) => h.date === today);
+      const previousEntry = sorted.find((h) => h.date < today);
 
       const visibleEntry = todayEntry || previousEntry;
 
@@ -34,7 +31,7 @@ export async function GET(req, context) {
         location: doc.location,
         commodity: doc.commodity,
         newRate: todayEntry ? todayEntry.rate : "",
-        oldRate: previousEntry ? previousEntry.rate : 0,
+        oldRate: previousEntry ? previousEntry.rate : "",
         others: visibleEntry?.others || "",
         date: visibleEntry?.date || today,
       });
@@ -50,13 +47,13 @@ export async function GET(req, context) {
   }
 }
 
-export async function POST(req, context) {
+export async function POST(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   await connectDB();
-  const { id } = await context.params;
+  const { id } = params;
 
   try {
     const body = await req.json();
@@ -65,6 +62,14 @@ export async function POST(req, context) {
     if (!locationName || !commodityName) {
       return NextResponse.json(
         { error: "Location and commodity are required" },
+        { status: 400 }
+      );
+    }
+
+    const rateValue = Number(newRate);
+    if (isNaN(rateValue)) {
+      return NextResponse.json(
+        { error: "Invalid rate value" },
         { status: 400 }
       );
     }
@@ -78,6 +83,7 @@ export async function POST(req, context) {
       "history.date": today,
     });
 
+    // 🔁 SAME DAY → UPDATE
     if (existsToday) {
       await RateHistory.updateOne(
         {
@@ -88,7 +94,7 @@ export async function POST(req, context) {
         },
         {
           $set: {
-            "history.$.rate": Number(newRate),
+            "history.$.rate": rateValue,
             "history.$.others": others || "",
           },
         }
@@ -104,16 +110,19 @@ export async function POST(req, context) {
           $push: {
             history: {
               date: today,
-              rate: Number(newRate),
+              rate: rateValue,
               others: others || "",
             },
           },
         },
-        { upsert: true }
+        { upsert: true, new: true }
       );
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json(
+      { success: true, message: "Rate updated successfully" },
+      { status: 200 }
+    );
   } catch (err) {
     console.error("POST /ratehistory error:", err);
     return NextResponse.json(
