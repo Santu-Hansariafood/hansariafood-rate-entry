@@ -97,14 +97,24 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
     }
   };
 
-  const renderArrow = (oldRate, newRate) => {
+  const renderRateDifference = (oldRate, newRate) => {
     if (!newRate || !oldRate) return null;
 
-    if (Number(newRate) > Number(oldRate))
-      return <span className="text-green-600 font-semibold">↑</span>;
-    if (Number(newRate) < Number(oldRate))
-      return <span className="text-red-600 font-semibold">↓</span>;
-    return <span className="text-gray-400">–</span>;
+    const diff = Number(newRate) - Number(oldRate);
+
+    if (diff === 0) {
+      return <span className="ml-2 text-gray-500 text-sm font-medium">0</span>;
+    }
+
+    return (
+      <span
+        className={`ml-2 text-sm font-semibold ${
+          diff > 0 ? "text-green-600" : "text-red-600"
+        }`}
+      >
+        {diff > 0 ? `+${diff}` : diff}
+      </span>
+    );
   };
 
   if (!isOpen || !data) return null;
@@ -115,17 +125,15 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.25 }}
-        className="bg-white w-full max-w-4xl h-[80vh] max-h-[80vh] rounded-2xl shadow-xl overflow-hidden flex flex-col"
+        className="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-xl overflow-hidden flex flex-col"
       >
-        {/* HEADER */}
-        <div className="flex justify-between items-center px-5 py-4 border-b flex-shrink-0 bg-white">
+        <div className="flex justify-between items-center px-5 py-4 border-b bg-white">
           <h2 className="text-lg font-semibold text-gray-800">{data.name}</h2>
           <button onClick={onClose} className="p-1 rounded hover:bg-gray-200">
             <X />
           </button>
         </div>
 
-        {/* BODY */}
         <div className="p-5 flex-1 overflow-hidden">
           {loadingFetch ? (
             <Loading />
@@ -162,9 +170,7 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
                                 {item.commodity}
                               </span>
 
-                              <span className="ml-2">
-                                {renderArrow(item.oldRate, item.newRate)}
-                              </span>
+                              {renderRateDifference(item.oldRate, item.newRate)}
 
                               <div className="ml-auto">
                                 {!isEditing ? (
