@@ -22,7 +22,6 @@ export async function GET(req, { params }) {
       "SBM 49%",
       "SBM 50%",
       "SBM 51%",
-      "H Soya",
     ];
 
     const company = await ManageCompany.findOne({

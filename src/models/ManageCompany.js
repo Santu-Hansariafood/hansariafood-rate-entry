@@ -14,7 +14,11 @@ const ManageCompanySchema = new mongoose.Schema(
     state: { type: String, required: true },
     category: { type: String, required: true },
     isSelfCompany: { type: Boolean, default: false },
-
+    isSoyaVisible: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
     type: {
       type: [String],
       enum: ["buyer", "seller"],

@@ -3,14 +3,14 @@ import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
-
 export async function GET(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    await connectDB();
+
     const targetCommodities = [
       "SBM 46%",
       "SBM 47%",
@@ -23,29 +23,15 @@ export async function GET(req) {
     const companies = await ManageCompany.find({
       type: "seller",
       commodities: { $in: targetCommodities },
-      isSoyaVisible: true,
     })
-      .select("_id name commodities type")
+      .select("_id name isSoyaVisible commodities")
       .sort({ name: 1 })
       .lean();
 
-    const result = companies.map((c) => ({
-      _id: c._id,
-      name: c.name,
-      type: c.type,
-      commodities: c.commodities.filter((item) =>
-        targetCommodities.includes(item)
-      ),
-    }));
-
-    return NextResponse.json(
-      { companies: result, total: result.length },
-      { status: 200 }
-    );
+    return NextResponse.json({ companies });
   } catch (error) {
-    console.error("Error in GET /soyacompany:", error);
     return NextResponse.json(
-      { error: "Failed to fetch soya companies" },
+      { error: "Failed to fetch companies" },
       { status: 500 }
     );
   }
