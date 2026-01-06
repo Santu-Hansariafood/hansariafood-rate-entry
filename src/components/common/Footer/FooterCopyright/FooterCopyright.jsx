@@ -12,7 +12,7 @@ const FooterCopyright = () => {
       >
         Hansaria Food Private Limited
       </a>
-      <span> © {new Date().getFullYear()}</span>
+      <span> © 2025 - {new Date().getFullYear()}</span>
     </p>
   );
 };
