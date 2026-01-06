@@ -13,6 +13,31 @@ const COMMODITIES = [
   "SBM 51%",
 ];
 
+const formatRate = (newRate, oldRate) => {
+  if (!newRate) return "-";
+
+  const diff =
+    oldRate !== undefined && oldRate !== null
+      ? Number(newRate) - Number(oldRate)
+      : 0;
+
+  return (
+    <span className="font-medium text-gray-800">
+      {newRate}
+
+      {diff !== 0 && (
+        <span
+          className={`ml-1 text-sm font-semibold ${
+            diff > 0 ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          ({diff > 0 ? `+${diff}` : diff})
+        </span>
+      )}
+    </span>
+  );
+};
+
 export default function useSoyaRates(date, search) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,14 +56,18 @@ export default function useSoyaRates(date, search) {
           `/ratehistory/${company._id}?date=${date}`
         );
 
-        const history = rateRes.data || {};
+        const history = rateRes.data || [];
         const locationMap = {};
 
         history.forEach((r) => {
           if (!locationMap[r.location]) {
             locationMap[r.location] = {};
           }
-          locationMap[r.location][r.commodity] = r.newRate;
+
+          locationMap[r.location][r.commodity] = {
+            newRate: r.newRate,
+            oldRate: r.oldRate,
+          };
         });
 
         if (Object.keys(locationMap).length === 0) {
@@ -55,7 +84,11 @@ export default function useSoyaRates(date, search) {
             };
 
             COMMODITIES.forEach((c) => {
-              row[c] = rates[c] || "-";
+              const rateObj = rates[c];
+
+              row[c] = rateObj
+                ? formatRate(rateObj.newRate, rateObj.oldRate)
+                : "-";
             });
 
             tableRows.push(row);
@@ -78,6 +111,7 @@ export default function useSoyaRates(date, search) {
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
+
     return rows.filter(
       (r) =>
         r.company.toLowerCase().includes(search.toLowerCase()) ||
