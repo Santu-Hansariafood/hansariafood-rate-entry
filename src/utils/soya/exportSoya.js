@@ -28,6 +28,11 @@ export function exportToPDF(rows, columns, selectedDate) {
   });
 
   const logoPath = "/logo/logo1.png";
+const fileTime = new Date().toLocaleTimeString("en-IN", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: true,
+}).replace(/[:\s]/g, "_");
 
   doc.addImage(logoPath, "PNG", 40, 20, 120, 40);
 
@@ -116,5 +121,5 @@ export function exportToPDF(rows, columns, selectedDate) {
     { align: "center" }
   );
 
-  doc.save(`Soya_Rate_${dateToShow}.pdf`);
+doc.save(`Soya_Rate_${dateToShow}_${fileTime}.pdf`);
 }
