@@ -56,22 +56,34 @@ export function exportToPDF(rows, columns, selectedDate) {
   const fileTime = timeToShow.replace(/[:\s]/g, "_");
   const logoPath = "/logo/logo1.png";
 
-  doc.addImage(logoPath, "PNG", 40, 20, 120, 40);
+  doc.addImage(logoPath, "PNG", 40, 25, 110, 38);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Date: ${dateToShow}`, pageWidth - 40, 35, { align: "right" });
+  doc.setTextColor(60);
+  doc.text(`Date: ${dateToShow}`, pageWidth - 40, 32, { align: "right" });
 
   doc.setTextColor(220, 38, 38);
-  doc.text(`Time: ${timeToShow}`, pageWidth - 40, 50, { align: "right" });
+  doc.text(`Time: ${timeToShow}`, pageWidth - 40, 48, { align: "right" });
 
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("times", "bold");
+  doc.setFontSize(22);
   doc.setTextColor(0);
-  doc.text("Soya Rate Report", pageWidth / 2, 90, { align: "center" });
+  doc.text("SOYA RATE REPORT", pageWidth / 2, 85, { align: "center" });
+
+  doc.setFont("times", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(80);
+  doc.text("Hansaria Food Private Limited", pageWidth / 2, 102, {
+    align: "center",
+  });
+
+  doc.setDrawColor(22, 163, 74);
+  doc.setLineWidth(1.2);
+  doc.line(40, 112, pageWidth - 40, 112);
 
   autoTable(doc, {
-    startY: 120,
+    startY: 130,
     head: [columns.map((c) => c.header)],
 
     body: rows.map((row) =>
@@ -109,7 +121,7 @@ export function exportToPDF(rows, columns, selectedDate) {
 
     styles: {
       fontSize: 8,
-      cellPadding: { top: 5, bottom: 5, left: 4, right: 18 }, // 🔥 reserve space
+      cellPadding: { top: 5, bottom: 5, left: 4, right: 18 },
       valign: "middle",
       textColor: 0,
     },
@@ -161,9 +173,10 @@ export function exportToPDF(rows, columns, selectedDate) {
     },
   });
 
-  const finalY = doc.lastAutoTable.finalY + 30;
+  const finalY = doc.lastAutoTable.finalY + 25;
 
   doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
   doc.setTextColor(0);
   doc.text("Thanks and Regards,", pageWidth - 40, finalY, { align: "right" });
   doc.text("Purchase Team", pageWidth - 40, finalY + 16, { align: "right" });
@@ -171,39 +184,60 @@ export function exportToPDF(rows, columns, selectedDate) {
     align: "right",
   });
 
-  const contactY = finalY + 60;
+  const tradeTitleY = finalY + 60;
 
-  doc.setFontSize(11);
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
   doc.setTextColor(22, 163, 74);
-  doc.text("For Trades, please contact:", pageWidth / 2, contactY, {
+  doc.text("For Trades, please contact:", pageWidth / 2, tradeTitleY, {
     align: "center",
   });
 
+  const boxY = tradeTitleY + 12;
+  const boxHeight = 80;
+  const boxWidth = (pageWidth - 120) / 2;
+
+  const leftBoxX = 50;
+  const rightBoxX = leftBoxX + boxWidth + 20;
+  doc.setFillColor(240, 249, 255);
+  doc.setDrawColor(37, 99, 235);
+  doc.roundedRect(leftBoxX, boxY, boxWidth, boxHeight, 8, 8, "FD");
+  doc.setFillColor(250, 245, 255);
+  doc.setDrawColor(168, 85, 247);
+  doc.roundedRect(rightBoxX, boxY, boxWidth, boxHeight, 8, 8, "FD");
+
+  let textY = boxY + 22;
+
   doc.setFontSize(11);
   doc.setTextColor(37, 99, 235);
-  doc.text("Gopal Agarwal", 60, contactY + 24);
-  doc.setFontSize(9);
-  doc.text("Mobile: +91 9830433535", 60, contactY + 40);
-  doc.text("Email: gopal@hansariafood.com", 60, contactY + 54);
-  doc.text("Kolkata Office", 60, contactY + 68);
-  doc.setFontSize(11);
-  doc.setTextColor(168, 85, 247);
-  doc.text("Prince Surana", pageWidth - 60, contactY + 24, {
-    align: "right",
-  });
-  doc.setFontSize(9);
-  doc.text("Mobile: +91 8876521045", pageWidth - 60, contactY + 40, {
-    align: "right",
-  });
-  doc.text("Email: prince@hansariafood.com", pageWidth - 60, contactY + 54, {
-    align: "right",
-  });
-  doc.text("Assam Office", pageWidth - 60, contactY + 68, {
-    align: "right",
-  });
+  doc.text("Gopal Agarwal", leftBoxX + 14, textY);
 
   doc.setFontSize(9);
-  doc.setTextColor(100);
+  doc.setTextColor(0);
+  doc.text("Mobile: +91 9830433535", leftBoxX + 14, textY + 16);
+  doc.text("Email: gopal@hansariafood.com", leftBoxX + 14, textY + 30);
+
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text("Kolkata Office", leftBoxX + 14, textY + 46);
+
+  textY = boxY + 22;
+
+  doc.setFontSize(11);
+  doc.setTextColor(168, 85, 247);
+  doc.text("Prince Surana", rightBoxX + 14, textY);
+
+  doc.setFontSize(9);
+  doc.setTextColor(0);
+  doc.text("Mobile: +91 8876521045", rightBoxX + 14, textY + 16);
+  doc.text("Email: prince@hansariafood.com", rightBoxX + 14, textY + 30);
+
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text("Assam Office", rightBoxX + 14, textY + 46);
+
+  doc.setFontSize(9);
+  doc.setTextColor(120);
   doc.text(
     "Confidential — compiled exclusively by the Hansaria Food Team for internal reference.",
     pageWidth / 2,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
@@ -24,7 +24,6 @@ const formatRate = (newRate, oldRate) => {
   return (
     <span className="font-medium text-gray-800">
       {newRate}
-
       {diff !== 0 && (
         <span
           className={`ml-1 text-sm font-semibold ${
@@ -41,6 +40,8 @@ const formatRate = (newRate, oldRate) => {
 export default function useSoyaRates(date, search) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const lastFetchedDateRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -60,40 +61,30 @@ export default function useSoyaRates(date, search) {
         const locationMap = {};
 
         history.forEach((r) => {
-          if (!locationMap[r.location]) {
-            locationMap[r.location] = {};
-          }
-
+          if (!locationMap[r.location]) locationMap[r.location] = {};
           locationMap[r.location][r.commodity] = {
             newRate: r.newRate,
             oldRate: r.oldRate,
           };
         });
 
-        if (Object.keys(locationMap).length === 0) {
-          tableRows.push({
-            company: company.name,
-            location: "-",
-            ...Object.fromEntries(COMMODITIES.map((c) => [c, "-"])),
+        if (Object.keys(locationMap).length === 0) continue;
+
+        Object.entries(locationMap).forEach(([location, rates]) => {
+          const row = { company: company.name, location };
+          let hasAnyRate = false;
+
+          COMMODITIES.forEach((c) => {
+            const rateObj = rates[c];
+            if (rateObj?.newRate) hasAnyRate = true;
+
+            row[c] = rateObj
+              ? formatRate(rateObj.newRate, rateObj.oldRate)
+              : "-";
           });
-        } else {
-          Object.entries(locationMap).forEach(([location, rates]) => {
-            const row = {
-              company: company.name,
-              location,
-            };
 
-            COMMODITIES.forEach((c) => {
-              const rateObj = rates[c];
-
-              row[c] = rateObj
-                ? formatRate(rateObj.newRate, rateObj.oldRate)
-                : "-";
-            });
-
-            tableRows.push(row);
-          });
-        }
+          if (hasAnyRate) tableRows.push(row);
+        });
       }
 
       setRows(tableRows);
@@ -106,8 +97,11 @@ export default function useSoyaRates(date, search) {
   }, [date]);
 
   useEffect(() => {
+    if (lastFetchedDateRef.current === date) return;
+    lastFetchedDateRef.current = date;
+
     fetchData();
-  }, [fetchData]);
+  }, [date, fetchData]);
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
