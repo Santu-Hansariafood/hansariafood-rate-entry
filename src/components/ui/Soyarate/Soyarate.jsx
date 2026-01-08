@@ -56,7 +56,6 @@ export default function Soyarate() {
     }
   }, [debouncedSearch]);
 
-  /* ---------------- Open Popup ---------------- */
   const openPopup = async (id) => {
     try {
       const res = await axiosInstance.get(`/soyacompany/${id}`);
@@ -67,7 +66,6 @@ export default function Soyarate() {
     }
   };
 
-  /* ---------------- Effects ---------------- */
   useEffect(() => {
     if (showRateList) fetchCompanies();
   }, [fetchCompanies, showRateList]);
@@ -77,7 +75,6 @@ export default function Soyarate() {
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
         <Title text="Soya Commodity Company List" />
 
-        {/* ---------------- Tabs ---------------- */}
         <div className="mb-6 flex gap-3 flex-wrap">
           <button
             onClick={() => setShowRateList(true)}
@@ -102,7 +99,6 @@ export default function Soyarate() {
           </button>
         </div>
 
-        {/* ---------------- Search ---------------- */}
         {showRateList && (
           <SearchBox
             value={search}
@@ -111,10 +107,8 @@ export default function Soyarate() {
           />
         )}
 
-        {/* ---------------- Visibility Manager ---------------- */}
         {!showRateList && <ManageSoyaVisibility onUpdated={fetchCompanies} />}
 
-        {/* ---------------- Company Cards ---------------- */}
         {showRateList && (
           <>
             {loading ? (
@@ -155,7 +149,6 @@ export default function Soyarate() {
           </>
         )}
 
-        {/* ---------------- Popup ---------------- */}
         <SoyaCompanyPopup
           isOpen={popupOpen}
           onClose={() => setPopupOpen(false)}
