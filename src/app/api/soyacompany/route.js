@@ -11,6 +11,9 @@ export async function GET(req) {
   }
 
   try {
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search");
+
     const targetCommodities = [
       "SBM 46%",
       "SBM 47%",
@@ -20,11 +23,17 @@ export async function GET(req) {
       "SBM 51%",
     ];
 
-    const companies = await ManageCompany.find({
+    const query = {
       type: "seller",
       commodities: { $in: targetCommodities },
       isSoyaVisible: true,
-    })
+    };
+
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    const companies = await ManageCompany.find(query)
       .select("_id name commodities type")
       .sort({ name: 1 })
       .lean();

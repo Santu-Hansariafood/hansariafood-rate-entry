@@ -9,7 +9,7 @@ const baseConfig = {
   },
   images: {
     dangerouslyAllowSVG: true,
-    domains: ["cdn.jsdelivr.net", "res.cloudinary.com"],
+    domains: ["res.cloudinary.com"],
   },
   reactStrictMode: true,
 };
