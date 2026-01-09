@@ -15,13 +15,14 @@ const InputBox = ({
   const inputId = useId();
 
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex flex-col gap-1.5 w-full">
       {label && (
         <label
           htmlFor={name || inputId}
-          className="text-sm font-semibold text-gray-700 dark:text-gray-300"
+          className="text-xs font-medium tracking-wide text-gray-600 dark:text-gray-300"
         >
           {label}
+          {required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
       )}
 
@@ -34,19 +35,15 @@ const InputBox = ({
         onChange={onChange}
         required={required}
         readOnly={readOnly}
-        className={`w-full px-4 py-2 text-sm rounded-xl 
-          border border-green-500/30 dark:border-green-400/30
-          shadow-sm backdrop-blur-md
-          transition-all duration-200
+        className={`w-full px-3.5 py-2 text-sm rounded-lg border
+          shadow-xs bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm
+          transition-all duration-200 outline-none
+          placeholder-gray-400 dark:placeholder-gray-500
           ${
             readOnly
-              ? "bg-gray-100/70 dark:bg-gray-800/60 text-gray-500 cursor-not-allowed"
-              : `bg-white/80 dark:bg-gray-900/70 text-gray-900 dark:text-white 
-                 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500
-                 hover:border-green-500/60`
-          }
-          placeholder-gray-400 dark:placeholder-gray-500
-        `}
+              ? "border-gray-200 dark:border-gray-700 text-gray-500 cursor-not-allowed"
+              : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-400/60 hover:border-emerald-400/80"
+          }`}
       />
     </div>
   );

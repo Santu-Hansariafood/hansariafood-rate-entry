@@ -21,22 +21,23 @@ const Button = ({
   const isButtonDisabled = isLoading || disabled;
 
   return (
-    <div className="mt-4">
+    <div className="mt-3">
       <button
         type={type}
         onClick={onClick}
         disabled={isButtonDisabled}
         aria-busy={isLoading}
-        className={`w-full flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-300 ease-in-out
+        className={`w-full inline-flex items-center justify-center gap-2 rounded-xl font-semibold
+          transition-all duration-200 ease-out select-none
           ${
             isButtonDisabled
-              ? "bg-gray-400 text-white cursor-not-allowed"
-              : "bg-green-500 text-white hover:bg-white hover:text-green-600 shadow-lg"
+              ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-300 cursor-not-allowed shadow-none"
+              : "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 hover:shadow-md active:scale-[0.98]"
           }
           ${sizeClasses[size]} ${className}`}
       >
         {isLoading && (
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-white/80 border-t-transparent rounded-full animate-spin" />
         )}
         {text || children}
       </button>

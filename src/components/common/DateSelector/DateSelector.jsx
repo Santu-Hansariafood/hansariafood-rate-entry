@@ -13,22 +13,19 @@ export default function DateSelector({
 
   return (
     <motion.div
-      className="w-full flex items-center gap-3 
-                 bg-white/70 dark:bg-gray-900/60 
-                 border border-green-500/30 dark:border-green-400/20 
-                 rounded-2xl px-5 py-3 shadow-lg 
-                 backdrop-blur-md transition-all duration-300
-                 hover:border-green-500 dark:hover:border-green-400
-                 hover:shadow-green-200/50 dark:hover:shadow-green-500/20"
+      className="w-full flex items-center gap-3 bg-white/90 dark:bg-gray-900/80
+                 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-2.5 shadow-sm
+                 backdrop-blur-sm transition-all duration-200
+                 hover:border-emerald-500/70 hover:shadow-md"
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
       <Calendar
-        className="text-green-600 dark:text-green-400 transition-colors"
-        size={22}
+        className="text-emerald-500 dark:text-emerald-400 transition-colors flex-shrink-0"
+        size={20}
       />
-      <label className="font-medium whitespace-nowrap text-gray-700 dark:text-gray-300">
+      <label className="font-medium whitespace-nowrap text-gray-700 dark:text-gray-200 text-sm">
         {label}:
       </label>
       <input
@@ -43,7 +40,7 @@ export default function DateSelector({
           }
         }}
         max={todayISO}
-        className="flex-1 bg-transparent focus:outline-none text-base 
+        className="flex-1 bg-transparent focus:outline-none text-sm sm:text-base 
                    text-gray-900 dark:text-white"
       />
     </motion.div>
