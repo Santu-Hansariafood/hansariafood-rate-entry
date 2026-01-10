@@ -1,36 +1,48 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 
 const options = [
   { label: "All", value: "all", gradient: "from-blue-500 to-blue-600" },
-  { label: "Buyer", value: "buyer", gradient: "from-green-500 to-green-600" },
-  { label: "Seller", value: "seller", gradient: "from-red-500 to-red-600" },
+  { label: "Buyer", value: "buyer", gradient: "from-emerald-500 to-emerald-600" },
+  { label: "Seller", value: "seller", gradient: "from-rose-500 to-rose-600" },
 ];
 
 export default function BuyerSellerFilter({ value, onChange }) {
   return (
-    <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+    <div className="flex items-center gap-3 flex-wrap">
       <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 tracking-wide whitespace-nowrap">
         Filter:
       </span>
 
-      <div className="flex gap-2 sm:gap-3">
+      <div className="relative flex gap-2 bg-gray-100 dark:bg-gray-800 p-1.5 rounded-full shadow-inner">
         {options.map((opt) => {
           const isSelected = value === opt.value;
+
           return (
             <button
               key={opt.value}
               onClick={() => onChange(opt.value)}
-              className={`px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-full transition-all duration-300 border-2 shadow-sm
-                ${
-                  isSelected
-                    ? `bg-gradient-to-r ${opt.gradient} text-white border-transparent shadow-lg scale-105 transform`
-                    : `bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gradient-to-r ${opt.gradient} hover:text-white hover:border-transparent hover:shadow-md hover:scale-102`
-                }
-              `}
+              className="relative z-10 px-4 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-full transition-colors duration-200"
             >
-              {opt.label}
+              {isSelected && (
+                <motion.span
+                  layoutId="activeFilter"
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  className={`absolute inset-0 rounded-full bg-gradient-to-r ${opt.gradient} shadow-md`}
+                />
+              )}
+
+              <span
+                className={`relative z-10 transition-colors duration-200 ${
+                  isSelected
+                    ? "text-white"
+                    : "text-gray-700 dark:text-gray-300 hover:text-white"
+                }`}
+              >
+                {opt.label}
+              </span>
             </button>
           );
         })}

@@ -5,6 +5,7 @@ import { useRef, useEffect, useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import Loading from "../../Loading/Loading";
+
 const NotificationList = dynamic(() =>
   import("@/components/NotificationList/NotificationList")
 );
@@ -26,23 +27,27 @@ export default function NotificationBell({ notifications }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const hasUnread = notifications?.some((n) => !n.read);
+
   return (
     <Suspense fallback={<Loading />}>
-      <motion.li
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className="relative notification-wrapper"
-        ref={notificationRef}
-      >
-        <button
+      <div ref={notificationRef} className="relative">
+        <motion.button
+          whileHover={{
+            scale: 1.08,
+            boxShadow: "0 0 10px rgba(34,197,94,0.45)",
+          }}
+          whileTap={{ scale: 0.92 }}
+          transition={{ type: "spring", stiffness: 300, damping: 18 }}
           onClick={() => setShowNotifications((prev) => !prev)}
-          className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
+          className="relative p-2 rounded-lg bg-white/5 hover:bg-white/10 backdrop-blur-md transition-colors"
         >
           <Bell className="text-white" size={20} />
-          {notifications.some((n) => !n.read) && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+
+          {hasUnread && (
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
           )}
-        </button>
+        </motion.button>
 
         <AnimatePresence>
           {showNotifications && (
@@ -58,7 +63,7 @@ export default function NotificationBell({ notifications }) {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.li>
+      </div>
     </Suspense>
   );
 }

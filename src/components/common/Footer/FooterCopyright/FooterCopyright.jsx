@@ -1,19 +1,33 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 const FooterCopyright = () => {
   return (
-    <p className="text-sm mb-2 md:mb-0">
+    <motion.p
+      initial={{ opacity: 0, x: -20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5 }}
+      viewport={{ once: true }}
+      className="text-sm text-gray-300"
+    >
       Developed by
       <a
         href="https://www.hansariafood.com"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-green-400 hover:underline ml-1"
+        className="
+          ml-1 font-semibold
+          text-emerald-400 hover:text-emerald-300
+          transition-all duration-300
+          hover:drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]
+        "
       >
         Hansaria Food Private Limited
       </a>
-      <span> © 2025 - {new Date().getFullYear()}</span>
-    </p>
+      <span className="ml-1 text-gray-400">
+        © 2025 - {new Date().getFullYear()}
+      </span>
+    </motion.p>
   );
 };
 

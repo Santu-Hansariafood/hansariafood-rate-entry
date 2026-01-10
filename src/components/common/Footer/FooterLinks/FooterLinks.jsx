@@ -1,16 +1,31 @@
 import React from "react";
+import { motion } from "framer-motion";
+import { ExternalLink } from "lucide-react";
 
 const FooterLinks = () => {
   return (
-    <div className="flex gap-6 text-sm">
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5 }}
+      viewport={{ once: true }}
+      className="flex items-center gap-6 text-sm"
+    >
       <a
         href="https://hansariafood.shop"
         target="_blank"
-        className="hover:text-green-400 transition"
+        rel="noopener noreferrer"
+        className="
+          flex items-center gap-1
+          text-gray-300 hover:text-emerald-400
+          transition-all duration-300
+          hover:translate-x-1
+        "
       >
         Click to Generate Bill and Bids
+        <ExternalLink size={14} />
       </a>
-    </div>
+    </motion.div>
   );
 };
 

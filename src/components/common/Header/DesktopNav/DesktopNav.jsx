@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
@@ -57,9 +57,7 @@ export default function DesktopNav({
     const links = ["Rate", "Sauda", "Company"];
 
     if (allowedMobileNumbers.includes(currentUserMobile)) {
-      links.push("Register");
-      links.push("Commodity");
-      links.push("Category");
+      links.push("Register", "Commodity", "Category");
     }
 
     return links.map((label) => ({
@@ -69,8 +67,8 @@ export default function DesktopNav({
   }, [currentUserMobile]);
 
   return (
-    <nav className="hidden md:flex items-center gap-8">
-      <ul className="flex items-center gap-8 text-sm md:text-base relative">
+    <nav className="hidden md:flex items-center">
+      <ul className="flex items-center gap-8 text-sm md:text-[15px] font-medium relative">
         {navLinks.map(({ label, path }) => {
           if (label === "Rate") {
             const isActive =
@@ -82,13 +80,12 @@ export default function DesktopNav({
                 key="rate-dropdown"
                 className="relative"
                 whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95 }}
               >
-                <div
-                  className={`flex items-center gap-1 cursor-pointer group ${
+                <button
+                  className={`flex items-center gap-1 px-1 transition-colors ${
                     isActive
-                      ? "text-green-400"
-                      : "text-white/90 hover:text-white"
+                      ? "text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.5)]"
+                      : "text-white/80 hover:text-white"
                   }`}
                   onClick={() => {
                     setOpenRateDropdown((v) => !v);
@@ -98,45 +95,61 @@ export default function DesktopNav({
                   {rateTitle}
                   <ChevronDown
                     size={16}
-                    className={`transition-transform ${
+                    className={`transition-transform duration-300 ${
                       openRateDropdown ? "rotate-180" : ""
                     }`}
                   />
-                </div>
+                </button>
 
-                {openRateDropdown && (
-                  <ul className="absolute left-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg overflow-hidden z-30">
-                    {rateDropdownItems.map(({ label, path }) => (
-                      <li key={path}>
-                        <Link
-                          href={path}
-                          onClick={() => {
-                            setActiveLink(path);
-                            setOpenRateDropdown(false);
+                <AnimatePresence>
+                  {openRateDropdown && (
+                    <motion.ul
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                      transition={{ duration: 0.2 }}
+                      className="
+                        absolute left-0 mt-3 w-52
+                        backdrop-blur-xl bg-black/70
+                        border border-white/10
+                        shadow-2xl rounded-xl overflow-hidden z-40
+                      "
+                    >
+                      {rateDropdownItems.map(({ label, path }) => (
+                        <li key={path}>
+                          <Link
+                            href={path}
+                            onClick={() => {
+                              setActiveLink(path);
+                              setOpenRateDropdown(false);
 
-                            setRateDropdownItems((items) => {
-                              const idx = items.findIndex(
-                                (i) => i.path === path
-                              );
-                              if (idx <= 0) return items;
-                              const next = [...items];
-                              const [picked] = next.splice(idx, 1);
-                              next.unshift(picked);
-                              return next;
-                            });
-                          }}
-                          className={`block px-4 py-2 text-sm transition-colors ${
-                            activeLink === path
-                              ? "bg-green-500 text-white"
-                              : "text-white/90 hover:bg-gray-700 hover:text-white"
-                          }`}
-                        >
-                          {label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                              setRateDropdownItems((items) => {
+                                const idx = items.findIndex(
+                                  (i) => i.path === path
+                                );
+                                if (idx <= 0) return items;
+                                const next = [...items];
+                                const [picked] = next.splice(idx, 1);
+                                next.unshift(picked);
+                                return next;
+                              });
+                            }}
+                            className={`
+                              block px-4 py-2.5 text-sm transition-all
+                              ${
+                                activeLink === path
+                                  ? "bg-emerald-500/20 text-emerald-400"
+                                  : "text-white/80 hover:bg-white/10 hover:text-white"
+                              }
+                            `}
+                          >
+                            {label}
+                          </Link>
+                        </li>
+                      ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
               </motion.li>
             );
           }
@@ -151,13 +164,12 @@ export default function DesktopNav({
                 key="company-dropdown"
                 className="relative"
                 whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95 }}
               >
-                <div
-                  className={`flex items-center gap-1 cursor-pointer group ${
+                <button
+                  className={`flex items-center gap-1 px-1 transition-colors ${
                     isActive
-                      ? "text-green-400"
-                      : "text-white/90 hover:text-white"
+                      ? "text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.5)]"
+                      : "text-white/80 hover:text-white"
                   }`}
                   onClick={() => {
                     setOpenCompanyDropdown((v) => !v);
@@ -167,56 +179,67 @@ export default function DesktopNav({
                   {companyTitle}
                   <ChevronDown
                     size={16}
-                    className={`transition-transform ${
+                    className={`transition-transform duration-300 ${
                       openCompanyDropdown ? "rotate-180" : ""
                     }`}
                   />
-                </div>
+                </button>
 
-                {openCompanyDropdown && (
-                  <ul className="absolute left-0 mt-2 w-48 bg-gray-800 shadow-lg rounded-lg overflow-hidden z-20">
-                    {companyDropdownItems.map(({ label, path }) => (
-                      <li key={path}>
-                        <Link
-                          href={path}
-                          onClick={() => {
-                            setActiveLink(path);
-                            setOpenCompanyDropdown(false);
+                <AnimatePresence>
+                  {openCompanyDropdown && (
+                    <motion.ul
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                      transition={{ duration: 0.2 }}
+                      className="
+                        absolute left-0 mt-3 w-56
+                        backdrop-blur-xl bg-black/70
+                        border border-white/10
+                        shadow-2xl rounded-xl overflow-hidden z-40
+                      "
+                    >
+                      {companyDropdownItems.map(({ label, path }) => (
+                        <li key={path}>
+                          <Link
+                            href={path}
+                            onClick={() => {
+                              setActiveLink(path);
+                              setOpenCompanyDropdown(false);
 
-                            setCompanyDropdownItems((items) => {
-                              const idx = items.findIndex(
-                                (i) => i.path === path
-                              );
-                              if (idx <= 0) return items;
-                              const next = [...items];
-                              const [picked] = next.splice(idx, 1);
-                              next.unshift(picked);
-                              return next;
-                            });
-                          }}
-                          className={`block px-4 py-2 text-sm transition-colors ${
-                            activeLink === path
-                              ? "bg-green-500 text-white"
-                              : "text-white/90 hover:bg-gray-700 hover:text-white"
-                          }`}
-                        >
-                          {label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                              setCompanyDropdownItems((items) => {
+                                const idx = items.findIndex(
+                                  (i) => i.path === path
+                                );
+                                if (idx <= 0) return items;
+                                const next = [...items];
+                                const [picked] = next.splice(idx, 1);
+                                next.unshift(picked);
+                                return next;
+                              });
+                            }}
+                            className={`
+                              block px-4 py-2.5 text-sm transition-all
+                              ${
+                                activeLink === path
+                                  ? "bg-emerald-500/20 text-emerald-400"
+                                  : "text-white/80 hover:bg-white/10 hover:text-white"
+                              }
+                            `}
+                          >
+                            {label}
+                          </Link>
+                        </li>
+                      ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
               </motion.li>
             );
           }
 
           return (
-            <motion.li
-              key={path}
-              className="relative"
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <motion.li key={path} whileHover={{ y: -2 }}>
               <Link
                 href={path}
                 onClick={() => {
@@ -224,18 +247,23 @@ export default function DesktopNav({
                   setOpenCompanyDropdown(false);
                   setOpenRateDropdown(false);
                 }}
-                className={`relative group ${
-                  activeLink === path
-                    ? "text-green-400"
-                    : "text-white/90 hover:text-white"
-                }`}
+                className={`
+                  relative px-1 transition-colors
+                  ${
+                    activeLink === path
+                      ? "text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.5)]"
+                      : "text-white/80 hover:text-white"
+                  }
+                `}
               >
                 {label}
-                <span
-                  className={`absolute -bottom-1 left-0 h-0.5 bg-green-400 transition-all duration-300 ${
-                    activeLink === path ? "w-full" : "w-0 group-hover:w-full"
-                  }`}
-                />
+
+                {activeLink === path && (
+                  <motion.span
+                    layoutId="nav-underline"
+                    className="absolute -bottom-1 left-0 h-[2px] w-full bg-emerald-400 rounded-full"
+                  />
+                )}
               </Link>
             </motion.li>
           );

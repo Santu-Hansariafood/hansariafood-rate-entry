@@ -1,0 +1,70 @@
+[
+  { "date": "2026-01-04", "name": "Sunday" },
+  { "date": "2026-01-11", "name": "Sunday" },
+  { "date": "2026-01-18", "name": "Sunday" },
+  { "date": "2026-01-23", "name": "Netaji Birthday" },
+  { "date": "2026-01-25", "name": "Sunday" },
+  { "date": "2026-01-26", "name": "Republic Day" },
+
+  { "date": "2026-02-01", "name": "Sunday" },
+  { "date": "2026-02-08", "name": "Sunday" },
+  { "date": "2026-02-15", "name": "Sunday" },
+  { "date": "2026-02-22", "name": "Sunday" },
+
+  { "date": "2026-03-01", "name": "Sunday" },
+  { "date": "2026-03-08", "name": "Sunday" },
+  { "date": "2026-03-15", "name": "Sunday" },
+  { "date": "2026-03-22", "name": "Sunday" },
+  { "date": "2026-03-25", "name": "Holi" },
+  { "date": "2026-03-29", "name": "Sunday" },
+
+  { "date": "2026-04-05", "name": "Sunday" },
+  { "date": "2026-04-12", "name": "Sunday" },
+  { "date": "2026-04-19", "name": "Sunday" },
+  { "date": "2026-04-26", "name": "Sunday" },
+
+  { "date": "2026-05-03", "name": "Sunday" },
+  { "date": "2026-05-10", "name": "Sunday" },
+  { "date": "2026-05-17", "name": "Sunday" },
+  { "date": "2026-05-24", "name": "Sunday" },
+  { "date": "2026-05-31", "name": "Sunday" },
+
+  { "date": "2026-06-07", "name": "Sunday" },
+  { "date": "2026-06-14", "name": "Sunday" },
+  { "date": "2026-06-21", "name": "Sunday" },
+  { "date": "2026-06-28", "name": "Sunday" },
+
+  { "date": "2026-07-05", "name": "Sunday" },
+  { "date": "2026-07-12", "name": "Sunday" },
+  { "date": "2026-07-19", "name": "Sunday" },
+  { "date": "2026-07-26", "name": "Sunday" },
+
+  { "date": "2026-08-02", "name": "Sunday" },
+  { "date": "2026-08-09", "name": "Sunday" },
+  { "date": "2026-08-15", "name": "Independence Day" },
+  { "date": "2026-08-16", "name": "Sunday" },
+  { "date": "2026-08-23", "name": "Sunday" },
+  { "date": "2026-08-30", "name": "Sunday" },
+
+  { "date": "2026-09-06", "name": "Sunday" },
+  { "date": "2026-09-13", "name": "Sunday" },
+  { "date": "2026-09-20", "name": "Sunday" },
+  { "date": "2026-09-27", "name": "Sunday" },
+
+  { "date": "2026-10-02", "name": "Gandhi Jayanti" },
+  { "date": "2026-10-04", "name": "Sunday" },
+  { "date": "2026-10-11", "name": "Sunday" },
+  { "date": "2026-10-18", "name": "Sunday" },
+  { "date": "2026-10-25", "name": "Sunday" },
+
+  { "date": "2026-11-01", "name": "Sunday" },
+  { "date": "2026-11-08", "name": "Sunday" },
+  { "date": "2026-11-15", "name": "Sunday" },
+  { "date": "2026-11-22", "name": "Sunday" },
+  { "date": "2026-11-29", "name": "Sunday" },
+
+  { "date": "2026-12-06", "name": "Sunday" },
+  { "date": "2026-12-13", "name": "Sunday" },
+  { "date": "2026-12-20", "name": "Sunday" },
+  { "date": "2026-12-27", "name": "Sunday" }
+]
