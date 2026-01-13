@@ -1,25 +1,41 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Loading from "@/components/common/Loading/Loading";
 
-const AuthWrapper = ({ children }) => {
+const AuthWrapper = ({ children, allowedRoles }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (status !== "loading" && !session) {
-      router.push("/login");
+    if (status === "loading") return;
+    if (!session) {
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      return;
     }
-  }, [status, session, router]);
+    if (session?.expires && new Date(session.expires) < new Date()) {
+      signOut({ callbackUrl: "/login" });
+      return;
+    }
 
-  if (status === "loading") {
-    return <Loading />;
-  }
-
-  if (!session) {
+    if (
+      allowedRoles &&
+      session.user?.role &&
+      !allowedRoles.includes(session.user.role)
+    ) {
+      router.replace("/unauthorized");
+    }
+  }, [status, session, router, pathname, allowedRoles]);
+  if (status === "loading") return <Loading />;
+  if (!session) return null;
+  if (
+    allowedRoles &&
+    session.user?.role &&
+    !allowedRoles.includes(session.user.role)
+  ) {
     return null;
   }
 

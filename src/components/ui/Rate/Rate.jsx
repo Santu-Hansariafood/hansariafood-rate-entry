@@ -73,7 +73,6 @@ export default function Rate() {
           onChange={(type) => setFilters((prev) => ({ ...prev, type }))}
         />
 
-        {/* Direct Update Rate Button */}
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
@@ -130,8 +129,6 @@ export default function Rate() {
           {!selectedCompany && renderCompanySelector}
           {selectedCompany && renderRateTable}
         </div>
-
-        {/* Direct Rate Update Popup */}
         <AnimatePresence>
           {showRatePopup && (
             <>
@@ -157,7 +154,6 @@ export default function Rate() {
                   >
                     ✕
                   </button>
-                  {/* Directly show RateUpdatePopup content */}
                   <RateUpdatePopup />
                 </div>
               </motion.div>

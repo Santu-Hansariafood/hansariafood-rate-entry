@@ -153,78 +153,88 @@ const ViewRate = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <motion.div
-        className="p-4 max-w-7xl mx-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        <motion.h2
-          className="text-2xl font-semibold mb-4 text-center sm:text-left"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          Rate Statistics
-        </motion.h2>
+      <div className="relative min-h-screen p-6 bg-gray-100 dark:bg-gray-950 overflow-hidden">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 -right-40 w-96 h-96 bg-teal-400/30 rounded-full blur-3xl" />
 
         <motion.div
-          className="flex flex-col sm:flex-row flex-wrap gap-4 mb-6 justify-center sm:justify-start"
-          initial={{ opacity: 0, y: 20 }}
+          className="relative z-10 max-w-7xl mx-auto rounded-3xl border border-white/20
+                   bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl
+                   shadow-2xl p-6 md:p-10"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ duration: 0.5 }}
         >
-          <select
-            className="border px-3 py-2 rounded shadow w-full sm:w-auto"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
           >
-            {monthNames.map((name, i) => (
-              <option key={i} value={i}>
-                {name}
-              </option>
-            ))}
-          </select>
+            <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
+              Rate Statistics 📊
+            </h2>
+            <div className="flex flex-wrap gap-3">
+              <select
+                className="px-4 py-2 rounded-full bg-white/80 dark:bg-gray-800/80
+                         border border-gray-200 dark:border-gray-700
+                         shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+              >
+                {monthNames.map((name, i) => (
+                  <option key={i} value={i}>
+                    {name}
+                  </option>
+                ))}
+              </select>
 
-          <input
-            type="number"
-            className="border px-3 py-2 rounded shadow w-full sm:w-auto"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-          />
+              <input
+                type="number"
+                className="px-4 py-2 rounded-full bg-white/80 dark:bg-gray-800/80
+                         border border-gray-200 dark:border-gray-700
+                         shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400
+                         w-28"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+              />
 
-          <select
-            className="border px-3 py-2 rounded shadow w-full sm:w-auto"
-            value={chartType}
-            onChange={(e) => setChartType(e.target.value)}
+              <select
+                className="px-4 py-2 rounded-full bg-white/80 dark:bg-gray-800/80
+                         border border-gray-200 dark:border-gray-700
+                         shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={chartType}
+                onChange={(e) => setChartType(e.target.value)}
+              >
+                <option value="bar">Bar</option>
+                <option value="line">Line</option>
+              </select>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="rounded-2xl border border-white/20
+                     bg-white/80 dark:bg-gray-900/60 backdrop-blur-lg
+                     shadow-xl p-4 md:p-6 h-[420px] md:h-[520px]"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
           >
-            <option value="bar">Bar Chart</option>
-            <option value="line">Line Chart</option>
-          </select>
+            {filteredRates.length === 0 ? (
+              <motion.div
+                className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                No data for selected month 📭
+              </motion.div>
+            ) : chartType === "bar" ? (
+              <Bar data={chartData} options={chartOptions} />
+            ) : (
+              <Line data={chartData} options={chartOptions} />
+            )}
+          </motion.div>
         </motion.div>
-
-        <motion.div
-          className="w-full h-[400px] sm:h-[500px]"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          {filteredRates.length === 0 ? (
-            <motion.p
-              className="text-center text-gray-600 mt-10"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              No data for selected month
-            </motion.p>
-          ) : chartType === "bar" ? (
-            <Bar data={chartData} options={chartOptions} />
-          ) : (
-            <Line data={chartData} options={chartOptions} />
-          )}
-        </motion.div>
-      </motion.div>
+      </div>
     </Suspense>
   );
 };

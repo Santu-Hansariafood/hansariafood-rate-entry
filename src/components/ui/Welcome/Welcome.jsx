@@ -121,37 +121,88 @@ export default function Welcome() {
 
   if (loading) return <Loading />;
 
-  return (
-    <Suspense fallback={<Loading />}>
-      <div
-        className="flex items-center justify-center min-h-screen
-                      bg-gray-100 dark:bg-gray-950 p-4"
+return (
+  <Suspense fallback={<Loading />}>
+    <div className="relative min-h-screen flex items-center justify-center p-6 overflow-hidden bg-gray-100 dark:bg-gray-950">
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-teal-400/30 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 -right-32 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative z-10 w-full max-w-5xl rounded-3xl border border-white/20
+                   bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl
+                   shadow-2xl p-8 md:p-12"
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white dark:bg-gray-900 shadow-lg rounded-2xl
-                     p-8 max-w-4xl w-full text-center"
-        >
-          <h1
-            className="text-3xl font-extrabold
-                         bg-gradient-to-r from-green-500 to-teal-400
-                         bg-clip-text text-transparent mb-4"
-          >
-            Welcome, {name}
+        <div className="text-center">
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-green-500 to-teal-400 bg-clip-text text-transparent">
+            Welcome, {name} 👋
           </h1>
+
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            Here are the companies assigned to your account
+          </p>
 
           <Link
             href="/resetpassword"
-            className="inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            className="inline-flex mt-4 px-5 py-2 rounded-full text-sm font-semibold
+                       bg-gradient-to-r from-blue-500 to-indigo-600 text-white
+                       shadow-lg hover:shadow-xl transition"
           >
-            Reset Your Password
+            Reset Password
           </Link>
+        </div>
+        <div className="mt-12">
+          <Title text="Assigned Companies" />
 
-          {assignedCompaniesList}
-        </motion.div>
-      </div>
-    </Suspense>
-  );
+          {assignedCompanies.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400 mt-8">
+              No assigned companies found.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+              {assignedCompanies.map((company, index) => {
+                if (!company?.companyId) return null;
+
+                return (
+                  <motion.div
+                    key={company.companyId._id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ y: -6, scale: 1.02 }}
+                    className="group rounded-2xl border border-white/20
+                               bg-white/80 dark:bg-gray-900/60 backdrop-blur-lg
+                               shadow-lg hover:shadow-2xl transition-all p-6"
+                  >
+                    <h3 className="font-bold text-lg bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
+                      {company.companyId.name}
+                    </h3>
+
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {company.locations.map((loc, idx) => (
+                        <span
+                          key={`${company.companyId._id}-${idx}`}
+                          className="px-3 py-1 rounded-full text-xs font-semibold
+                                     bg-gradient-to-r from-blue-100 to-teal-100
+                                     dark:from-blue-900/40 dark:to-teal-900/40
+                                     text-blue-800 dark:text-blue-200
+                                     shadow-sm hover:scale-105 transition"
+                        >
+                          {loc}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  </Suspense>
+);
 }
+

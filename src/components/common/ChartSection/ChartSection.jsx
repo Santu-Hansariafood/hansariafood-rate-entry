@@ -23,87 +23,75 @@ export const ChartSection = ({
   return (
     <Suspense fallback={<Loading />}>
       <motion.div
-        className="p-6 w-full rounded-2xl shadow-xl 
-                   bg-white/80 dark:bg-gray-900/70 
-                   backdrop-blur-lg border border-green-500/20"
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
+        className="w-full rounded-3xl border border-white/20
+                   bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl
+                   shadow-2xl p-6 md:p-8"
       >
-        <motion.h2
-          className="text-3xl font-extrabold mb-6 text-center sm:text-left 
-                     bg-gradient-to-r from-green-500 to-green-700 
-                     bg-clip-text text-transparent drop-shadow-sm"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          {title}
-        </motion.h2>
-        <motion.div
-          className="flex flex-col sm:flex-row flex-wrap gap-4 mb-8 
-                     justify-center sm:justify-start"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <select
-            className="border border-green-500/40 dark:border-green-400/30 
-                       bg-white/70 dark:bg-gray-800/70 
-                       px-4 py-2 rounded-xl shadow-sm text-gray-800 dark:text-gray-100
-                       focus:ring-2 focus:ring-green-500 outline-none
-                       backdrop-blur-sm transition-all"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+          <h2
+            className="text-2xl md:text-3xl font-extrabold
+                         bg-gradient-to-r from-blue-500 to-teal-400
+                         bg-clip-text text-transparent"
           >
-            {monthNames.map((name, i) => (
-              <option key={i} value={i}>
-                {name}
-              </option>
-            ))}
-          </select>
+            {title}
+          </h2>
 
-          <input
-            type="number"
-            className="border border-green-500/40 dark:border-green-400/30 
-                       bg-white/70 dark:bg-gray-800/70 
-                       px-4 py-2 rounded-xl shadow-sm text-gray-800 dark:text-gray-100
-                       focus:ring-2 focus:ring-green-500 outline-none
-                       backdrop-blur-sm transition-all"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-          />
-
-          <select
-            className="border border-green-500/40 dark:border-green-400/30 
-                       bg-white/70 dark:bg-gray-800/70 
-                       px-4 py-2 rounded-xl shadow-sm text-gray-800 dark:text-gray-100
-                       focus:ring-2 focus:ring-green-500 outline-none
-                       backdrop-blur-sm transition-all"
-            value={chartType}
-            onChange={(e) => setChartType(e.target.value)}
-          >
-            <option value="bar">Bar Chart</option>
-            <option value="line">Line Chart</option>
-          </select>
-        </motion.div>
+          <div className="flex flex-wrap gap-3">
+            <select
+              className="px-4 py-2 rounded-full text-sm
+                         bg-white/80 dark:bg-gray-800/80
+                         border border-gray-200 dark:border-gray-700
+                         shadow-sm backdrop-blur
+                         focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            >
+              {monthNames.map((name, i) => (
+                <option key={i} value={i}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              className="px-4 py-2 rounded-full text-sm w-28
+                         bg-white/80 dark:bg-gray-800/80
+                         border border-gray-200 dark:border-gray-700
+                         shadow-sm backdrop-blur
+                         focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            />
+            <select
+              className="px-4 py-2 rounded-full text-sm
+                         bg-white/80 dark:bg-gray-800/80
+                         border border-gray-200 dark:border-gray-700
+                         shadow-sm backdrop-blur
+                         focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={chartType}
+              onChange={(e) => setChartType(e.target.value)}
+            >
+              <option value="bar">Bar</option>
+              <option value="line">Line</option>
+            </select>
+          </div>
+        </div>
         <motion.div
-          className="w-full aspect-[2/1] max-h-[600px] 
-                     bg-white/70 dark:bg-gray-800/70 
-                     rounded-2xl p-4 shadow-lg backdrop-blur-md"
-          initial={{ scale: 0.97, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.15 }}
+          className="w-full h-[420px] md:h-[520px]
+                     rounded-2xl border border-white/20
+                     bg-white/80 dark:bg-gray-900/60 backdrop-blur-lg
+                     shadow-xl p-4 md:p-6"
         >
           {!isDataAvailable ? (
-            <motion.p
-              className="text-center text-gray-600 dark:text-gray-300 mt-12"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
+            <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
               {noDataMessage}
-            </motion.p>
+            </div>
           ) : chartType === "bar" ? (
             <Bar data={chartData} options={chartOptions} />
           ) : (
