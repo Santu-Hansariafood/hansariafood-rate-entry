@@ -42,35 +42,37 @@ export default function useSaudaNotifications() {
       const filtered = filterAndSortToday(all);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtered));
 
-      const enriched = await Promise.all(
-        filtered.map(async (item) => {
-          try {
-            const rateRes = await axiosInstance.get("/rate", {
-              params: {
-                company: item.company,
-                location: item.location,
-                commodity: item.commodity,
-              },
-            });
+      if (filtered.length === 0) {
+        setNotifications([]);
+        setLoading(false);
+        return;
+      }
 
-            const match = rateRes.data.find(
-              (r) =>
-                r.company === item.company &&
-                r.location === item.location &&
-                r.commodity === item.commodity
-            );
+      let allRates = [];
+      try {
+        const ratesRes = await axiosInstance.get("/rate");
+        allRates = ratesRes.data || [];
+      } catch (err) {
+        console.warn("Failed to fetch rates:", err);
+      }
 
-            return {
-              ...item,
-              rate: item.rate ?? match?.newRate ?? null,
-              others: item.others || match?.others || "",
-              payment: match?.payment ?? null,
-            };
-          } catch {
-            return item;
-          }
-        })
-      );
+      const rateMap = new Map();
+      allRates.forEach((rate) => {
+        const key = `${rate.company}|${rate.location}|${rate.commodity}`;
+        rateMap.set(key, rate);
+      });
+
+      const enriched = filtered.map((item) => {
+        const key = `${item.company}|${item.location}|${item.commodity}`;
+        const match = rateMap.get(key);
+
+        return {
+          ...item,
+          rate: item.rate ?? match?.newRate ?? null,
+          others: item.others || match?.others || "",
+          payment: match?.payment ?? null,
+        };
+      });
 
       setNotifications(enriched);
     } catch (error) {
@@ -87,14 +89,16 @@ export default function useSaudaNotifications() {
       try {
         const cachedData = JSON.parse(cached);
         const filteredCache = filterAndSortToday(cachedData);
-        setNotifications(filteredCache);
+        if (filteredCache.length > 0) {
+          setNotifications(filteredCache);
+          setLoading(false);
+        }
       } catch {}
-      setLoading(false);
     }
 
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
+    const interval = setInterval(fetchNotifications, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchNotifications, filterAndSortToday]);
 

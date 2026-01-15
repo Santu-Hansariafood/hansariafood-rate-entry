@@ -49,14 +49,23 @@ const Sauda = () => {
   } = useSaudaData();
 
   const filteredCompanies = useMemo(() => {
-    return companies
-      .filter((c) => hasRate(c.name))
-      .filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .filter((c) => {
-        if (filterType === "all") return true;
+    if (!companies.length) return [];
+    
+    const searchLower = searchTerm.toLowerCase();
+    const filterLower = filterType.toLowerCase();
+    
+    return companies.filter((c) => {
+      if (!hasRate(c.name)) return false;
+      
+      if (searchLower && !c.name.toLowerCase().includes(searchLower)) return false;
+      
+      if (filterLower !== "all") {
         const types = Array.isArray(c.type) ? c.type : [c.type];
-        return types.some((t) => t?.toLowerCase() === filterType.toLowerCase());
-      });
+        if (!types.some((t) => t?.toLowerCase() === filterLower)) return false;
+      }
+      
+      return true;
+    });
   }, [companies, searchTerm, filterType, hasRate]);
 
   const handlePopupClose = useCallback(
