@@ -31,9 +31,6 @@ const InputBox = dynamic(
   () => import("@/components/common/InputBox/InputBox"),
   { suspense: true }
 );
-const Legend = dynamic(() => import("@/components/ui/Sauda/Legend/Legend"), {
-  suspense: true,
-});
 
 const Sauda = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -186,9 +183,6 @@ const Sauda = () => {
             onSaudaAdded={refreshSaudaData}
           />
         )}
-        <div className="w-full px-4 sm:px-6 pb-6 hidden sm:block">
-          <Legend />
-        </div>
       </div>
     </Suspense>
   );

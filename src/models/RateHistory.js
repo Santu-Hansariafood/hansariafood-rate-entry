@@ -1,10 +1,37 @@
 import mongoose from "mongoose";
 
+const TempRateSchema = new mongoose.Schema(
+  {
+    rate: { type: Number, required: true },
+    time: { type: String, required: true },
+    note: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const HistorySchema = new mongoose.Schema(
   {
     date: { type: String, required: true },
-    rate: { type: Number, required: true },
-    others: { type: String, default: "" },
+
+    oldRate: {
+      type: Number,
+      default: 0,
+    },
+
+    tempRates: {
+      type: [TempRateSchema],
+      default: [],
+    },
+
+    finalRate: {
+      type: Number,
+      default: null,
+    },
+
+    others: {
+      type: String,
+      default: "",
+    },
   },
   { _id: false }
 );

@@ -16,6 +16,8 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
   const [loadingSave, setLoadingSave] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(false);
 
+  const today = new Date().toLocaleDateString("en-GB");
+
   useEffect(() => {
     if (!isOpen || !data?._id) return;
     loadExistingHistory();
@@ -24,12 +26,10 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
   const loadExistingHistory = async () => {
     try {
       setLoadingFetch(true);
-
       const res = await axiosInstance.get(`/ratehistory/${data._id}`);
       const history = res.data || [];
 
       const initial = {};
-
       data.location.forEach((loc) => {
         initial[loc] = data.commodities.map((commodity) => {
           const entry = history.find(
@@ -39,7 +39,9 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
           return {
             commodity,
             oldRate: entry?.oldRate || 0,
-            newRate: entry?.newRate || "",
+            tempRate: "",
+            tempRates: entry?.tempRates || [],
+            finalRate: entry?.newRate || "",
             others: entry?.others || "",
           };
         });
@@ -54,187 +56,177 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
   };
 
   const toggleLocation = (loc) => {
-    setExpandedLocations((prev) =>
-      prev.includes(loc) ? prev.filter((x) => x !== loc) : [...prev, loc]
+    setExpandedLocations((p) =>
+      p.includes(loc) ? p.filter((x) => x !== loc) : [...p, loc]
     );
   };
 
   const toggleEdit = (loc, index) => {
-    setEditing((prev) => ({
-      ...prev,
-      [`${loc}_${index}`]: !prev[`${loc}_${index}`],
+    setEditing((p) => ({
+      ...p,
+      [`${loc}_${index}`]: !p[`${loc}_${index}`],
     }));
   };
 
-  const handleInputChange = (loc, index, field, value) => {
-    setRates((prev) => {
-      const copy = { ...prev };
-      copy[loc][index][field] = value;
+  const handleChange = (loc, index, value) => {
+    setRates((p) => {
+      const copy = { ...p };
+      copy[loc][index].tempRate = value;
       return copy;
     });
   };
 
-  const handleSaveCommodity = async (loc, index) => {
-    try {
-      const item = rates[loc][index];
-      if (!item.newRate) return;
+  const handleSave = async (loc, index) => {
+    const item = rates[loc][index];
+    if (!item.tempRate) return;
 
+    try {
       setLoadingSave(true);
 
       await axiosInstance.post(`/ratehistory/${data._id}`, {
         locationName: loc,
         commodityName: item.commodity,
-        newRate: item.newRate,
-        others: item.others,
+        tempRate: item.tempRate,
       });
 
       toggleEdit(loc, index);
       loadExistingHistory();
-    } catch (error) {
-      console.error("Saving error:", error);
+    } catch (err) {
+      console.error("Save error:", err);
     } finally {
       setLoadingSave(false);
     }
   };
 
-  const renderRateDifference = (oldRate, newRate) => {
-    if (!newRate || !oldRate) return null;
-
-    const diff = Number(newRate) - Number(oldRate);
-
-    if (diff === 0) {
-      return <span className="ml-2 text-gray-500 text-sm font-medium">0</span>;
-    }
-
-    return (
-      <span
-        className={`ml-2 text-sm font-semibold ${
-          diff > 0 ? "text-green-600" : "text-red-600"
-        }`}
-      >
-        {diff > 0 ? `+${diff}` : diff}
-      </span>
-    );
-  };
-
   if (!isOpen || !data) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.25 }}
-        className="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-xl overflow-hidden flex flex-col"
-      >
-        <div className="flex justify-between items-center px-5 py-4 border-b bg-white">
-          <h2 className="text-lg font-semibold text-gray-800">{data.name}</h2>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-200">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+      <motion.div className="bg-white w-full max-w-5xl h-[80vh] rounded-xl overflow-hidden flex flex-col">
+        <div className="flex justify-between p-4 border-b">
+          <div>
+            <h2 className="font-semibold">{data.name}</h2>
+            <p className="text-sm text-gray-500">Date: {today}</p>
+          </div>
+          <button onClick={onClose}>
             <X />
           </button>
         </div>
 
-        <div className="p-5 flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4">
           {loadingFetch ? (
             <Loading />
           ) : (
-            <div className="h-full overflow-y-auto pr-2 space-y-3 custom-scroll">
-              {data.location.map((loc) => (
-                <div key={loc} className="border rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => toggleLocation(loc)}
-                    className="w-full px-4 py-3 flex justify-between bg-gray-50 hover:bg-gray-100"
-                  >
-                    <span className="font-medium text-gray-800">{loc}</span>
-                    {expandedLocations.includes(loc) ? (
-                      <ChevronUp />
-                    ) : (
-                      <ChevronDown />
-                    )}
-                  </button>
-
-                  {expandedLocations.includes(loc) && (
-                    <div className="p-4 space-y-3 bg-white">
-                      {rates[loc]?.map((item, index) => {
-                        const isEditing = editing[`${loc}_${index}`];
-
-                        return (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="border rounded-lg p-4 bg-gray-50 shadow-sm"
-                          >
-                            <div className="flex items-center mb-3">
-                              <span className="font-medium text-sm text-gray-800">
-                                {item.commodity}
-                              </span>
-
-                              {renderRateDifference(item.oldRate, item.newRate)}
-
-                              <div className="ml-auto">
-                                {!isEditing ? (
-                                  <button
-                                    onClick={() => toggleEdit(loc, index)}
-                                    className="px-3 py-1 text-xs border rounded bg-white hover:bg-gray-100"
-                                  >
-                                    Edit
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() =>
-                                      handleSaveCommodity(loc, index)
-                                    }
-                                    className="px-3 py-1 text-xs bg-green-600 text-white rounded"
-                                  >
-                                    {loadingSave ? "Saving..." : "Save"}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              <InputBox
-                                label="Old Rate"
-                                value={item.oldRate}
-                                readOnly
-                              />
-                              <InputBox
-                                label="New Rate"
-                                type="number"
-                                value={item.newRate}
-                                readOnly={!isEditing}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    loc,
-                                    index,
-                                    "newRate",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                              <InputBox
-                                label="Others"
-                                value={item.others}
-                                readOnly={!isEditing}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    loc,
-                                    index,
-                                    "others",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
+            data.location.map((loc) => (
+              <div key={loc} className="border rounded mb-3">
+                <button
+                  onClick={() => toggleLocation(loc)}
+                  className="w-full px-4 py-3 flex justify-between bg-gray-50"
+                >
+                  <span>{loc}</span>
+                  {expandedLocations.includes(loc) ? (
+                    <ChevronUp />
+                  ) : (
+                    <ChevronDown />
                   )}
-                </div>
-              ))}
-            </div>
+                </button>
+
+                {expandedLocations.includes(loc) && (
+                  <div className="p-4 space-y-4">
+                    {rates[loc]?.map((item, index) => {
+                      const isEditing = editing[`${loc}_${index}`];
+
+                      return (
+                        <div key={index} className="bg-gray-50 p-4 rounded">
+                          <div className="flex justify-between mb-3">
+                            <strong>{item.commodity}</strong>
+                            {!isEditing ? (
+                              <button
+                                onClick={() => toggleEdit(loc, index)}
+                                className="text-xs border px-3 py-1"
+                              >
+                                Edit
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleSave(loc, index)}
+                                className="text-xs bg-green-600 text-white px-3 py-1"
+                              >
+                                {loadingSave ? "Saving..." : "Save"}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* INPUTS (SWAPPED ORDER) */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <InputBox
+                              label="Yesterday Rate"
+                              value={item.oldRate}
+                              readOnly
+                            />
+
+                            <InputBox
+                              label="Temp Rate (Today)"
+                              type="number"
+                              value={item.tempRate}
+                              readOnly={!isEditing}
+                              onChange={(e) =>
+                                handleChange(loc, index, e.target.value)
+                              }
+                            />
+
+                            <InputBox
+                              label="Final Rate (Auto)"
+                              value={
+                                item.tempRates.length
+                                  ? item.tempRates[item.tempRates.length - 1]
+                                      .rate
+                                  : item.finalRate
+                              }
+                              readOnly
+                            />
+                          </div>
+
+                          {item.tempRates.length > 0 && (
+                            <div className="mt-3 text-sm">
+                              <p className="font-semibold mb-1">Today Rates</p>
+                              {item.tempRates.map((tr, i) => {
+                                const prev =
+                                  i === 0
+                                    ? item.oldRate
+                                    : item.tempRates[i - 1].rate;
+                                const diff = tr.rate - prev;
+
+                                return (
+                                  <div
+                                    key={i}
+                                    className="flex justify-between text-xs"
+                                  >
+                                    <span>{tr.time}</span>
+                                    <span>{tr.rate}</span>
+                                    <span
+                                      className={
+                                        diff > 0
+                                          ? "text-green-600"
+                                          : diff < 0
+                                          ? "text-red-600"
+                                          : "text-gray-500"
+                                      }
+                                    >
+                                      {diff > 0 ? `+${diff}` : diff}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))
           )}
         </div>
       </motion.div>

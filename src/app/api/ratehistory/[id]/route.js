@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import RateHistory from "@/models/RateHistory";
-import ManageCompany from "@/models/ManageCompany";
 import { connectDB } from "@/lib/mongodb";
 
 export async function GET(req, { params }) {
@@ -13,47 +12,34 @@ export async function GET(req, { params }) {
   const { id } = params;
 
   try {
-    const company = await ManageCompany.findById(id)
-      .select("isSoyaVisible")
-      .lean();
-
-    if (!company || company.isSoyaVisible !== true) {
-      return NextResponse.json([], { status: 200 });
-    }
-
     const { searchParams } = new URL(req.url);
     const selectedDate =
       searchParams.get("date") || new Date().toISOString().split("T")[0];
 
     const docs = await RateHistory.find({ companyId: id }).lean();
-    const result = [];
 
-    for (const doc of docs) {
-      const history = doc.history || [];
-
-      const sortedHistory = [...history].sort(
+    const result = docs.map((doc) => {
+      const history = [...doc.history].sort(
         (a, b) => new Date(b.date) - new Date(a.date)
       );
 
-      const sameDayEntry = sortedHistory.find((h) => h.date === selectedDate);
+      const today = history.find((h) => h.date === selectedDate);
+      const previous = history.find((h) => h.date < selectedDate);
 
-      const previousEntry = sortedHistory.find((h) => h.date < selectedDate);
-
-      const visibleEntry = sameDayEntry || previousEntry;
-
-      result.push({
+      return {
         location: doc.location,
         commodity: doc.commodity,
-        newRate: sameDayEntry ? sameDayEntry.rate : "",
-        oldRate: previousEntry ? previousEntry.rate : "",
-        others: visibleEntry?.others || "",
-        date: visibleEntry?.date || selectedDate,
-      });
-    }
+        oldRate: today?.oldRate ?? previous?.finalRate ?? 0,
+        tempRates: today?.tempRates || [],
+        newRate: today?.finalRate || "",
+        others: today?.others || "",
+        date: selectedDate,
+      };
+    });
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    console.error("GET /ratehistory error:", error);
+    console.error("GET ratehistory error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -71,33 +57,67 @@ export async function POST(req, { params }) {
 
   try {
     const body = await req.json();
-    const { locationName, commodityName, newRate, others } = body;
+    const { locationName, commodityName, tempRate, finalRate, note, others } =
+      body;
 
     if (!locationName || !commodityName) {
       return NextResponse.json(
-        { error: "Location and commodity are required" },
-        { status: 400 }
-      );
-    }
-
-    const rateValue = Number(newRate);
-    if (isNaN(rateValue)) {
-      return NextResponse.json(
-        { error: "Invalid rate value" },
+        { error: "Location & commodity required" },
         { status: 400 }
       );
     }
 
     const today = new Date().toISOString().split("T")[0];
+    const time = new Date().toTimeString().slice(0, 5);
 
-    const existsToday = await RateHistory.findOne({
+    const doc = await RateHistory.findOne({
+      companyId: id,
+      location: locationName,
+      commodity: commodityName,
+    });
+
+    let previousRate = 0;
+
+    if (doc) {
+      const prev = [...doc.history]
+        .filter((h) => h.date < today)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      previousRate = prev?.finalRate || 0;
+    }
+
+    const todayExists = await RateHistory.findOne({
       companyId: id,
       location: locationName,
       commodity: commodityName,
       "history.date": today,
     });
 
-    if (existsToday) {
+    if (todayExists) {
+      const update = {};
+
+      if (tempRate !== undefined) {
+        update.$push = {
+          "history.$.tempRates": {
+            rate: Number(tempRate),
+            time,
+            note: note || "",
+          },
+        };
+
+        update.$set = {
+          ...(update.$set || {}),
+          "history.$.finalRate": Number(tempRate),
+        };
+      }
+
+      if (finalRate !== undefined) {
+        update.$set = {
+          ...(update.$set || {}),
+          "history.$.finalRate": Number(finalRate),
+          "history.$.others": others || "",
+        };
+      }
+
       await RateHistory.updateOne(
         {
           companyId: id,
@@ -105,12 +125,7 @@ export async function POST(req, { params }) {
           commodity: commodityName,
           "history.date": today,
         },
-        {
-          $set: {
-            "history.$.rate": rateValue,
-            "history.$.others": others || "",
-          },
-        }
+        update
       );
     } else {
       await RateHistory.findOneAndUpdate(
@@ -123,7 +138,23 @@ export async function POST(req, { params }) {
           $push: {
             history: {
               date: today,
-              rate: rateValue,
+              oldRate: previousRate,
+              tempRates:
+                tempRate !== undefined
+                  ? [
+                      {
+                        rate: Number(tempRate),
+                        time,
+                        note: note || "",
+                      },
+                    ]
+                  : [],
+              finalRate:
+                finalRate !== undefined
+                  ? Number(finalRate)
+                  : tempRate !== undefined
+                  ? Number(tempRate)
+                  : null,
               others: others || "",
             },
           },
@@ -137,7 +168,7 @@ export async function POST(req, { params }) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("POST /ratehistory error:", error);
+    console.error("POST ratehistory error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

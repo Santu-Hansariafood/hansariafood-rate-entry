@@ -13,34 +13,90 @@ const COMMODITIES = [
   "SBM 51%",
 ];
 
-const formatRate = (newRate, oldRate) => {
-  if (!newRate) return "-";
-
-  const diff =
-    oldRate !== undefined && oldRate !== null
-      ? Number(newRate) - Number(oldRate)
-      : 0;
+const Diff = ({ value }) => {
+  if (value === 0 || value === null || value === undefined) return null;
 
   return (
-    <span className="font-medium text-gray-800">
-      {newRate}
-      {diff !== 0 && (
-        <span
-          className={`ml-1 text-sm font-semibold ${
-            diff > 0 ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          ({diff > 0 ? `+${diff}` : diff})
-        </span>
-      )}
+    <span
+      className={`ml-1 text-xs font-semibold ${
+        value > 0 ? "text-green-600" : "text-red-600"
+      }`}
+    >
+      ({value > 0 ? `+${value}` : value})
     </span>
   );
+};
+
+const renderRateWithTemps = ({ oldRate, tempRates, finalRate }) => {
+  if (!finalRate && (!tempRates || tempRates.length === 0)) return "-";
+
+  const prevDay = oldRate || 0;
+  let lastRate = finalRate ?? prevDay;
+
+  return (
+    <div className="space-y-1">
+      {finalRate !== null && finalRate !== undefined && (
+        <div className="font-semibold text-gray-900 flex items-center">
+          <span>{finalRate}</span>
+          <Diff value={finalRate - prevDay} />
+        </div>
+      )}
+
+      {tempRates?.length > 0 && (
+        <div className="space-y-0.5">
+          {tempRates.map((t, i) => {
+            const diff = t.rate - lastRate;
+            lastRate = t.rate;
+
+            return (
+              <div
+                key={i}
+                className="text-xs text-gray-600 flex items-center gap-1"
+              >
+                <span>{t.rate}</span>
+                <Diff value={diff} />
+                <span className="text-[10px] text-gray-400">{t.time}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const buildRateText = ({ oldRate, tempRates, finalRate }) => {
+  if (!finalRate && (!tempRates || tempRates.length === 0)) return "-";
+
+  let prev = oldRate || 0;
+  const parts = [];
+
+  if (finalRate !== null && finalRate !== undefined) {
+    const diff = finalRate - prev;
+    parts.push(
+      diff === 0
+        ? `${finalRate}`
+        : `${finalRate} (${diff > 0 ? "+" : ""}${diff})`
+    );
+    prev = finalRate;
+  }
+
+  if (tempRates?.length) {
+    tempRates.forEach((t) => {
+      const diff = t.rate - prev;
+      parts.push(
+        `${t.rate} (${diff > 0 ? "+" : ""}${diff}) @ ${t.time}`
+      );
+      prev = t.rate;
+    });
+  }
+
+  return parts.join(" | ");
 };
 
 export default function useSoyaRates(date, search) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const lastFetchedDateRef = useRef(null);
 
   const fetchData = useCallback(async () => {
@@ -63,12 +119,10 @@ export default function useSoyaRates(date, search) {
         history.forEach((r) => {
           if (!locationMap[r.location]) locationMap[r.location] = {};
           locationMap[r.location][r.commodity] = {
-            newRate: r.newRate,
-            oldRate: r.oldRate,
+            ...r,
+            newRate: r.newRate ?? r.finalRate,
           };
         });
-
-        if (Object.keys(locationMap).length === 0) continue;
 
         Object.entries(locationMap).forEach(([location, rates]) => {
           const row = { company: company.name, location };
@@ -76,11 +130,28 @@ export default function useSoyaRates(date, search) {
 
           COMMODITIES.forEach((c) => {
             const rateObj = rates[c];
-            if (rateObj?.newRate) hasAnyRate = true;
 
-            row[c] = rateObj
-              ? formatRate(rateObj.newRate, rateObj.oldRate)
-              : "-";
+            if (rateObj?.newRate || rateObj?.tempRates?.length) {
+              hasAnyRate = true;
+
+              const jsxValue = renderRateWithTemps({
+                oldRate: rateObj.oldRate,
+                tempRates: rateObj.tempRates,
+                finalRate: rateObj.newRate,
+              });
+
+              const textValue = buildRateText({
+                oldRate: rateObj.oldRate,
+                tempRates: rateObj.tempRates,
+                finalRate: rateObj.newRate,
+              });
+
+              row[c] = jsxValue;
+              row[`${c}__text`] = textValue;
+            } else {
+              row[c] = "-";
+              row[`${c}__text`] = "-";
+            }
           });
 
           if (hasAnyRate) tableRows.push(row);
@@ -99,13 +170,11 @@ export default function useSoyaRates(date, search) {
   useEffect(() => {
     if (lastFetchedDateRef.current === date) return;
     lastFetchedDateRef.current = date;
-
     fetchData();
   }, [date, fetchData]);
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
-
     return rows.filter(
       (r) =>
         r.company.toLowerCase().includes(search.toLowerCase()) ||
@@ -116,6 +185,7 @@ export default function useSoyaRates(date, search) {
   return {
     loading,
     rows: filteredRows,
+    rawRows: rows,
     commodities: COMMODITIES,
   };
 }

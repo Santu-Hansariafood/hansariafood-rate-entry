@@ -1,6 +1,6 @@
-import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
-import dynamic from "next/dynamic";
 import React from "react";
+import dynamic from "next/dynamic";
+import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
 const Soya = dynamic(() => import("@/components/ui/Soya/Soya"));
 
 const page = () => {
