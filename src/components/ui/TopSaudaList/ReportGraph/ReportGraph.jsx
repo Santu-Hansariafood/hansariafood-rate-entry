@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import {
   Download,
@@ -10,8 +10,11 @@ import {
   Calendar,
   Filter,
   FileText,
+  X,
+  AlertCircle,
 } from "lucide-react";
 import Loading from "@/components/common/Loading/Loading";
+import { motion, AnimatePresence } from "framer-motion";
 
 const PieChartComponent = dynamic(() => import("./PieChartComponent"), {
   loading: () => <Loading />,
@@ -31,9 +34,17 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
   const [selectedPeriod, setSelectedPeriod] = useState("all");
   const [selectedCommodity, setSelectedCommodity] = useState("all");
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [error, setError] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const processedData = useMemo(() => {
-    if (!saudaDetails?.length)
-      return { pieData: [], barData: [], lineData: [] };
+    try {
+      setIsProcessing(true);
+      setError(null);
+
+      if (!saudaDetails?.length) {
+        return { pieData: [], barData: [], lineData: [], allCommodities: [] };
+      }
 
     const allCommodities = new Set();
     const allLocations = new Set();
@@ -41,28 +52,37 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
     const locationStats = {};
     const dailyStats = {};
     const isWithinPeriod = (dateStr) => {
-      if (selectedPeriod === "all") return true;
+      try {
+        if (selectedPeriod === "all") return true;
+        if (!dateStr || typeof dateStr !== "string") return false;
 
-      const now = new Date();
-      const filterDate = new Date();
+        const now = new Date();
+        const filterDate = new Date();
 
-      switch (selectedPeriod) {
-        case "7d":
-          filterDate.setDate(now.getDate() - 7);
-          break;
-        case "30d":
-          filterDate.setDate(now.getDate() - 30);
-          break;
-        case "90d":
-          filterDate.setDate(now.getDate() - 90);
-          break;
-        default:
-          return true;
+        switch (selectedPeriod) {
+          case "7d":
+            filterDate.setDate(now.getDate() - 7);
+            break;
+          case "30d":
+            filterDate.setDate(now.getDate() - 30);
+            break;
+          case "90d":
+            filterDate.setDate(now.getDate() - 90);
+            break;
+          default:
+            return true;
+        }
+
+        const dateParts = dateStr.split("-");
+        if (dateParts.length !== 3) return false;
+        const [dd, mm, yyyy] = dateParts;
+        const entryDate = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+        if (isNaN(entryDate.getTime())) return false;
+        return entryDate >= filterDate;
+      } catch (err) {
+        console.error("Error in isWithinPeriod:", err);
+        return false;
       }
-
-      const [dd, mm, yyyy] = dateStr.split("-");
-      const entryDate = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-      return entryDate >= filterDate;
     };
 
     const matchesCommodityFilter = (commodityName) => {
@@ -70,53 +90,72 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
       return commodityName === selectedCommodity;
     };
 
-    saudaDetails.forEach((company) => {
-      company.days.forEach((day) => {
-        const date = day.date;
-        if (isWithinPeriod(date)) {
-          if (!dailyStats[date]) {
-            dailyStats[date] = { totalTons: 0, totalValue: 0, count: 0 };
-          }
+    try {
+      saudaDetails.forEach((company) => {
+        if (!company || !company.days || !Array.isArray(company.days)) return;
 
-          day.units.forEach((unit) => {
-            const location = unit.unit;
-            allLocations.add(location);
-
-            if (!locationStats[location]) {
-              locationStats[location] = { totalTons: 0, totalValue: 0 };
+        company.days.forEach((day) => {
+          if (!day || !day.date) return;
+          const date = day.date;
+          if (isWithinPeriod(date)) {
+            if (!dailyStats[date]) {
+              dailyStats[date] = { totalTons: 0, totalValue: 0, count: 0 };
             }
 
-            unit.commodities.forEach((commodity) => {
-              const commodityName = commodity.commodity;
-              if (matchesCommodityFilter(commodityName)) {
-                allCommodities.add(commodityName);
+            if (!day.units || !Array.isArray(day.units)) return;
+            day.units.forEach((unit) => {
+              if (!unit || !unit.unit) return;
+              const location = unit.unit || "Unknown";
+              allLocations.add(location);
 
-                if (!commodityStats[commodityName]) {
-                  commodityStats[commodityName] = {
-                    totalTons: 0,
-                    totalValue: 0,
-                  };
-                }
-
-                const tons = commodity.totalTons || 0;
-                const value = commodity.saudas.reduce(
-                  (sum, sauda) => sum + sauda.tons * sauda.finalRate,
-                  0
-                );
-
-                commodityStats[commodityName].totalTons += tons;
-                commodityStats[commodityName].totalValue += value;
-                locationStats[location].totalTons += tons;
-                locationStats[location].totalValue += value;
-                dailyStats[date].totalTons += tons;
-                dailyStats[date].totalValue += value;
-                dailyStats[date].count += commodity.saudas.length;
+              if (!locationStats[location]) {
+                locationStats[location] = { totalTons: 0, totalValue: 0 };
               }
+
+              if (!unit.commodities || !Array.isArray(unit.commodities)) return;
+              unit.commodities.forEach((commodity) => {
+                if (!commodity || !commodity.commodity) return;
+                const commodityName = commodity.commodity;
+                if (matchesCommodityFilter(commodityName)) {
+                  allCommodities.add(commodityName);
+
+                  if (!commodityStats[commodityName]) {
+                    commodityStats[commodityName] = {
+                      totalTons: 0,
+                      totalValue: 0,
+                    };
+                  }
+
+                  const tons = Number(commodity.totalTons) || 0;
+                  const value = (commodity.saudas || []).reduce(
+                    (sum, sauda) => {
+                      const saudaTons = Number(sauda.tons) || 0;
+                      const saudaRate = Number(sauda.finalRate) || 0;
+                      return sum + saudaTons * saudaRate;
+                    },
+                    0
+                  );
+
+                  if (!isNaN(tons) && !isNaN(value)) {
+                    commodityStats[commodityName].totalTons += tons;
+                    commodityStats[commodityName].totalValue += value;
+                    locationStats[location].totalTons += tons;
+                    locationStats[location].totalValue += value;
+                    dailyStats[date].totalTons += tons;
+                    dailyStats[date].totalValue += value;
+                    dailyStats[date].count += (commodity.saudas || []).length;
+                  }
+                }
+              });
             });
-          });
-        }
+          }
+        });
       });
-    });
+    } catch (err) {
+      console.error("Error processing sauda details:", err);
+      setError(`Error processing data: ${err.message}`);
+      return { pieData: [], barData: [], lineData: [], allCommodities: [] };
+    }
 
     const pieData = Object.entries(commodityStats).map(([name, stats]) => ({
       name,
@@ -151,18 +190,35 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
         count: stats.count,
       }));
 
-    return {
+    const result = {
       pieData,
       barData,
       lineData,
       allCommodities: Array.from(allCommodities),
     };
+
+    setIsProcessing(false);
+    return result;
+    } catch (err) {
+      console.error("Error in processedData:", err);
+      setError(`Error processing data: ${err.message || "Unknown error"}`);
+      setIsProcessing(false);
+      return { pieData: [], barData: [], lineData: [], allCommodities: [] };
+    }
   }, [saudaDetails, selectedPeriod, selectedCommodity]);
+
+  const closeErrorPopup = useCallback(() => {
+    setError(null);
+  }, []);
 
   const generatePDFReport = async () => {
     setIsGeneratingReport(true);
+    setError(null);
 
     try {
+      if (!processedData.pieData.length && !processedData.barData.length && !processedData.lineData.length) {
+        throw new Error("No data available to generate report");
+      }
       const jsPDF = (await import("jspdf")).default;
       const doc = new jsPDF("p", "mm", "a4");
       doc.setFont("helvetica");
@@ -495,11 +551,30 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
       );
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Error generating PDF report. Please try again.");
+      setError(`Error generating PDF report: ${error.message || "Unknown error"}`);
     } finally {
       setIsGeneratingReport(false);
     }
   };
+
+  // Determine which tabs have data
+  const hasPieData = processedData.pieData && processedData.pieData.length > 0;
+  const hasBarData = processedData.barData && processedData.barData.length > 0;
+  const hasLineData = processedData.lineData && processedData.lineData.length > 0;
+
+  // Auto-switch to first available tab if current tab has no data
+  React.useEffect(() => {
+    if (activeTab === "pie" && !hasPieData) {
+      if (hasBarData) setActiveTab("bar");
+      else if (hasLineData) setActiveTab("line");
+    } else if (activeTab === "bar" && !hasBarData) {
+      if (hasPieData) setActiveTab("pie");
+      else if (hasLineData) setActiveTab("line");
+    } else if (activeTab === "line" && !hasLineData) {
+      if (hasPieData) setActiveTab("pie");
+      else if (hasBarData) setActiveTab("bar");
+    }
+  }, [activeTab, hasPieData, hasBarData, hasLineData]);
 
   if (!selectedSeller || !saudaDetails?.length) {
     return (
@@ -513,6 +588,15 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
         <p className="text-gray-500 dark:text-gray-400">
           Select a seller with sauda data to view reports and charts.
         </p>
+      </div>
+    );
+  }
+
+  if (isProcessing) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+        <Loading />
+        <p className="text-gray-500 dark:text-gray-400 mt-4">Processing data...</p>
       </div>
     );
   }
@@ -614,81 +698,154 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
           </div>
         )}
       </div>
-      <div className="flex flex-wrap gap-2 mb-6">
-        <button
-          onClick={() => setActiveTab("pie")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-            activeTab === "pie"
-              ? "bg-blue-600 text-white shadow-lg scale-105"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
-        >
-          <PieChart size={18} />
-          Commodity Distribution
-        </button>
+      {hasPieData || hasBarData || hasLineData ? (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {hasPieData && (
+            <button
+              onClick={() => setActiveTab("pie")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                activeTab === "pie"
+                  ? "bg-blue-600 text-white shadow-lg scale-105"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }`}
+            >
+              <PieChart size={18} />
+              Commodity Distribution
+            </button>
+          )}
 
-        <button
-          onClick={() => setActiveTab("bar")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-            activeTab === "bar"
-              ? "bg-blue-600 text-white shadow-lg scale-105"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
-        >
-          <BarChart3 size={18} />
-          Location Performance
-        </button>
+          {hasBarData && (
+            <button
+              onClick={() => setActiveTab("bar")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                activeTab === "bar"
+                  ? "bg-blue-600 text-white shadow-lg scale-105"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }`}
+            >
+              <BarChart3 size={18} />
+              Location Performance
+            </button>
+          )}
 
-        <button
-          onClick={() => setActiveTab("line")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-            activeTab === "line"
-              ? "bg-blue-600 text-white shadow-lg scale-105"
-              : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-          }`}
-        >
-          <TrendingUp size={18} />
-          Daily Trends
-        </button>
-      </div>
-      <div className="min-h-[400px] bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-        {activeTab === "pie" && (
-          <PieChartComponent data={processedData.pieData} />
-        )}
-
-        {activeTab === "bar" && (
-          <BarChartComponent data={processedData.barData} />
-        )}
-
-        {activeTab === "line" && (
-          <LineChartComponent data={processedData.lineData} />
-        )}
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
-          <h3 className="text-sm font-medium opacity-90">Total Tons</h3>
-          <p className="text-2xl font-bold">
-            {processedData.pieData
-              .reduce((sum, item) => sum + item.value, 0)
-              .toFixed(2)}
+          {hasLineData && (
+            <button
+              onClick={() => setActiveTab("line")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                activeTab === "line"
+                  ? "bg-blue-600 text-white shadow-lg scale-105"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+              }`}
+            >
+              <TrendingUp size={18} />
+              Daily Trends
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+            ⚠️ No data available for the selected filters. Try adjusting your filters or select a different seller.
           </p>
         </div>
+      )}
+      {(hasPieData || hasBarData || hasLineData) && (
+        <div className="min-h-[400px] bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+          {activeTab === "pie" && hasPieData && (
+            <PieChartComponent data={processedData.pieData} />
+          )}
 
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
-          <h3 className="text-sm font-medium opacity-90">Total Value</h3>
-          <p className="text-2xl font-bold">
-            Rs.{" "}
-            {processedData.barData
-              .reduce((sum, item) => sum + item.value, 0)
-              .toLocaleString()}
-          </p>
-        </div>
+          {activeTab === "bar" && hasBarData && (
+            <BarChartComponent data={processedData.barData} />
+          )}
 
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
-          <h3 className="text-sm font-medium opacity-90">Active Locations</h3>
-          <p className="text-2xl font-bold">{processedData.barData.length}</p>
+          {activeTab === "line" && hasLineData && (
+            <LineChartComponent data={processedData.lineData} />
+          )}
         </div>
-      </div>
+      )}
+      {(hasPieData || hasBarData || hasLineData) && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          {hasPieData && (
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg">
+              <h3 className="text-sm font-medium opacity-90">Total Tons</h3>
+              <p className="text-2xl font-bold">
+                {processedData.pieData
+                  .reduce((sum, item) => sum + (item.value || 0), 0)
+                  .toFixed(2)}
+              </p>
+            </div>
+          )}
+
+          {hasBarData && (
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg">
+              <h3 className="text-sm font-medium opacity-90">Total Value</h3>
+              <p className="text-2xl font-bold">
+                Rs.{" "}
+                {processedData.barData
+                  .reduce((sum, item) => sum + (item.value || 0), 0)
+                  .toLocaleString()}
+              </p>
+            </div>
+          )}
+
+          {hasBarData && (
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg">
+              <h3 className="text-sm font-medium opacity-90">Active Locations</h3>
+              <p className="text-2xl font-bold">{processedData.barData.length}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Error Popup */}
+      <AnimatePresence>
+        {error && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeErrorPopup}
+            />
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-red-200 dark:border-red-800">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Error
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                      {error}
+                    </p>
+                    <button
+                      onClick={closeErrorPopup}
+                      className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <button
+                    onClick={closeErrorPopup}
+                    className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

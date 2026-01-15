@@ -9,11 +9,66 @@ Chart.register(ArcElement, Tooltip, Legend);
 const PieChartComponent = ({ data }) => {
   const chartRef = useRef(null);
 
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="text-gray-400 dark:text-gray-500 mb-4">
+            <svg
+              className="mx-auto h-16 w-16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No Commodity Data
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            No commodity distribution data available for the selected period.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Filter out invalid data
+  const validData = data.filter(
+    (item) =>
+      item &&
+      item.name &&
+      typeof item.value === "number" &&
+      !isNaN(item.value) &&
+      item.value >= 0
+  );
+
+  if (validData.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No Valid Data
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            No valid commodity data available.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const chartData = {
-    labels: data.map((item) => `${item.name} (${item.percentage}%)`),
+    labels: validData.map((item) => `${item.name} (${item.percentage || 0}%)`),
     datasets: [
       {
-        data: data.map((item) => item.value),
+        data: validData.map((item) => item.value),
         backgroundColor: [
           "#FF6384",
           "#36A2EB",
@@ -112,15 +167,20 @@ const PieChartComponent = ({ data }) => {
             return `📊 ${label}`;
           },
           label: function (context) {
-            const label = context.label || "";
-            const value = context.parsed;
-            const percentage = data[context.dataIndex]?.percentage || 0;
-            return [
-              `📦 Commodity: ${label.split(" (")[0]}`,
-              `⚖️  Tons: ${value.toFixed(2)}`,
-              `📈 Percentage: ${percentage}%`,
-              `💰 Value: ₹${(value * 1000).toLocaleString()} (estimated)`,
-            ];
+            try {
+              const label = context.label || "";
+              const value = context.parsed || 0;
+              const dataIndex = context.dataIndex || 0;
+              const percentage = validData[dataIndex]?.percentage || 0;
+              return [
+                `📦 Commodity: ${label.split(" (")[0]}`,
+                `⚖️  Tons: ${Number(value).toFixed(2)}`,
+                `📈 Percentage: ${percentage}%`,
+                `💰 Value: ₹${(Number(value) * 1000).toLocaleString()} (estimated)`,
+              ];
+            } catch (err) {
+              return ["Error displaying data"];
+            }
           },
         },
       },
@@ -165,35 +225,6 @@ const PieChartComponent = ({ data }) => {
     }
   }, [data]);
 
-  if (!data || data.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="text-gray-400 dark:text-gray-500 mb-4">
-            <svg
-              className="mx-auto h-16 w-16"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No Commodity Data
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            No commodity distribution data available for the selected period.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full">
@@ -214,7 +245,7 @@ const PieChartComponent = ({ data }) => {
               📊 Commodity Summary
             </h3>
             <div className="space-y-3">
-              {data.slice(0, 5).map((item, index) => (
+              {validData.slice(0, 5).map((item, index) => (
                 <div
                   key={item.name}
                   className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
@@ -253,10 +284,10 @@ const PieChartComponent = ({ data }) => {
               📈 Total Commodities
             </h4>
             <p className="text-2xl font-bold">
-              {data.reduce((sum, item) => sum + item.value, 0).toFixed(2)} tons
+              {validData.reduce((sum, item) => sum + (item.value || 0), 0).toFixed(2)} tons
             </p>
             <p className="text-sm opacity-75 mt-1">
-              Across {data.length} commodities
+              Across {validData.length} commodities
             </p>
           </div>
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">

@@ -116,15 +116,33 @@ export async function GET(req) {
             unit: "$saudaEntries.v.unit",
             commodity: "$saudaEntries.v.commodity",
           },
-          totalTons: { $sum: "$saudaEntries.v.tons" },
+          totalTons: { 
+            $sum: { 
+              $cond: [
+                { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } }, 0] },
+                { $toDouble: "$saudaEntries.v.tons" },
+                0
+              ]
+            }
+          },
           saudas: {
             $push: {
               saudaNo: { $ifNull: ["$saudaEntries.v.saudaNo", ""] },
-              tons: "$saudaEntries.v.tons",
-              unit: "$saudaEntries.v.unit",
-              finalRate: "$saudaEntries.v.finalRate",
-              sellerName: "$saudaEntries.v.sellerName",
-              sellerCompany: "$saudaEntries.v.sellerCompany",
+              tons: { $ifNull: ["$saudaEntries.v.tons", 0] },
+              unit: { $ifNull: ["$saudaEntries.v.unit", ""] },
+              finalRate: { 
+                $cond: [
+                  { $and: [
+                    { $ne: ["$saudaEntries.v.finalRate", null] },
+                    { $ne: ["$saudaEntries.v.finalRate", ""] },
+                    { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.finalRate", 0] } }, 0] }
+                  ]},
+                  { $toDouble: "$saudaEntries.v.finalRate" },
+                  0
+                ]
+              },
+              sellerName: { $ifNull: ["$saudaEntries.v.sellerName", ""] },
+              sellerCompany: { $ifNull: ["$saudaEntries.v.sellerCompany", ""] },
             },
           },
         },
@@ -224,7 +242,25 @@ export async function GET(req) {
             },
             count: { $sum: 1 },
             totalTons: { $sum: "$saudaEntries.v.tons" },
-            totalValue: { $sum: { $multiply: ["$saudaEntries.v.finalRate", "$saudaEntries.v.tons"] } },
+            totalValue: { 
+              $sum: { 
+                $cond: [
+                  { 
+                    $and: [
+                      { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.finalRate", 0] } }, 0] },
+                      { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } }, 0] }
+                    ]
+                  },
+                  { 
+                    $multiply: [
+                      { $toDouble: "$saudaEntries.v.finalRate" },
+                      { $toDouble: "$saudaEntries.v.tons" }
+                    ] 
+                  },
+                  0
+                ]
+              }
+            },
           },
         },
         { $sort: { count: -1, totalTons: -1 } },

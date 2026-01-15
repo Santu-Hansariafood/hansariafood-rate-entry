@@ -22,6 +22,7 @@ const TopSaudaList = () => {
     saudaDetails,
     selectedSeller,
     loading,
+    error,
     fetchSaudaDetails,
     setSelectedSeller,
     setSaudaDetails,
@@ -76,6 +77,7 @@ const TopSaudaList = () => {
               selectedSeller={selectedSeller}
               saudaDetails={saudaDetails}
               loading={loading}
+              error={error}
               onClearSelection={handleClearSelection}
             />
           </div>

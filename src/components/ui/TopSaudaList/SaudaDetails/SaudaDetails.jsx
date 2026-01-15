@@ -1,27 +1,144 @@
 "use client";
 
-import React, { Suspense } from "react";
-import { XCircle, CalendarDays, Factory, Package, Hash } from "lucide-react";
+import React, { Suspense, useMemo } from "react";
+import { XCircle, CalendarDays, Factory, Package, Hash, AlertCircle } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
+// Utility function to format rate properly
+const formatRate = (rate) => {
+  if (rate === null || rate === undefined || rate === "") return "—";
+  const numRate = Number(rate);
+  if (isNaN(numRate) || numRate <= 0) return "—";
+  return `₹${numRate.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+// Utility function to format tons properly
+const formatTons = (tons) => {
+  if (tons === null || tons === undefined || tons === "") return "0.00";
+  const numTons = Number(tons);
+  if (isNaN(numTons) || numTons < 0) return "0.00";
+  return numTons.toFixed(2);
+};
+
+// Utility function to validate and calculate value
+const calculateValue = (tons, rate) => {
+  const numTons = Number(tons) || 0;
+  const numRate = Number(rate) || 0;
+  if (isNaN(numTons) || isNaN(numRate) || numTons <= 0 || numRate <= 0) return 0;
+  return numTons * numRate;
+};
+
 const SaudaDetails = ({
   selectedSeller,
   saudaDetails,
   loading,
+  error,
   onClearSelection,
 }) => {
   const sortDaysByDate = (days) => {
+    if (!Array.isArray(days)) return [];
     return [...days].sort((a, b) => {
-      const [da, ma, ya] = (a.date || "").split("-");
-      const [db, mb, yb] = (b.date || "").split("-");
-      const ta = new Date(Number(ya), Number(ma) - 1, Number(da)).getTime();
-      const tb = new Date(Number(yb), Number(mb) - 1, Number(db)).getTime();
-      return tb - ta;
+      try {
+        const [da, ma, ya] = (a.date || "").split("-");
+        const [db, mb, yb] = (b.date || "").split("-");
+        const ta = new Date(Number(ya), Number(ma) - 1, Number(da)).getTime();
+        const tb = new Date(Number(yb), Number(mb) - 1, Number(db)).getTime();
+        if (isNaN(ta) || isNaN(tb)) return 0;
+        return tb - ta;
+      } catch (err) {
+        console.error("Error sorting dates:", err);
+        return 0;
+      }
     });
   };
+
+  // Validate and process sauda details
+  const validatedSaudaDetails = useMemo(() => {
+    if (!Array.isArray(saudaDetails)) return [];
+    
+    return saudaDetails.map((company) => {
+      if (!company || !company.days || !Array.isArray(company.days)) return company;
+      
+      const processedDays = company.days.map((day) => {
+        if (!day || !day.units || !Array.isArray(day.units)) return day;
+        
+        const processedUnits = day.units.map((unit) => {
+          if (!unit || !unit.commodities || !Array.isArray(unit.commodities)) return unit;
+          
+          const processedCommodities = unit.commodities.map((commodity) => {
+            if (!commodity || !commodity.saudas || !Array.isArray(commodity.saudas)) return commodity;
+            
+            const processedSaudas = commodity.saudas.map((sauda) => {
+              const validatedSauda = {
+                ...sauda,
+                tons: formatTons(sauda.tons),
+                finalRate: sauda.finalRate ? Number(sauda.finalRate) : 0,
+                value: calculateValue(sauda.tons, sauda.finalRate),
+              };
+              
+              // Validate rate
+              if (!validatedSauda.finalRate || validatedSauda.finalRate <= 0) {
+                validatedSauda.hasInvalidRate = true;
+              }
+              
+              return validatedSauda;
+            });
+            
+            // Recalculate total tons for commodity
+            const commodityTotalTons = processedSaudas.reduce(
+              (sum, s) => sum + (Number(s.tons) || 0),
+              0
+            );
+            
+            return {
+              ...commodity,
+              saudas: processedSaudas,
+              totalTons: commodityTotalTons,
+            };
+          });
+          
+          // Recalculate unit total tons
+          const unitTotalTons = processedCommodities.reduce(
+            (sum, c) => sum + (Number(c.totalTons) || 0),
+            0
+          );
+          
+          return {
+            ...unit,
+            commodities: processedCommodities,
+            unitTotalTons,
+          };
+        });
+        
+        // Recalculate day total tons
+        const dayTotalTons = processedUnits.reduce(
+          (sum, u) => sum + (Number(u.unitTotalTons) || 0),
+          0
+        );
+        
+        return {
+          ...day,
+          units: processedUnits,
+          dayTotalTons,
+        };
+      });
+      
+      // Recalculate company total tons
+      const companyTotalTons = processedDays.reduce(
+        (sum, d) => sum + (Number(d.dayTotalTons) || 0),
+        0
+      );
+      
+      return {
+        ...company,
+        days: processedDays,
+        companyTotalTons,
+      };
+    });
+  }, [saudaDetails]);
 
   if (!selectedSeller) {
     return (
@@ -55,9 +172,19 @@ const SaudaDetails = ({
             <div className="flex items-center justify-center py-12">
               <Loading />
             </div>
-          ) : saudaDetails?.length ? (
+          ) : error ? (
+            <div className="text-center py-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4">
+                <AlertCircle className="text-red-600 dark:text-red-400" size={20} />
+                <p className="text-red-600 dark:text-red-400 font-medium">{error}</p>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Please try again or contact support if the issue persists.
+              </p>
+            </div>
+          ) : validatedSaudaDetails?.length ? (
             <div className="space-y-6">
-              {saudaDetails.map((company) => (
+              {validatedSaudaDetails.map((company) => (
                 <div
                   key={company.company}
                   className="border border-purple-300 dark:border-purple-600 rounded-xl p-6 bg-gradient-to-r from-purple-50 to-fuchsia-100 dark:from-purple-800 dark:to-fuchsia-900 shadow-md"
@@ -68,7 +195,7 @@ const SaudaDetails = ({
                       <span className="italic">{company.company}</span>
                     </h3>
                     <span className="px-4 py-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full text-sm font-bold shadow">
-                      Total: <i>{company.companyTotalTons?.toFixed(2) || 0}</i>{" "}
+                      Total: <i>{formatTons(company.companyTotalTons)}</i>{" "}
                       Tons
                     </span>
                   </div>
@@ -85,7 +212,7 @@ const SaudaDetails = ({
                           </h4>
                           <span className="text-sm bg-amber-600 text-white px-3 py-1 rounded-full shadow font-medium">
                             Day Total:{" "}
-                            <i>{day.dayTotalTons?.toFixed(2) || 0}</i> Tons
+                            <i>{formatTons(day.dayTotalTons)}</i> Tons
                           </span>
                         </div>
                         <div className="space-y-4">
@@ -102,7 +229,7 @@ const SaudaDetails = ({
                                 <span className="text-xs bg-sky-600 text-white px-2 py-1 rounded-full shadow font-semibold">
                                   Total Saudas:{" "}
                                   <i>
-                                    {unitObj.unitTotalTons?.toFixed(2) || 0}
+                                    {formatTons(unitObj.unitTotalTons)}
                                   </i>{" "}
                                   Tons
                                 </span>
@@ -118,7 +245,7 @@ const SaudaDetails = ({
                                       <span className="italic">
                                         {com.commodity}
                                       </span>{" "}
-                                      (<i>{com.totalTons?.toFixed(2) || 0}</i>{" "}
+                                      (<i>{formatTons(com.totalTons)}</i>{" "}
                                       Tons)
                                     </h6>
                                     <div className="space-y-2">
@@ -138,10 +265,25 @@ const SaudaDetails = ({
                                               — {s.saudaNo || "—"}
                                             </span>
                                           </span>
-                                          <span className="text-gray-700 dark:text-gray-100 font-bold italic">
-                                            {s.tons} Tons {com.commodity} at{" "}
-                                            {s.unit} Location @ ₹{s.finalRate}
-                                          </span>
+                                          <div className="flex flex-col items-end gap-1">
+                                            <span className={`text-gray-700 dark:text-gray-100 font-bold italic ${
+                                              s.hasInvalidRate ? "text-red-600 dark:text-red-400" : ""
+                                            }`}>
+                                              {formatTons(s.tons)} Tons {com.commodity} at{" "}
+                                              {s.unit} Location @ {formatRate(s.finalRate)}
+                                            </span>
+                                            {s.hasInvalidRate && (
+                                              <span className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                                                <AlertCircle size={12} />
+                                                Invalid Rate
+                                              </span>
+                                            )}
+                                            {s.value > 0 && (
+                                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                Value: {formatRate(s.value)}
+                                              </span>
+                                            )}
+                                          </div>
                                         </div>
                                       ))}
                                     </div>

@@ -17,12 +17,68 @@ Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 const BarChartComponent = ({ data }) => {
   const chartRef = useRef(null);
 
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="text-gray-400 dark:text-gray-500 mb-4">
+            <svg
+              className="mx-auto h-16 w-16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No Location Data
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            No location performance data available for the selected period.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Filter out invalid data
+  const validData = data.filter(
+    (item) =>
+      item &&
+      item.location &&
+      typeof item.tons === "number" &&
+      !isNaN(item.tons) &&
+      typeof item.value === "number" &&
+      !isNaN(item.value)
+  );
+
+  if (validData.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No Valid Data
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            No valid location data available.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const chartData = {
-    labels: data.map((item) => item.location),
+    labels: validData.map((item) => item.location),
     datasets: [
       {
         label: "Tons",
-        data: data.map((item) => item.tons),
+        data: validData.map((item) => item.tons),
         backgroundColor: "rgba(59, 130, 246, 0.8)",
         borderColor: "rgba(59, 130, 246, 1)",
         borderWidth: 2,
@@ -90,19 +146,22 @@ const BarChartComponent = ({ data }) => {
             const label = context.dataset.label || "";
             const value = context.parsed.y;
 
-            if (context.datasetIndex === 0) {
-              return [
-                `📦 ${label}: ${value.toFixed(2)} tons`,
-                `📊 Performance: ${(
-                  (value / Math.max(...data.map((d) => d.tons))) *
-                  100
-                ).toFixed(1)}%`,
-              ];
-            } else {
-              return [
-                `💰 ${label}: ₹${(value * 1000).toLocaleString()}`,
-                `📈 Value: ${value.toFixed(1)}K (thousands)`,
-              ];
+            try {
+              if (context.datasetIndex === 0) {
+                const maxTons = Math.max(...validData.map((d) => d.tons || 0), 1);
+                const performance = maxTons > 0 ? ((value / maxTons) * 100).toFixed(1) : 0;
+                return [
+                  `📦 ${label}: ${Number(value).toFixed(2)} tons`,
+                  `📊 Performance: ${performance}%`,
+                ];
+              } else {
+                return [
+                  `💰 ${label}: ₹${(Number(value) * 1000).toLocaleString()}`,
+                  `📈 Value: ${Number(value).toFixed(1)}K (thousands)`,
+                ];
+              }
+            } catch (err) {
+              return ["Error displaying data"];
             }
           },
         },
@@ -217,43 +276,15 @@ const BarChartComponent = ({ data }) => {
     }
   }, [data]);
 
-  if (!data || data.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="text-gray-400 dark:text-gray-500 mb-4">
-            <svg
-              className="mx-auto h-16 w-16"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            No Location Data
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            No location performance data available for the selected period.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const totalTons = data.reduce((sum, item) => sum + item.tons, 0);
-  const totalValue = data.reduce((sum, item) => sum + item.value, 0);
-  const avgTonsPerLocation = totalTons / data.length;
-  const topLocation = data.reduce(
-    (max, item) => (item.tons > max.tons ? item : max),
-    data[0]
-  );
+  const totalTons = validData.reduce((sum, item) => sum + (item.tons || 0), 0);
+  const totalValue = validData.reduce((sum, item) => sum + (item.value || 0), 0);
+  const avgTonsPerLocation = validData.length > 0 ? totalTons / validData.length : 0;
+  const topLocation = validData.length > 0
+    ? validData.reduce(
+        (max, item) => ((item.tons || 0) > (max.tons || 0) ? item : max),
+        validData[0]
+      )
+    : null;
 
   return (
     <Suspense fallback={<Loading />}>
@@ -324,10 +355,10 @@ const BarChartComponent = ({ data }) => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {data.map((item, index) => {
-                  const performance = ((item.tons / totalTons) * 100).toFixed(
-                    1
-                  );
+                {validData.map((item, index) => {
+                  const performance = totalTons > 0
+                    ? ((item.tons / totalTons) * 100).toFixed(1)
+                    : 0;
                   return (
                     <tr
                       key={item.location}

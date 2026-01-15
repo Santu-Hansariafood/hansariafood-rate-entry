@@ -16,7 +16,6 @@ export default function Welcome() {
   const [assignedCompanies, setAssignedCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Capitalize Name
   const formatName = useCallback((str) => {
     return str
       .split(" ")
@@ -24,7 +23,6 @@ export default function Welcome() {
       .join(" ");
   }, []);
 
-  // Fetch user + company data
   const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
@@ -34,12 +32,10 @@ export default function Welcome() {
         axiosInstance.get(`/user-companies?mobile=${mobile}`),
       ]);
 
-      // ✅ FIXED: Extract correct array from API
       const users = Array.isArray(userResponse.data?.users)
         ? userResponse.data.users
         : [];
 
-      // Find logged-in user
       const userData = users.find(
         (user) => user.mobile.toString() === mobile?.toString()
       );
@@ -52,7 +48,6 @@ export default function Welcome() {
         setName("Guest");
       }
 
-      // Assigned companies
       setAssignedCompanies(companyResponse.data?.companies ?? []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -66,7 +61,6 @@ export default function Welcome() {
     if (mobile) fetchUserData();
   }, [mobile, fetchUserData]);
 
-  // Render assigned companies
   const assignedCompaniesList = useMemo(() => {
     if (assignedCompanies.length === 0) {
       return (
