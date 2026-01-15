@@ -55,12 +55,14 @@ export default function SellerList() {
     formData,
     setFormData,
     setModalOpen,
+    setEditMode,
     setSearchQuery,
     handlePageChange,
     handleEdit,
     handleView,
     handleDelete,
     handleSaveEdit,
+    saving,
     ITEMS_PER_PAGE,
   } = useSellerList();
 
@@ -159,16 +161,28 @@ export default function SellerList() {
                   </div>
                   <div className="flex justify-end gap-3 mt-6">
                     <button
-                      onClick={() => setModalOpen(false)}
-                      className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                      onClick={() => {
+                        setModalOpen(false);
+                        setEditMode(false);
+                      }}
+                      disabled={saving}
+                      className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveEdit}
-                      className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                      disabled={saving}
+                      className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                     >
-                      Save Changes
+                      {saving ? (
+                        <>
+                          <span className="animate-spin">⏳</span>
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
                     </button>
                   </div>
                 </Suspense>

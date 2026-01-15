@@ -17,6 +17,7 @@ const useSellerList = () => {
   const [editMode, setEditMode] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [formData, setFormData] = useState({ sellerName: "", companies: [] });
+  const [saving, setSaving] = useState(false);
 
   const [debouncedSearch, setDebouncedSearch] = useState("");
   useEffect(() => {
@@ -124,12 +125,21 @@ const useSellerList = () => {
   const handlePageChange = (page) => setCurrentPage(page);
 
   const handleEdit = (seller) => {
+    // Ask for confirmation before editing
+    const confirmed = window.confirm(
+      `Are you sure you want to edit "${seller?.sellerName || "this seller"}"?`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
     setEditMode(true);
     const normalizedId = seller?._id || seller?.id;
     setSelectedSeller({ ...seller, _id: normalizedId });
 
     const companyNames =
-      seller?.companies?.map((c) => c?.name).filter(Boolean) || [];
+      seller?.companies?.map((c) => c?.name || c).filter(Boolean) || [];
 
     setFormData({
       sellerName: seller?.sellerName || "",
@@ -184,23 +194,59 @@ const useSellerList = () => {
   };
 
   const handleSaveEdit = async () => {
+    // Validate form data
+    if (!formData.sellerName || !formData.sellerName.trim()) {
+      toast.error("Seller name is required");
+      return;
+    }
+
+    if (!formData.companies || !Array.isArray(formData.companies) || formData.companies.length === 0) {
+      toast.error("At least one company is required");
+      return;
+    }
+
+    // Ensure all companies are strings (not objects)
+    const companyNames = formData.companies.map((c) => {
+      if (typeof c === "string") return c.trim();
+      if (typeof c === "object" && c?.name) return c.name.trim();
+      if (typeof c === "object" && c?.value) return c.value.trim();
+      return String(c).trim();
+    }).filter(Boolean);
+
+    if (companyNames.length === 0) {
+      toast.error("At least one valid company is required");
+      return;
+    }
+
+    const id = selectedSeller?._id || selectedSeller?.id;
+    if (!id) {
+      toast.error("Missing seller id");
+      return;
+    }
+
+    setSaving(true);
     try {
-      const id = selectedSeller?._id || selectedSeller?.id;
-      if (!id) {
-        toast.error("Missing seller id");
-        return;
-      }
       const payload = {
         sellerName: formData.sellerName.trim(),
-        companies: formData.companies,
+        companies: companyNames,
       };
-      await axiosInstance.put(`/seller/${id}`, payload);
-      toast.success("Seller updated");
-      setModalOpen(false);
-      await fetchSellers(currentPage, debouncedSearch);
+      
+      const response = await axiosInstance.put(`/seller/${id}`, payload);
+      
+      if (response.data && response.status === 200) {
+        toast.success("Seller updated successfully");
+        setModalOpen(false);
+        setEditMode(false);
+        await fetchSellers(currentPage, debouncedSearch);
+      } else {
+        throw new Error("Update failed");
+      }
     } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.error || "Failed to update seller");
+      console.error("Save error:", error);
+      const errorMessage = error.response?.data?.error || error.message || "Failed to update seller";
+      toast.error(errorMessage);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -217,12 +263,14 @@ const useSellerList = () => {
     formData,
     setFormData,
     setModalOpen,
+    setEditMode,
     setSearchQuery,
     handlePageChange,
     handleEdit,
     handleView,
     handleDelete,
     handleSaveEdit,
+    saving,
     ITEMS_PER_PAGE,
   };
 };
