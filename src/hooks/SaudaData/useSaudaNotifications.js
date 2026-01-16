@@ -98,14 +98,36 @@ export default function useSaudaNotifications() {
 
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 10 * 60 * 1000);
+    const interval = setInterval(fetchNotifications, 30 * 1000);
     return () => clearInterval(interval);
   }, [fetchNotifications, filterAndSortToday]);
 
   useEffect(() => {
-    const handler = () => fetchNotifications();
+    const handler = () => {
+      setTimeout(() => fetchNotifications(), 500);
+    };
     window.addEventListener("sauda_updated", handler);
     return () => window.removeEventListener("sauda_updated", handler);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchNotifications();
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchNotifications();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [fetchNotifications]);
 
   const filteredNotifications = useMemo(() => {

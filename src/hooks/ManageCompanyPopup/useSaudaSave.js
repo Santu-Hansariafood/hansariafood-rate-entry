@@ -87,6 +87,10 @@ export const useSaudaSave = (
         setTimeout(() => {
           setSaveStatus((prev) => ({ ...prev, [entryId]: "" }));
         }, 3000);
+        
+        window.dispatchEvent(new CustomEvent("sauda_updated", { 
+          detail: { company: company.name, date: today } 
+        }));
       }
     } catch (err) {
       if (err?.response?.status === 409) {
