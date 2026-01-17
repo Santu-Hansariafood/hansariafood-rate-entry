@@ -77,7 +77,7 @@ export default function DesktopNav({
           if (label === "Rate") {
             const isActive =
               activeLink &&
-              ["/rate", "/soyarate"].some((p) => activeLink.startsWith(p));
+              rateDropdownItems.some((item) => activeLink.startsWith(item.path));
 
             return (
               <motion.li

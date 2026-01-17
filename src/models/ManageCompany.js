@@ -19,6 +19,16 @@ const ManageCompanySchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    isDDGSVisible: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+    isMDOCVisible: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
     type: {
       type: [String],
       enum: ["buyer", "seller"],
