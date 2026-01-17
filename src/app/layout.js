@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
+
 import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
@@ -35,25 +36,46 @@ export const viewport = {
 };
 
 export const metadata = {
-  title: "Hansaria Food Private Limited",
+  metadataBase: new URL("https://www.hansariafood.site"),
+
+  title: {
+    default: "Hansaria Food Private Limited",
+    template: "%s | Hansaria Food Pvt. Ltd.",
+  },
 
   description:
-    "Hansaria Food Private Limited is a trusted poultry and animal feed raw material supplier in India, providing high-quality maize, soya DOC, rice DDGS and bulk feed ingredients. We offer reliable commodity trading and brokerage services with competitive pricing and strong logistics support for poultry farms, feed manufacturers and agribusiness companies across India.",
-  keywords:
-    "agri rise, hansaria food, gopal, gopal agarwal, best poultry feed raw material supplier in India,trusted animal feed ingredient supplier,maize supplier, maize supplier for poultry feed India, soya DOC bulk supplier for feed mills,DDGS supplier for poultry industry India, bulk feed ingredients wholesaler, poultry feed manufacturer raw material supplier, animal feed trading company in India, commodity trading and brokerage services India, agribusiness raw material supplier, livestock feed ingredient wholesaler, feed mill raw material distributor India, poultry nutrition ingredient supplier, high quality feed ingredients supplier, pan India poultry feed supplier, Kolkata based feed raw material supplier",
-  authors: [{ name: "Santu De" }],
+    "Hansaria Food Private Limited is a trusted poultry and animal feed raw material supplier in India, providing high-quality maize, soya DOC, rice DDGS and bulk feed ingredients with reliable logistics and competitive pricing.",
 
-  metadataBase: new URL("https://www.hansariafood.site"),
+  keywords:
+    "hansaria food, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India",
+
+  authors: [{ name: "Santu De" }],
 
   alternates: {
     canonical: "https://www.hansariafood.site",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+
+  verification: {
+    google: "dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4",
   },
 
   openGraph: {
     title:
       "Hansaria Food Pvt. Ltd. | Trusted Poultry Feed Raw Material Supplier in India",
     description:
-      "Supplier of maize, soya DOC, DDGS and bulk feed ingredients with global commodity trading and brokerage services. Trusted by poultry farms and feed manufacturers across India.",
+      "Supplier of maize, soya DOC, DDGS and bulk feed ingredients with reliable logistics and competitive pricing. Trusted by poultry farms and feed manufacturers across India.",
     url: "https://www.hansariafood.site",
     siteName: "Hansaria Food Private Limited",
     images: [
@@ -61,7 +83,7 @@ export const metadata = {
         url: "/images/og-image1.png",
         width: 1200,
         height: 630,
-        alt: "Hansaria Food Pvt. Ltd. - Poultry Feed Raw Material Supplier",
+        alt: "Hansaria Food Pvt. Ltd. Poultry Feed Supplier",
       },
     ],
     type: "website",
@@ -72,7 +94,7 @@ export const metadata = {
     title:
       "Hansaria Food Pvt. Ltd. | Poultry Feed Raw Materials & Commodity Trading",
     description:
-      "Leading supplier of maize, soya DOC, DDGS and animal feed ingredients with reliable logistics and competitive pricing in India.",
+      "Leading supplier of maize, soya DOC, DDGS and animal feed ingredients across India.",
     images: ["/images/og-image1.png"],
   },
 
@@ -85,16 +107,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <meta
-          name="google-site-verification"
-          content="dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4"
-        />
-        <meta name="robots" content="index, follow" />
         <meta name="geo.region" content="IN-WB" />
         <meta name="geo.placename" content="Kolkata" />
         <meta name="distribution" content="global" />
         <link rel="manifest" href="/manifest.json" />
-
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -105,7 +121,7 @@ export default function RootLayout({ children }) {
               url: "https://www.hansariafood.site",
               logo: "https://www.hansariafood.site/images/og-image1.png",
               description:
-                "Supplier of poultry and animal feed raw materials in India including maize, soya DOC, DDGS and bulk feed ingredients with global commodity trading and brokerage services.",
+                "Supplier of poultry and animal feed raw materials in India including maize, soya DOC and DDGS with reliable logistics.",
 
               founder: [
                 { "@type": "Person", name: "Gopal Agarwal" },
