@@ -157,7 +157,6 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
                             )}
                           </div>
 
-                          {/* INPUTS (SWAPPED ORDER) */}
                           <div className="grid grid-cols-3 gap-3">
                             <InputBox
                               label="Yesterday Rate"

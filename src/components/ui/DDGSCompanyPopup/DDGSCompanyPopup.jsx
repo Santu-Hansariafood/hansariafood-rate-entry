@@ -232,4 +232,3 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data }) {
     </div>
   );
 }
-

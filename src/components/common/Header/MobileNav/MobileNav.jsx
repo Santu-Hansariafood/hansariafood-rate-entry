@@ -90,27 +90,27 @@ export default function MobileNav({
   };
 
   const dropdownVariants = {
-    hidden: { 
-      opacity: 0, 
+    hidden: {
+      opacity: 0,
       height: 0,
       marginTop: 0,
-      transition: { duration: 0.2 }
+      transition: { duration: 0.2 },
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       height: "auto",
       marginTop: "0.5rem",
-      transition: { 
+      transition: {
         duration: 0.3,
         height: { duration: 0.3 },
-        opacity: { duration: 0.2, delay: 0.1 }
-      }
+        opacity: { duration: 0.2, delay: 0.1 },
+      },
     },
-    exit: { 
-      opacity: 0, 
+    exit: {
+      opacity: 0,
       height: 0,
       marginTop: 0,
-      transition: { duration: 0.2 }
+      transition: { duration: 0.2 },
     },
   };
 
@@ -159,7 +159,8 @@ export default function MobileNav({
                       setCompanyDropdownOpen(false);
                     }}
                     className={`w-full flex justify-between items-center px-4 py-3 rounded-xl transition-all duration-200 ${
-                      rateDropdownOpen || rateDropdownItems.some(
+                      rateDropdownOpen ||
+                      rateDropdownItems.some(
                         (item) => activeLink && activeLink.startsWith(item.path)
                       )
                         ? "bg-emerald-500/20 text-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.25)]"
@@ -185,7 +186,8 @@ export default function MobileNav({
                         className="ml-4 flex flex-col gap-1 border-l-2 border-emerald-500/30 pl-4 overflow-hidden"
                       >
                         {rateDropdownItems.map((item, idx) => {
-                          const isActive = activeLink && activeLink.startsWith(item.path);
+                          const isActive =
+                            activeLink && activeLink.startsWith(item.path);
                           return (
                             <motion.li
                               key={item.path}
@@ -224,7 +226,8 @@ export default function MobileNav({
                       setRateDropdownOpen(false);
                     }}
                     className={`w-full flex justify-between items-center px-4 py-3 rounded-xl transition-all duration-200 ${
-                      companyDropdownOpen || companyDropdownItems.some(
+                      companyDropdownOpen ||
+                      companyDropdownItems.some(
                         (item) => activeLink && activeLink.startsWith(item.path)
                       )
                         ? "bg-emerald-500/20 text-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.25)]"
@@ -250,7 +253,8 @@ export default function MobileNav({
                         className="ml-4 flex flex-col gap-1 border-l-2 border-emerald-500/30 pl-4 overflow-hidden"
                       >
                         {companyDropdownItems.map((item, idx) => {
-                          const isActive = activeLink && activeLink.startsWith(item.path);
+                          const isActive =
+                            activeLink && activeLink.startsWith(item.path);
                           return (
                             <motion.li
                               key={item.path}
@@ -280,8 +284,6 @@ export default function MobileNav({
                     )}
                   </AnimatePresence>
                 </motion.li>
-
-                {/* Other Links */}
                 {navLinks.map((label) => {
                   const path = `/${label.toLowerCase().replace(/ /g, "")}`;
                   const isActive = activeLink === path;
@@ -305,9 +307,10 @@ export default function MobileNav({
                     </motion.li>
                   );
                 })}
-
-                {/* Notification and Logout */}
-                <motion.li variants={itemVariants} className="mt-4 pt-4 border-t border-gray-800/50">
+                <motion.li
+                  variants={itemVariants}
+                  className="mt-4 pt-4 border-t border-gray-800/50"
+                >
                   <div className="px-2">
                     <NotificationBell notifications={notifications} />
                   </div>

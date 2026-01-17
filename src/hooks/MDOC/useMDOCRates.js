@@ -77,9 +77,7 @@ const buildRateText = ({ oldRate, tempRates, finalRate }) => {
   if (tempRates?.length) {
     tempRates.forEach((t) => {
       const diff = t.rate - prev;
-      parts.push(
-        `${t.rate} (${diff > 0 ? "+" : ""}${diff}) @ ${t.time}`
-      );
+      parts.push(`${t.rate} (${diff > 0 ? "+" : ""}${diff}) @ ${t.time}`);
       prev = t.rate;
     });
   }
@@ -182,4 +180,3 @@ export default function useMDOCRates(date, search) {
     commodities: COMMODITIES,
   };
 }
-

@@ -232,4 +232,3 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data }) {
     </div>
   );
 }
-
