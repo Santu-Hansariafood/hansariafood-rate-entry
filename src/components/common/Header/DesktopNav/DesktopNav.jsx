@@ -25,6 +25,8 @@ export default function DesktopNav({
   const [rateDropdownItems, setRateDropdownItems] = useState([
     { label: "Rate", path: "/rate" },
     { label: "Soya Rate", path: "/soyarate" },
+    { label: "M DOC Rate", path: "/mdocrate" },
+    { label: "DDGS Rate", path: "/ddgsrate" },
   ]);
 
   const rateTitle = (() => {
@@ -44,6 +46,8 @@ export default function DesktopNav({
     { label: "Buyer Company", path: "/buyercompany" },
     { label: "Seller", path: "/seller" },
     { label: "Soya", path: "/soya" },
+    { label: "M DOC", path: "/mdoc" },
+    { label: "DDGS", path: "/ddgs" },
   ]);
 
   const companyTitle = (() => {

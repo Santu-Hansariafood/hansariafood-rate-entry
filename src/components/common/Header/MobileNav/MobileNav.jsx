@@ -33,6 +33,8 @@ export default function MobileNav({
     "Self Company",
     "Previous Sauda",
     "Soya",
+    "M DOC",
+    "DDGS"
   ];
 
   const extraLinks = allowedMobileNumbers.includes(currentUserMobile)
@@ -133,8 +135,10 @@ export default function MobileNav({
                         className="ml-3 mt-2 flex flex-col gap-1 border-l border-gray-700 pl-3"
                       >
                         {[
-                          { label: "Daily Rate", path: "/rate" },
+                          { label: "Rate", path: "/rate" },
                           { label: "Soya Rate", path: "/soyarate" },
+                          { label: "M DOC Rate", path: "/mdocrate" },
+                          { label: "DDGS Rate", path: "/ddgsrate" },
                         ].map((item) => (
                           <li key={item.path}>
                             <Link
