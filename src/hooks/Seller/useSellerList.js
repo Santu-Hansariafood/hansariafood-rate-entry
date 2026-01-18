@@ -125,21 +125,17 @@ const useSellerList = () => {
   const handlePageChange = (page) => setCurrentPage(page);
 
   const handleEdit = (seller) => {
-    // Ask for confirmation before editing
-    const confirmed = window.confirm(
-      `Are you sure you want to edit "${seller?.sellerName || "this seller"}"?`
-    );
-    
-    if (!confirmed) {
-      return;
-    }
-
     setEditMode(true);
     const normalizedId = seller?._id || seller?.id;
     setSelectedSeller({ ...seller, _id: normalizedId });
 
+    // Extract company names - handle both object format {name: "..."} and string format
     const companyNames =
-      seller?.companies?.map((c) => c?.name || c).filter(Boolean) || [];
+      seller?.companies?.map((c) => {
+        if (typeof c === "string") return c.trim();
+        if (typeof c === "object" && c?.name) return c.name.trim();
+        return String(c).trim();
+      }).filter(Boolean) || [];
 
     setFormData({
       sellerName: seller?.sellerName || "",

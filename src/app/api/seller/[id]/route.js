@@ -11,7 +11,8 @@ export async function GET(req, { params }) {
   }
 
   try {
-    const { id } = params;
+    const awaitedParams = await params;
+    const { id } = awaitedParams;
     const seller = await Seller.findById(id);
 
     if (!seller) {
@@ -33,7 +34,8 @@ export async function PUT(req, { params }) {
   }
 
   try {
-    const { id } = params;
+    const awaitedParams = await params;
+    const { id } = awaitedParams;
     const { sellerName, companies } = await req.json();
 
     const sellerNameTrimmed = sellerName?.trim();
@@ -47,10 +49,11 @@ export async function PUT(req, { params }) {
     if (
       !companies ||
       !Array.isArray(companies) ||
-      companies.some((c) => !c.trim())
+      companies.length === 0 ||
+      companies.some((c) => typeof c !== "string" || !c.trim())
     ) {
       return NextResponse.json(
-        { error: "All company names are required" },
+        { error: "At least one valid company name is required" },
         { status: 400 }
       );
     }
@@ -104,7 +107,8 @@ export async function DELETE(req, { params }) {
   }
 
   try {
-    const { id } = params;
+    const awaitedParams = await params;
+    const { id } = awaitedParams;
     const deletedSeller = await Seller.findByIdAndDelete(id);
 
     if (!deletedSeller) {
