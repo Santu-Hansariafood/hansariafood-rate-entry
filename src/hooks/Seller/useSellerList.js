@@ -129,7 +129,6 @@ const useSellerList = () => {
     const normalizedId = seller?._id || seller?.id;
     setSelectedSeller({ ...seller, _id: normalizedId });
 
-    // Extract company names - handle both object format {name: "..."} and string format
     const companyNames =
       seller?.companies?.map((c) => {
         if (typeof c === "string") return c.trim();
@@ -190,7 +189,6 @@ const useSellerList = () => {
   };
 
   const handleSaveEdit = async () => {
-    // Validate form data
     if (!formData.sellerName || !formData.sellerName.trim()) {
       toast.error("Seller name is required");
       return;
@@ -201,7 +199,6 @@ const useSellerList = () => {
       return;
     }
 
-    // Ensure all companies are strings (not objects)
     const companyNames = formData.companies.map((c) => {
       if (typeof c === "string") return c.trim();
       if (typeof c === "object" && c?.name) return c.name.trim();
