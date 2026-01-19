@@ -89,13 +89,15 @@ const useSellerList = () => {
       });
 
       if (res.data && Array.isArray(res.data.companies)) {
+        setCompanies(res.data.companies);
+
         const sellerCompanies = res.data.companies.filter(
           (c) => Array.isArray(c.type) && c.type.includes("seller")
         );
         const sorted = sellerCompanies.sort((a, b) =>
           (a?.name || "").localeCompare(b?.name || "")
         );
-        setCompanies(sorted);
+        
         setCompanyOptions(
           sorted.map((c) => ({
             label: c?.name || "Unknown",
@@ -134,7 +136,7 @@ const useSellerList = () => {
         if (typeof c === "string") return c.trim();
         if (typeof c === "object" && c?.name) return c.name.trim();
         return String(c).trim();
-      }).filter(Boolean) || [];
+      }).filter((c) => c && c !== "Unknown") || [];
 
     setFormData({
       sellerName: seller?.sellerName || "",
