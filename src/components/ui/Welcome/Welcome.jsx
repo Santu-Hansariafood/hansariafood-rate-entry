@@ -7,14 +7,41 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { ADMINS } from "@/config/navigation";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
+
+// Dashboard Components
+const ViewRate = dynamic(
+  () => import("@/components/common/ViewRate/ViewRate"),
+  { loading: () => <Loading /> }
+);
+const RateEntryList = dynamic(
+  () => import("@/components/ui/RateEntryList/RateEntryList"),
+  { loading: () => <Loading /> }
+);
+const TopSaudaList = dynamic(
+  () => import("@/components/ui/TopSaudaList/TopSaudaList"),
+  { loading: () => <Loading /> }
+);
+const RateCalendar = dynamic(
+  () => import("@/components/common/RateCalendar/RateCalendar"),
+  { loading: () => <Loading /> }
+);
+const SaudaTonsChart = dynamic(
+  () => import("@/components/common/SaudaTonsChart/SaudaTonsChart"),
+  { loading: () => <Loading /> }
+);
 
 export default function Welcome() {
   const { mobile } = useUser();
   const [name, setName] = useState("Guest");
   const [assignedCompanies, setAssignedCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const isAdmin = useMemo(() => {
+    return mobile && ADMINS.includes(mobile.toString());
+  }, [mobile]);
 
   const formatName = useCallback((str) => {
     return str
@@ -115,8 +142,39 @@ export default function Welcome() {
 
   if (loading) return <Loading />;
 
-return (
-  <Suspense fallback={<Loading />}>
+  if (isAdmin) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <div className="relative min-h-screen bg-gray-100 dark:bg-gray-950 pb-12">
+          {/* Background Elements */}
+          <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-teal-500/10 to-transparent pointer-events-none" />
+          
+          <div className="relative pt-8 px-6 text-center">
+             <h1 className="text-4xl font-extrabold bg-gradient-to-r from-green-500 to-teal-400 bg-clip-text text-transparent">
+              Welcome Back, {name} 👋
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              Here is your administrative dashboard overview
+            </p>
+
+            <Link
+              href="/resetpassword"
+              className="inline-flex mt-4 px-5 py-2 rounded-full text-sm font-semibold
+                         bg-gradient-to-r from-blue-500 to-indigo-600 text-white
+                         shadow-lg hover:shadow-xl transition"
+            >
+              Reset Password
+            </Link>
+          </div>
+
+          <AdminDashboard />
+        </div>
+      </Suspense>
+    );
+  }
+
+  return (
+    <Suspense fallback={<Loading />}>
     <div className="relative min-h-screen flex items-center justify-center p-6 overflow-hidden bg-gray-100 dark:bg-gray-950">
       <div className="absolute -top-32 -left-32 w-96 h-96 bg-teal-400/30 rounded-full blur-3xl" />
       <div className="absolute top-1/2 -right-32 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl" />
@@ -199,4 +257,24 @@ return (
   </Suspense>
 );
 }
+
+const AdminDashboard = () => (
+  <div className="space-y-8 mt-12 w-full max-w-7xl mx-auto px-4">
+    <section role="region" aria-label="View Rate Section">
+      <ViewRate />
+    </section>
+    <section role="region" aria-label="Rate Entry List">
+      <RateEntryList />
+    </section>
+    <section role="region" aria-label="Sauda Tons Chart">
+      <SaudaTonsChart />
+    </section>
+    <section role="region" aria-label="Top Sauda List">
+      <TopSaudaList />
+    </section>
+    <section role="region" aria-label="Rate Calendar">
+      <RateCalendar />
+    </section>
+  </div>
+);
 

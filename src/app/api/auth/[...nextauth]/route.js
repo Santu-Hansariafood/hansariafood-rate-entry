@@ -43,7 +43,12 @@ export const authOptions = {
         }
         deviceGuard.register(userId, ip);
 
-        return { id: userId, name: user.name, mobile: user.mobile.toString() };
+        return {
+          id: userId,
+          name: user.name,
+          mobile: user.mobile.toString(),
+          pages: user.pages || [],
+        };
       },
     }),
   ],
@@ -58,12 +63,14 @@ export const authOptions = {
       if (user) {
         token.sub = user.id;
         token.mobile = user.mobile;
+        token.pages = user.pages;
       }
       return token;
     },
     async session({ session, token }) {
       session.user.id = token.sub;
       session.user.mobile = token.mobile;
+      session.user.pages = token.pages;
       return session;
     },
   },

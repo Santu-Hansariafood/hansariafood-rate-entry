@@ -6,9 +6,14 @@ export default withAuth(
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
 
-    // 🔐 Not logged in → go to login
+    // ✅ Allow root path (Login page)
+    if (pathname === "/") {
+      return NextResponse.next();
+    }
+
+    // 🔐 Not logged in → go to login (root /)
     if (!token) {
-      const loginUrl = new URL("/login", req.url);
+      const loginUrl = new URL("/", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -20,7 +25,7 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      signIn: "/login",
+      signIn: "/",
     },
   }
 );
@@ -30,6 +35,6 @@ export default withAuth(
  */
 export const config = {
   matcher: [
-    "/((?!api|_next|static|favicon.ico|images|login|unauthorized).*)",
+    "/((?!api|_next|static|favicon.ico|images|unauthorized).*)",
   ],
 };

@@ -52,21 +52,32 @@ export async function PUT(req) {
 
   try {
     await connectDB();
-    const { mobile, password } = await req.json();
+    const { mobile, password, pages } = await req.json();
 
-    if (!mobile || !password)
-      return error("Mobile & password are required", 400);
+    if (!mobile)
+      return error("Mobile number is required", 400);
 
     const user = await User.findOne({ mobile });
     if (!user) return error("User not found", 404);
 
-    user.password = await bcrypt.hash(password, 10);
+    let message = "User updated successfully";
+
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+      message = "Password updated successfully";
+    }
+
+    if (pages) {
+      user.pages = pages;
+      message = "Pages updated successfully";
+    }
+
     await user.save();
 
-    return success("Password updated successfully");
+    return success(message);
   } catch (err) {
-    console.error("Reset Password Error:", err);
-    return error("Failed to reset password");
+    console.error("Update User Error:", err);
+    return error("Failed to update user");
   }
 }
 

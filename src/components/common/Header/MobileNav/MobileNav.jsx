@@ -5,14 +5,13 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, X } from "lucide-react";
+import { ADMINS } from "@/config/navigation";
 
 const NotificationBell = dynamic(() =>
   import("../NotificationBell/NotificationBell")
 );
 
 const LogoutButton = dynamic(() => import("../LogoutButton/LogoutButton"));
-
-const allowedMobileNumbers = ["9830433535", "7029481930"];
 
 export default function MobileNav({
   isOpen,
@@ -21,18 +20,24 @@ export default function MobileNav({
   setActiveLink,
   notifications,
   currentUserMobile,
+  currentUserPages = [],
 }) {
   const [rateDropdownOpen, setRateDropdownOpen] = useState(false);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
+  const isAdmin = ADMINS.includes(currentUserMobile);
 
-  const rateDropdownItems = [
+  const allRateDropdownItems = [
     { label: "Rate", path: "/rate" },
     { label: "Soya Rate", path: "/soyarate" },
     { label: "M DOC Rate", path: "/mdocrate" },
     { label: "DDGS Rate", path: "/ddgsrate" },
   ];
 
-  const companyDropdownItems = [
+  const rateDropdownItems = isAdmin
+    ? allRateDropdownItems
+    : allRateDropdownItems.filter((item) => currentUserPages.includes(item.path));
+
+  const allCompanyDropdownItems = [
     { label: "Company", path: "/company" },
     { label: "Manage Company", path: "/managecompany" },
     { label: "Seller Company", path: "/sellercompany" },
@@ -46,13 +51,19 @@ export default function MobileNav({
     { label: "DDGS", path: "/ddgs" },
   ];
 
-  const baseLinks = ["Sauda"];
+  const companyDropdownItems = isAdmin
+    ? allCompanyDropdownItems
+    : allCompanyDropdownItems.filter((item) =>
+        currentUserPages.includes(item.path)
+      );
 
-  const extraLinks = allowedMobileNumbers.includes(currentUserMobile)
-    ? ["Register", "Commodity", "Category"]
-    : [];
+  const possibleLinks = ["Sauda", "Register", "Commodity", "Category"];
 
-  const navLinks = [...baseLinks, ...extraLinks];
+  const navLinks = possibleLinks.filter((label) => {
+    if (isAdmin) return true;
+    const path = `/${label.toLowerCase().replace(/ /g, "")}`;
+    return currentUserPages.includes(path);
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -152,6 +163,7 @@ export default function MobileNav({
                 className="flex flex-col gap-1.5"
               >
                 {/* Rate Dropdown */}
+                {rateDropdownItems.length > 0 && (
                 <motion.li variants={itemVariants}>
                   <button
                     onClick={() => {
@@ -217,8 +229,10 @@ export default function MobileNav({
                     )}
                   </AnimatePresence>
                 </motion.li>
+                )}
 
                 {/* Company Dropdown */}
+                {companyDropdownItems.length > 0 && (
                 <motion.li variants={itemVariants}>
                   <button
                     onClick={() => {
@@ -284,6 +298,7 @@ export default function MobileNav({
                     )}
                   </AnimatePresence>
                 </motion.li>
+                )}
                 {navLinks.map((label) => {
                   const path = `/${label.toLowerCase().replace(/ /g, "")}`;
                   const isActive = activeLink === path;

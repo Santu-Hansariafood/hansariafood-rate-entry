@@ -96,6 +96,7 @@ export default function Header() {
             setActiveLink={setActiveLink}
             notifications={notifications}
             currentUserMobile={session?.user?.mobile}
+            currentUserPages={session?.user?.pages}
           />
         ) : (
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -119,6 +120,7 @@ export default function Header() {
             setActiveLink={setActiveLink}
             notifications={notifications}
             currentUserMobile={session?.user?.mobile}
+            currentUserPages={session?.user?.pages}
           />
         )}
       </AnimatePresence>
