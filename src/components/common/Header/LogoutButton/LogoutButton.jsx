@@ -15,7 +15,7 @@ export default function LogoutButton() {
 
     await signOut({
       redirect: true,
-      callbackUrl: "https://hansariafood.site",
+      callbackUrl: "/",
     });
   };
 

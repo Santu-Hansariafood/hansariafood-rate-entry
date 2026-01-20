@@ -99,7 +99,11 @@ export default function useRateAnalysis({
   const getTopRatesByCommodity = useCallback(() => {
     const now = new Date();
     const grouped = {};
+    if (!Array.isArray(allRates)) return {};
+
     for (const r of allRates) {
+      if (!r || !r.commodity) continue;
+
       const commodity = r.commodity || "N.A";
       const lastDate = r.lastUpdated ? new Date(r.lastUpdated) : null;
       let freshnessDays = null;
@@ -143,7 +147,7 @@ export default function useRateAnalysis({
     }
     const sorted = {};
     Object.entries(grouped).forEach(([com, items]) => {
-      sorted[com] = items
+      const validItems = items
         .filter((i) => i.latestRate != null)
         .sort((a, b) => {
           const fa = a.freshnessDays;
@@ -154,6 +158,10 @@ export default function useRateAnalysis({
           return (b.latestRate ?? -Infinity) - (a.latestRate ?? -Infinity);
         })
         .slice(0, 5);
+      
+      if (validItems.length > 0) {
+        sorted[com] = validItems;
+      }
     });
     return sorted;
   }, [allRates]);

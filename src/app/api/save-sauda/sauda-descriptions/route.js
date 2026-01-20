@@ -48,28 +48,51 @@ export async function GET(req) {
         {
           $match: {
             "saudaEntries.v.sellerName": { $in: sellerNames },
-            "saudaEntries.v.finalRate": { $gt: 0 },
-            "saudaEntries.v.tons": { $gt: 0 },
+             $expr: {
+               $and: [
+                 { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.finalRate", 0] } }, 0] },
+                 { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } }, 0] }
+               ]
+             }
           },
         },
         {
           $group: {
             _id: "$saudaEntries.v.sellerName",
             latestDate: { $max: "$date" },
+            totalTons: { 
+              $sum: { $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } } 
+            },
+            saudaCount: { $sum: 1 },
+            commodities: { $addToSet: "$saudaEntries.v.commodity" }
           },
         },
       ]);
 
-      const latestMap = new Map(
-        latestPerSeller.map((d) => [d._id, d.latestDate])
+      const statsMap = new Map(
+        latestPerSeller.map((d) => [
+          d._id, 
+          { 
+            latestDate: d.latestDate, 
+            totalTons: d.totalTons, 
+            saudaCount: d.saudaCount,
+            commodities: d.commodities 
+          }
+        ])
       );
 
       return NextResponse.json(
         {
-          sellers: allSellers.map((s) => ({
-            name: s.sellerName,
-            latestDate: latestMap.get(s.sellerName) || null,
-          })),
+          sellers: allSellers.map((s) => {
+            const stats = statsMap.get(s.sellerName) || {};
+            return {
+              name: s.sellerName,
+              latestDate: stats.latestDate || null,
+              totalTons: stats.totalTons || 0,
+              saudaCount: stats.saudaCount || 0,
+              commodities: stats.commodities || []
+            };
+          }),
           totalSellers: allSellers.length,
         },
         { status: 200 }

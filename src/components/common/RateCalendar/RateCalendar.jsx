@@ -444,20 +444,26 @@ export default function RateCalendar() {
                   </button>
                 </div>
                 <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-                  {availableCommodities.map((commodity, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleCommoditySelect(commodity)}
-                      className="w-full p-3 text-left rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 dark:border-slate-700 dark:hover:bg-slate-800"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        <span className="font-medium text-slate-800 dark:text-slate-100">
-                          {commodity}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+                  {availableCommodities.length > 0 ? (
+                    availableCommodities.map((commodity, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => handleCommoditySelect(commodity)}
+                        className="w-full p-3 text-left rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 dark:border-slate-700 dark:hover:bg-slate-800"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <span className="font-medium text-slate-800 dark:text-slate-100">
+                            {commodity}
+                          </span>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-slate-500 dark:text-slate-400">
+                      No commodities found for this company.
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </motion.div>

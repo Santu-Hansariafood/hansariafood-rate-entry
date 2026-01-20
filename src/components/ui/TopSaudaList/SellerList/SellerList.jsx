@@ -44,12 +44,19 @@ const SellerList = ({
   sellers.forEach((seller) => {
     const name = seller.name || seller;
     const latest = seller.latestDate || null;
+    const totalTons = seller.totalTons || 0;
+    const saudaCount = seller.saudaCount || 0;
+    
     const status = getSellerStatus(latest);
-    const item = { name, latest, status };
+    const item = { name, latest, status, totalTons, saudaCount };
+    
     if (status === "active") primeSellers.push(item);
     else if (status === "inactive") attentionSellers.push(item);
     else otherSellers.push(item);
   });
+
+  // Sort Prime Sellers by Volume (Tons) descending to show "Top" sellers first
+  primeSellers.sort((a, b) => b.totalTons - a.totalTons);
 
   const SellerItem = ({ item }) => (
     <button
@@ -65,23 +72,42 @@ const SellerList = ({
             : "bg-white dark:bg-gray-800 hover:bg-green-50 dark:hover:bg-green-800/40 border border-green-200 dark:border-green-600"
         }`}
     >
-      <span className="flex items-center gap-1.5">
-        {item.status === "active" && (
-          <Star
-            size={14}
-            className="text-yellow-500 drop-shadow animate-bounce mt-[1px]"
-          />
-        )}
-        <span
-          className={`font-semibold text-base ${
-            selectedSeller === item.name
-              ? "text-white"
-              : "text-gray-900 dark:text-gray-100"
-          }`}
-        >
-          {item.name}
+      <div className="flex flex-col gap-1 overflow-hidden">
+        <span className="flex items-center gap-1.5">
+            {item.status === "active" && (
+            <Star
+                size={14}
+                className="text-yellow-500 drop-shadow animate-bounce mt-[1px]"
+            />
+            )}
+            <span
+            className={`font-semibold text-base truncate ${
+                selectedSeller === item.name
+                ? "text-white"
+                : "text-gray-900 dark:text-gray-100"
+            }`}
+            >
+            {item.name}
+            </span>
         </span>
-      </span>
+        
+        {/* Detail Stats */}
+        <div className={`text-xs flex items-center gap-2 ${
+             selectedSeller === item.name ? "text-green-50" : "text-gray-500 dark:text-gray-400"
+        }`}>
+            {item.totalTons > 0 && (
+                <span className="font-medium">{item.totalTons.toLocaleString()} Tons</span>
+            )}
+            {item.totalTons > 0 && item.saudaCount > 0 && <span>•</span>}
+            {item.saudaCount > 0 && (
+                <span>{item.saudaCount} Orders</span>
+            )}
+            {(!item.totalTons && !item.saudaCount && item.latest) && (
+                <span>Last: {item.latest}</span>
+            )}
+        </div>
+      </div>
+
       <span className="shrink-0 inline-flex items-center gap-1 text-xs font-medium">
         {item.status === "active" && (
           <ArrowUpCircle
