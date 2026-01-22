@@ -9,7 +9,8 @@ export const useSaudaSave = (
   tradeMode,
   today,
   lastUpdated,
-  setLastUpdated
+  setLastUpdated,
+  mobile // Add mobile parameter
 ) => {
   const [saveStatus, setSaveStatus] = useState({});
 
@@ -59,6 +60,7 @@ export const useSaudaSave = (
         })),
       },
       lastUpdated,
+      mobile, // Include mobile in payload
     };
 
     const effectiveRole =

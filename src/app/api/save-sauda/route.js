@@ -19,6 +19,7 @@ export async function POST(req) {
       saudaEntries,
       buyer,
       seller,
+      mobile,
       lastUpdated: clientLastUpdated,
     } = await req.json();
 
@@ -110,6 +111,7 @@ export async function POST(req) {
       existingEntry.time = time || existingEntry.time;
       if (buyer) existingEntry.buyer = buyer.trim();
       if (seller) existingEntry.seller = seller.trim();
+      if (mobile) existingEntry.mobile = mobile;
       existingEntry.company = company.trim();
       existingEntry.lastUpdated = new Date();
 
@@ -121,6 +123,7 @@ export async function POST(req) {
         time: time || "",
         buyer: buyer?.trim(),
         seller: seller?.trim(),
+        mobile: mobile,
         saudaEntries: normalizedEntries,
         lastUpdated: new Date(),
       });

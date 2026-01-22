@@ -19,6 +19,10 @@ const RateEntryList = dynamic(
   () => import("@/components/ui/RateEntryList/RateEntryList"),
   { loading: () => <Loading /> }
 );
+const SaudaEntryList = dynamic(
+  () => import("@/components/ui/SaudaEntryList/SaudaEntryList"),
+  { loading: () => <Loading /> }
+);
 const TopSaudaList = dynamic(
   () => import("@/components/ui/TopSaudaList/TopSaudaList"),
   { loading: () => <Loading /> }
@@ -271,6 +275,9 @@ const AdminDashboard = () => (
     </section>
     <section role="region" aria-label="Rate Entry List">
       <RateEntryList />
+    </section>
+    <section role="region" aria-label="Sauda Entry List">
+      <SaudaEntryList />
     </section>
     <section role="region" aria-label="Sauda Tons Chart">
       <SaudaTonsChart />

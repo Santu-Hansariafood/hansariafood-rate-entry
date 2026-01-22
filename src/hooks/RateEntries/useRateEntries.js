@@ -4,15 +4,26 @@ import { toast } from "react-toastify";
 
 const useRateEntries = () => {
   const [rates, setRates] = useState([]);
+  const [saudas, setSaudas] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [date, setDate] = useState("");
+
+  useEffect(() => {
+    const today = new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
+    setDate(today);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
+      if(!date) return;
+      
+      setLoading(true);
       try {
-        const [ratesRes, usersRes] = await Promise.all([
+        const [ratesRes, usersRes, saudaRes] = await Promise.all([
           axiosInstance.get("/rate"),
           axiosInstance.get("/auth/register"),
+          axiosInstance.get(`/sauda/today?date=${date}`),
         ]);
 
         const safeRates = Array.isArray(ratesRes.data) ? ratesRes.data : [];
@@ -20,6 +31,11 @@ const useRateEntries = () => {
         setRates(
           safeRates.filter((r) => r?.newRate && r?.mobile)
         );
+
+        const safeSaudas = Array.isArray(saudaRes.data) ? saudaRes.data : [];
+        setSaudas(safeSaudas);
+
+        // API might return { users: [...] } or just [...]
 
         const userData = usersRes.data?.users || usersRes.data || [];
         const safeUsers = Array.isArray(userData) ? userData : [];
@@ -34,7 +50,7 @@ const useRateEntries = () => {
     };
 
     fetchData();
-  }, []);
+  }, [date]);
 
   const mobileToName = useMemo(() => {
     const safeUsers = Array.isArray(users) ? users : [];
@@ -50,17 +66,30 @@ const useRateEntries = () => {
 
   const groupedRates = useMemo(() => {
     const safeRates = Array.isArray(rates) ? rates : [];
+    const safeSaudas = Array.isArray(saudas) ? saudas : [];
 
-    return safeRates.reduce((acc, rate) => {
-      if (!rate.mobile) return acc;
+    const grouped = {};
+
+    // Group Rates
+    safeRates.forEach((rate) => {
+      if (!rate.mobile) return;
       const mobileKey = String(rate.mobile);
-      if (!acc[mobileKey]) acc[mobileKey] = [];
-      acc[mobileKey].push(rate);
-      return acc;
-    }, {});
-  }, [rates]);
+      if (!grouped[mobileKey]) grouped[mobileKey] = { rates: [], saudas: [] };
+      grouped[mobileKey].rates.push(rate);
+    });
 
-  return { groupedRates, mobileToName, loading };
+    // Group Saudas
+    safeSaudas.forEach((sauda) => {
+      if (!sauda.mobile) return;
+      const mobileKey = String(sauda.mobile);
+      if (!grouped[mobileKey]) grouped[mobileKey] = { rates: [], saudas: [] };
+      grouped[mobileKey].saudas.push(sauda);
+    });
+
+    return grouped;
+  }, [rates, saudas]);
+
+  return { groupedRates, mobileToName, loading, date, setDate };
 };
 
 export default useRateEntries;

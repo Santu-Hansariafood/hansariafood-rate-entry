@@ -22,6 +22,7 @@ const SaudaEntrySchema = new mongoose.Schema(
     seller: { type: String },
     date: { type: String, required: true },
     time: { type: String },
+    mobile: { type: String }, // User's mobile number
     saudaEntries: {
       type: Map,
       of: [saudaEntrySubSchema],

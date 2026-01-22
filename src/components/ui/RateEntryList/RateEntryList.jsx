@@ -45,7 +45,7 @@ const RateEntryList = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Object.entries(groupedRates).map(([mobile, entries], i) => (
+              {Object.entries(groupedRates).map(([mobile, data], i) => (
                 <motion.div
                   key={mobile}
                   layout
@@ -68,7 +68,7 @@ const RateEntryList = () => {
                         {mobileToName[mobile] || mobile}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {entries.length} Entr{entries.length > 1 ? "ies" : "y"}
+                        {data.rates.length} Rates
                       </p>
                     </div>
 
@@ -88,38 +88,41 @@ const RateEntryList = () => {
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="px-5 py-4 space-y-4 border-t border-white/20"
+                        className="px-5 py-4 space-y-6 border-t border-white/20"
                       >
-                        {entries.map((entry, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 5 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.05 }}
-                            className="rounded-xl p-4 bg-white/90 dark:bg-gray-900/70
-                                     border border-gray-200/60 dark:border-gray-700/50
-                                     shadow-sm hover:shadow-md transition"
-                          >
-                            <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 font-medium">
-                              <Building2 size={16} /> {entry.company}
+                        {data.rates.length > 0 && (
+                          <div>
+                            <div className="space-y-3">
+                              {data.rates.map((entry, idx) => (
+                                <div
+                                  key={idx}
+                                  className="rounded-xl p-3 bg-white/90 dark:bg-gray-900/70
+                                           border border-gray-200/60 dark:border-gray-700/50
+                                           shadow-sm"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                                      <Building2 size={14} className="inline mr-1" />
+                                      {entry.company}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      <Clock4 size={12} className="inline mr-1" />
+                                      {new Date(entry.lastUpdated).toLocaleTimeString("en-GB", { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-between mt-2 text-sm">
+                                    <span className="text-purple-600 dark:text-purple-400 flex items-center">
+                                      <MapPin size={14} className="mr-1" /> {entry.location}
+                                    </span>
+                                    <span className="text-green-600 dark:text-green-400 font-bold flex items-center">
+                                      <IndianRupee size={14} className="mr-1" /> {entry.newRate}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-
-                            <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
-                              <MapPin size={16} /> {entry.location}
-                            </div>
-
-                            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 font-semibold">
-                              <IndianRupee size={16} /> ₹{entry.newRate}
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                              <Clock4 size={14} />
-                              {new Date(entry.lastUpdated).toLocaleString(
-                                "en-GB"
-                              )}
-                            </div>
-                          </motion.div>
-                        ))}
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>

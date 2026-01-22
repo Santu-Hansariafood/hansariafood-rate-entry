@@ -13,6 +13,7 @@ import { useSaudaSave } from "@/hooks/ManageCompanyPopup/useSaudaSave";
 import { useSaudaExport } from "@/hooks/ManageCompanyPopup/useSaudaExport";
 import { useFirstLoadBlocker } from "@/hooks/ManageCompanyPopup/useFirstLoadBlocker";
 import { useSellers } from "@/hooks/ManageCompanyPopup/useSellers";
+import { useUser } from "@/context/UserContext";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   suspense: true,
@@ -40,6 +41,7 @@ const TradeModeSelector = dynamic(
 );
 
 export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
+  const { mobile } = useUser();
   const today = useToday();
   const { company, loading: loadingCompany, role } = useCompanyData(name);
   const { rates, rateMap, loading: loadingRates } = useRateData(company?.name);
@@ -63,7 +65,8 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
     tradeMode,
     today,
     lastUpdated,
-    setLastUpdated
+    setLastUpdated,
+    mobile
   );
   const exportHook = useSaudaExport({ company, today, rates, entries });
 
