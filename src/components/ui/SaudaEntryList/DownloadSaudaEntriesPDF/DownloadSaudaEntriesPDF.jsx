@@ -1,7 +1,7 @@
-import React from 'react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { Download } from 'lucide-react';
+import React from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { Download } from "lucide-react";
 
 const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
   const handleDownload = () => {
@@ -13,7 +13,14 @@ const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const dateToShow = date || new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
+
+    const marginLeft = 40;
+    const marginRight = 40;
+    const usableWidth = pageWidth - marginLeft - marginRight;
+
+    const dateToShow =
+      date || new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
+
     const timeToShow = new Date().toLocaleTimeString("en-IN", {
       hour: "2-digit",
       minute: "2-digit",
@@ -60,68 +67,73 @@ const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
       );
     }
 
-    // Transform Data for Table
     const tableBody = [];
-    
+
     saudaGroups.forEach(([mobile, data]) => {
       const userName = mobileToName[mobile] || mobile;
-      
-      // Group Header Row
-      tableBody.push([{ 
-        content: userName, 
-        colSpan: 6, 
-        styles: { 
-          fillColor: [255, 240, 200], 
-          textColor: [0, 0, 0], 
-          fontStyle: 'bold',
-          halign: 'left'
-        } 
-      }]);
 
-      // Data Rows
-      data.saudas.forEach(sauda => {
+      tableBody.push([
+        {
+          content: userName,
+          colSpan: 6,
+          styles: {
+            fillColor: [255, 240, 200],
+            textColor: [0, 0, 0],
+            fontStyle: "bold",
+            halign: "left",
+          },
+        },
+      ]);
+
+      data.saudas.forEach((sauda) => {
         tableBody.push([
           sauda.company,
-          sauda.saudaNo || '-',
+          sauda.saudaNo || "-",
           sauda.commodity,
           `${sauda.tons} Tons`,
-          `₹${sauda.finalRate}`,
-          sauda.sellerName
+          `Rs. ${sauda.finalRate}`,
+          sauda.sellerName,
         ]);
       });
     });
 
     autoTable(doc, {
       startY: 140,
-      margin: { top: 140, left: 40, right: 40 },
+      margin: { top: 140, left: marginLeft, right: marginRight },
       pageBreak: "auto",
       rowPageBreak: "avoid",
 
-      head: [['Company', 'Sauda #', 'Commodity', 'Quantity', 'Rate', 'Seller']],
+      head: [
+        ["Company", "Sauda #", "Commodity", "Quantity", "Rate", "Seller"],
+      ],
       body: tableBody,
-      
+
       theme: "grid",
+      tableWidth: usableWidth,
+
       styles: {
         fontSize: 9,
         cellPadding: 6,
         valign: "middle",
       },
+
       headStyles: {
-        fillColor: [255, 165, 0], // Orange Header
+        fillColor: [255, 165, 0],
         textColor: 255,
         fontStyle: "bold",
         halign: "center",
       },
+
       columnStyles: {
-        0: { cellWidth: 150 }, // Company
-        1: { cellWidth: 60, halign: 'center' }, // Sauda #
-        2: { cellWidth: 100 }, // Commodity
-        3: { cellWidth: 80, halign: 'right' }, // Quantity
-        4: { cellWidth: 80, halign: 'right' }, // Rate
-        5: { cellWidth: 100 }, // Seller
+        0: { cellWidth: usableWidth * 0.22 },
+        1: { cellWidth: usableWidth * 0.1, halign: "center" },
+        2: { cellWidth: usableWidth * 0.18 },
+        3: { cellWidth: usableWidth * 0.15, halign: "right" },
+        4: { cellWidth: usableWidth * 0.15, halign: "right" },
+        5: { cellWidth: usableWidth * 0.2 },
       },
 
-      didDrawPage: (data) => {
+      didDrawPage: () => {
         drawHeaderFooter(doc, pageWidth, pageHeight, dateToShow, timeToShow);
       },
     });
@@ -134,7 +146,6 @@ const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
       finalY = 140;
     }
 
-    // Contact Info Section
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(22, 163, 74);
@@ -145,7 +156,6 @@ const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
     const boxY = finalY + 14;
     const boxWidth = (pageWidth - 120) / 2;
 
-    // Contact 1: Gopal Agarwal
     doc.setFillColor(240, 249, 255);
     doc.setDrawColor(37, 99, 235);
     doc.roundedRect(50, boxY, boxWidth, 80, 8, 8, "FD");
@@ -158,7 +168,6 @@ const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
     doc.text("Mobile: +91 9830433535", 64, boxY + 40);
     doc.text("Email: gopal@hansariafood.com", 64, boxY + 56);
 
-    // Contact 2: Prince Surana
     doc.setFillColor(250, 245, 255);
     doc.setDrawColor(168, 85, 247);
     doc.roundedRect(70 + boxWidth, boxY, boxWidth, 80, 8, 8, "FD");
