@@ -4,13 +4,11 @@ import dynamic from "next/dynamic";
 import React, { Suspense, useEffect } from "react";
 import { motion } from "framer-motion";
 import Loading from "../Loading/Loading";
-
 const FooterCopyright = dynamic(() =>
   import("./FooterCopyright/FooterCopyright")
 );
 const FooterLinks = dynamic(() => import("./FooterLinks/FooterLinks"));
-const TaskChat = dynamic(() => import("./TaskChat/TaskChat"), { ssr: false });
-
+const TaskChat = dynamic(() => import("./TaskChat/TaskChat"));
 const Footer = () => {
   useEffect(() => {
     import("./FooterCopyright/FooterCopyright");

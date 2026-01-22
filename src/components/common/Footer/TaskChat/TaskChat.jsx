@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Send, CheckCircle, AlertCircle, X, User } from "lucide-react";
+import { ClipboardList, Send, CheckCircle, AlertCircle, X, User, ListTodo } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { useUser } from "@/context/UserContext";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import Loading from "../../Loading/Loading";
 
 const TaskChat = () => {
   const userContext = useUser();
-  const mobile = userContext?.mobile;
+  const { data: session } = useSession();
+  const mobile = userContext?.mobile || session?.user?.mobile;
   const [isOpen, setIsOpen] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [input, setInput] = useState("");
@@ -21,7 +24,6 @@ const TaskChat = () => {
   const inputRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch Users for Mentions
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -35,7 +37,6 @@ const TaskChat = () => {
     fetchUsers();
   }, []);
 
-  // Poll Tasks
   const fetchTasks = useCallback(async () => {
     if (!mobile) return;
     try {
@@ -47,14 +48,11 @@ const TaskChat = () => {
   }, [mobile]);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchTasks();
-      const interval = setInterval(fetchTasks, 5000); // Poll every 5s
-      return () => clearInterval(interval);
-    }
-  }, [isOpen, fetchTasks]);
+    fetchTasks();
+    const interval = setInterval(fetchTasks, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, [fetchTasks]);
 
-  // Handle Input Change (Detect @)
   const handleInputChange = (e) => {
     const val = e.target.value;
     setInput(val);
@@ -68,10 +66,9 @@ const TaskChat = () => {
     }
   };
 
-  // Select User from Mention List
   const handleSelectUser = (user) => {
     const words = input.split(" ");
-    words.pop(); // Remove the incomplete @mention
+    words.pop();
     const newValue = words.join(" ") + ` @${user.name} `;
     setInput(newValue);
     setSelectedReceivers((prev) => [...prev, { mobile: user.mobile, name: user.name }]);
@@ -79,7 +76,6 @@ const TaskChat = () => {
     inputRef.current?.focus();
   };
 
-  // Send Task
   const handleSend = async () => {
     if (!input.trim() || selectedReceivers.length === 0) {
       toast.warning("Please mention a user (@name) to assign the task.");
@@ -88,7 +84,6 @@ const TaskChat = () => {
 
     setLoading(true);
     try {
-        // Check for "important" keyword
       const isImportant = input.toLowerCase().includes("important");
       const senderName = localStorage.getItem("userName") || "Unknown";
 
@@ -113,7 +108,7 @@ const TaskChat = () => {
 
   const handleMarkDone = async (taskId) => {
     try {
-      const userName = localStorage.getItem("userName") || "Unknown";
+      const userName = session?.user?.name || localStorage.getItem("userName") || "Unknown";
       await axiosInstance.put("/tasks", {
         taskId,
         status: "done",
@@ -126,7 +121,6 @@ const TaskChat = () => {
     }
   };
 
-  // Filter Tasks
   const myTasks = mobile ? tasks.filter(t => t.receivers.some(r => String(r.mobile) === String(mobile))) : [];
   const sentTasks = mobile ? tasks.filter(t => String(t.sender) === String(mobile)) : [];
 
@@ -135,27 +129,31 @@ const TaskChat = () => {
     String(u.mobile).includes(mentionQuery)
   );
 
-  const pendingCount = myTasks.filter(t => t.status === 'pending').length;
+  const pendingCount = myTasks.filter((t) => {
+    if (t.status !== "pending") return false;
+    const taskDate = new Date(t.createdAt).toLocaleDateString();
+    const today = new Date().toLocaleDateString();
+    return taskDate === today;
+  }).length;
 
   if (!mobile) return null;
 
   return (
-    <>
+    <Suspense fallback={<Loading />}>
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-24 right-6 z-50 p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-full shadow-xl hover:shadow-2xl transition-all"
+        className="fixed bottom-24 right-6 z-[60] flex items-center justify-center w-14 h-14 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.3)] border border-white/20 backdrop-blur-sm transition-all duration-300"
+        title="Assign Tasks"
       >
-        <MessageSquare size={24} />
+        <ListTodo size={26} strokeWidth={2} />
         {pendingCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 animate-pulse">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white dark:border-gray-900 animate-bounce">
             {pendingCount > 9 ? "9+" : pendingCount}
           </span>
         )}
       </motion.button>
-
-      {/* Chat Popup */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -164,7 +162,6 @@ const TaskChat = () => {
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             className="fixed bottom-40 right-6 z-50 w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[500px]"
           >
-            {/* Header */}
             <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-center">
               <h3 className="font-bold text-lg">Team Tasks</h3>
               <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">
@@ -172,7 +169,6 @@ const TaskChat = () => {
               </button>
             </div>
 
-            {/* Tabs */}
             <div className="flex border-b border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setActiveTab("inbox")}
@@ -196,7 +192,6 @@ const TaskChat = () => {
               </button>
             </div>
 
-            {/* Task List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-950/50">
               {(activeTab === "inbox" ? myTasks : sentTasks).length === 0 ? (
                 <div className="text-center text-gray-400 py-10">No tasks found</div>
@@ -211,42 +206,58 @@ const TaskChat = () => {
                       task.status === "done"
                         ? "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800"
                         : "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"
-                    } shadow-sm`}
+                    } shadow-sm group hover:shadow-md transition-shadow duration-200`}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
-                        {task.isImportant && (
-                          <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                            <AlertCircle size={12} /> Important
-                          </span>
-                        )}
-                        <span className="text-xs text-gray-500">
-                          {new Date(task.createdAt).toLocaleString()}
-                        </span>
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${
+                            activeTab === "inbox" ? "bg-gradient-to-br from-blue-500 to-indigo-600" : "bg-gradient-to-br from-purple-500 to-pink-600"
+                        }`}>
+                            {activeTab === "inbox" 
+                                ? (task.senderName?.[0] || task.sender?.[0] || "U").toUpperCase()
+                                : (task.receivers[0]?.name?.[0] || "U").toUpperCase()
+                            }
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                {activeTab === "inbox" 
+                                    ? (task.senderName || task.sender)
+                                    : `To: ${task.receivers.map(r => r.name).join(", ")}`
+                                }
+                            </p>
+                            <span className="text-[10px] text-gray-400">
+                                {new Date(task.createdAt).toLocaleString()}
+                            </span>
+                        </div>
                       </div>
+                      
                       {task.status === "done" && (
-                        <span className="text-green-600 text-xs font-bold flex items-center gap-1">
+                        <span className="text-green-600 text-xs font-bold flex items-center gap-1 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
                           <CheckCircle size={12} /> Done
                         </span>
                       )}
                     </div>
 
-                    <p className="text-sm text-gray-800 dark:text-gray-200 mb-3">{task.content}</p>
+                    <div className="pl-11">
+                        {task.isImportant && (
+                            <div className="mb-2">
+                                <span className="bg-red-50 text-red-600 border border-red-100 text-[10px] px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                                    <AlertCircle size={10} /> Important
+                                </span>
+                            </div>
+                        )}
+                        <p className="text-sm text-gray-800 dark:text-gray-200 mb-3 leading-relaxed">
+                            {task.content}
+                        </p>
+                    </div>
 
-                    <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span>
-                        {activeTab === "inbox" 
-                          ? `From: ${task.senderName || task.sender}`
-                          : `To: ${task.receivers.map(r => r.name).join(", ")}`
-                        }
-                      </span>
-                      
+                    <div className="flex justify-end items-center text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-800">
                       {activeTab === "inbox" && task.status === "pending" && (
                         <button
                           onClick={() => handleMarkDone(task._id)}
-                          className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition text-xs font-semibold"
+                          className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-sm hover:shadow transition-all text-xs font-medium flex items-center gap-1"
                         >
-                          Mark Done
+                          <CheckCircle size={12} /> Mark Done
                         </button>
                       )}
                     </div>
@@ -255,7 +266,6 @@ const TaskChat = () => {
               )}
             </div>
 
-            {/* Input Area */}
             <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 relative">
               {showMentions && (
                 <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-h-48 overflow-y-auto">
@@ -300,7 +310,7 @@ const TaskChat = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </Suspense>
   );
 };
 

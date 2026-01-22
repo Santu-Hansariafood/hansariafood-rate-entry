@@ -6,7 +6,7 @@ import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
 import { UserProvider } from "@/context/UserContext";
 import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
-
+import TaskChat from "@/components/common/Footer/TaskChat/TaskChat";
 import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
 
 const geistSans = Geist({
@@ -166,14 +166,17 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           <AuthWrapper>
-            <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
+            <UserProvider>
+              <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
 
-            <main className="flex-1 pt-16">
-              <UserProvider>{children}</UserProvider>
-            </main>
+              <main className="flex-1 pt-16">
+                {children}
+              </main>
 
-            <Footer className="mt-auto" />
-            <ScrollToTop />
+              <Footer className="mt-auto" />
+              <TaskChat />
+              <ScrollToTop />
+            </UserProvider>
           </AuthWrapper>
         </AuthProvider>
       </body>
