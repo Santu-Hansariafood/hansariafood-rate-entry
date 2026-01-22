@@ -11,7 +11,6 @@ import { ADMINS } from "@/config/navigation";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
-// Dashboard Components
 const ViewRate = dynamic(
   () => import("@/components/common/ViewRate/ViewRate"),
   { loading: () => <Loading /> }
@@ -66,13 +65,21 @@ export default function Welcome() {
       const userData = users.find(
         (user) => user.mobile.toString() === mobile?.toString()
       );
-
-      if (userData) {
+      if (userData && userData.name) {
         const formattedName = formatName(userData.name);
         setName(formattedName);
         localStorage.setItem("mobile", userData.mobile);
       } else {
-        setName("Guest");
+         const storedName = localStorage.getItem("userName");
+         if(storedName) {
+            setName(storedName);
+         } else {
+            setName("Guest");
+         }
+      }
+      
+      if(userData && userData.name) {
+         localStorage.setItem("userName", formatName(userData.name));
       }
 
       setAssignedCompanies(companyResponse.data?.companies ?? []);
@@ -146,7 +153,6 @@ export default function Welcome() {
     return (
       <Suspense fallback={<Loading />}>
         <div className="relative min-h-screen bg-gray-100 dark:bg-gray-950 pb-12">
-          {/* Background Elements */}
           <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-teal-500/10 to-transparent pointer-events-none" />
           
           <div className="relative pt-8 px-6 text-center">

@@ -54,42 +54,22 @@ const ViewRate = () => {
   useEffect(() => {
     const fetchRates = async () => {
       try {
-        const res = await axiosInstance.get("/rate");
+        // Use optimized stats endpoint
+        const res = await axiosInstance.get("/rate/stats");
         const data = res.data;
 
-        const allRates = [];
-
-        data.forEach((item) => {
-          item.oldRates.forEach((entry) => {
-            const [rateStr, dateStr] = entry.split(" (");
-            const date = dateStr?.replace(")", "").trim();
-            allRates.push({ date, rate: parseFloat(rateStr) });
-          });
-
-          if (item.hasNewRateToday && item.newRate !== "") {
-            const today = new Date(item.lastUpdated).toLocaleDateString(
-              "en-GB"
-            );
-            allRates.push({ date: today, rate: parseFloat(item.newRate) });
-          }
+        const parsedData = data.map((item) => {
+          // item is { _id: "YYYY-MM-DD", count: N }
+          const [year, month, day] = item._id.split("-").map(Number);
+          // Create date object (Month is 0-indexed in JS Date)
+          const date = new Date(year, month - 1, day);
+          
+          return {
+            date: date,
+            count: item.count,
+            label: date.toLocaleDateString("en-GB"), // DD/MM/YYYY for display
+          };
         });
-
-        const groupedByDate = {};
-        allRates.forEach(({ date }) => {
-          if (!groupedByDate[date]) groupedByDate[date] = 0;
-          groupedByDate[date]++;
-        });
-
-        const parsedData = Object.entries(groupedByDate).map(
-          ([dateStr, count]) => {
-            const [day, month, year] = dateStr.split("/").map(Number);
-            return {
-              date: new Date(year, month - 1, day),
-              count,
-              label: dateStr,
-            };
-          }
-        );
 
         setRateData(parsedData);
       } catch (err) {

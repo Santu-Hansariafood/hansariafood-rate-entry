@@ -3,7 +3,13 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
+export const revalidate = 60;
+
+const getCutoffDate = (months) => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return d;
+};
 
 export async function GET(req) {
   if (!verifyApiKey(req)) {
@@ -11,7 +17,13 @@ export async function GET(req) {
   }
 
   try {
+    await connectDB();
     const totals = await SaudaEntry.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: getCutoffDate(12) }
+        }
+      },
       {
         $project: {
           date: 1,

@@ -12,27 +12,30 @@ export async function GET(req) {
   }
 
   try {
+    await connectDB();
+    
     const { searchParams } = new URL(req.url);
     const days = parseInt(searchParams.get("days") || "15");
     const cutoffDate = dayjs().subtract(days, "day").toDate();
 
-    const recent = await DescriptionStats.find({
-      lastUsedDate: { $gte: cutoffDate },
-    });
+    const recentDocs = await DescriptionStats.find(
+      { lastUsedDate: { $gte: cutoffDate } }
+    ).select("description").lean();
+    
+    const recentNames = recentDocs.map(d => d.description);
 
-    const recentDescriptions = new Set(recent.map((r) => r.description));
-    const all = await DescriptionStats.find();
+    const inactiveDescriptions = await DescriptionStats.find({
+      description: { $nin: recentNames }
+    }).lean();
 
-    const inactiveDescriptions = all
-      .filter((item) => !recentDescriptions.has(item.description))
-      .map((item) => ({
+    const formatted = inactiveDescriptions.map((item) => ({
         description: item.description,
         count: item.count,
         lastUsedDate: item.lastUsedDate,
         totalQuantity: item.totalQuantity,
-      }));
+    }));
 
-    return NextResponse.json(inactiveDescriptions);
+    return NextResponse.json(formatted);
   } catch (error) {
     console.error("GET /description-stats error:", error);
     return NextResponse.json(
@@ -48,6 +51,7 @@ export async function POST(req) {
   }
 
   try {
+    await connectDB();
     const body = await req.json();
     const { description, quantity } = body;
 

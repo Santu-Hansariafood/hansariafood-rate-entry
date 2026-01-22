@@ -34,9 +34,10 @@ const SaudaTonsChart = () => {
   } = useChartFilters();
   const data = useSaudaTonsData();
 
-  const filtered = data
+  const filtered = (data || [])
     .filter(
       (d) =>
+        d && d.date &&
         d.date.getMonth() === selectedMonth &&
         d.date.getFullYear() === selectedYear
     )

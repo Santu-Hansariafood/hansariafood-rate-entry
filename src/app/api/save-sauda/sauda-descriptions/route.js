@@ -6,6 +6,12 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 await connectDB();
 
+const getCutoffDate = (months) => {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return d;
+};
+
 export async function GET(req) {
   try {
     if (!verifyApiKey(req)) {
@@ -35,6 +41,11 @@ export async function GET(req) {
       const sellerNames = allSellers.map((s) => s.sellerName);
 
       const latestPerSeller = await SaudaEntry.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: getCutoffDate(12) }
+          }
+        },
         {
           $project: {
             date: 1,
@@ -111,6 +122,7 @@ export async function GET(req) {
         $match: {
           ...(companyName ? { company: companyName } : {}),
           ...dateFilter,
+          ...(!selectedDate && !selectedMonth ? { createdAt: { $gte: getCutoffDate(12) } } : {})
         },
       },
       {
@@ -228,17 +240,16 @@ export async function GET(req) {
       },
     ];
 
-    const facetResult = await SaudaEntry.aggregate(facetPipeline);
-    const results = facetResult?.[0]?.results || [];
-    const totalCount = facetResult?.[0]?.total?.[0]?.count || 0;
+    const facetPromise = SaudaEntry.aggregate(facetPipeline);
+    let sellerAggregationPromise = Promise.resolve([]);
 
-    let sellerInfo = null;
-    if (companyName && results.length > 0) {
-      const sellerAggregation = await SaudaEntry.aggregate([
+    if (companyName) {
+      sellerAggregationPromise = SaudaEntry.aggregate([
         {
           $match: {
             company: companyName,
             ...dateFilter,
+            ...(!selectedDate && !selectedMonth ? { createdAt: { $gte: getCutoffDate(12) } } : {})
           },
         },
         {
@@ -288,22 +299,31 @@ export async function GET(req) {
         },
         { $sort: { count: -1, totalTons: -1 } },
       ]);
+    }
 
-      if (sellerAggregation.length > 0) {
-        sellerInfo = {
-          sellers: sellerAggregation.map(seller => ({
-            sellerName: seller._id.sellerName,
-            sellerCompany: seller._id.sellerCompany,
-            transactionCount: seller.count,
-            totalTons: seller.totalTons,
-            totalValue: seller.totalValue,
-          })),
-          primarySeller: {
-            sellerName: sellerAggregation[0]._id.sellerName,
-            sellerCompany: sellerAggregation[0]._id.sellerCompany,
-          }
-        };
-      }
+    const [facetResult, sellerAggregation] = await Promise.all([
+      facetPromise,
+      sellerAggregationPromise
+    ]);
+
+    const results = facetResult?.[0]?.results || [];
+    const totalCount = facetResult?.[0]?.total?.[0]?.count || 0;
+
+    let sellerInfo = null;
+    if (sellerAggregation.length > 0) {
+      sellerInfo = {
+        sellers: sellerAggregation.map(seller => ({
+          sellerName: seller._id.sellerName,
+          sellerCompany: seller._id.sellerCompany,
+          transactionCount: seller.count,
+          totalTons: seller.totalTons,
+          totalValue: seller.totalValue,
+        })),
+        primarySeller: {
+          sellerName: sellerAggregation[0]._id.sellerName,
+          sellerCompany: sellerAggregation[0]._id.sellerCompany,
+        }
+      };
     }
 
     return NextResponse.json(

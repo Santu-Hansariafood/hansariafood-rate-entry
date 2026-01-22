@@ -20,6 +20,10 @@ const RateSchema = new mongoose.Schema({
   others: { type: String },
 });
 
+RateSchema.index({ company: 1, location: 1, commodity: 1 });
+RateSchema.index({ company: 1 });
+RateSchema.index({ newRateDate: 1 });
+
 RateSchema.pre("save", function (next) {
   const now = new Date();
   const today = new Date(now);
