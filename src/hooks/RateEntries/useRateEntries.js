@@ -21,7 +21,8 @@ const useRateEntries = () => {
           safeRates.filter((r) => r?.newRate && r?.mobile)
         );
 
-        const safeUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
+        const userData = usersRes.data?.users || usersRes.data || [];
+        const safeUsers = Array.isArray(userData) ? userData : [];
 
         setUsers(safeUsers);
       } catch (error) {
@@ -39,8 +40,9 @@ const useRateEntries = () => {
     const safeUsers = Array.isArray(users) ? users : [];
 
     return safeUsers.reduce((acc, user) => {
-      if (user.mobile) {
-        acc[user.mobile] = user.name || "Unknown User";
+      const mobileKey = String(user.mobile);
+      if (mobileKey) {
+        acc[mobileKey] = user.name || "Unknown User";
       }
       return acc;
     }, {});
@@ -51,8 +53,9 @@ const useRateEntries = () => {
 
     return safeRates.reduce((acc, rate) => {
       if (!rate.mobile) return acc;
-      if (!acc[rate.mobile]) acc[rate.mobile] = [];
-      acc[rate.mobile].push(rate);
+      const mobileKey = String(rate.mobile);
+      if (!acc[mobileKey]) acc[mobileKey] = [];
+      acc[mobileKey].push(rate);
       return acc;
     }, {});
   }, [rates]);
