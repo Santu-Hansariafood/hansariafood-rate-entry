@@ -90,6 +90,7 @@ export const authOptions = {
             id: userId,
             name: user.name,
             mobile: user.mobile.toString(),
+            email: user.email,
             pages: user.pages || [],
           };
         } catch (error) {
@@ -110,6 +111,7 @@ export const authOptions = {
       if (user) {
         token.sub = user.id;
         token.mobile = user.mobile;
+        token.email = user.email;
         token.pages = user.pages;
       }
       return token;
@@ -117,6 +119,7 @@ export const authOptions = {
     async session({ session, token }) {
       session.user.id = token.sub;
       session.user.mobile = token.mobile;
+      session.user.email = token.email;
       session.user.pages = token.pages;
       return session;
     },

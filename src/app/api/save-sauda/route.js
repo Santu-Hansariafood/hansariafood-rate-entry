@@ -3,6 +3,11 @@ import { connectDB } from "@/lib/mongodb";
 import mongoose from "mongoose";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+import { sendEmail } from "@/lib/email/sendEmail";
+import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
+import { generateSaudaPDFNode } from "@/utils/generateSaudaPDF/generateSaudaPDFNode";
 
 await connectDB();
 
@@ -127,6 +132,66 @@ export async function POST(req) {
         saudaEntries: normalizedEntries,
         lastUpdated: new Date(),
       });
+    }
+
+    // Generate Email Content and Send
+    try {
+      const saudaEntriesObject = {};
+      if (existingEntry.saudaEntries instanceof Map) {
+        for (const [key, value] of existingEntry.saudaEntries.entries()) {
+          saudaEntriesObject[key] = value;
+        }
+      } else {
+        Object.assign(saudaEntriesObject, existingEntry.saudaEntries);
+      }
+
+      const session = await getServerSession(authOptions);
+      const userEmail = session?.user?.email;
+
+      // Get admin emails from environment variable
+      const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
+        .split(",")
+        .map((e) => e.trim())
+        .filter(Boolean);
+
+      const recipients = [...adminEmails];
+      if (userEmail && !recipients.includes(userEmail)) {
+        recipients.push(userEmail);
+      }
+
+      const emailHtml = generateSaudaEmailTemplate({
+        company: existingEntry.company,
+        date: existingEntry.date,
+        time: existingEntry.time,
+        saudaEntries: saudaEntriesObject,
+        userEmail,
+      });
+
+      const pdfBuffer = await generateSaudaPDFNode({
+        company: existingEntry.company,
+        date: existingEntry.date,
+        saudaEntries: saudaEntriesObject,
+      });
+
+      if (recipients.length > 0) {
+        await sendEmail({
+          to: recipients.join(", "),
+          subject: `Sauda Report - ${existingEntry.company} - ${existingEntry.date}`,
+          text: `Please view the Sauda Report for ${existingEntry.company} dated ${existingEntry.date} in the email body.`,
+          html: emailHtml,
+          attachments: [
+            {
+              filename: `${existingEntry.company}_${existingEntry.date.replace(
+                /\//g,
+                "-"
+              )}_sauda.pdf`,
+              content: pdfBuffer,
+            },
+          ],
+        });
+      }
+    } catch (emailError) {
+      console.error("Error generating or sending email:", emailError);
     }
 
     return NextResponse.json(
