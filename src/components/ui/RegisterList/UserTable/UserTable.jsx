@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Eye, Layers, X, Check } from "lucide-react";
+import { Plus, Trash2, Eye, Layers, X, Check, Edit2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { NAV_CONFIG, RATE_DROPDOWN, COMPANY_DROPDOWN } from "@/config/navigation";
@@ -14,6 +14,7 @@ export default function UserTable({
   handleOpenPopup,
   handleDeleteUser,
   onView,
+  onEdit,
 }) {
   const [pageModalOpen, setPageModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -126,6 +127,18 @@ export default function UserTable({
         >
           <Eye size={16} />
           View
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => onEdit && onEdit(user)}
+          className="px-3 py-1 rounded-lg flex items-center gap-2
+                     bg-yellow-500 dark:bg-yellow-600 
+                     text-white hover:bg-yellow-600 dark:hover:bg-yellow-700 
+                     transition-colors"
+        >
+          <Edit2 size={16} />
+          Edit
         </motion.button>
       </div>
     ),

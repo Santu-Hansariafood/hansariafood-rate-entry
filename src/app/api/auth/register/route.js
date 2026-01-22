@@ -15,16 +15,19 @@ export async function POST(req) {
 
   try {
     await connectDB();
-    const { name, mobile, password } = await req.json();
+    const { name, mobile, password, email } = await req.json();
 
-    if (!name || !mobile || !password)
+    if (!name || !mobile || !password || !email)
       return error("All fields are required", 400);
 
-    const existing = await User.findOne({ mobile });
-    if (existing) return error("Mobile number already registered", 400);
+    const existing = await User.findOne({ $or: [{ mobile }, { email }] });
+    if (existing) {
+        if (existing.mobile === mobile) return error("Mobile number already registered", 400);
+        if (existing.email === email) return error("Email already registered", 400);
+    }
 
     const hash = await bcrypt.hash(password, 10);
-    await User.create({ name, mobile, password: hash });
+    await User.create({ name, mobile, email, password: hash });
 
     return success("User registered successfully");
   } catch (err) {

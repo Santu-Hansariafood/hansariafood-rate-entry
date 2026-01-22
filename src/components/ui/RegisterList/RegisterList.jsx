@@ -19,6 +19,9 @@ const UserTable = dynamic(() =>
 const CompanyViewPopup = dynamic(() =>
   import("@/components/ui/RegisterList/CompanyViewPopup/CompanyViewPopup")
 );
+const EditUserPopup = dynamic(() =>
+  import("@/components/ui/RegisterList/EditUserPopup/EditUserPopup")
+);
 
 export default function RegisterList() {
   const { users, fetchUsers, loadingUsers } = useUsers();
@@ -26,6 +29,27 @@ export default function RegisterList() {
   const [viewingUser, setViewingUser] = useState(null);
   const [viewingCompanies, setViewingCompanies] = useState([]);
   const [viewOpen, setViewOpen] = useState(false);
+  
+  const [editingUser, setEditingUser] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useState(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const { mobile } = JSON.parse(storedUser);
+        const adminMobiles = process.env.NEXT_PUBLIC_ADMIN_MOBILES?.split(",") || [];
+        setIsAdmin(adminMobiles.includes(String(mobile)));
+      }
+    }
+  }, []);
+
+  const handleEditUser = (user) => {
+    if (!isAdmin) return;
+    setEditingUser(user);
+    setEditOpen(true);
+  };
 
   const handleViewUserCompanies = async (user) => {
     try {
@@ -82,6 +106,7 @@ export default function RegisterList() {
           handleDeleteUser={handleDeleteUser}
           saving={saving}
           onView={handleViewUserCompanies}
+          onEdit={isAdmin ? handleEditUser : null}
         />
 
         <AnimatePresence>
@@ -110,6 +135,14 @@ export default function RegisterList() {
               userName={viewingUser}
               assignedCompanies={viewingCompanies}
             />
+          )}
+          {editOpen && (
+             <EditUserPopup 
+                open={editOpen}
+                onClose={() => setEditOpen(false)}
+                user={editingUser}
+                onUpdate={fetchUsers}
+             />
           )}
         </AnimatePresence>
       </div>

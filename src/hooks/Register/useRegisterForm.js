@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 export default function useRegisterForm() {
-  const [form, setForm] = useState({ name: "", mobile: "", password: "" });
+  const [form, setForm] = useState({ name: "", mobile: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +23,12 @@ export default function useRegisterForm() {
       newErrors.mobile = "Mobile number is required";
     } else if (!validationPatterns.mobile.test(form.mobile)) {
       newErrors.mobile = "Enter a valid 10-digit mobile number";
+    }
+
+    if (!form.email) {
+      newErrors.email = "Email is required";
+    } else if (!validationPatterns.email.test(form.email)) {
+      newErrors.email = "Enter a valid email address";
     }
 
     if (!form.password) {
@@ -54,6 +60,15 @@ export default function useRegisterForm() {
         mobile: "Enter a valid 10-digit mobile number",
       }));
     } else if (
+      name === "email" &&
+      value &&
+      !validationPatterns.email.test(value)
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        email: "Enter a valid email address",
+      }));
+    } else if (
       name === "password" &&
       value &&
       !validationPatterns.password.test(value)
@@ -75,7 +90,7 @@ export default function useRegisterForm() {
     try {
       const res = await axiosInstance.post("/auth/register", form);
       toast.success(res.data.message);
-      setForm({ name: "", mobile: "", password: "" });
+      setForm({ name: "", mobile: "", email: "", password: "" });
       setErrors({});
     } catch (error) {
       if (error.response) {
