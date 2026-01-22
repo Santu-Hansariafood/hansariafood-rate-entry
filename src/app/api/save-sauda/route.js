@@ -147,6 +147,7 @@ export async function POST(req) {
 
       const session = await getServerSession(authOptions);
       const userEmail = session?.user?.email;
+      const userName = session?.user?.name;
 
       // Get admin emails from environment variable
       const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
@@ -165,6 +166,7 @@ export async function POST(req) {
         time: existingEntry.time,
         saudaEntries: saudaEntriesObject,
         userEmail,
+        userName,
       });
 
       const pdfBuffer = await generateSaudaPDFNode({

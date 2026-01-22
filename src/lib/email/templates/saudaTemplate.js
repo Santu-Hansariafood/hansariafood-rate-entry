@@ -5,13 +5,14 @@ export const generateSaudaEmailTemplate = ({
   time,
   saudaEntries,
   userEmail,
+  userName,
 }) => {
   let tableRows = "";
   let slNo = 1;
   let totalTons = 0;
   let totalValue = 0;
+  let summaryBlock = "";
 
-  // saudaEntries can be a Map or an Object depending on how it's passed
   const entriesList = [];
   
   if (saudaEntries instanceof Map) {
@@ -28,33 +29,37 @@ export const generateSaudaEmailTemplate = ({
       }
   }
 
-  // Sort or organize if needed? For now, just list them.
-  // Group by Unit/Commodity is usually better but a flat list is also fine.
-  // The key usually contains "Unit-Commodity".
-
   entriesList.forEach((entry) => {
     const tons = Number(entry.tons) || 0;
     const rate = Number(entry.finalRate) || 0;
     const value = tons * rate * 1000; // Assuming Rate is per Ton? Or per Quintal?
-    // Usually rate is per unit.
-    // If unit is "Quintal", Rate is per Quintal. Tons = 10 Quintals.
-    // Let's stick to simple "Tons * Rate" if Rate is per Ton.
-    // However, usually in India, Rate might be per Quintal or Ton.
-    // Without specific domain knowledge, "Calculate Price" might just mean Tons * Rate.
-    // Let's check existing PDF generator.
-    // PDF generator doesn't calculate total value, just lists Rate.
-    // I'll assume Rate is per Ton for now, or just show Rate and Tons.
-    // Wait, "calculate the price also".
-    // I'll add a column "Total Value" = tons * rate.
-    // IMPORTANT: If rate is per Quintal (100kg) and Tons is in Tons (1000kg).
-    // Let's look at the unit field.
     
     // Safety check for empty entries
     if (tons <= 0 && rate <= 0) return;
 
     totalTons += tons;
-    const itemValue = tons * rate; // Simplified calculation
+    const itemValue = tons * rate; 
     totalValue += itemValue;
+
+    // Build the "Sauda Confirmed" summary block for each entry
+    summaryBlock += `
+      <div style="background-color: #f0fdf4; border: 1px solid #16a34a; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <h3 style="color: #166534; margin: 0 0 10px 0;">✅ Sauda Confirmed</h3>
+        <p style="margin: 0 0 10px 0; font-weight: bold;">Sauda details are as follows:</p>
+        <div style="display: grid; gap: 5px; font-size: 14px;">
+           <p style="margin: 2px 0;"><strong>Date:</strong> ${date}</p>
+           <p style="margin: 2px 0;"><strong>Location:</strong> ${entry.unit || "-"}</p>
+           <p style="margin: 2px 0;"><strong>Commodity:</strong> ${entry.commodity || "-"}</p>
+           <p style="margin: 2px 0;"><strong>Tons:</strong> ${tons}</p>
+           <p style="margin: 2px 0;"><strong>Rate:</strong> ₹${rate}</p>
+           <p style="margin: 2px 0;"><strong>Sauda No:</strong> ${entry.saudaNo || "-"}</p>
+           <p style="margin: 2px 0;"><strong>Buyer:</strong> ${company || "-"}</p>
+           <p style="margin: 2px 0;"><strong>Seller Company:</strong> ${entry.sellerCompany || "-"}</p>
+           <p style="margin: 2px 0;"><strong>Delivery Date:</strong> ${entry.deliveryDate || "-"}</p>
+           <p style="margin: 2px 0;"><strong>Notes:</strong> ${entry.others || "-"}</p>
+        </div>
+      </div>
+    `;
 
     tableRows += `
       <tr style="border-bottom: 1px solid #ddd;">
@@ -96,12 +101,18 @@ export const generateSaudaEmailTemplate = ({
         </div>
         
         <div class="content">
+          ${summaryBlock}
+
+          <div style="margin-top: 20px; padding: 10px; background-color: #eff6ff; border-radius: 4px;">
+             <p style="margin: 0; font-size: 14px;"><strong>Sauda confirmed by:</strong> ${userName || userEmail || "Unknown"}</p>
+          </div>
+
+          <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
+
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
             <p><strong>Date:</strong> ${date}</p>
             <p><strong>Time:</strong> ${time || new Date().toLocaleTimeString()}</p>
           </div>
-
-          ${userEmail ? `<p style="font-size: 12px; color: #666;">Updated by: ${userEmail}</p>` : ''}
 
           <table>
             <thead>

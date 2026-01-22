@@ -110,6 +110,7 @@ export const authOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
+        token.name = user.name;
         token.mobile = user.mobile;
         token.email = user.email;
         token.pages = user.pages;
@@ -118,6 +119,7 @@ export const authOptions = {
     },
     async session({ session, token }) {
       session.user.id = token.sub;
+      session.user.name = token.name;
       session.user.mobile = token.mobile;
       session.user.email = token.email;
       session.user.pages = token.pages;
