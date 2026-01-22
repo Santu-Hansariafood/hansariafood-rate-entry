@@ -11,7 +11,16 @@ export const rateLimit = (maxAttempts, windowMs) => {
   }, 60000);
 
   return (req) => {
-    const ip = req.headers?.get("x-forwarded-for")?.split(",")[0] || "global";
+    let ip = "global";
+    
+    if (req?.headers) {
+      if (typeof req.headers.get === "function") {
+         ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "global";
+      } else {
+         ip = req.headers["x-forwarded-for"]?.split(",")[0] || "global";
+      }
+    }
+    
     const now = Date.now();
 
     const entry = attempts.get(ip) || { count: 0, expires: now + windowMs };
