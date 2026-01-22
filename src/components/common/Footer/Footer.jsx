@@ -9,6 +9,7 @@ const FooterCopyright = dynamic(() =>
   import("./FooterCopyright/FooterCopyright")
 );
 const FooterLinks = dynamic(() => import("./FooterLinks/FooterLinks"));
+const TaskChat = dynamic(() => import("./TaskChat/TaskChat"), { ssr: false });
 
 const Footer = () => {
   useEffect(() => {
@@ -35,6 +36,7 @@ const Footer = () => {
           <FooterCopyright />
           <FooterLinks />
         </div>
+        <TaskChat />
       </motion.footer>
     </Suspense>
   );
