@@ -49,9 +49,13 @@ const TaskChat = () => {
 
   useEffect(() => {
     fetchTasks();
-    const interval = setInterval(fetchTasks, 5000); // Poll every 5s
-    return () => clearInterval(interval);
   }, [fetchTasks]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchTasks();
+    }
+  }, [isOpen, fetchTasks]);
 
   const handleInputChange = (e) => {
     const val = e.target.value;
