@@ -6,21 +6,24 @@ import dynamic from "next/dynamic";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
+import SoyaNotification from "../SoyaNotification/SoyaNotification";
 
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 
-export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
+export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }) {
   const [expandedLocations, setExpandedLocations] = useState([]);
   const [rates, setRates] = useState({});
   const [editing, setEditing] = useState({});
   const [loadingSave, setLoadingSave] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(false);
+  const [notificationData, setNotificationData] = useState(null);
 
   const today = new Date().toLocaleDateString("en-GB");
 
   useEffect(() => {
     if (!isOpen || !data?._id) return;
     loadExistingHistory();
+    setNotificationData(null);
   }, [isOpen, data]);
 
   const loadExistingHistory = async () => {
@@ -89,6 +92,25 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
         tempRate: item.tempRate,
       });
 
+      setNotificationData({
+        companyName: data.name,
+        location: loc,
+        date: today,
+        rate: item.tempRate,
+        commodity: item.commodity,
+      });
+
+      if (onRateUpdate) {
+        onRateUpdate({
+          companyName: data.name,
+          location: loc,
+          date: today,
+          rate: item.tempRate,
+          commodity: item.commodity,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        });
+      }
+
       toggleEdit(loc, index);
       loadExistingHistory();
     } catch (err) {
@@ -111,6 +133,10 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data }) {
           <button onClick={onClose}>
             <X />
           </button>
+        </div>
+
+        <div className="px-4">
+           <SoyaNotification data={notificationData} />
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">

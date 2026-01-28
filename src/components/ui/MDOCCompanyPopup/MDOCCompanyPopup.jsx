@@ -9,7 +9,7 @@ import Loading from "@/components/common/Loading/Loading";
 
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
 
-export default function MDOCCompanyPopup({ isOpen, onClose, data }) {
+export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }) {
   const [expandedLocations, setExpandedLocations] = useState([]);
   const [rates, setRates] = useState({});
   const [editing, setEditing] = useState({});
@@ -88,6 +88,17 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data }) {
         commodityName: item.commodity,
         tempRate: item.tempRate,
       });
+
+      if (onRateUpdate) {
+        onRateUpdate({
+          companyName: data.name,
+          location: loc,
+          date: today,
+          rate: item.tempRate,
+          commodity: item.commodity,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        });
+      }
 
       toggleEdit(loc, index);
       loadExistingHistory();

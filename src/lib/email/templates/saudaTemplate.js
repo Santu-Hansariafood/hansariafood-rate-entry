@@ -32,16 +32,14 @@ export const generateSaudaEmailTemplate = ({
   entriesList.forEach((entry) => {
     const tons = Number(entry.tons) || 0;
     const rate = Number(entry.finalRate) || 0;
-    const value = tons * rate * 1000; // Assuming Rate is per Ton? Or per Quintal?
+    const value = tons * rate * 1000;
     
-    // Safety check for empty entries
     if (tons <= 0 && rate <= 0) return;
 
     totalTons += tons;
     const itemValue = tons * rate; 
     totalValue += itemValue;
 
-    // Build the "Sauda Confirmed" summary block for each entry
     summaryBlock += `
       <div style="background-color: #f0fdf4; border: 1px solid #16a34a; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
         <h3 style="color: #166534; margin: 0 0 10px 0;">✅ Sauda Confirmed</h3>
