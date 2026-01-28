@@ -11,7 +11,7 @@ export async function GET(req) {
   try {
     await connectDB();
 
-    const targetCommodities = ["Maize DDGS", "Rice DDGS"];
+    const targetCommodities = ["Maize DDGS", "Rice DDGS", "Mix DDGS"];
 
     const companies = await ManageCompany.find({
       type: "seller",

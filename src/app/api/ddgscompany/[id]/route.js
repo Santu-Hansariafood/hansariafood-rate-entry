@@ -15,7 +15,7 @@ export async function GET(req, { params }) {
       );
     }
 
-    const targetCommodities = ["Maize DDGS", "Rice DDGS"];
+    const targetCommodities = ["Maize DDGS", "Rice DDGS", "Mix DDGS"];
 
     const company = await ManageCompany.findOne({
       _id: awaitedParams.id,

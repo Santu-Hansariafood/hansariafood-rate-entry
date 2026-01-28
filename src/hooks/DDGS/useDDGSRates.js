@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
-const COMMODITIES = ["Maize DDGS", "Rice DDGS"];
+const COMMODITIES = ["Maize DDGS", "Rice DDGS", "Mix DDGS"];
 
 const Diff = ({ value }) => {
   if (value === 0 || value === null || value === undefined) return null;
