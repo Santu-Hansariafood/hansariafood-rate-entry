@@ -84,10 +84,6 @@ ${payment && payment !== "" ? `*Payment Terms: ${payment} Days*` : ""}${
 (Updated on: ${time}).  
 
 👉 *For rates and orders, please click the link below to participate in the bid.*
- 
-👉 *रेट और ऑर्डर के लिए कृपया नीचे दिए गए लिंक पर क्लिक करें और बोली में भाग लें।*
-
-👉 *রেট এবং অর্ডারের জন্য অনুগ্রহ করে নিচের লিঙ্কে ক্লিক করে বিডে অংশগ্রহণ করুন।*
 
 📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.agriv2_  
 🌐 *Web App:* _https://vupix.in/hfood/auth/index.php_  

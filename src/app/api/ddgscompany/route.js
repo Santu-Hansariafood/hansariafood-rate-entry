@@ -14,7 +14,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");
 
-    const targetCommodities = ["Maize DDGS", "Rice DDGS"];
+    const targetCommodities = ["Maize DDGS", "Rice DDGS", "Mix DDGS"];
 
     const query = {
       type: "seller",
