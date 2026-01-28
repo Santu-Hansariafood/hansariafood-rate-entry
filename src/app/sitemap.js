@@ -1,9 +1,46 @@
+import { connectDB } from "@/lib/mongodb";
+import Commodity from "@/models/Commodity";
+
 const BASE_URL = "https://www.hansariafood.site";
 
-export default function sitemap() {
-  const now = new Date();
+export const revalidate = 3600;
 
-  return [
+export default async function sitemap() {
+  const now = new Date();
+  
+  let dynamicCommodityUrls = [];
+  
+  try {
+    await connectDB();
+    const commodities = await Commodity.find({});
+    
+    const existingRoutes = ['soya', 'mdoc', 'ddgs'];
+    
+    dynamicCommodityUrls = commodities
+      .filter(c => !existingRoutes.includes(c.name.toLowerCase()))
+      .flatMap(c => {
+        const slug = c.name.toLowerCase().replace(/\s+/g, '');
+        return [
+          {
+            url: `${BASE_URL}/${slug}rate`,
+            lastModified: now,
+            changeFrequency: "daily",
+            priority: 0.9,
+          },
+          {
+            url: `${BASE_URL}/${slug}`,
+            lastModified: now,
+            changeFrequency: "monthly",
+            priority: 0.7,
+          }
+        ];
+      });
+      
+  } catch (error) {
+    console.error("Sitemap generation error:", error);
+  }
+
+  const staticRoutes = [
     {
       url: BASE_URL,
       lastModified: now,
@@ -92,4 +129,6 @@ export default function sitemap() {
       priority: 0.7,
     },
   ];
+
+  return [...staticRoutes, ...dynamicCommodityUrls];
 }

@@ -39,7 +39,9 @@ const AuthWrapper = ({ children, allowedRoles }) => {
       return;
     }
     if (session?.expires && new Date(session.expires) < new Date()) {
-      signOut({ callbackUrl: "/" });
+      signOut({ redirect: false }).then(() => {
+        window.location.href = "/";
+      });
       return;
     }
 

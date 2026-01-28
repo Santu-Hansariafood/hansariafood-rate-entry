@@ -14,9 +14,10 @@ export default function LogoutButton() {
     localStorage.clear();
 
     await signOut({
-      redirect: true,
-      callbackUrl: "/",
+      redirect: false,
     });
+    
+    window.location.href = "/";
   };
 
   return (

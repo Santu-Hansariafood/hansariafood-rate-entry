@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function SoyaNotification({ data }) {
   if (!data) return null;
@@ -12,6 +13,7 @@ export default function SoyaNotification({ data }) {
     const text = `*${companyName}*\nLocation: ${location}\nDate: ${date}\nCommodity: ${commodity}\nRate: ${rate}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
+    toast.success("Copied to clipboard!");
     setTimeout(() => setCopied(false), 2000);
   };
 

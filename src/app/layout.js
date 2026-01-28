@@ -8,6 +8,8 @@ import { UserProvider } from "@/context/UserContext";
 import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
 import TaskChat from "@/components/common/Footer/TaskChat/TaskChat";
 import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
+import { connectDB } from "@/lib/mongodb";
+import Commodity from "@/models/Commodity";
 
 const geistSans = Geist({
   variable: "--font-body",
@@ -37,73 +39,90 @@ export const viewport = {
   themeColor: "#ffffff",
 };
 
-export const metadata = {
-  metadataBase: new URL("https://www.hansariafood.site"),
+export async function generateMetadata() {
+  let commodityKeywords = "";
+  
+  try {
+    await connectDB();
+    const commodities = await Commodity.find({});
+    commodityKeywords = commodities.map(c => c.name).join(", ");
+  } catch (error) {
+    console.error("Metadata fetch error:", error);
+  }
 
-  title: {
-    default: "Hansaria Food Private Limited",
-    template: "%s | Hansaria Food Pvt. Ltd.",
-  },
+  const baseKeywords = "hansaria food, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India";
+  
+  const keywords = commodityKeywords 
+    ? `${baseKeywords}, ${commodityKeywords}`
+    : baseKeywords;
 
-  description:
-    "Hansaria Food Private Limited is a trusted poultry and animal feed raw material supplier in India, providing high-quality maize, soya DOC, rice DDGS and bulk feed ingredients with reliable logistics and competitive pricing.",
+  return {
+    metadataBase: new URL("https://www.hansariafood.site"),
 
-  keywords:
-    "hansaria food, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India",
+    title: {
+      default: "Hansaria Food Private Limited",
+      template: "%s | Hansaria Food Pvt. Ltd.",
+    },
 
-  authors: [{ name: "Santu De" }],
+    description:
+      "Hansaria Food Private Limited is a trusted poultry and animal feed raw material supplier in India, providing high-quality maize, soya DOC, rice DDGS and bulk feed ingredients with reliable logistics and competitive pricing.",
 
-  alternates: {
-    canonical: "https://www.hansariafood.site",
-  },
+    keywords: keywords,
 
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    authors: [{ name: "Santu De" }],
+
+    alternates: {
+      canonical: "https://www.hansariafood.site",
+    },
+
+    robots: {
       index: true,
       follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
-  },
-
-  verification: {
-    google: "dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4",
-  },
-
-  openGraph: {
-    title:
-      "Hansaria Food Pvt. Ltd. | Trusted Poultry Feed Raw Material Supplier in India",
-    description:
-      "Supplier of maize, soya DOC, DDGS and bulk feed ingredients with reliable logistics and competitive pricing. Trusted by poultry farms and feed manufacturers across India.",
-    url: "https://www.hansariafood.site",
-    siteName: "Hansaria Food Private Limited",
-    images: [
-      {
-        url: "/images/og-image1.png",
-        width: 1200,
-        height: 630,
-        alt: "Hansaria Food Pvt. Ltd. Poultry Feed Supplier",
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
       },
-    ],
-    type: "website",
-  },
+    },
 
-  twitter: {
-    card: "summary_large_image",
-    title:
-      "Hansaria Food Pvt. Ltd. | Poultry Feed Raw Materials & Commodity Trading",
-    description:
-      "Leading supplier of maize, soya DOC, DDGS and animal feed ingredients across India.",
-    images: ["/images/og-image1.png"],
-  },
+    verification: {
+      google: "dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4",
+    },
 
-  icons: {
-    icon: "/favicon.ico",
-  },
-};
+    openGraph: {
+      title:
+        "Hansaria Food Pvt. Ltd. | Trusted Poultry Feed Raw Material Supplier in India",
+      description:
+        "Supplier of maize, soya DOC, DDGS and bulk feed ingredients with reliable logistics and competitive pricing. Trusted by poultry farms and feed manufacturers across India.",
+      url: "https://www.hansariafood.site",
+      siteName: "Hansaria Food Private Limited",
+      images: [
+        {
+          url: "/images/og-image1.png",
+          width: 1200,
+          height: 630,
+          alt: "Hansaria Food Pvt. Ltd. Poultry Feed Supplier",
+        },
+      ],
+      type: "website",
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title:
+        "Hansaria Food Pvt. Ltd. | Poultry Feed Raw Materials & Commodity Trading",
+      description:
+        "Leading supplier of maize, soya DOC, DDGS and animal feed ingredients across India.",
+      images: ["/images/og-image1.png"],
+    },
+
+    icons: {
+      icon: "/favicon.ico",
+    },
+  };
+}
 
 export default function RootLayout({ children }) {
   return (
