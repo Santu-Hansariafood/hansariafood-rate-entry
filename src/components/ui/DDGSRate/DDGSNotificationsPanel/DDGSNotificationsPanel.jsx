@@ -6,7 +6,15 @@ import { toast } from "react-toastify";
 
 export default function DDGSNotificationsPanel({ notifications = [] }) {
   const handleCopy = (item) => {
-    const text = `*${item.companyName}*\nLocation: ${item.location}\nDate: ${item.date}\nCommodity: ${item.commodity}\nRate: ${item.rate}`;
+    const text = `*Today* ${item.date}
+*${item.companyName}* is required
+*${item.commodity}* for the *${item.location}* location
+*Rate:* ₹${item.rate}/-*MT*
+*Payment Terms:*
+\n \n
+*Thanks,*  
+*Purchase Team*  
+    `;
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!");
   };
@@ -27,7 +35,7 @@ export default function DDGSNotificationsPanel({ notifications = [] }) {
         ) : (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {/* Show newest first */}
-            {[...notifications].reverse().map((item, index) => (
+            {notifications.map((item, index) => (
               <li key={index} className="p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-semibold text-gray-900 text-sm">{item.companyName}</h4>

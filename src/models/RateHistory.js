@@ -40,6 +40,7 @@ const RateHistorySchema = new mongoose.Schema(
   {
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "ManageCompany",
       required: true,
       index: true,
     },
