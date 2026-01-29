@@ -16,6 +16,8 @@ export default function useCopyNotification() {
   const capitalizeFirst = capitalizeWords;
 
   const offeringCommodities = [
+    "mix ddgs",
+    "ddgs",
     "m doc",
     "rice ddgs",
     "sbm 46%",
