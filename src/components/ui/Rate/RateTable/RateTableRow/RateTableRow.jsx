@@ -105,22 +105,21 @@ export default function RateTableRow({
       <td className="px-6 py-4 border-b whitespace-nowrap align-middle">
         {editIndex === index ? (
           <input
-            type="number"
-            min="0"
+            type="text"
             value={rate.payment || ""}
             onChange={(e) =>
               setRates((prev) =>
                 prev.map((r, idx) =>
-                  idx === index ? { ...r, payment: Number(e.target.value) } : r
+                  idx === index ? { ...r, payment: e.target.value } : r
                 )
               )
             }
             className="w-full min-w-[100px] px-3 py-2 border border-green-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-            placeholder="Days"
+            placeholder="Payment Terms"
           />
         ) : (
           <span className="text-gray-800">
-            {rate.payment ? `${rate.payment} days` : "-"}
+            {rate.payment ? rate.payment : "-"}
           </span>
         )}
       </td>
