@@ -5,6 +5,8 @@ import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
 import { UserProvider } from "@/context/UserContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
 import TaskChat from "@/components/common/Footer/TaskChat/TaskChat";
 import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
@@ -190,6 +192,16 @@ export default function RootLayout({ children }) {
 
               <main className="flex-1 pt-16">
                 {children}
+                <ToastContainer
+                  position="top-right"
+                  autoClose={2000}
+                  hideProgressBar={false}
+                  newestOnTop
+                  closeOnClick
+                  pauseOnHover
+                  draggable
+                  theme="light"
+                />
               </main>
 
               <Footer className="mt-auto" />
