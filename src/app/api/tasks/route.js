@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Task from "@/models/Task";
-import User from "@/models/User"; // Assuming User model exists for validation if needed
+import User from "@/models/User";
 
 export async function GET(req) {
   try {
@@ -13,7 +13,6 @@ export async function GET(req) {
       return NextResponse.json({ error: "Mobile is required" }, { status: 400 });
     }
 
-    // Find tasks where user is sender OR one of the receivers
     const tasks = await Task.find({
       $or: [
         { sender: mobile },
@@ -41,7 +40,7 @@ export async function POST(req) {
     const newTask = await Task.create({
       sender,
       senderName,
-      receivers, // Array of { mobile, name }
+      receivers,
       content,
       isImportant: isImportant || content.toLowerCase().includes("important"),
       status: "pending"

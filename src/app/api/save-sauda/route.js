@@ -134,7 +134,6 @@ export async function POST(req) {
       });
     }
 
-    // Generate Email Content and Send
     try {
       const saudaEntriesObject = {};
       if (existingEntry.saudaEntries instanceof Map) {
@@ -149,7 +148,6 @@ export async function POST(req) {
       const userEmail = session?.user?.email;
       const userName = session?.user?.name;
 
-      // Get admin emails from environment variable
       const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || "")
         .split(",")
         .map((e) => e.trim())

@@ -16,19 +16,14 @@ export async function GET(request) {
       );
     }
 
-    // Optimized Aggregation Pipeline to find sauda directly in DB
     const pipeline = [
-      // 1. Transform the Map to an array of objects so we can process it
       { $project: {
           saudaEntriesArray: { $objectToArray: "$saudaEntries" },
           date: 1, time: 1, company: 1, buyer: 1, seller: 1
       }},
-      // 2. Unwind the entries to flatten the structure
       { $unwind: "$saudaEntriesArray" },
       { $unwind: "$saudaEntriesArray.v" },
-      // 3. Match ONLY the specific sauda number
       { $match: { "saudaEntriesArray.v.saudaNo": saudaNumber } },
-      // 4. Format the output
       { $project: {
           _id: 0,
           type: { 

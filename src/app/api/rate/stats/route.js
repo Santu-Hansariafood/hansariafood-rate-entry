@@ -22,7 +22,6 @@ export async function GET(req) {
               in: "$$rate.date",
             },
           },
-          // Current rate date
           currentDate: "$newRateDate",
         },
       },

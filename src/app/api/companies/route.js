@@ -102,7 +102,6 @@ export async function POST(req) {
       );
     }
 
-    // Create new company
     const newCompany = await Company.create({
       name: nameTrim,
       category: categoryTrim,

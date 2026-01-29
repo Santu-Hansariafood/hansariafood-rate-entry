@@ -6,19 +6,15 @@ import { connectDB } from "@/lib/mongodb";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import Purchase from "@/models/Purchase";
 
-// ⛔ Ensure DB connects only ONCE (fixes Mongo timeout on build)
 async function initDB() {
   try {
     await connectDB();
   } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
+    console.error("MongoDB connection error:", err);
   }
 }
 initDB();
 
-// ======================================
-// ✅ GET SINGLE PURCHASE BY ID
-// ======================================
 export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -36,7 +32,7 @@ export async function GET(req, { params }) {
 
     return NextResponse.json({ purchase }, { status: 200 });
   } catch (err) {
-    console.error("❌ GET /purchases/[id] error:", err);
+    console.error("GET /purchases/[id] error:", err);
     return NextResponse.json(
       { error: "Failed to fetch purchase", detail: err.message },
       { status: 500 }
@@ -44,9 +40,6 @@ export async function GET(req, { params }) {
   }
 }
 
-// ======================================
-// ✅ UPDATE PURCHASE BY ID
-// ======================================
 export async function PUT(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -72,7 +65,7 @@ export async function PUT(req, { params }) {
       { status: 200 }
     );
   } catch (err) {
-    console.error("❌ PUT /purchases/[id] error:", err);
+    console.error("PUT /purchases/[id] error:", err);
     return NextResponse.json(
       { error: "Failed to update purchase", detail: err.message },
       { status: 500 }
@@ -80,9 +73,6 @@ export async function PUT(req, { params }) {
   }
 }
 
-// ======================================
-// ✅ DELETE PURCHASE BY ID
-// ======================================
 export async function DELETE(req, { params }) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -103,7 +93,7 @@ export async function DELETE(req, { params }) {
       { status: 200 }
     );
   } catch (err) {
-    console.error("❌ DELETE /purchases/[id] error:", err);
+    console.error("DELETE /purchases/[id] error:", err);
     return NextResponse.json(
       { error: "Failed to delete purchase", detail: err.message },
       { status: 500 }

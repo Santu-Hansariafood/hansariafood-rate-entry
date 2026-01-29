@@ -22,7 +22,6 @@ export const authOptions = {
 
       async authorize(credentials, req) {
         try {
-          // Helper to safely get headers
           const getHeader = (key) => {
             if (!req?.headers) return null;
             if (typeof req.headers.get === "function") {
@@ -33,21 +32,17 @@ export const authOptions = {
 
           const headerApiKey = getHeader("x-api-key");
           
-          // Log incoming request for debugging
           console.log("Auth Attempt:", { 
             mobile: credentials?.mobile, 
             hasPassword: !!credentials?.password,
             hasApiKey: !!(credentials?.apiKey || headerApiKey)
           });
 
-          // 1. Rate Limiting
-          // Note: Rate limiter might need adjustment if it expects a specific req structure
           if (!limiter(req)) {
             console.error("Auth Failed: Rate limited");
             throw new Error("Too many login attempts.");
           }
 
-          // 2. API Key Validation
           const apiKey = credentials?.apiKey || headerApiKey;
           const expectedApiKey = process.env.API_KEY;
 
@@ -56,24 +51,20 @@ export const authOptions = {
             throw new Error("Unauthorized: Invalid API Key");
           }
 
-          // 3. Database Connection
           await connectDB();
 
-          // 4. User Lookup
           const user = await User.findOne({ mobile: credentials.mobile }).lean();
           if (!user) {
             console.error("Auth Failed: User not found for mobile:", credentials.mobile);
             throw new Error("User not found");
           }
 
-          // 5. Password Validation
           const ok = await bcrypt.compare(credentials.password, user.password);
           if (!ok) {
             console.error("Auth Failed: Password mismatch for user:", user.name);
             throw new Error("Invalid credentials");
           }
 
-          // 6. Device Guard
           const forwardedFor = getHeader("x-forwarded-for");
           const ip = forwardedFor?.split(",")[0] || req.ip || "global";
           const userId = user._id.toString();
