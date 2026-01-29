@@ -20,7 +20,13 @@ export async function GET(req) {
     };
 
     if (commodityType) {
-      query.commodity = { $regex: commodityType, $options: "i" };
+      if (commodityType === "MDOC") {
+        query.commodity = { $regex: "M\\s?DOC", $options: "i" };
+      } else if (commodityType === "Soya") {
+        query.commodity = { $regex: "SBM", $options: "i" };
+      } else {
+        query.commodity = { $regex: commodityType, $options: "i" };
+      }
     }
 
     const histories = await RateHistory.find(query).populate(
