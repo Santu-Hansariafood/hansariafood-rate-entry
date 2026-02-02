@@ -18,16 +18,16 @@ const Actions = ({ item }) => {
 
   const buttons = [
     {
-      type: "view",
-      icon: Eye,
-      color: "from-green-400 to-emerald-500",
-      glow: "shadow-green-400/50",
-    },
-    {
       type: "edit",
       icon: Edit,
       color: "from-blue-400 to-indigo-500",
       glow: "shadow-blue-400/50",
+    },
+    {
+      type: "view",
+      icon: Eye,
+      color: "from-green-400 to-emerald-500",
+      glow: "shadow-green-400/50",
     },
     {
       type: "delete",
