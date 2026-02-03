@@ -11,7 +11,7 @@ export async function GET(req, { params }) {
   await connectDB();
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
@@ -44,7 +44,7 @@ export async function PUT(req, { params }) {
   await connectDB();
 
   try {
-    const id = params.id;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(

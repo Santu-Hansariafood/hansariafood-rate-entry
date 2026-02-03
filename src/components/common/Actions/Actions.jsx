@@ -6,7 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 const Actions = ({ item }) => {
   const [modal, setModal] = useState({ open: false, type: "" });
 
-  const openModal = (type) => setModal({ open: true, type });
+  const openModal = (type) => {
+    if (type === "edit") {
+      item.onEdit(item);
+      return;
+    }
+    setModal({ open: true, type });
+  };
   const closeModal = () => setModal({ open: false, type: "" });
 
   const handleAction = () => {
