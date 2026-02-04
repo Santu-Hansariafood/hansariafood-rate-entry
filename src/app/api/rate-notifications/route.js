@@ -34,6 +34,19 @@ export async function GET(req) {
       "name"
     );
 
+    // Fallback: Manually fetch companies if populate failed
+    const missingIds = histories
+      .filter((h) => !h.companyId?.name && h.companyId)
+      .map((h) => h.companyId._id || h.companyId);
+
+    let manualMap = {};
+    if (missingIds.length > 0) {
+      const found = await ManageCompany.find({ _id: { $in: missingIds } }).select(
+        "name"
+      );
+      found.forEach((c) => (manualMap[c._id.toString()] = c.name));
+    }
+
     let notifications = [];
 
     histories.forEach((doc) => {
@@ -44,9 +57,15 @@ export async function GET(req) {
         Array.isArray(todayEntry.tempRates) &&
         todayEntry.tempRates.length > 0
       ) {
+        let cName = doc.companyId?.name;
+        if (!cName && doc.companyId) {
+          const idStr = (doc.companyId._id || doc.companyId).toString();
+          cName = manualMap[idStr];
+        }
+
         todayEntry.tempRates.forEach((rateUpdate) => {
           notifications.push({
-            companyName: doc.companyId?.name || "Unknown Company",
+            companyName: cName || "Unknown Company",
             location: doc.location,
             commodity: doc.commodity,
             rate: rateUpdate.rate,
