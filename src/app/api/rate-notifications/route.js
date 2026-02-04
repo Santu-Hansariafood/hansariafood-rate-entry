@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import RateHistory from "@/models/RateHistory";
-import Company from "@/models/Company";
+import ManageCompany from "@/models/ManageCompany";
 
 export const dynamic = "force-dynamic";
 

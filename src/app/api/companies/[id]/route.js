@@ -11,7 +11,7 @@ export async function GET(req, { params }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
     const company = await Company.findById(id);
 
     if (!company) {
@@ -36,7 +36,7 @@ export async function PUT(req, { params }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
     const { name, category, type, isSelfCompany } = await req.json();
 
     const nameTrimmed = name?.trim();
@@ -107,7 +107,7 @@ export async function DELETE(req, { params }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
 
     const deletedCompany = await Company.findByIdAndDelete(id);
 

@@ -9,7 +9,7 @@ export async function PUT(req, { params }) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const { name, subcommodities } = await req.json();
 
     await connectDB();
@@ -75,7 +75,7 @@ export async function DELETE(req, { params }) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
     await connectDB();
 

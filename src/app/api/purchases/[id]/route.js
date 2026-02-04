@@ -21,7 +21,8 @@ export async function GET(req, { params }) {
   }
 
   try {
-    const purchase = await Purchase.findById(params.id);
+    const { id } = await params;
+    const purchase = await Purchase.findById(id);
 
     if (!purchase) {
       return NextResponse.json(
@@ -47,8 +48,9 @@ export async function PUT(req, { params }) {
 
   try {
     const data = await req.json();
+    const { id } = await params;
 
-    const updated = await Purchase.findByIdAndUpdate(params.id, data, {
+    const updated = await Purchase.findByIdAndUpdate(id, data, {
       new: true,
       runValidators: true,
     });
@@ -79,7 +81,8 @@ export async function DELETE(req, { params }) {
   }
 
   try {
-    const deleted = await Purchase.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const deleted = await Purchase.findByIdAndDelete(id);
 
     if (!deleted) {
       return NextResponse.json(

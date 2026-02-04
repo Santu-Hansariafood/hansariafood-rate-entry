@@ -52,7 +52,6 @@ const useManageCompanyList = () => {
         ...comp,
         location: comp.location || [],
         commodities: comp.commodities || [],
-        subCommodities: comp.subCommodities || [],
         mobileNumbers: comp.mobileNumbers || [],
       }));
 

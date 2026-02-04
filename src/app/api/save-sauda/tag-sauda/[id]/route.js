@@ -11,7 +11,7 @@ export async function GET(req, { params }) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const entry = await TagSauda.findOne({ saudaNo: id });
     if (!entry)
@@ -35,7 +35,7 @@ export async function PUT(req, { params }) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     const {
@@ -111,7 +111,7 @@ export async function DELETE(req, { params }) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const entry = await TagSauda.findOne({ saudaNo: id });
     if (!entry)

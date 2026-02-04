@@ -72,6 +72,15 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     }
   );
 
+  useEffect(() => {
+    if ((!companyType || companyType.length === 0) && companyName && companies.length > 0) {
+      const selectedCompany = companies.find((comp) => comp.name === companyName);
+      if (selectedCompany?.type) {
+        setCompanyType(selectedCompany.type);
+      }
+    }
+  }, [companyName, companies, companyType]);
+
   const handleCompanyChange = useCallback(
     (val) => {
       setCompanyName(val);
@@ -129,6 +138,11 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
       selectedCommodities.length === 0
     ) {
       toast.error("Please fill required fields.");
+      return;
+    }
+
+    if (!companyType || companyType.length === 0) {
+      toast.error("Company Type is missing. Please select a valid company.");
       return;
     }
 

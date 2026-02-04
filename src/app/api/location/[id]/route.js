@@ -12,6 +12,7 @@ export async function PUT(req, { params }) {
 
   try {
     const { state, name } = await req.json();
+    const { id } = await params;
 
     if (!state || !name) {
       return NextResponse.json(
@@ -23,7 +24,7 @@ export async function PUT(req, { params }) {
     await connectDB();
 
     const updatedLocation = await Location.findByIdAndUpdate(
-      params.id,
+      id,
       { state, name },
       { new: true }
     );
@@ -55,8 +56,9 @@ export async function DELETE(req, { params }) {
 
   try {
     await connectDB();
+    const { id } = await params;
 
-    const deletedLocation = await Location.findByIdAndDelete(params.id);
+    const deletedLocation = await Location.findByIdAndDelete(id);
 
     if (!deletedLocation) {
       return NextResponse.json(
@@ -85,8 +87,9 @@ export async function GET(req, { params }) {
 
   try {
     await connectDB();
+    const { id } = await params;
 
-    const location = await Location.findById(params.id);
+    const location = await Location.findById(id);
 
     if (!location) {
       return NextResponse.json(

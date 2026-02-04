@@ -20,7 +20,6 @@ export async function POST(req) {
       type,
       mobileNumbers = [],
       commodities = [],
-      subCommodities = [],
       isSelfCompany = false,
     } = await req.json();
 
@@ -49,10 +48,6 @@ export async function POST(req) {
 
       existingCompany.commodities = Array.from(
         new Set([...existingCompany.commodities, ...commodities])
-      );
-
-      existingCompany.subCommodities = Array.from(
-        new Set([...existingCompany.subCommodities, ...subCommodities])
       );
 
       const mergedMobile = [...existingCompany.mobileNumbers];
@@ -85,7 +80,6 @@ export async function POST(req) {
       type,
       mobileNumbers,
       commodities,
-      subCommodities,
       isSelfCompany,
     });
 

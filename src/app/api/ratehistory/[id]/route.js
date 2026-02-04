@@ -9,7 +9,7 @@ export async function GET(req, { params }) {
   }
 
   await connectDB();
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const { searchParams } = new URL(req.url);
@@ -53,7 +53,7 @@ export async function POST(req, { params }) {
   }
 
   await connectDB();
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const body = await req.json();

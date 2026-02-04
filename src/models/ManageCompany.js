@@ -43,7 +43,6 @@ const ManageCompanySchema = new mongoose.Schema(
     },
 
     commodities: [{ type: String, required: true }],
-    subCommodities: [{ type: String }],
     mobileNumbers: [MobileNumberSchema],
   },
   { timestamps: true }

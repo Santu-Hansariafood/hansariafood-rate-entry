@@ -11,7 +11,7 @@ export async function GET(req, { params }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
 
     const category = await Category.findById(id);
 
@@ -39,7 +39,7 @@ export async function PUT(req, { params }) {
 
   try {
     const { name } = await req.json();
-    const { id } = params;
+    const { id } = await params;
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -99,7 +99,7 @@ export async function DELETE(req, { params }) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
 
     await connectDB();
 
