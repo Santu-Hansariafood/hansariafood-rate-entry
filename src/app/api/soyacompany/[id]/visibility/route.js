@@ -11,7 +11,7 @@ export async function PUT(req, { params }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
     const { isSoyaVisible } = await req.json();
 
     if (typeof isSoyaVisible !== "boolean") {
