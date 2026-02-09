@@ -31,6 +31,7 @@ export default function MobileNav({
     { label: "Soya Rate", path: "/soyarate" },
     { label: "M DOC Rate", path: "/mdocrate" },
     { label: "DDGS Rate", path: "/ddgsrate" },
+    { label: "Freight", path: "/freight" },
   ];
 
   const rateDropdownItems = isAdmin

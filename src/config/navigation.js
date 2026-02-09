@@ -16,6 +16,7 @@ export const RATE_DROPDOWN = [
   { label: "Soya Rate", path: "/soyarate", allowed: [] },
   { label: "M DOC Rate", path: "/mdocrate", allowed: [] },
   { label: "DDGS Rate", path: "/ddgsrate", allowed: [] },
+  { label: "Freight", path: "/freight", allowed: [] },
 ];
 
 export const COMPANY_DROPDOWN = [
