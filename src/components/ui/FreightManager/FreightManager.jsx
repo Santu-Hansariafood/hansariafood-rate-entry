@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import {
   MapPin,
@@ -36,12 +36,18 @@ export default function FreightManager() {
 
   // Derived Company Lists
   const sellerCompanies = React.useMemo(() => {
-    return companies.filter(c => c.type?.includes('seller'));
-  }, [companies]);
+    return companies.filter(c => 
+      c.type?.includes('seller') && 
+      c.commodities?.includes(selectedCommodity)
+    );
+  }, [companies, selectedCommodity]);
 
   const buyerCompanies = React.useMemo(() => {
-    return companies.filter(c => c.type?.includes('buyer'));
-  }, [companies]);
+    return companies.filter(c => 
+      c.type?.includes('buyer') && 
+      c.commodities?.includes(selectedCommodity)
+    );
+  }, [companies, selectedCommodity]);
 
   // List State
   const [freights, setFreights] = useState([]);
@@ -77,7 +83,7 @@ export default function FreightManager() {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axiosInstance.get("/api/managecompany?limit=1000");
+      const response = await axiosInstance.get("/managecompany?limit=1000");
       if (response.data.success) {
         setCompanies(response.data.companies);
       }
@@ -89,7 +95,7 @@ export default function FreightManager() {
 
   const fetchFreights = useCallback(async () => {
     try {
-      const response = await axiosInstance.get("/api/freight", {
+      const response = await axiosInstance.get("/freight", {
         params: {
           commodity: selectedCommodity,
           page: pagination.page,
@@ -157,9 +163,9 @@ export default function FreightManager() {
 
       let response;
       if (editingId) {
-        response = await axiosInstance.put(`/api/freight/${editingId}`, payload);
+        response = await axiosInstance.put(`/freight/${editingId}`, payload);
       } else {
-        response = await axiosInstance.post("/api/freight", payload);
+        response = await axiosInstance.post("/freight", payload);
       }
 
       if (response.data.success) {
@@ -213,7 +219,7 @@ export default function FreightManager() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this freight entry?")) return;
     try {
-      const response = await axiosInstance.delete(`/api/freight/${id}`);
+      const response = await axiosInstance.delete(`/freight/${id}`);
       if (response.data.success) {
         toast.success("Freight deleted successfully");
         fetchFreights();
