@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import Dropdown from "@/components/common/Dropdown/Dropdown";
 import { toast } from "react-toastify";
 import {
   MapPin,
@@ -113,8 +114,7 @@ export default function FreightManager() {
   }, [selectedCommodity, pagination.page, pagination.limit, searchTerm]);
 
   // Handle Source Company Change
-  const handleCompanyChange = (e) => {
-    const companyId = e.target.value;
+  const handleCompanyChange = (companyId) => {
     const company = companies.find((c) => c._id === companyId);
     setFormData((prev) => ({
       ...prev,
@@ -125,8 +125,7 @@ export default function FreightManager() {
   };
 
   // Handle Delivery Company Change
-  const handleDeliveryCompanyChange = (e) => {
-    const companyId = e.target.value;
+  const handleDeliveryCompanyChange = (companyId) => {
     const company = companies.find((c) => c._id === companyId);
     setFormData((prev) => ({
       ...prev,
@@ -291,45 +290,32 @@ export default function FreightManager() {
             </h3>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Company Name
-              </label>
-              <select
+              <Dropdown
+                label="Company Name"
+                options={sellerCompanies.map((c) => ({
+                  label: c.name,
+                  value: c._id,
+                }))}
                 value={formData.company}
                 onChange={handleCompanyChange}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              >
-                <option value="">Select Seller Company</option>
-                {sellerCompanies.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select Seller Company"
+              />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Assign Location
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-                <select
-                  value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value })
-                  }
-                  disabled={!formData.company}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Location</option>
-                  {sourceLocations.map((loc, idx) => (
-                    <option key={idx} value={loc}>
-                      {loc}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Dropdown
+                label="Assign Location"
+                options={sourceLocations.map((loc) => ({
+                  label: loc,
+                  value: loc,
+                }))}
+                value={formData.location}
+                onChange={(val) =>
+                  setFormData({ ...formData, location: val })
+                }
+                placeholder="Select Location"
+                disabled={!formData.company}
+              />
             </div>
           </div>
 
@@ -340,45 +326,32 @@ export default function FreightManager() {
             </h3>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Delivery Company
-              </label>
-              <select
+              <Dropdown
+                label="Delivery Company"
+                options={buyerCompanies.map((c) => ({
+                  label: c.name,
+                  value: c._id,
+                }))}
                 value={formData.deliveryCompany}
                 onChange={handleDeliveryCompanyChange}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              >
-                <option value="">Select Buyer Company</option>
-                {buyerCompanies.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Select Buyer Company"
+              />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Assign Location
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-                <select
-                  value={formData.deliveryLocation}
-                  onChange={(e) =>
-                    setFormData({ ...formData, deliveryLocation: e.target.value })
-                  }
-                  disabled={!formData.deliveryCompany}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="">Select Location</option>
-                  {deliveryLocations.map((loc, idx) => (
-                    <option key={idx} value={loc}>
-                      {loc}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Dropdown
+                label="Assign Location"
+                options={deliveryLocations.map((loc) => ({
+                  label: loc,
+                  value: loc,
+                }))}
+                value={formData.deliveryLocation}
+                onChange={(val) =>
+                  setFormData({ ...formData, deliveryLocation: val })
+                }
+                placeholder="Select Location"
+                disabled={!formData.deliveryCompany}
+              />
             </div>
           </div>
 

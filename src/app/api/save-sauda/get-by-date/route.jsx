@@ -5,10 +5,11 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 
 export async function GET(req) {
-  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  await connectDB();
 
   try {
     const { searchParams } = new URL(req.url);
@@ -21,7 +22,7 @@ export async function GET(req) {
       );
     }
 
-    const entries = await SaudaEntry.find({ date });
+    const entries = await SaudaEntry.find({ date }).lean();
 
     return NextResponse.json({ entries }, { status: 200 });
   } catch (error) {
