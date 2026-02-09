@@ -305,10 +305,13 @@ export default function FreightManager() {
             <div className="space-y-2">
               <Dropdown
                 label="Assign Location"
-                options={sourceLocations.map((loc) => ({
-                  label: loc,
-                  value: loc,
-                }))}
+                options={sourceLocations.map((loc) => {
+                  const company = companies.find((c) => c._id === formData.company);
+                  return {
+                    label: company ? `${company.name} - ${loc}` : loc,
+                    value: loc,
+                  };
+                })}
                 value={formData.location}
                 onChange={(val) =>
                   setFormData({ ...formData, location: val })
@@ -341,10 +344,15 @@ export default function FreightManager() {
             <div className="space-y-2">
               <Dropdown
                 label="Assign Location"
-                options={deliveryLocations.map((loc) => ({
-                  label: loc,
-                  value: loc,
-                }))}
+                options={deliveryLocations.map((loc) => {
+                  const company = companies.find(
+                    (c) => c._id === formData.deliveryCompany
+                  );
+                  return {
+                    label: company ? `${company.name} - ${loc}` : loc,
+                    value: loc,
+                  };
+                })}
                 value={formData.deliveryLocation}
                 onChange={(val) =>
                   setFormData({ ...formData, deliveryLocation: val })
