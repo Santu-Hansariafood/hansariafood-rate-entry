@@ -3,9 +3,9 @@ import { connectDB } from "@/lib/mongodb";
 import RateUpdate from "@/models/RateUpdate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
 
 export async function POST(req) {
+  await connectDB();
   try {
     if (!verifyApiKey(req)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,6 +33,7 @@ export async function POST(req) {
 }
 
 export async function GET() {
+  await connectDB();
   try {
     const data = await RateUpdate.find().sort({ date: -1 });
     return NextResponse.json({ success: true, data });

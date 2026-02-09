@@ -4,7 +4,6 @@ import SaudaEntry from "@/models/SaudaEntry";
 import Seller from "@/models/Seller";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
 
 const getCutoffDate = (months) => {
   const d = new Date();
@@ -13,6 +12,7 @@ const getCutoffDate = (months) => {
 };
 
 export async function GET(req) {
+  await connectDB();
   try {
     if (!verifyApiKey(req)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

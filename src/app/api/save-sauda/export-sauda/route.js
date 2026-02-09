@@ -5,9 +5,9 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import ExcelJS from "exceljs";
 import nodemailer from "nodemailer";
 
-await connectDB();
 
 export async function GET(req) {
+  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

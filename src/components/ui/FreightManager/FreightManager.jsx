@@ -24,7 +24,6 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const COMMODITIES = ["Maize DDGS", "M DOC", "Soya"];
 

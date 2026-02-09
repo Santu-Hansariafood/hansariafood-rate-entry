@@ -4,9 +4,9 @@ import DescriptionStats from "@/models/DescriptionStats";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import dayjs from "dayjs";
 
-await connectDB();
 
 export async function GET(req) {
+  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -46,6 +46,7 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
