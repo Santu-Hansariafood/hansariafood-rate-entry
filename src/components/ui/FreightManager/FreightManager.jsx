@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const COMMODITIES = ["Maize DDGS", "M DOC", "Soya"];
 
@@ -76,7 +77,7 @@ export default function FreightManager() {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axios.get("/api/managecompany?limit=1000");
+      const response = await axiosInstance.get("/api/managecompany?limit=1000");
       if (response.data.success) {
         setCompanies(response.data.companies);
       }
@@ -88,7 +89,7 @@ export default function FreightManager() {
 
   const fetchFreights = useCallback(async () => {
     try {
-      const response = await axios.get("/api/freight", {
+      const response = await axiosInstance.get("/api/freight", {
         params: {
           commodity: selectedCommodity,
           page: pagination.page,
@@ -156,9 +157,9 @@ export default function FreightManager() {
 
       let response;
       if (editingId) {
-        response = await axios.put(`/api/freight/${editingId}`, payload);
+        response = await axiosInstance.put(`/api/freight/${editingId}`, payload);
       } else {
-        response = await axios.post("/api/freight", payload);
+        response = await axiosInstance.post("/api/freight", payload);
       }
 
       if (response.data.success) {
@@ -212,7 +213,7 @@ export default function FreightManager() {
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to delete this freight entry?")) return;
     try {
-      const response = await axios.delete(`/api/freight/${id}`);
+      const response = await axiosInstance.delete(`/api/freight/${id}`);
       if (response.data.success) {
         toast.success("Freight deleted successfully");
         fetchFreights();
