@@ -38,16 +38,29 @@ export default function FreightManager() {
   const sellerCompanies = React.useMemo(() => {
     return companies.filter(c => 
       c.type?.includes('seller') && 
-      c.commodities?.includes(selectedCommodity)
+      c.commodities?.some(comm => typeof comm === 'string' && comm.toLowerCase() === selectedCommodity.toLowerCase())
     );
   }, [companies, selectedCommodity]);
 
   const buyerCompanies = React.useMemo(() => {
     return companies.filter(c => 
       c.type?.includes('buyer') && 
-      c.commodities?.includes(selectedCommodity)
+      c.commodities?.some(comm => typeof comm === 'string' && comm.toLowerCase() === selectedCommodity.toLowerCase())
     );
   }, [companies, selectedCommodity]);
+
+  useEffect(() => {
+    setFormData({
+      company: "",
+      location: "",
+      deliveryCompany: "",
+      deliveryLocation: "",
+      freightRate: "",
+    });
+    setSourceLocations([]);
+    setDeliveryLocations([]);
+    setEditingId(null);
+  }, [selectedCommodity]);
 
   // List State
   const [freights, setFreights] = useState([]);
@@ -291,6 +304,7 @@ export default function FreightManager() {
 
             <div className="space-y-2">
               <Dropdown
+                key={`source-company-${selectedCommodity}`}
                 label="Company Name"
                 options={sellerCompanies.map((c) => ({
                   label: c.name,
@@ -304,6 +318,7 @@ export default function FreightManager() {
 
             <div className="space-y-2">
               <Dropdown
+                key={`source-location-${selectedCommodity}-${formData.company}`}
                 label="Assign Location"
                 options={sourceLocations.map((loc) => {
                   const company = companies.find((c) => c._id === formData.company);
@@ -330,6 +345,7 @@ export default function FreightManager() {
 
             <div className="space-y-2">
               <Dropdown
+                key={`delivery-company-${selectedCommodity}`}
                 label="Delivery Company"
                 options={buyerCompanies.map((c) => ({
                   label: c.name,
@@ -343,6 +359,7 @@ export default function FreightManager() {
 
             <div className="space-y-2">
               <Dropdown
+                key={`delivery-location-${selectedCommodity}-${formData.deliveryCompany}`}
                 label="Assign Location"
                 options={deliveryLocations.map((loc) => {
                   const company = companies.find(
