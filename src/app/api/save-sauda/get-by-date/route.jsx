@@ -3,13 +3,12 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
+await connectDB();
 
 export async function GET(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  await connectDB();
 
   try {
     const { searchParams } = new URL(req.url);
@@ -22,7 +21,7 @@ export async function GET(req) {
       );
     }
 
-    const entries = await SaudaEntry.find({ date }).lean();
+    const entries = await SaudaEntry.find({ date });
 
     return NextResponse.json({ entries }, { status: 200 });
   } catch (error) {

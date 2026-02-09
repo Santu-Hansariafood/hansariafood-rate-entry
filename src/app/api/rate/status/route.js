@@ -3,10 +3,11 @@ import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
+await connectDB();
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
-  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

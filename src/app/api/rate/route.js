@@ -3,9 +3,9 @@ import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
+await connectDB();
 
 export async function POST(req) {
-  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

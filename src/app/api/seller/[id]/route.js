@@ -3,9 +3,9 @@ import { connectDB } from "@/lib/mongodb";
 import Seller from "@/models/Seller";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
+await connectDB();
 
 export async function GET(req, { params }) {
-  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -29,7 +29,6 @@ export async function GET(req, { params }) {
 }
 
 export async function PUT(req, { params }) {
-  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

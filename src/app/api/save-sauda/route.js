@@ -9,9 +9,9 @@ import { sendEmail } from "@/lib/email/sendEmail";
 import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
 import { generateSaudaPDFNode } from "@/utils/generateSaudaPDF/generateSaudaPDFNode";
 
+await connectDB();
 
 export async function POST(req) {
-  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

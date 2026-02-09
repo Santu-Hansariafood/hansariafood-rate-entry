@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
+await connectDB();
 
 const companyMappings = {
   "Agri Rise": ["Agri Rise Pvt Ltd", "Shivansh Trading Company"],
@@ -14,7 +15,6 @@ const companyMappings = {
 };
 
 export async function GET(req) {
-  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
