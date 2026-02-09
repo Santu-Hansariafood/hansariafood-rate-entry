@@ -33,6 +33,15 @@ export default function FreightManager() {
   const [selectedCommodity, setSelectedCommodity] = useState(COMMODITIES[0]);
   const [editingId, setEditingId] = useState(null);
 
+  // Derived Company Lists
+  const sellerCompanies = React.useMemo(() => {
+    return companies.filter(c => c.type?.includes('seller'));
+  }, [companies]);
+
+  const buyerCompanies = React.useMemo(() => {
+    return companies.filter(c => c.type?.includes('buyer'));
+  }, [companies]);
+
   // List State
   const [freights, setFreights] = useState([]);
   const [pagination, setPagination] = useState({
@@ -284,8 +293,8 @@ export default function FreightManager() {
                 onChange={handleCompanyChange}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               >
-                <option value="">Select Company</option>
-                {companies.map((c) => (
+                <option value="">Select Seller Company</option>
+                {sellerCompanies.map((c) => (
                   <option key={c._id} value={c._id}>
                     {c.name}
                   </option>
@@ -333,8 +342,8 @@ export default function FreightManager() {
                 onChange={handleDeliveryCompanyChange}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               >
-                <option value="">Select Delivery Company</option>
-                {companies.map((c) => (
+                <option value="">Select Buyer Company</option>
+                {buyerCompanies.map((c) => (
                   <option key={c._id} value={c._id}>
                     {c.name}
                   </option>
