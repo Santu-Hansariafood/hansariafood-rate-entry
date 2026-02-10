@@ -17,6 +17,9 @@ const FreightList = ({
   setPagination,
   searchTerm,
   setSearchTerm,
+  selectedCreator,
+  setSelectedCreator,
+  creators,
   setViewingFreight,
   handleEdit,
   handleDelete,
@@ -103,6 +106,15 @@ const FreightList = ({
       },
     },
     {
+      header: "Added By",
+      accessor: "createdBy",
+      cell: (item) => (
+        <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {item.createdBy || <span className="text-gray-400 italic">Unknown</span>}
+        </div>
+      ),
+    },
+    {
       header: "Actions",
       cell: (item) => (
         <div className="flex items-center justify-end gap-2">
@@ -138,12 +150,27 @@ const FreightList = ({
         <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
           Freight List
         </h3>
-        <div className="w-full sm:w-72">
-          <SearchBox
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Search company or location..."
-          />
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-center">
+          <select
+            value={selectedCreator}
+            onChange={(e) => setSelectedCreator(e.target.value)}
+            className="w-full sm:w-48 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 dark:text-gray-200 h-10"
+          >
+            <option value="">All Users</option>
+            {creators &&
+              creators.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+          </select>
+          <div className="w-full sm:w-72">
+            <SearchBox
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search company or location..."
+            />
+          </div>
         </div>
       </div>
 

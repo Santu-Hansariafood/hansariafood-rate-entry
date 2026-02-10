@@ -15,10 +15,24 @@ export async function GET(req) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const search = searchParams.get("search") || "";
+    const createdBy = searchParams.get("createdBy");
+    const getCreators = searchParams.get("getCreators");
+
+    if (getCreators) {
+      const creators = await Freight.distinct("createdBy");
+      return NextResponse.json({
+        success: true,
+        creators: creators.filter(Boolean),
+      });
+    }
 
     const query = {};
     if (commodity) {
       query.commodity = commodity;
+    }
+
+    if (createdBy) {
+      query.createdBy = createdBy;
     }
 
     if (search) {
@@ -83,6 +97,7 @@ export async function POST(req) {
       deliveryCompany,
       deliveryLocation,
       freightRate,
+      createdBy,
     } = body;
 
     if (
@@ -107,6 +122,7 @@ export async function POST(req) {
       deliveryLocation,
       freightRate,
       previousRate: freightRate, // Initial previous rate same as current
+      createdBy,
     });
 
     const populatedFreight = await Freight.findById(newFreight._id)

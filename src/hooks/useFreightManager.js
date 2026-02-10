@@ -19,6 +19,9 @@ export const useFreightManager = () => {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [viewingFreight, setViewingFreight] = useState(null);
+  const [selectedCreator, setSelectedCreator] = useState("");
+  const [creators, setCreators] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   
   const [formData, setFormData] = useState({
     company: "",
@@ -90,6 +93,17 @@ export const useFreightManager = () => {
     }
   };
 
+  const fetchCreators = async () => {
+    try {
+      const response = await axiosInstance.get("/freight?getCreators=true");
+      if (response.data.success) {
+        setCreators(response.data.creators);
+      }
+    } catch (error) {
+      console.error("Error fetching creators:", error);
+    }
+  };
+
   const fetchFreights = useCallback(async () => {
     try {
       const response = await axiosInstance.get("/freight", {
@@ -98,6 +112,7 @@ export const useFreightManager = () => {
           page: pagination.page,
           limit: pagination.limit,
           search: searchTerm,
+          createdBy: selectedCreator || undefined,
         },
       });
       if (response.data.success) {
@@ -107,10 +122,27 @@ export const useFreightManager = () => {
     } catch (error) {
       console.error("Error fetching freights:", error);
     }
-  }, [selectedCommodity, pagination.page, pagination.limit, searchTerm]);
+  }, [selectedCommodity, pagination.page, pagination.limit, searchTerm, selectedCreator]);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedUserName = localStorage.getItem("userName");
+      if (storedUserName) {
+        setCurrentUser({ name: storedUserName });
+      } else {
+        const storedUserObj = localStorage.getItem("user");
+        if (storedUserObj) {
+          try {
+            const parsed = JSON.parse(storedUserObj);
+            setCurrentUser({ name: parsed.name || parsed.mobile });
+          } catch (e) {
+            console.error("Error parsing user from storage", e);
+          }
+        }
+      }
+    }
     fetchCompanies();
+    fetchCreators();
   }, []);
 
   useEffect(() => {
@@ -167,6 +199,7 @@ export const useFreightManager = () => {
         deliveryCompany: formData.deliveryCompany,
         deliveryLocation: formData.deliveryLocation,
         freightRate: Number(formData.freightRate),
+        createdBy: currentUser?.name || "Unknown",
       };
 
       let response;
@@ -243,6 +276,9 @@ export const useFreightManager = () => {
     setPagination,
     searchTerm,
     setSearchTerm,
+    selectedCreator,
+    setSelectedCreator,
+    creators,
     viewingFreight,
     setViewingFreight,
     formData,

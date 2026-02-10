@@ -18,6 +18,7 @@ const FreightSchema = new mongoose.Schema(
     deliveryLocation: { type: String, required: true },
     freightRate: { type: Number, required: true },
     previousRate: { type: Number, default: 0 },
+    createdBy: { type: String },
   },
   { timestamps: true }
 );

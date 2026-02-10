@@ -22,6 +22,9 @@ export default function FreightManager() {
     setPagination,
     searchTerm,
     setSearchTerm,
+    selectedCreator,
+    setSelectedCreator,
+    creators,
     viewingFreight,
     setViewingFreight,
     isEditModalOpen,
@@ -49,6 +52,9 @@ export default function FreightManager() {
         setPagination={setPagination}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        selectedCreator={selectedCreator}
+        setSelectedCreator={setSelectedCreator}
+        creators={creators}
         setViewingFreight={setViewingFreight}
         handleEdit={handleEdit}
         handleDelete={handleDelete}
