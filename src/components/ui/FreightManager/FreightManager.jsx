@@ -4,6 +4,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Dropdown from "@/components/common/Dropdown/Dropdown";
+import Table from "@/components/common/Tables/Tables";
+import Modal from "@/components/common/Modal/Modal";
 import { toast } from "react-toastify";
 import {
   MapPin,
@@ -34,6 +36,8 @@ export default function FreightManager() {
   const [selectedCommodity, setSelectedCommodity] = useState(COMMODITIES[0]);
   const [editingId, setEditingId] = useState(null);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   // Derived Company Lists
   const sellerCompanies = React.useMemo(() => {
     return companies.filter(c => 
@@ -49,18 +53,20 @@ export default function FreightManager() {
     );
   }, [companies, selectedCommodity]);
 
+  // Reset form when commodity changes - only if not editing
   useEffect(() => {
-    setFormData({
-      company: "",
-      location: "",
-      deliveryCompany: "",
-      deliveryLocation: "",
-      freightRate: "",
-    });
-    setSourceLocations([]);
-    setDeliveryLocations([]);
-    setEditingId(null);
-  }, [selectedCommodity]);
+    if (!editingId) {
+        setFormData({
+        company: "",
+        location: "",
+        deliveryCompany: "",
+        deliveryLocation: "",
+        freightRate: "",
+        });
+        setSourceLocations([]);
+        setDeliveryLocations([]);
+    }
+  }, [selectedCommodity, editingId]);
 
   // List State
   const [freights, setFreights] = useState([]);
@@ -97,7 +103,7 @@ export default function FreightManager() {
   const fetchCompanies = async () => {
     try {
       const response = await axiosInstance.get("/managecompany?limit=1000");
-      if (response.data.success) {
+      if (response.data && response.data.companies) {
         setCompanies(response.data.companies);
       }
     } catch (error) {
@@ -150,21 +156,15 @@ export default function FreightManager() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (
-      !formData.company ||
-      !formData.location ||
-      !formData.deliveryCompany ||
-      !formData.deliveryLocation ||
-      !formData.freightRate
-    ) {
-      toast.warning("Please fill all fields");
+    if (!formData.company || !formData.location || !formData.deliveryCompany || !formData.deliveryLocation || !formData.freightRate || !selectedCommodity) {
+      toast.error("Please fill in all fields including Commodity");
       return;
     }
 
     setLoading(true);
     try {
       const payload = {
-        commodity: selectedCommodity,
+        commodity: selectedCommodity, // Ensure current selected commodity is used
         company: formData.company,
         location: formData.location,
         deliveryCompany: formData.deliveryCompany,
@@ -184,6 +184,7 @@ export default function FreightManager() {
           editingId ? "Freight updated successfully!" : "Freight added successfully!"
         );
         resetForm();
+        setIsEditModalOpen(false); // Close modal on success
         fetchFreights();
       }
     } catch (error) {
@@ -205,9 +206,15 @@ export default function FreightManager() {
     setSourceLocations([]);
     setDeliveryLocations([]);
     setEditingId(null);
+    setIsEditModalOpen(false);
   };
 
   const handleEdit = (freight) => {
+    // Ensure we switch to the correct commodity context if needed, though usually list is filtered by commodity
+    if (freight.commodity && freight.commodity !== selectedCommodity) {
+        setSelectedCommodity(freight.commodity);
+    }
+
     const company = companies.find((c) => c._id === freight.company._id);
     const deliveryCompany = companies.find(
       (c) => c._id === freight.deliveryCompany._id
@@ -224,7 +231,7 @@ export default function FreightManager() {
       freightRate: freight.freightRate,
     });
     setEditingId(freight._id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsEditModalOpen(true);
   };
 
   const handleDelete = async (id) => {
@@ -257,6 +264,98 @@ export default function FreightManager() {
       };
     return { icon: <Minus size={14} />, color: "text-gray-500", diff: 0 };
   };
+
+  const columns = [
+    {
+      header: "ID",
+      accessor: "_id",
+      cell: (item) => (
+        <span className="font-mono text-gray-500">
+          #{item._id.slice(-6).toUpperCase()}
+        </span>
+      ),
+    },
+    {
+      header: "Loading Station",
+      accessor: "company",
+      cell: (item) => (
+        <div>
+          <div className="font-medium text-gray-900 dark:text-gray-100">
+            {item.company?.name}
+          </div>
+          <div className="text-sm text-gray-500 flex items-center gap-1">
+            <MapPin size={12} /> {item.location}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Unloading Station",
+      accessor: "deliveryCompany",
+      cell: (item) => (
+        <div>
+          <div className="font-medium text-gray-900 dark:text-gray-100">
+            {item.deliveryCompany?.name}
+          </div>
+          <div className="text-sm text-gray-500 flex items-center gap-1">
+            <MapPin size={12} /> {item.deliveryLocation}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Rate (₹)",
+      accessor: "freightRate",
+      cell: (item) => {
+        const { icon, color, diff } = getRateDifference(
+          item.freightRate,
+          item.previousRate
+        );
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">
+              ₹{item.freightRate}
+            </span>
+            {diff !== 0 && (
+              <span
+                className={`flex items-center text-xs font-bold ${color} bg-gray-100 dark:bg-gray-900 px-1.5 py-0.5 rounded-md`}
+              >
+                {icon} {Math.abs(diff)}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      header: "Actions",
+      cell: (item) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => setViewingFreight(item)}
+            className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            title="View"
+          >
+            <Eye size={18} />
+          </button>
+          <button
+            onClick={() => handleEdit(item)}
+            className="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+            title="Edit"
+          >
+            <Edit size={18} />
+          </button>
+          <button
+            onClick={() => handleDelete(item._id)}
+            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+            title="Delete"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="w-full max-w-6xl mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
@@ -294,141 +393,135 @@ export default function FreightManager() {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 mb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-          {/* Source Section */}
-          <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-              <Building2 size={16} /> Source Details
-            </h3>
+      {/* Add New Freight Form (Only shown when not editing) */}
+      {!editingId && (
+        <form onSubmit={handleSubmit} className="space-y-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+            {/* Source Section */}
+            <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                <Building2 size={16} /> Source Details
+                </h3>
 
-            <div className="space-y-2">
-              <Dropdown
-                key={`source-company-${selectedCommodity}`}
-                label="Company Name"
-                options={sellerCompanies.map((c) => ({
-                  label: c.name,
-                  value: c._id,
-                }))}
-                value={formData.company}
-                onChange={handleCompanyChange}
-                placeholder="Select Seller Company"
-              />
+                <div className="space-y-2">
+                <Dropdown
+                    key={`source-company-${selectedCommodity}`}
+                    label="Company Name"
+                    options={sellerCompanies.map((c) => ({
+                    label: c.name,
+                    value: c._id,
+                    }))}
+                    value={formData.company}
+                    onChange={handleCompanyChange}
+                    placeholder="Select Seller Company"
+                />
+                </div>
+
+                <div className="space-y-2">
+                <Dropdown
+                    key={`source-location-${selectedCommodity}-${formData.company}`}
+                    label="Assign Location"
+                    options={sourceLocations.map((loc) => {
+                    const company = companies.find((c) => c._id === formData.company);
+                    return {
+                        label: company ? `${company.name} - ${loc}` : loc,
+                        value: loc,
+                    };
+                    })}
+                    value={formData.location}
+                    onChange={(val) =>
+                    setFormData({ ...formData, location: val })
+                    }
+                    placeholder="Select Location"
+                    disabled={!formData.company}
+                />
+                </div>
             </div>
 
-            <div className="space-y-2">
-              <Dropdown
-                key={`source-location-${selectedCommodity}-${formData.company}`}
-                label="Assign Location"
-                options={sourceLocations.map((loc) => {
-                  const company = companies.find((c) => c._id === formData.company);
-                  return {
-                    label: company ? `${company.name} - ${loc}` : loc,
-                    value: loc,
-                  };
-                })}
-                value={formData.location}
-                onChange={(val) =>
-                  setFormData({ ...formData, location: val })
+            {/* Delivery Section */}
+            <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                <Truck size={16} /> Delivery Details
+                </h3>
+
+                <div className="space-y-2">
+                <Dropdown
+                    key={`delivery-company-${selectedCommodity}`}
+                    label="Delivery Company"
+                    options={buyerCompanies.map((c) => ({
+                    label: c.name,
+                    value: c._id,
+                    }))}
+                    value={formData.deliveryCompany}
+                    onChange={handleDeliveryCompanyChange}
+                    placeholder="Select Buyer Company"
+                />
+                </div>
+
+                <div className="space-y-2">
+                <Dropdown
+                    key={`delivery-location-${selectedCommodity}-${formData.deliveryCompany}`}
+                    label="Assign Location"
+                    options={deliveryLocations.map((loc) => {
+                    const company = companies.find(
+                        (c) => c._id === formData.deliveryCompany
+                    );
+                    return {
+                        label: company ? `${company.name} - ${loc}` : loc,
+                        value: loc,
+                    };
+                    })}
+                    value={formData.deliveryLocation}
+                    onChange={(val) =>
+                    setFormData({ ...formData, deliveryLocation: val })
+                    }
+                    placeholder="Select Location"
+                    disabled={!formData.deliveryCompany}
+                />
+                </div>
+            </div>
+
+            {/* Arrow Indicator (Visual) */}
+            <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-600 items-center justify-center shadow-sm z-10">
+                <ArrowRight className="w-5 h-5 text-gray-400" />
+            </div>
+            </div>
+
+            {/* Freight Rate */}
+            <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/30">
+            <div className="max-w-md mx-auto space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2">
+                <DollarSign size={16} /> Freight Rate (₹/MT)
+                </label>
+                <input
+                type="number"
+                value={formData.freightRate}
+                onChange={(e) =>
+                    setFormData({ ...formData, freightRate: e.target.value })
                 }
-                placeholder="Select Location"
-                disabled={!formData.company}
-              />
+                placeholder="Enter freight rate..."
+                className="w-full px-4 py-3 text-center text-lg font-bold rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
+                />
             </div>
-          </div>
-
-          {/* Delivery Section */}
-          <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-              <Truck size={16} /> Delivery Details
-            </h3>
-
-            <div className="space-y-2">
-              <Dropdown
-                key={`delivery-company-${selectedCommodity}`}
-                label="Delivery Company"
-                options={buyerCompanies.map((c) => ({
-                  label: c.name,
-                  value: c._id,
-                }))}
-                value={formData.deliveryCompany}
-                onChange={handleDeliveryCompanyChange}
-                placeholder="Select Buyer Company"
-              />
             </div>
 
-            <div className="space-y-2">
-              <Dropdown
-                key={`delivery-location-${selectedCommodity}-${formData.deliveryCompany}`}
-                label="Assign Location"
-                options={deliveryLocations.map((loc) => {
-                  const company = companies.find(
-                    (c) => c._id === formData.deliveryCompany
-                  );
-                  return {
-                    label: company ? `${company.name} - ${loc}` : loc,
-                    value: loc,
-                  };
-                })}
-                value={formData.deliveryLocation}
-                onChange={(val) =>
-                  setFormData({ ...formData, deliveryLocation: val })
-                }
-                placeholder="Select Location"
-                disabled={!formData.deliveryCompany}
-              />
-            </div>
-          </div>
-
-          {/* Arrow Indicator (Visual) */}
-          <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-600 items-center justify-center shadow-sm z-10">
-            <ArrowRight className="w-5 h-5 text-gray-400" />
-          </div>
-        </div>
-
-        {/* Freight Rate */}
-        <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/30">
-          <div className="max-w-md mx-auto space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2">
-              <DollarSign size={16} /> Freight Rate (₹/MT)
-            </label>
-            <input
-              type="number"
-              value={formData.freightRate}
-              onChange={(e) =>
-                setFormData({ ...formData, freightRate: e.target.value })
-              }
-              placeholder="Enter freight rate..."
-              className="w-full px-4 py-3 text-center text-lg font-bold rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
-            />
-          </div>
-        </div>
-
-        {/* Submit Button */}
-        <div className="flex gap-4">
-            {editingId && (
+            {/* Submit Button */}
+            <div className="flex gap-4">
                 <button
-                    type="button"
-                    onClick={resetForm}
-                    className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                type="submit"
+                disabled={loading}
+                className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transform hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    Cancel Edit
+                {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                    <Save className="w-5 h-5" />
+                )}
+                Add Freight
                 </button>
-            )}
-            <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transform hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-            {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-                <Save className="w-5 h-5" />
-            )}
-            {editingId ? "Update Freight" : "Add Freight"}
-            </button>
-        </div>
-      </form>
+            </div>
+        </form>
+      )}
 
       {/* List Section */}
       <div className="space-y-6 border-t border-gray-200 dark:border-gray-700 pt-8">
@@ -448,111 +541,178 @@ export default function FreightManager() {
             </div>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <table className="w-full text-left">
-                <thead className="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-sm font-semibold uppercase tracking-wider">
-                    <tr>
-                        <th className="px-6 py-4">ID</th>
-                        <th className="px-6 py-4">Loading Station</th>
-                        <th className="px-6 py-4">Unloading Station</th>
-                        <th className="px-6 py-4">Rate (₹)</th>
-                        <th className="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {freights.length > 0 ? (
-                        freights.map((item) => {
-                            const { icon, color, diff } = getRateDifference(item.freightRate, item.previousRate);
-                            return (
-                                <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                                    <td className="px-6 py-4 text-sm font-mono text-gray-500">
-                                        #{item._id.slice(-6).toUpperCase()}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="font-medium text-gray-900 dark:text-gray-100">{item.company?.name}</div>
-                                        <div className="text-sm text-gray-500 flex items-center gap-1">
-                                            <MapPin size={12} /> {item.location}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="font-medium text-gray-900 dark:text-gray-100">{item.deliveryCompany?.name}</div>
-                                        <div className="text-sm text-gray-500 flex items-center gap-1">
-                                            <MapPin size={12} /> {item.deliveryLocation}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-gray-900 dark:text-gray-100 text-lg">
-                                                ₹{item.freightRate}
-                                            </span>
-                                            {diff !== 0 && (
-                                                <span className={`flex items-center text-xs font-bold ${color} bg-gray-100 dark:bg-gray-900 px-1.5 py-0.5 rounded-md`}>
-                                                    {icon} {Math.abs(diff)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button 
-                                                onClick={() => setViewingFreight(item)}
-                                                className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                                                title="View"
-                                            >
-                                                <Eye size={18} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleEdit(item)}
-                                                className="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDelete(item._id)}
-                                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })
-                    ) : (
-                        <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
-                                No freight records found.
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <Table data={freights} columns={columns} />
 
         {/* Pagination */}
         {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-                <button
-                    onClick={() => setPagination(p => ({...p, page: Math.max(1, p.page - 1)}))}
-                    disabled={pagination.page === 1}
-                    className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <ChevronLeft size={20} />
-                </button>
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    Page {pagination.page} of {pagination.totalPages}
-                </span>
-                <button
-                    onClick={() => setPagination(p => ({...p, page: Math.min(p.totalPages, p.page + 1)}))}
-                    disabled={pagination.page === pagination.totalPages}
-                    className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <ChevronRight size={20} />
-                </button>
+          <div className="flex justify-center p-4 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex gap-2">
+              <button
+                onClick={() =>
+                  setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+                }
+                disabled={pagination.page === 1}
+                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 flex items-center">
+                Page {pagination.page} of {pagination.totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+                }
+                disabled={pagination.page === pagination.totalPages}
+                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
             </div>
+          </div>
         )}
+      </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <Modal onClose={resetForm} className="max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+                <h2 className="text-xl font-bold mb-6 text-gray-800 dark:text-white flex items-center gap-2">
+                    <Edit size={20} className="text-blue-600" />
+                    Edit Freight for {selectedCommodity}
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                    {/* Source Section */}
+                    <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                        <Building2 size={16} /> Source Details
+                        </h3>
+
+                        <div className="space-y-2">
+                        <Dropdown
+                            key={`edit-source-company-${selectedCommodity}`}
+                            label="Company Name"
+                            options={sellerCompanies.map((c) => ({
+                            label: c.name,
+                            value: c._id,
+                            }))}
+                            value={formData.company}
+                            onChange={handleCompanyChange}
+                            placeholder="Select Seller Company"
+                        />
+                        </div>
+
+                        <div className="space-y-2">
+                        <Dropdown
+                            key={`edit-source-location-${selectedCommodity}-${formData.company}`}
+                            label="Assign Location"
+                            options={sourceLocations.map((loc) => {
+                            const company = companies.find((c) => c._id === formData.company);
+                            return {
+                                label: company ? `${company.name} - ${loc}` : loc,
+                                value: loc,
+                            };
+                            })}
+                            value={formData.location}
+                            onChange={(val) =>
+                            setFormData({ ...formData, location: val })
+                            }
+                            placeholder="Select Location"
+                            disabled={!formData.company}
+                        />
+                        </div>
+                    </div>
+
+                    {/* Delivery Section */}
+                    <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                        <Truck size={16} /> Delivery Details
+                        </h3>
+
+                        <div className="space-y-2">
+                        <Dropdown
+                            key={`edit-delivery-company-${selectedCommodity}`}
+                            label="Delivery Company"
+                            options={buyerCompanies.map((c) => ({
+                            label: c.name,
+                            value: c._id,
+                            }))}
+                            value={formData.deliveryCompany}
+                            onChange={handleDeliveryCompanyChange}
+                            placeholder="Select Buyer Company"
+                        />
+                        </div>
+
+                        <div className="space-y-2">
+                        <Dropdown
+                            key={`edit-delivery-location-${selectedCommodity}-${formData.deliveryCompany}`}
+                            label="Assign Location"
+                            options={deliveryLocations.map((loc) => {
+                            const company = companies.find(
+                                (c) => c._id === formData.deliveryCompany
+                            );
+                            return {
+                                label: company ? `${company.name} - ${loc}` : loc,
+                                value: loc,
+                            };
+                            })}
+                            value={formData.deliveryLocation}
+                            onChange={(val) =>
+                            setFormData({ ...formData, deliveryLocation: val })
+                            }
+                            placeholder="Select Location"
+                            disabled={!formData.deliveryCompany}
+                        />
+                        </div>
+                    </div>
+                    </div>
+
+                    {/* Freight Rate */}
+                    <div className="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800/30">
+                    <div className="max-w-md mx-auto space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center justify-center gap-2">
+                        <DollarSign size={16} /> Freight Rate (₹/MT)
+                        </label>
+                        <input
+                        type="number"
+                        value={formData.freightRate}
+                        onChange={(e) =>
+                            setFormData({ ...formData, freightRate: e.target.value })
+                        }
+                        placeholder="Enter freight rate..."
+                        className="w-full px-4 py-3 text-center text-lg font-bold rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
+                        />
+                    </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex gap-4">
+                        <button
+                            type="button"
+                            onClick={resetForm}
+                            className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-bold rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 transform hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                        {loading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <Save className="w-5 h-5" />
+                        )}
+                        Update Freight
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </Modal>
+      )}
       </div>
 
       {/* View Modal */}
