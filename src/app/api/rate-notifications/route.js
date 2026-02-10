@@ -4,10 +4,10 @@ import RateHistory from "@/models/RateHistory";
 import ManageCompany from "@/models/ManageCompany";
 
 export const dynamic = "force-dynamic";
+await connectDB();
 
 export async function GET(req) {
   try {
-    await connectDB();
 
     const { searchParams } = new URL(req.url);
 
