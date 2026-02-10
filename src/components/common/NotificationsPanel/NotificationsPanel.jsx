@@ -9,36 +9,45 @@ import {
   Clock,
   FileText,
   Building2,
-  CheckCircle
 } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function NotificationsPanel({ notifications = [] }) {
 
+  const formatDate = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   const handleCopy = async (item) => {
-    const text = `*Today* ${item.date}
-            *${item.companyName}* is Offering
+    const text =
+`*Today* ${formatDate(item.date)}
+*${item.companyName}* is Offering
 
-            *Commodity:* ${item.commodity}
-            *Location:* ${item.location}
-            *Rate:* ₹${item.rate}/- MT
-            *Payment Terms:* 
+*Commodity:* ${item.commodity}
+*Location:* ${item.location}
+*Rate:* ₹${item.rate}/- MT
+*Payment Terms:* 
 
-            *Thanks,*  
-            *Purchase Team*  
-            *Hansaria Food Pvt. Ltd.*`
-            ;
+*Thanks,*  
+*Purchase Team*  
+*Hansaria Food Pvt. Ltd.*`;
+
     await navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard!", {
-                                            icon: "📋",
-                                            style: {
-                                              borderRadius: "12px",
-                                              background: "#ecfdf5",
-                                              color: "#065f46",
-                                              fontSize: "14px",
-                                            },
-                                          });
 
+    toast.success("Copied to clipboard!", {
+      icon: "📋",
+      style: {
+        borderRadius: "12px",
+        background: "#ecfdf5",
+        color: "#065f46",
+        fontSize: "14px",
+      },
+    });
   };
 
   return (
@@ -48,6 +57,7 @@ export default function NotificationsPanel({ notifications = [] }) {
           Recent Updates ({notifications.length})
         </h3>
       </div>
+
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
         {notifications.length === 0 ? (
           <div className="p-10 text-center text-gray-400 text-sm">
@@ -76,8 +86,8 @@ export default function NotificationsPanel({ notifications = [] }) {
                     <Copy size={14} />
                   </button>
                 </div>
-                <div className="text-xs space-y-2 text-gray-600 dark:text-gray-400">
 
+                <div className="text-xs space-y-2 text-gray-600 dark:text-gray-400">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1">
                       <Package size={14} /> Commodity
@@ -96,22 +106,19 @@ export default function NotificationsPanel({ notifications = [] }) {
                     <span className="flex items-center gap-1">
                       <FileText size={14} /> Payment
                     </span>
-                    <span className="font-medium">
-                      
-                    </span>
+                    <span className="font-medium"></span>
                   </div>
 
                   <div className="flex items-center justify-between pt-3 mt-3 border-t border-dashed border-gray-200 dark:border-gray-700">
                     <span className="flex items-center gap-1 text-gray-400">
                       <Clock size={14} />
-                      {item.time || item.date}
+                      {formatDate(item.date)}
                     </span>
                     <span className="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400 text-base">
                       <IndianRupee size={16} />
                       {item.rate}
                     </span>
                   </div>
-
                 </div>
               </li>
             ))}
