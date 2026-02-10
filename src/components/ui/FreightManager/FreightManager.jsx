@@ -38,22 +38,45 @@ export default function FreightManager() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  // Helper function for commodity matching
+  const checkCommodityMatch = useCallback((companyCommodities, selected) => {
+    if (!companyCommodities || !Array.isArray(companyCommodities)) return false;
+    
+    const selectedLower = selected.toLowerCase();
+    
+    // Soya: Match any Soya or SBM variants (SBM 46%, 47%, 48%, 50%, 51% etc.)
+    if (selectedLower === 'soya') {
+      return companyCommodities.some(c => {
+         const cLower = c.toLowerCase();
+         // Check for 'soya' or 'sbm' to cover all percentage variants requested
+         return cLower.includes('soya') || cLower.includes('sbm');
+      });
+    }
+    
+    // Maize DDGS: Match any DDGS (Maize, Rice, Mix) as per user intent
+    if (selectedLower.includes('ddgs')) {
+       return companyCommodities.some(c => c.toLowerCase().includes('ddgs'));
+    }
+    
+    // Default: Exact match (e.g., M DOC)
+    return companyCommodities.some(c => c.toLowerCase() === selectedLower);
+  }, []);
+
   // Derived Company Lists
   const sellerCompanies = React.useMemo(() => {
     return companies.filter(c => 
       c.type?.includes('seller') && 
-      c.commodities?.some(comm => typeof comm === 'string' && comm.toLowerCase() === selectedCommodity.toLowerCase())
+      checkCommodityMatch(c.commodities, selectedCommodity)
     );
-  }, [companies, selectedCommodity]);
+  }, [companies, selectedCommodity, checkCommodityMatch]);
 
   const buyerCompanies = React.useMemo(() => {
     return companies.filter(c => 
       c.type?.includes('buyer') && 
-      c.commodities?.some(comm => typeof comm === 'string' && comm.toLowerCase() === selectedCommodity.toLowerCase())
+      checkCommodityMatch(c.commodities, selectedCommodity)
     );
-  }, [companies, selectedCommodity]);
+  }, [companies, selectedCommodity, checkCommodityMatch]);
 
-  // Reset form when commodity changes - only if not editing
   useEffect(() => {
     if (!editingId) {
         setFormData({
