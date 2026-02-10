@@ -1,0 +1,261 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { toast } from "react-toastify";
+
+export const COMMODITIES = ["Maize DDGS", "M DOC", "Soya"];
+
+export const useFreightManager = () => {
+  const [loading, setLoading] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [selectedCommodity, setSelectedCommodity] = useState(COMMODITIES[0]);
+  const [editingId, setEditingId] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [freights, setFreights] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewingFreight, setViewingFreight] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    company: "",
+    location: "",
+    deliveryCompany: "",
+    deliveryLocation: "",
+    freightRate: "",
+  });
+
+  const [sourceLocations, setSourceLocations] = useState([]);
+  const [deliveryLocations, setDeliveryLocations] = useState([]);
+
+  const checkCommodityMatch = useCallback((companyCommodities, selected) => {
+    if (!companyCommodities || !Array.isArray(companyCommodities)) return false;
+    
+    const selectedLower = selected.toLowerCase();
+    
+    if (selectedLower === 'soya') {
+      return companyCommodities.some(c => {
+         const cLower = c.toLowerCase();
+         return cLower.includes('soya') || cLower.includes('sbm');
+      });
+    }
+    
+    if (selectedLower.includes('ddgs')) {
+       return companyCommodities.some(c => c.toLowerCase().includes('ddgs'));
+    }
+    
+    return companyCommodities.some(c => c.toLowerCase() === selectedLower);
+  }, []);
+
+  const sellerCompanies = useMemo(() => {
+    return companies.filter(c => 
+      c.type?.includes('seller') && 
+      checkCommodityMatch(c.commodities, selectedCommodity)
+    );
+  }, [companies, selectedCommodity, checkCommodityMatch]);
+
+  const buyerCompanies = useMemo(() => {
+    return companies.filter(c => 
+      c.type?.includes('buyer') && 
+      checkCommodityMatch(c.commodities, selectedCommodity)
+    );
+  }, [companies, selectedCommodity, checkCommodityMatch]);
+
+  const resetForm = useCallback(() => {
+    setFormData({
+      company: "",
+      location: "",
+      deliveryCompany: "",
+      deliveryLocation: "",
+      freightRate: "",
+    });
+    setSourceLocations([]);
+    setDeliveryLocations([]);
+    setEditingId(null);
+    setIsEditModalOpen(false);
+  }, []);
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await axiosInstance.get("/managecompany?limit=1000");
+      if (response.data && response.data.companies) {
+        setCompanies(response.data.companies);
+      }
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      toast.error("Failed to load companies");
+    }
+  };
+
+  const fetchFreights = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get("/freight", {
+        params: {
+          commodity: selectedCommodity,
+          page: pagination.page,
+          limit: pagination.limit,
+          search: searchTerm,
+        },
+      });
+      if (response.data.success) {
+        setFreights(response.data.freights);
+        setPagination(response.data.pagination);
+      }
+    } catch (error) {
+      console.error("Error fetching freights:", error);
+    }
+  }, [selectedCommodity, pagination.page, pagination.limit, searchTerm]);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, []);
+
+  useEffect(() => {
+    fetchFreights();
+  }, [fetchFreights]);
+
+  useEffect(() => {
+    if (!editingId) {
+        setFormData({
+        company: "",
+        location: "",
+        deliveryCompany: "",
+        deliveryLocation: "",
+        freightRate: "",
+        });
+        setSourceLocations([]);
+        setDeliveryLocations([]);
+    }
+  }, [selectedCommodity, editingId]);
+
+  const handleCompanyChange = (companyId) => {
+    const company = companies.find((c) => c._id === companyId);
+    setFormData((prev) => ({
+      ...prev,
+      company: companyId,
+      location: "",
+    }));
+    setSourceLocations(company ? company.location : []);
+  };
+
+  const handleDeliveryCompanyChange = (companyId) => {
+    const company = companies.find((c) => c._id === companyId);
+    setFormData((prev) => ({
+      ...prev,
+      deliveryCompany: companyId,
+      deliveryLocation: "",
+    }));
+    setDeliveryLocations(company ? company.location : []);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.company || !formData.location || !formData.deliveryCompany || !formData.deliveryLocation || !formData.freightRate || !selectedCommodity) {
+      toast.error("Please fill in all fields including Commodity");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        commodity: selectedCommodity,
+        company: formData.company,
+        location: formData.location,
+        deliveryCompany: formData.deliveryCompany,
+        deliveryLocation: formData.deliveryLocation,
+        freightRate: Number(formData.freightRate),
+      };
+
+      let response;
+      if (editingId) {
+        response = await axiosInstance.put(`/freight/${editingId}`, payload);
+      } else {
+        response = await axiosInstance.post("/freight", payload);
+      }
+
+      if (response.data.success) {
+        toast.success(
+          editingId ? "Freight updated successfully!" : "Freight added successfully!"
+        );
+        resetForm();
+        setIsEditModalOpen(false);
+        fetchFreights();
+      }
+    } catch (error) {
+      console.error("Error saving freight:", error);
+      toast.error(error.response?.data?.error || "Failed to save freight");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (freight) => {
+    if (freight.commodity && freight.commodity !== selectedCommodity) {
+        setSelectedCommodity(freight.commodity);
+    }
+
+    const company = companies.find((c) => c._id === freight.company._id);
+    const deliveryCompany = companies.find(
+      (c) => c._id === freight.deliveryCompany._id
+    );
+
+    setSourceLocations(company ? company.location : []);
+    setDeliveryLocations(deliveryCompany ? deliveryCompany.location : []);
+
+    setFormData({
+      company: freight.company._id,
+      location: freight.location,
+      deliveryCompany: freight.deliveryCompany._id,
+      deliveryLocation: freight.deliveryLocation,
+      freightRate: freight.freightRate,
+    });
+    setEditingId(freight._id);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this freight entry?")) return;
+    try {
+      const response = await axiosInstance.delete(`/freight/${id}`);
+      if (response.data.success) {
+        toast.success("Freight deleted successfully");
+        fetchFreights();
+      }
+    } catch (error) {
+      toast.error("Failed to delete freight");
+    }
+  };
+
+  return {
+    loading,
+    companies,
+    selectedCommodity,
+    setSelectedCommodity,
+    editingId,
+    setEditingId,
+    isEditModalOpen,
+    setIsEditModalOpen,
+    freights,
+    pagination,
+    setPagination,
+    searchTerm,
+    setSearchTerm,
+    viewingFreight,
+    setViewingFreight,
+    formData,
+    setFormData,
+    sourceLocations,
+    deliveryLocations,
+    sellerCompanies,
+    buyerCompanies,
+    handleCompanyChange,
+    handleDeliveryCompanyChange,
+    handleSubmit,
+    handleEdit,
+    handleDelete,
+    resetForm,
+  };
+};
