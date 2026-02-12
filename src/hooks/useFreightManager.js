@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
 
 export const COMMODITIES = ["Maize DDGS", "M DOC", "Soya"];
 
 export const useFreightManager = () => {
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [selectedCommodity, setSelectedCommodity] = useState(COMMODITIES[0]);
@@ -124,7 +126,6 @@ export const useFreightManager = () => {
       if (response.data.success) {
         setFreights(response.data.freights);
         setPagination(response.data.pagination);
-        console.log("Fetched freights:", response.data.freights); // Debug log
       }
     } catch (error) {
       console.error("Error fetching freights:", error);
@@ -132,18 +133,19 @@ export const useFreightManager = () => {
   }, [selectedCommodity, pagination.page, pagination.limit, searchTerm, selectedCreator]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (session?.user) {
+      setCurrentUser({ 
+        name: session.user.name || session.user.mobile || "Unknown" 
+      });
+    } else if (typeof window !== "undefined") {
       const storedUserName = localStorage.getItem("userName");
       const storedUserObj = localStorage.getItem("user");
       
-      console.log("Storage check:", { storedUserName, storedUserObj }); // Debug log
-
       if (storedUserName) {
         setCurrentUser({ name: storedUserName });
       } else if (storedUserObj) {
         try {
           const parsed = JSON.parse(storedUserObj);
-          console.log("Parsed user:", parsed); // Debug log
           // Prioritize registeredName, then name, then mobile
           const displayName = parsed.registeredName || parsed.name || parsed.mobile;
           setCurrentUser({ name: displayName });
@@ -154,7 +156,7 @@ export const useFreightManager = () => {
     }
     fetchCompanies();
     fetchCreators();
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     fetchFreights();
@@ -259,7 +261,6 @@ export const useFreightManager = () => {
   };
 
   const handleEdit = (freight) => {
-    console.log("Editing freight:", freight); // Debug log
     if (!confirm("Are you sure you want to edit this freight entry?")) return;
     
     // Use _id from freight object
@@ -286,7 +287,6 @@ export const useFreightManager = () => {
   };
 
   const handleDelete = async (id) => {
-    console.log("Deleting freight with ID:", id); // Debug log
     if (!id) {
         toast.error("Freight ID missing");
         return;
