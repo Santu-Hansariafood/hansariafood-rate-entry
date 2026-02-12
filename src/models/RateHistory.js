@@ -32,6 +32,16 @@ const HistorySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    destinationLocation: {
+      type: String,
+      default: "",
+    },
+
+    freightRate: {
+      type: Number,
+      default: 0,
+    },
   },
   { _id: false }
 );

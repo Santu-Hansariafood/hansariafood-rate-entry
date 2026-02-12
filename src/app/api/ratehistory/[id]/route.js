@@ -33,6 +33,8 @@ export async function GET(req, { params }) {
         tempRates: today?.tempRates || [],
         newRate: today?.finalRate || "",
         others: today?.others || "",
+        destinationLocation: today?.destinationLocation || "",
+        freightRate: today?.freightRate || 0,
         date: selectedDate,
       };
     });
@@ -57,8 +59,16 @@ export async function POST(req, { params }) {
 
   try {
     const body = await req.json();
-    const { locationName, commodityName, tempRate, finalRate, note, others } =
-      body;
+    const {
+      locationName,
+      commodityName,
+      tempRate,
+      finalRate,
+      note,
+      others,
+      destinationLocation,
+      freightRate,
+    } = body;
 
     if (!locationName || !commodityName) {
       return NextResponse.json(
@@ -115,6 +125,15 @@ export async function POST(req, { params }) {
           ...(update.$set || {}),
           "history.$.finalRate": Number(finalRate),
           "history.$.others": others || "",
+          "history.$.destinationLocation": destinationLocation || "",
+          "history.$.freightRate": Number(freightRate) || 0,
+        };
+      } else if (destinationLocation !== undefined || freightRate !== undefined) {
+        // Even if finalRate is not provided, update destination and freight if they are
+        update.$set = {
+          ...(update.$set || {}),
+          "history.$.destinationLocation": destinationLocation || "",
+          "history.$.freightRate": Number(freightRate) || 0,
         };
       }
 
@@ -156,6 +175,8 @@ export async function POST(req, { params }) {
                   ? Number(tempRate)
                   : null,
               others: others || "",
+              destinationLocation: destinationLocation || "",
+              freightRate: Number(freightRate) || 0,
             },
           },
         },
