@@ -210,170 +210,133 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
   if (!isOpen || !data) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white w-full max-w-5xl h-[85vh] rounded-xl overflow-hidden flex flex-col shadow-2xl"
-      >
-        {/* Header */}
-        <div className="px-6 py-4 bg-orange-600 text-white flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-3">
-            <MapPin size={20} />
-            <div>
-              <h2 className="text-lg font-bold">{data.name}</h2>
-              <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider opacity-80">
-                <span>Maize DDGS Rates</span>
-                <span>•</span>
-                <span>{today}</span>
-              </div>
-            </div>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+      <motion.div className="bg-white w-full max-w-5xl h-[80vh] rounded-xl overflow-hidden flex flex-col">
+        <div className="flex justify-between p-4 border-b">
+          <div>
+            <h2 className="font-semibold">{data.name}</h2>
+            <p className="text-sm text-gray-500">Date: {today}</p>
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <X size={20} />
+          <button onClick={onClose}>
+            <X />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-gray-50">
+        <div className="flex-1 overflow-y-auto p-4">
           {loadingFetch ? (
-            <div className="h-full flex flex-col items-center justify-center">
-              <Loading />
-              <p className="text-gray-500 mt-2 text-sm">Loading market data...</p>
-            </div>
+            <Loading />
           ) : (
             data.location.map((loc) => (
-              <div key={loc} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div key={loc} className="border rounded mb-3">
                 <button
                   onClick={() => toggleLocation(loc)}
-                  className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                  className="w-full px-4 py-3 flex justify-between bg-gray-50"
                 >
-                  <div className="flex items-center gap-2">
-                    <MapPin size={16} className="text-orange-500" />
-                    <span className="font-bold text-gray-700">{loc}</span>
-                  </div>
-                  <div className={`transition-transform ${expandedLocations.includes(loc) ? 'rotate-180' : ''}`}>
-                    <ChevronDown size={20} className="text-gray-400" />
-                  </div>
+                  <span>{loc}</span>
+                  {expandedLocations.includes(loc) ? (
+                    <ChevronUp />
+                  ) : (
+                    <ChevronDown />
+                  )}
                 </button>
 
                 {expandedLocations.includes(loc) && (
-                  <div className="px-5 pb-5 pt-2 space-y-4">
-                    <div className="h-px bg-gray-100" />
-                    
+                  <div className="p-4 space-y-4">
                     {rates[loc]?.map((item, index) => {
                       const isEditing = editing[`${loc}_${index}`];
                       const key = `${loc}_${index}`;
 
                       return (
-                        <div key={index} className={`p-5 rounded-xl border transition-all ${
-                          isEditing ? 'border-orange-200 bg-orange-50/10' : 'border-gray-100 bg-white'
-                        }`}>
-                          <div className="flex items-center justify-between mb-5">
-                            <h3 className="text-lg font-bold text-gray-800">{item.commodity}</h3>
-                            <div className="flex gap-2">
-                              {!isEditing ? (
-                                <button
-                                  onClick={() => toggleEdit(loc, index)}
-                                  className="px-4 py-1.5 rounded-lg text-xs font-bold border border-gray-200 text-gray-600 hover:bg-gray-50"
-                                >
-                                  Edit Rates
-                                </button>
-                              ) : (
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => toggleEdit(loc, index)}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-gray-600"
-                                  >
-                                    Cancel
-                                  </button>
-                                  <button
-                                    onClick={() => handleSave(loc, index)}
-                                    disabled={loadingSave}
-                                    className="px-4 py-1.5 rounded-lg text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
-                                  >
-                                    {loadingSave ? "Saving..." : "Save"}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
+                        <div key={index} className="bg-gray-50 p-4 rounded">
+                          <div className="flex justify-between mb-3">
+                            <strong>{item.commodity}</strong>
+                            {!isEditing ? (
+                              <button
+                                onClick={() => toggleEdit(loc, index)}
+                                className="text-xs border px-3 py-1"
+                              >
+                                Edit
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleSave(loc, index)}
+                                className="text-xs bg-orange-600 text-white px-3 py-1"
+                              >
+                                {loadingSave ? "Saving..." : "Save"}
+                              </button>
+                            )}
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* Rates Section */}
-                            <div className="space-y-3">
-                              <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold uppercase text-gray-400">Yesterday</label>
-                                <span className="text-sm font-bold text-gray-600">₹{item.oldRate}</span>
-                              </div>
-                              
-                              <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold uppercase text-orange-600">Temp Rate (Today)</label>
-                                <div className="flex items-center gap-1 border-b border-orange-200 pb-1">
-                                  <span className="text-orange-600 text-sm">₹</span>
-                                  <input
-                                    type="number"
-                                    value={item.tempRate}
-                                    readOnly={!isEditing}
-                                    onChange={(e) => handleChange(loc, index, e.target.value)}
-                                    className="w-full bg-transparent font-bold text-lg outline-none text-orange-700"
-                                    placeholder="0"
-                                  />
-                                </div>
-                              </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <InputBox
+                              label="Yesterday Rate"
+                              value={item.oldRate}
+                              readOnly
+                            />
 
-                              <div className="flex flex-col gap-1">
-                                <label className="text-[10px] font-bold uppercase text-gray-400">Final Rate</label>
-                                <span className="text-sm font-bold text-gray-800">
-                                  ₹{item.tempRates.length
-                                    ? item.tempRates[item.tempRates.length - 1].rate
-                                    : item.finalRate || 0}
-                                </span>
-                              </div>
-                            </div>
+                            <InputBox
+                              label="Temp Rate (Today)"
+                              type="number"
+                              value={item.tempRate}
+                              readOnly={!isEditing}
+                              onChange={(e) =>
+                                handleChange(loc, index, e.target.value)
+                              }
+                            />
 
-                            {/* Destination & Freight */}
-                            <div className="space-y-4">
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-bold uppercase text-gray-500">Destination</label>
+                            <InputBox
+                              label="Final Rate (Auto)"
+                              value={
+                                item.tempRates.length
+                                  ? item.tempRates[item.tempRates.length - 1]
+                                      .rate
+                                  : item.finalRate || 0
+                              }
+                              readOnly
+                            />
+
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                                <MapPin size={12} className="text-orange-500" />
+                                Destination
+                              </label>
+                              <div className="relative group">
                                 <select
                                   value={selectedDestinations[key] || ""}
                                   onChange={(e) => handleDestinationChange(loc, index, e.target.value)}
-                                  className="w-full px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white focus:border-orange-500 outline-none"
+                                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white hover:border-orange-400 focus:border-orange-500 outline-none appearance-none cursor-pointer pr-8"
                                 >
                                   <option value="">Select Destination</option>
                                   {destinationLocations.map((dLoc) => (
-                                    <option key={dLoc} value={dLoc}>{dLoc}</option>
+                                    <option key={dLoc} value={dLoc}>
+                                      {dLoc}
+                                    </option>
                                   ))}
                                 </select>
-                              </div>
-
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-bold uppercase text-gray-500">Freight Rate</label>
-                                <div className="flex items-center justify-between p-3 rounded-lg bg-orange-50 border border-orange-100">
-                                  <div className="flex items-center gap-2">
-                                    <Truck size={14} className="text-orange-600" />
-                                    <span className="text-[10px] font-bold text-orange-800 uppercase">Freight</span>
-                                  </div>
-                                  <span className="text-lg font-bold text-orange-700">
-                                    ₹{freightRates[key] || 0}
-                                  </span>
-                                </div>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-orange-500 transition-colors" />
                               </div>
                             </div>
 
-                            {/* Landing Cost */}
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                                <Truck size={12} className="text-amber-500" />
+                                Freight
+                              </label>
+                              <div className="px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 text-gray-700 font-semibold flex items-center gap-1.5">
+                                <span className="text-gray-400 text-xs">₹</span>
+                                {freightRates[key] || 0}
+                              </div>
+                            </div>
+
                             <div className="flex flex-col gap-1.5 w-full">
                               <label className="text-[11px] font-bold uppercase tracking-wider text-orange-600 flex items-center gap-1">
                                 <IndianRupee size={12} className="text-orange-500" />
                                 Landing Cost
                               </label>
-                              <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50 p-[1px] shadow-sm">
-                                <div className="bg-white/80 backdrop-blur-sm px-3 py-2 rounded-[11px] flex items-center justify-between">
-                                  <span className="text-orange-700 font-black text-base">
-                                    <span className="text-orange-400 text-xs mr-0.5">₹</span>
+                              <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-orange-50 p-3 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-orange-700 font-black text-xl">
+                                    <span className="text-orange-400 text-sm mr-1">₹</span>
                                     {(() => {
                                       const currentRate = item.tempRate || (item.tempRates.length ? item.tempRates[item.tempRates.length - 1].rate : item.finalRate) || 0;
                                       const freight = freightRates[key] || 0;
@@ -386,29 +349,37 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                             </div>
                           </div>
 
-                          {/* Price Action Timeline */}
                           {item.tempRates.length > 0 && (
-                            <div className="mt-6 pt-6 border-t border-gray-50">
-                              <h4 className="text-[10px] font-bold uppercase text-gray-400 mb-3">Today's Price Action</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {item.tempRates.map((tr, i) => {
-                                  const prev = i === 0 ? item.oldRate : item.tempRates[i - 1].rate;
-                                  const diff = tr.rate - prev;
-                                  return (
-                                    <div key={i} className="flex flex-col bg-gray-50 rounded-lg p-2 min-w-[80px]">
-                                      <span className="text-[9px] font-bold text-gray-400 uppercase">{tr.time}</span>
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-xs font-bold text-gray-700">₹{tr.rate}</span>
-                                        {diff !== 0 && (
-                                          <span className={`text-[9px] font-bold ${diff > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            {diff > 0 ? '+' : ''}{diff}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                            <div className="mt-3 text-sm">
+                              <p className="font-semibold mb-1">Today Rates</p>
+                              {item.tempRates.map((tr, i) => {
+                                const prev =
+                                  i === 0
+                                    ? item.oldRate
+                                    : item.tempRates[i - 1].rate;
+                                const diff = tr.rate - prev;
+
+                                return (
+                                  <div
+                                    key={i}
+                                    className="flex justify-between text-xs"
+                                  >
+                                    <span>{tr.time}</span>
+                                    <span>{tr.rate}</span>
+                                    <span
+                                      className={
+                                        diff > 0
+                                          ? "text-green-600"
+                                          : diff < 0
+                                          ? "text-red-600"
+                                          : "text-gray-500"
+                                      }
+                                    >
+                                      {diff > 0 ? `+${diff}` : diff}
+                                    </span>
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </div>
