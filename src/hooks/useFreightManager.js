@@ -133,17 +133,18 @@ export const useFreightManager = () => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedUserName = localStorage.getItem("userName");
+      const storedUserObj = localStorage.getItem("user");
+      
       if (storedUserName) {
         setCurrentUser({ name: storedUserName });
-      } else {
-        const storedUserObj = localStorage.getItem("user");
-        if (storedUserObj) {
-          try {
-            const parsed = JSON.parse(storedUserObj);
-            setCurrentUser({ name: parsed.name || parsed.mobile });
-          } catch (e) {
-            console.error("Error parsing user from storage", e);
-          }
+      } else if (storedUserObj) {
+        try {
+          const parsed = JSON.parse(storedUserObj);
+          // Prioritize name, then registeredName, then mobile
+          const displayName = parsed.name || parsed.registeredName || parsed.mobile;
+          setCurrentUser({ name: displayName });
+        } catch (e) {
+          console.error("Error parsing user from storage", e);
         }
       }
     }
@@ -254,6 +255,9 @@ export const useFreightManager = () => {
   };
 
   const handleEdit = (freight) => {
+    if (!confirm("Are you sure you want to edit this freight entry?")) return;
+    
+    // Set commodity first to ensure locations list is correct
     if (freight.commodity && freight.commodity !== selectedCommodity) {
         setSelectedCommodity(freight.commodity);
     }
