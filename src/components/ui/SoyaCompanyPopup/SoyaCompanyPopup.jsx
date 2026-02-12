@@ -220,213 +220,197 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
   };
 
   if (!isOpen || !data) return null;
+  const todayDate = new Date().toLocaleDateString("en-GB");
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white w-full max-w-5xl h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-gray-100"
-      >
-        {/* Header */}
-        <div className="relative px-6 py-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
-              <MapPin className="text-white" size={24} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight">{data.name}</h2>
-              <div className="flex items-center gap-2 mt-0.5 opacity-90">
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/20 uppercase tracking-wider">Soya Rates</span>
-                <span className="text-xs opacity-75">•</span>
-                <span className="text-xs font-medium">{today}</span>
-              </div>
-            </div>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+      <motion.div className="bg-white w-full max-w-5xl h-[80vh] rounded-xl overflow-hidden flex flex-col">
+        <div className="flex justify-between p-4 border-b">
+          <div>
+            <h2 className="font-semibold">{data.name}</h2>
+            <p className="text-sm text-gray-500">Date: {todayDate}</p>
           </div>
-          <button 
-            onClick={onClose}
-            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all active:scale-90"
-          >
-            <X size={20} />
+          <button onClick={onClose}>
+            <X />
           </button>
         </div>
 
-        <div className="px-6 py-2 bg-gray-50 border-b border-gray-100">
-           <SoyaNotification data={notificationData} />
+        <div className="px-4 py-2 bg-gray-50 border-b">
+          <SoyaNotification data={notificationData} />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gray-50/30">
+        <div className="flex-1 overflow-y-auto p-4">
           {loadingFetch ? (
-            <div className="h-full flex flex-col items-center justify-center space-y-4">
-              <Loading />
-              <p className="text-gray-400 font-medium animate-pulse text-sm">Loading market data...</p>
-            </div>
+            <Loading />
           ) : (
             data.location.map((loc) => (
-              <div key={loc} className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md">
+              <div key={loc} className="border rounded mb-3">
                 <button
                   onClick={() => toggleLocation(loc)}
-                  className={`w-full px-6 py-5 flex items-center justify-between transition-colors ${
-                    expandedLocations.includes(loc) ? 'bg-emerald-50/50' : 'bg-white hover:bg-gray-50'
-                  }`}
+                  className="w-full px-4 py-3 flex justify-between bg-gray-50"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-xl transition-colors ${
-                      expandedLocations.includes(loc) ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      <MapPin size={18} />
-                    </div>
-                    <span className="font-bold text-gray-800 tracking-tight text-lg">{loc}</span>
-                  </div>
-                  <div className={`transition-transform duration-300 ${expandedLocations.includes(loc) ? 'rotate-180 text-emerald-600' : 'text-gray-400'}`}>
-                    <ChevronDown size={24} />
-                  </div>
+                  <span>{loc}</span>
+                  {expandedLocations.includes(loc) ? (
+                    <ChevronUp />
+                  ) : (
+                    <ChevronDown />
+                  )}
                 </button>
 
                 {expandedLocations.includes(loc) && (
-                  <div className="p-6 pt-0 space-y-6 animate-in slide-in-from-top-4 duration-300">
-                    <div className="h-px bg-gradient-to-r from-transparent via-gray-100 to-transparent mb-6" />
-                    
+                  <div className="p-4 space-y-4">
                     {rates[loc]?.map((item, index) => {
                       const isEditing = editing[`${loc}_${index}`];
                       const key = `${loc}_${index}`;
 
                       return (
-                        <div key={index} className="relative group">
-                          {/* Commodity Card */}
-                          <div className={`p-6 rounded-[2rem] border transition-all duration-300 ${
-                            isEditing 
-                              ? 'border-emerald-200 bg-emerald-50/30 ring-4 ring-emerald-500/5 shadow-lg' 
-                              : 'border-gray-100 bg-white hover:border-emerald-200 shadow-sm'
-                          }`}>
-                            <div className="flex items-center justify-between mb-6">
-                              <div className="flex items-center gap-3">
-                                <div className="w-2 h-8 rounded-full bg-emerald-500" />
-                                <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">{item.commodity}</h3>
-                              </div>
-                              
-                              <div className="flex items-center gap-2">
-                                {!isEditing ? (
-                                  <button
-                                    onClick={() => toggleEdit(loc, index)}
-                                    className="px-5 py-2 rounded-xl text-sm font-bold border border-gray-200 text-gray-600 hover:border-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all active:scale-95 shadow-sm"
-                                  >
-                                    Edit Rates
-                                  </button>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => toggleEdit(loc, index)}
-                                      className="px-4 py-2 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      onClick={() => handleSave(loc, index)}
-                                      disabled={loadingSave}
-                                      className="flex items-center gap-2 px-6 py-2 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all active:scale-95 shadow-md shadow-emerald-200 disabled:opacity-50"
-                                    >
-                                      {loadingSave ? (
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                      ) : null}
-                                      Save Changes
-                                    </button>
-                                  </div>
-                                )}
+                        <div key={index} className="bg-gray-50 p-4 rounded">
+                          <div className="flex justify-between mb-3">
+                            <strong>{item.commodity}</strong>
+                            {!isEditing ? (
+                              <button
+                                onClick={() => toggleEdit(loc, index)}
+                                className="text-xs border px-3 py-1"
+                              >
+                                Edit
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleSave(loc, index)}
+                                className="text-xs bg-green-600 text-white px-3 py-1"
+                              >
+                                {loadingSave ? "Saving..." : "Save"}
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <InputBox
+                              label="Yesterday Rate"
+                              value={item.oldRate}
+                              readOnly
+                            />
+
+                            <InputBox
+                              label="Temp Rate (Today)"
+                              type="number"
+                              value={item.tempRate}
+                              readOnly={!isEditing}
+                              onChange={(e) =>
+                                handleChange(loc, index, e.target.value)
+                              }
+                            />
+
+                            <InputBox
+                              label="Final Rate (Auto)"
+                              value={
+                                item.tempRates.length
+                                  ? item.tempRates[item.tempRates.length - 1]
+                                      .rate
+                                  : item.finalRate || 0
+                              }
+                              readOnly
+                            />
+
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                                <MapPin size={12} className="text-emerald-500" />
+                                Destination
+                              </label>
+                              <div className="relative group">
+                                <select
+                                  value={selectedDestinations[key] || ""}
+                                  onChange={(e) => handleDestinationChange(loc, index, e.target.value)}
+                                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white hover:border-emerald-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all appearance-none cursor-pointer pr-8"
+                                >
+                                  <option value="">Select Destination</option>
+                                  {destinationLocations.map((dLoc) => (
+                                    <option key={dLoc} value={dLoc}>
+                                      {dLoc}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-emerald-500 transition-colors" />
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                              {/* Rate Fields */}
-                              <div className="space-y-4">
-                                <div className="p-4 rounded-2xl bg-gray-50/80 border border-gray-100">
-                                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Yesterday</label>
-                                  <div className="flex items-baseline gap-1">
-                                    <span className="text-gray-400 text-sm font-bold">₹</span>
-                                    <span className="text-lg font-bold text-gray-600">{item.oldRate}</span>
-                                  </div>
-                                </div>
-                                
-                                <div className={`p-4 rounded-2xl border transition-all ${
-                                  isEditing ? 'bg-white border-emerald-200 shadow-sm' : 'bg-gray-50/80 border-gray-100'
-                                }`}>
-                                  <label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1 block">Temp Rate (Today)</label>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-emerald-600 text-sm font-bold">₹</span>
-                                    <input
-                                      type="number"
-                                      value={item.tempRate}
-                                      readOnly={!isEditing}
-                                      onChange={(e) => handleChange(loc, index, e.target.value)}
-                                      className={`w-full bg-transparent font-black text-xl outline-none ${
-                                        isEditing ? 'text-emerald-700' : 'text-gray-700'
-                                      }`}
-                                      placeholder="0"
-                                    />
-                                  </div>
-                                </div>
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                                <Truck size={12} className="text-amber-500" />
+                                Freight
+                              </label>
+                              <div className="px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 text-gray-700 font-semibold flex items-center gap-1.5 shadow-inner">
+                                <span className="text-gray-400 text-xs">₹</span>
+                                {freightRates[key] || 0}
+                              </div>
+                            </div>
 
-                                <div className="p-4 rounded-2xl bg-gray-50/80 border border-gray-100">
-                                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 block">Final Rate</label>
-                                  <div className="flex items-baseline gap-1">
-                                    <span className="text-gray-400 text-sm font-bold">₹</span>
-                                    <span className="text-lg font-bold text-gray-800">
-                                      {item.tempRates.length
-                                        ? item.tempRates[item.tempRates.length - 1].rate
-                                        : item.finalRate || 0}
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-blue-600 flex items-center gap-1">
+                                <IndianRupee size={12} className="text-blue-500" />
+                                Landing Cost
+                              </label>
+                              <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-[1px] shadow-sm">
+                                <div className="bg-white/80 backdrop-blur-sm px-3 py-2 rounded-[11px] flex items-center justify-between">
+                                  <span className="text-blue-700 font-black text-base">
+                                    <span className="text-blue-400 text-xs mr-0.5">₹</span>
+                                    {(() => {
+                                      const currentRate = item.tempRate || (item.tempRates.length ? item.tempRates[item.tempRates.length - 1].rate : item.finalRate) || 0;
+                                      const freight = freightRates[key] || 0;
+                                      return (Number(currentRate) + Number(freight)).toLocaleString('en-IN');
+                                    })()}
+                                  </span>
+                                  <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {item.tempRates.length > 0 && (
+                            <div className="mt-3 text-sm">
+                              <p className="font-semibold mb-1">Today Rates</p>
+                              {item.tempRates.map((tr, i) => {
+                                const prev =
+                                  i === 0
+                                    ? item.oldRate
+                                    : item.tempRates[i - 1].rate;
+                                const diff = tr.rate - prev;
+
+                                return (
+                                  <div
+                                    key={i}
+                                    className="flex justify-between text-xs"
+                                  >
+                                    <span>{tr.time}</span>
+                                    <span>{tr.rate}</span>
+                                    <span
+                                      className={
+                                        diff > 0
+                                          ? "text-green-600"
+                                          : diff < 0
+                                          ? "text-red-600"
+                                          : "text-gray-500"
+                                      }
+                                    >
+                                      {diff > 0 ? `+${diff}` : diff}
                                     </span>
                                   </div>
-                                </div>
-                              </div>
-
-                              {/* Logistics Fields */}
-                              <div className="space-y-4">
-                                <div className="flex flex-col gap-1.5">
-                                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-1.5 ml-1">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                    Destination
-                                  </label>
-                                  <div className="relative group/select">
-                                    <select
-                                      value={selectedDestinations[key] || ""}
-                                      onChange={(e) => handleDestinationChange(loc, index, e.target.value)}
-                                      className="w-full pl-4 pr-10 py-3.5 text-sm font-bold rounded-2xl border border-gray-200 bg-white hover:border-amber-400 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 outline-none transition-all appearance-none cursor-pointer shadow-sm"
-                                    >
-                                      <option value="">Select Destination</option>
-                                      {destinationLocations.map((dLoc) => (
-                                        <option key={dLoc} value={dLoc}>{dLoc}</option>
-                                      ))}
-                                    </select>
-                                    <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover/select:text-amber-500 transition-colors" />
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-col gap-1.5">
-                                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-1.5 ml-1">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                    Freight Details
-                                  </label>
-                                  <div className="flex items-center justify-between p-4 rounded-2xl bg-blue-50/50 border border-blue-100 shadow-inner group/freight hover:bg-blue-50 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shadow-md">
-                                        <Truck size={14} />
-                                      </div>
-                                      <span className="text-xs font-bold text-blue-800 uppercase tracking-tighter">Est. Freight</span>
-                                    </div>
-                                    <div className="flex items-baseline gap-0.5">
-                                      <span className="text-blue-400 text-[10px] font-bold">₹</span>
-                                      <span className="text-xl font-black text-blue-700 tracking-tight">
-                                        {freightRates[key] || 0}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Landing Cost Card */}
-                              <div className="relative overflow-hidden p-[1px] rounded-[2.25rem] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-xl shadow-indigo-100 group/landing transition-transform hover:scale-[1.02]">
-                                <div className="h-full bg-white/95 backdrop-blur-md p-6 rounded-[2.2rem] flex flex-col justify-between relative overflow-hidden">
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
                                   {/* Background Decorative Circles */}
                                   <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-indigo-500/5 blur-2xl group-hover/landing:bg-indigo-500/10 transition-colors" />
                                   <div className="absolute -left-8 -bottom-8 w-24 h-24 rounded-full bg-pink-500/5 blur-2xl group-hover/landing:bg-pink-500/10 transition-colors" />
