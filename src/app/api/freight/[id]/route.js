@@ -11,7 +11,7 @@ export async function PUT(req, { params }) {
 
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const { freightRate, ...otherUpdates } = body;
 
@@ -61,7 +61,7 @@ export async function DELETE(req, { params }) {
 
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
 
     const deletedFreight = await Freight.findByIdAndDelete(id);
 
