@@ -36,15 +36,26 @@ export const useFreightManager = () => {
     
     const selectedLower = selected.toLowerCase();
     
+    // For "Soya" tab
     if (selectedLower === 'soya') {
       return companyCommodities.some(c => {
          const cLower = c.toLowerCase();
+         // Match Soya, SBM, or specific variations like "SBM 48%"
          return cLower.includes('soya') || cLower.includes('sbm');
       });
     }
     
+    // For "Maize DDGS" tab
     if (selectedLower.includes('ddgs')) {
        return companyCommodities.some(c => c.toLowerCase().includes('ddgs'));
+    }
+
+    // For "M DOC" tab
+    if (selectedLower === 'm doc') {
+      return companyCommodities.some(c => {
+        const cLower = c.toLowerCase();
+        return cLower.includes('mdoc') || cLower.includes('m doc');
+      });
     }
     
     return companyCommodities.some(c => c.toLowerCase() === selectedLower);
@@ -160,61 +171,27 @@ export const useFreightManager = () => {
 
   const allSourceLocations = useMemo(() => {
     const locations = new Set();
-    const selectedLower = selectedCommodity.toLowerCase();
-    
     sellerCompanies.forEach(c => {
       if (Array.isArray(c.location)) {
         c.location.forEach(loc => {
-          const locLower = loc.toLowerCase();
-          if (selectedLower === 'soya') {
-            if (locLower.includes('soya') || locLower.includes('sbm')) {
-              locations.add(loc);
-            }
-          } else if (selectedLower.includes('ddgs')) {
-            if (locLower.includes('ddgs')) {
-              locations.add(loc);
-            }
-          } else if (selectedLower === 'm doc') {
-            if (locLower.includes('mdoc') || locLower.includes('m doc')) {
-              locations.add(loc);
-            }
-          } else {
-            locations.add(loc);
-          }
+          if (loc) locations.add(loc);
         });
       }
     });
     return Array.from(locations).sort();
-  }, [sellerCompanies, selectedCommodity]);
+  }, [sellerCompanies]);
 
   const allDeliveryLocations = useMemo(() => {
     const locations = new Set();
-    const selectedLower = selectedCommodity.toLowerCase();
-
     buyerCompanies.forEach(c => {
       if (Array.isArray(c.location)) {
         c.location.forEach(loc => {
-          const locLower = loc.toLowerCase();
-          if (selectedLower === 'soya') {
-            if (locLower.includes('soya') || locLower.includes('sbm')) {
-              locations.add(loc);
-            }
-          } else if (selectedLower.includes('ddgs')) {
-            if (locLower.includes('ddgs')) {
-              locations.add(loc);
-            }
-          } else if (selectedLower === 'm doc') {
-            if (locLower.includes('mdoc') || locLower.includes('m doc')) {
-              locations.add(loc);
-            }
-          } else {
-            locations.add(loc);
-          }
+          if (loc) locations.add(loc);
         });
       }
     });
     return Array.from(locations).sort();
-  }, [buyerCompanies, selectedCommodity]);
+  }, [buyerCompanies]);
 
   const handleSourceLocationChange = (location) => {
     const company = sellerCompanies.find(c => c.location.includes(location));
