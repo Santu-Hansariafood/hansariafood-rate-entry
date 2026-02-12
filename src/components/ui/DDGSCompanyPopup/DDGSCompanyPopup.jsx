@@ -15,86 +15,13 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
   const [editing, setEditing] = useState({});
   const [loadingSave, setLoadingSave] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(false);
-  const [destinationLocations, setDestinationLocations] = useState([]);
-  const [selectedDestinations, setSelectedDestinations] = useState({});
-  const [freightRates, setFreightRates] = useState({});
 
   const today = new Date().toLocaleDateString("en-GB");
 
   useEffect(() => {
     if (!isOpen || !data?._id) return;
     loadExistingHistory();
-    fetchDestinationLocations();
   }, [isOpen, data]);
-
-  const fetchDestinationLocations = async () => {
-    try {
-      const res = await axiosInstance.get("/managecompany", {
-        params: { type: "buyer", limit: 1000 },
-      });
-      const companies = res.data?.companies || [];
-      const locations = [...new Set(companies.flatMap((c) => c.location))].sort();
-      setDestinationLocations(locations);
-    } catch (err) {
-      console.error("Error fetching destinations:", err);
-    }
-  };
-
-  const fetchFreightRate = async (sourceLoc, destLoc, commodity) => {
-    try {
-      // Find freight rate between source and destination for the commodity
-      // The commodity in Freight model is simple (Soya, M DOC, Maize DDGS)
-      const baseCommodity = "Maize DDGS"; 
-      
-      const res = await axiosInstance.get("/freight", {
-        params: {
-          commodity: baseCommodity,
-          limit: 1000,
-        }
-      });
-      
-      const allFreights = res.data?.freights || [];
-      const match = allFreights.find(f => 
-        f.location === sourceLoc && 
-        f.deliveryLocation === destLoc
-      );
-      
-      return match ? match.freightRate : 0;
-    } catch (err) {
-      console.error("Error fetching freight rate:", err);
-      return 0;
-    }
-  };
-
-  const handleDestinationChange = async (sourceLoc, index, destLoc) => {
-    const key = `${sourceLoc}_${index}`;
-    setSelectedDestinations((prev) => ({
-      ...prev,
-      [key]: destLoc,
-    }));
-
-    // If not already in editing mode, activate it so the user can see the Save button
-    if (!editing[key]) {
-      setEditing((prev) => ({
-        ...prev,
-        [key]: true,
-      }));
-    }
-
-    if (destLoc) {
-      const item = rates[sourceLoc][index];
-      const rate = await fetchFreightRate(sourceLoc, destLoc, item.commodity);
-      setFreightRates(p => ({
-        ...p,
-        [`${sourceLoc}_${index}`]: rate
-      }));
-    } else {
-      setFreightRates(p => ({
-        ...p,
-        [`${sourceLoc}_${index}`]: 0
-      }));
-    }
-  };
 
   const loadExistingHistory = async () => {
     try {
@@ -103,19 +30,12 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
       const history = res.data || [];
 
       const initial = {};
-      const initialDestinations = {};
-      const initialFreightRates = {};
 
       data.location.forEach((loc) => {
         initial[loc] = data.commodities.map((commodity, index) => {
           const entry = history.find(
             (r) => r.location === loc && r.commodity === commodity
           );
-
-          if (entry?.destinationLocation) {
-            initialDestinations[`${loc}_${index}`] = entry.destinationLocation;
-            initialFreightRates[`${loc}_${index}`] = entry.freightRate || 0;
-          }
 
           return {
             commodity,
@@ -129,8 +49,6 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
       });
 
       setRates(initial);
-      setSelectedDestinations(initialDestinations);
-      setFreightRates(initialFreightRates);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -161,12 +79,8 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
 
   const handleSave = async (loc, index) => {
     const item = rates[loc][index];
-    const destination = selectedDestinations[`${loc}_${index}`] || "";
-    const freight = freightRates[`${loc}_${index}`] || 0;
 
-    // Allow save if there is a temp rate OR a destination selected
-    if (!item.tempRate && !destination) {
-      // If nothing to save, just toggle back to view mode
+    if (!item.tempRate) {
       toggleEdit(loc, index);
       return;
     }
@@ -176,14 +90,8 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
       const payload = {
         locationName: loc,
         commodityName: item.commodity,
-        destinationLocation: destination,
-        freightRate: freight,
+        tempRate: item.tempRate,
       };
-
-      // Only include tempRate if it has a value
-      if (item.tempRate) {
-        payload.tempRate = item.tempRate;
-      }
 
       await axiosInstance.post(`/ratehistory/${data._id}`, payload);
 
@@ -294,59 +202,6 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                               }
                               readOnly
                             />
-
-                            <div className="flex flex-col gap-1.5 w-full">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
-                                <MapPin size={12} className="text-orange-500" />
-                                Destination
-                              </label>
-                              <div className="relative group">
-                                <select
-                                  value={selectedDestinations[key] || ""}
-                                  onChange={(e) => handleDestinationChange(loc, index, e.target.value)}
-                                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white hover:border-orange-400 focus:border-orange-500 outline-none appearance-none cursor-pointer pr-8"
-                                >
-                                  <option value="">Select Destination</option>
-                                  {destinationLocations.map((dLoc) => (
-                                    <option key={dLoc} value={dLoc}>
-                                      {dLoc}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-orange-500 transition-colors" />
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-1.5 w-full">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
-                                <Truck size={12} className="text-amber-500" />
-                                Freight
-                              </label>
-                              <div className="px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 text-gray-700 font-semibold flex items-center gap-1.5">
-                                <span className="text-gray-400 text-xs">₹</span>
-                                {freightRates[key] || 0}
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-1.5 w-full">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-orange-600 flex items-center gap-1">
-                                <IndianRupee size={12} className="text-orange-500" />
-                                Landing Cost
-                              </label>
-                              <div className="relative overflow-hidden rounded-xl border border-orange-100 bg-orange-50 p-3 shadow-sm">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-orange-700 font-black text-xl">
-                                    <span className="text-orange-400 text-sm mr-1">₹</span>
-                                    {(() => {
-                                      const currentRate = item.tempRate || (item.tempRates.length ? item.tempRates[item.tempRates.length - 1].rate : item.finalRate) || 0;
-                                      const freight = freightRates[key] || 0;
-                                      return (Number(currentRate) + Number(freight)).toLocaleString('en-IN');
-                                    })()}
-                                  </span>
-                                  <div className="h-2 w-2 rounded-full bg-orange-400 animate-pulse"></div>
-                                </div>
-                              </div>
-                            </div>
                           </div>
 
                           {item.tempRates.length > 0 && (
