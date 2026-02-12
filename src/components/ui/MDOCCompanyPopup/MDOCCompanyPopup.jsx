@@ -15,13 +15,77 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }
   const [editing, setEditing] = useState({});
   const [loadingSave, setLoadingSave] = useState(false);
   const [loadingFetch, setLoadingFetch] = useState(false);
+  const [destinationLocations, setDestinationLocations] = useState([]);
+  const [selectedDestinations, setSelectedDestinations] = useState({});
+  const [freightRates, setFreightRates] = useState({});
 
   const today = new Date().toLocaleDateString("en-GB");
 
   useEffect(() => {
     if (!isOpen || !data?._id) return;
     loadExistingHistory();
+    fetchDestinationLocations();
   }, [isOpen, data]);
+
+  const fetchDestinationLocations = async () => {
+    try {
+      const res = await axiosInstance.get("/managecompany", {
+        params: { type: "buyer", limit: 1000 },
+      });
+      const companies = res.data?.companies || [];
+      const locations = [...new Set(companies.flatMap((c) => c.location))].sort();
+      setDestinationLocations(locations);
+    } catch (err) {
+      console.error("Error fetching destinations:", err);
+    }
+  };
+
+  const fetchFreightRate = async (sourceLoc, destLoc, commodity) => {
+    try {
+      // Find freight rate between source and destination for the commodity
+      // The commodity in Freight model is simple (Soya, M DOC, Maize DDGS)
+      const baseCommodity = "M DOC"; 
+      
+      const res = await axiosInstance.get("/freight", {
+        params: {
+          commodity: baseCommodity,
+          limit: 1000,
+        }
+      });
+      
+      const allFreights = res.data?.freights || [];
+      const match = allFreights.find(f => 
+        f.location === sourceLoc && 
+        f.deliveryLocation === destLoc
+      );
+      
+      return match ? match.freightRate : 0;
+    } catch (err) {
+      console.error("Error fetching freight rate:", err);
+      return 0;
+    }
+  };
+
+  const handleDestinationChange = async (sourceLoc, index, destLoc) => {
+    setSelectedDestinations(p => ({
+      ...p,
+      [`${sourceLoc}_${index}`]: destLoc
+    }));
+
+    if (destLoc) {
+      const item = rates[sourceLoc][index];
+      const rate = await fetchFreightRate(sourceLoc, destLoc, item.commodity);
+      setFreightRates(p => ({
+        ...p,
+        [`${sourceLoc}_${index}`]: rate
+      }));
+    } else {
+      setFreightRates(p => ({
+        ...p,
+        [`${sourceLoc}_${index}`]: 0
+      }));
+    }
+  };
 
   const loadExistingHistory = async () => {
     try {
@@ -168,7 +232,7 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                             )}
                           </div>
 
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <InputBox
                               label="Yesterday Rate"
                               value={item.oldRate}
@@ -195,6 +259,43 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                               }
                               readOnly
                             />
+
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-xs font-medium tracking-wide text-gray-600">
+                                Destination Location
+                              </label>
+                              <select
+                                value={selectedDestinations[`${loc}_${index}`] || ""}
+                                onChange={(e) => handleDestinationChange(loc, index, e.target.value)}
+                                className="w-full px-3.5 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-400/60 outline-none transition-all"
+                              >
+                                <option value="">Select Destination</option>
+                                {destinationLocations.map((dLoc) => (
+                                  <option key={dLoc} value={dLoc}>
+                                    {dLoc}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <InputBox
+                              label="Freight Rate"
+                              value={freightRates[`${loc}_${index}`] || 0}
+                              readOnly
+                            />
+
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-xs font-medium tracking-wide text-blue-600 font-bold">
+                                Landing Cost
+                              </label>
+                              <div className="w-full px-3.5 py-2 text-sm rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold shadow-sm">
+                                ₹{(() => {
+                                  const currentRate = item.tempRate || (item.tempRates.length ? item.tempRates[item.tempRates.length - 1].rate : item.finalRate) || 0;
+                                  const freight = freightRates[`${loc}_${index}`] || 0;
+                                  return Number(currentRate) + Number(freight);
+                                })()}
+                              </div>
+                            </div>
                           </div>
 
                           {item.tempRates.length > 0 && (
