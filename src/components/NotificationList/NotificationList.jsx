@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, Suspense, useRef } from "react";
-import { CheckCircle, Info, List, Copy } from "lucide-react";
+import { useEffect, Suspense, useRef, useState } from "react";
+import { CheckCircle, Info, List, Copy, Search } from "lucide-react";
 import Loading from "@/components/common/Loading/Loading";
 import useNotificationFilter from "@/hooks/Notifications/useNotificationFilter";
 import useCopyNotification from "@/hooks/Notifications/useCopyNotification";
@@ -8,6 +8,7 @@ import useCopyNotification from "@/hooks/Notifications/useCopyNotification";
 export default function NotificationList({ notifications = [] }) {
   const lastShownRef = useRef([]);
   const audioRef = useRef(null);
+  const [searchInput, setSearchInput] = useState("");
 
   const parseUpdateTime = (timeStr) => {
     if (!timeStr) return 0;
@@ -25,11 +26,23 @@ export default function NotificationList({ notifications = [] }) {
     return (hours * 60 + minutes) * 60 * 1000;
   };
 
-  const { filter, setFilter, filteredNotifications } = useNotificationFilter(
-    notifications,
-    parseUpdateTime
-  );
+  const {
+    filter,
+    setFilter,
+    searchQuery,
+    setSearchQuery,
+    filteredNotifications,
+  } = useNotificationFilter(notifications, parseUpdateTime);
+
   const { handleCopy, capitalizeFirst } = useCopyNotification();
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, setSearchQuery]);
 
   useEffect(() => {
     try {
@@ -129,6 +142,20 @@ export default function NotificationList({ notifications = [] }) {
             <FilterButton title="All" icon={List} type="all" />
             <FilterButton title="Unread" icon={Info} type="unread" />
             <FilterButton title="Read" icon={CheckCircle} type="read" />
+          </div>
+        </div>
+
+        {/* Search Box */}
+        <div className="px-4 py-2 bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+            <input
+              type="text"
+              placeholder="Search by company name..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-4 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            />
           </div>
         </div>
 

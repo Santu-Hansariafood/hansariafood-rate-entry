@@ -6,9 +6,10 @@ export default function useNotificationFilter(
   parseUpdateTime
 ) {
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredNotifications = useMemo(() => {
-    return [...(notifications || [])]
+    let result = [...(notifications || [])]
       .filter((n) => n.newRate)
       .sort((a, b) => {
         // Use lastUpdated (from API) or updatedAt or fallback to 0
@@ -20,13 +21,25 @@ export default function useNotificationFilter(
         
         // Combine date and time for sorting
         return bDate.getTime() + bTime - (aDate.getTime() + aTime);
-      })
-      .filter((n) => {
-        if (filter === "read") return n.read;
-        if (filter === "unread") return !n.read;
-        return true;
       });
-  }, [notifications, filter, parseUpdateTime]);
 
-  return { filter, setFilter, filteredNotifications };
+    // Apply read/unread filter
+    result = result.filter((n) => {
+      if (filter === "read") return n.read;
+      if (filter === "unread") return !n.read;
+      return true;
+    });
+
+    // Apply search query (case-insensitive)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter((n) =>
+        (n.company || "").toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  }, [notifications, filter, searchQuery, parseUpdateTime]);
+
+  return { filter, setFilter, searchQuery, setSearchQuery, filteredNotifications };
 }
