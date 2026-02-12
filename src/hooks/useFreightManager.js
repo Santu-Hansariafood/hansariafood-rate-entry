@@ -31,9 +31,6 @@ export const useFreightManager = () => {
     freightRate: "",
   });
 
-  const [sourceLocations, setSourceLocations] = useState([]);
-  const [deliveryLocations, setDeliveryLocations] = useState([]);
-
   const checkCommodityMatch = useCallback((companyCommodities, selected) => {
     if (!companyCommodities || !Array.isArray(companyCommodities)) return false;
     
@@ -75,8 +72,6 @@ export const useFreightManager = () => {
       deliveryLocation: "",
       freightRate: "",
     });
-    setSourceLocations([]);
-    setDeliveryLocations([]);
     setEditingId(null);
     setIsEditModalOpen(false);
   }, []);
@@ -158,29 +153,85 @@ export const useFreightManager = () => {
         deliveryLocation: "",
         freightRate: "",
         });
-        setSourceLocations([]);
-        setDeliveryLocations([]);
     }
   }, [selectedCommodity, editingId]);
 
-  const handleCompanyChange = (companyId) => {
-    const company = companies.find((c) => c._id === companyId);
-    setFormData((prev) => ({
+
+
+  const allSourceLocations = useMemo(() => {
+    const locations = new Set();
+    const selectedLower = selectedCommodity.toLowerCase();
+    
+    sellerCompanies.forEach(c => {
+      if (Array.isArray(c.location)) {
+        c.location.forEach(loc => {
+          const locLower = loc.toLowerCase();
+          if (selectedLower === 'soya') {
+            if (locLower.includes('soya') || locLower.includes('sbm')) {
+              locations.add(loc);
+            }
+          } else if (selectedLower.includes('ddgs')) {
+            if (locLower.includes('ddgs')) {
+              locations.add(loc);
+            }
+          } else if (selectedLower === 'm doc') {
+            if (locLower.includes('mdoc') || locLower.includes('m doc')) {
+              locations.add(loc);
+            }
+          } else {
+            locations.add(loc);
+          }
+        });
+      }
+    });
+    return Array.from(locations).sort();
+  }, [sellerCompanies, selectedCommodity]);
+
+  const allDeliveryLocations = useMemo(() => {
+    const locations = new Set();
+    const selectedLower = selectedCommodity.toLowerCase();
+
+    buyerCompanies.forEach(c => {
+      if (Array.isArray(c.location)) {
+        c.location.forEach(loc => {
+          const locLower = loc.toLowerCase();
+          if (selectedLower === 'soya') {
+            if (locLower.includes('soya') || locLower.includes('sbm')) {
+              locations.add(loc);
+            }
+          } else if (selectedLower.includes('ddgs')) {
+            if (locLower.includes('ddgs')) {
+              locations.add(loc);
+            }
+          } else if (selectedLower === 'm doc') {
+            if (locLower.includes('mdoc') || locLower.includes('m doc')) {
+              locations.add(loc);
+            }
+          } else {
+            locations.add(loc);
+          }
+        });
+      }
+    });
+    return Array.from(locations).sort();
+  }, [buyerCompanies, selectedCommodity]);
+
+  const handleSourceLocationChange = (location) => {
+    const company = sellerCompanies.find(c => c.location.includes(location));
+    setFormData(prev => ({
       ...prev,
-      company: companyId,
-      location: "",
+      location: location,
+      company: company ? company._id : ""
     }));
-    setSourceLocations(company ? company.location : []);
   };
 
-  const handleDeliveryCompanyChange = (companyId) => {
-    const company = companies.find((c) => c._id === companyId);
-    setFormData((prev) => ({
+  const handleDeliveryLocationChange = (location) => {
+    const company = buyerCompanies.find(c => c.location.includes(location));
+    setFormData(prev => ({
       ...prev,
-      deliveryCompany: companyId,
-      deliveryLocation: "",
+      deliveryLocation: location,
+      deliveryCompany: company ? company._id : ""
     }));
-    setDeliveryLocations(company ? company.location : []);
   };
 
   const handleSubmit = async (e) => {
@@ -230,18 +281,10 @@ export const useFreightManager = () => {
         setSelectedCommodity(freight.commodity);
     }
 
-    const company = companies.find((c) => c._id === freight.company._id);
-    const deliveryCompany = companies.find(
-      (c) => c._id === freight.deliveryCompany._id
-    );
-
-    setSourceLocations(company ? company.location : []);
-    setDeliveryLocations(deliveryCompany ? deliveryCompany.location : []);
-
     setFormData({
-      company: freight.company._id,
+      company: freight.company?._id || freight.company,
       location: freight.location,
-      deliveryCompany: freight.deliveryCompany._id,
+      deliveryCompany: freight.deliveryCompany?._id || freight.deliveryCompany,
       deliveryLocation: freight.deliveryLocation,
       freightRate: freight.freightRate,
     });
@@ -283,12 +326,12 @@ export const useFreightManager = () => {
     setViewingFreight,
     formData,
     setFormData,
-    sourceLocations,
-    deliveryLocations,
     sellerCompanies,
     buyerCompanies,
-    handleCompanyChange,
-    handleDeliveryCompanyChange,
+    allSourceLocations,
+    allDeliveryLocations,
+    handleSourceLocationChange,
+    handleDeliveryLocationChange,
     handleSubmit,
     handleEdit,
     handleDelete,

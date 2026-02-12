@@ -35,16 +35,13 @@ const ViewFreightModal = ({ viewingFreight, setViewingFreight }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl space-y-2">
                   <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 mb-1">
-                    <Building2 size={16} />
+                    <MapPin size={16} />
                     <span className="text-xs font-bold uppercase tracking-wider">
                       Source
                     </span>
                   </div>
                   <div className="font-bold text-gray-900 dark:text-gray-100">
-                    {viewingFreight.company?.name}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                    <MapPin size={12} /> {viewingFreight.location}
+                    {viewingFreight.location}
                   </div>
                 </div>
 
@@ -52,14 +49,11 @@ const ViewFreightModal = ({ viewingFreight, setViewingFreight }) => {
                   <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mb-1">
                     <Truck size={16} />
                     <span className="text-xs font-bold uppercase tracking-wider">
-                      Delivery
+                      Destination
                     </span>
                   </div>
                   <div className="font-bold text-gray-900 dark:text-gray-100">
-                    {viewingFreight.deliveryCompany?.name}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                    <MapPin size={12} /> {viewingFreight.deliveryLocation}
+                    {viewingFreight.deliveryLocation}
                   </div>
                 </div>
               </div>
