@@ -277,7 +277,7 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                             ) : (
                               <button
                                 onClick={() => handleSave(loc, index)}
-                                className="text-xs bg-green-600 text-white px-3 py-1"
+                                className="text-xs bg-emerald-600 text-white px-3 py-1"
                               >
                                 {loadingSave ? "Saving..." : "Save"}
                               </button>
@@ -321,7 +321,7 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                                 <select
                                   value={selectedDestinations[key] || ""}
                                   onChange={(e) => handleDestinationChange(loc, index, e.target.value)}
-                                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white hover:border-emerald-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all appearance-none cursor-pointer pr-8"
+                                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white hover:border-emerald-400 focus:border-emerald-500 outline-none appearance-none cursor-pointer pr-8"
                                 >
                                   <option value="">Select Destination</option>
                                   {destinationLocations.map((dLoc) => (
@@ -339,28 +339,28 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                                 <Truck size={12} className="text-amber-500" />
                                 Freight
                               </label>
-                              <div className="px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 text-gray-700 font-semibold flex items-center gap-1.5 shadow-inner">
+                              <div className="px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 text-gray-700 font-semibold flex items-center gap-1.5">
                                 <span className="text-gray-400 text-xs">₹</span>
                                 {freightRates[key] || 0}
                               </div>
                             </div>
 
                             <div className="flex flex-col gap-1.5 w-full">
-                              <label className="text-[11px] font-bold uppercase tracking-wider text-blue-600 flex items-center gap-1">
-                                <IndianRupee size={12} className="text-blue-500" />
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
+                                <IndianRupee size={12} className="text-emerald-500" />
                                 Landing Cost
                               </label>
-                              <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-[1px] shadow-sm">
-                                <div className="bg-white/80 backdrop-blur-sm px-3 py-2 rounded-[11px] flex items-center justify-between">
-                                  <span className="text-blue-700 font-black text-base">
-                                    <span className="text-blue-400 text-xs mr-0.5">₹</span>
+                              <div className="relative overflow-hidden rounded-xl border border-emerald-100 bg-emerald-50 p-3 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-emerald-700 font-black text-xl">
+                                    <span className="text-emerald-400 text-sm mr-1">₹</span>
                                     {(() => {
                                       const currentRate = item.tempRate || (item.tempRates.length ? item.tempRates[item.tempRates.length - 1].rate : item.finalRate) || 0;
                                       const freight = freightRates[key] || 0;
                                       return (Number(currentRate) + Number(freight)).toLocaleString('en-IN');
                                     })()}
                                   </span>
-                                  <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse"></div>
+                                  <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></div>
                                 </div>
                               </div>
                             </div>
