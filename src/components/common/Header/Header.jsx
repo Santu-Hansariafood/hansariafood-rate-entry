@@ -39,8 +39,18 @@ export default function Header() {
     };
 
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    
+    const handleRatesUpdated = () => {
+      fetchNotifications();
+    };
+
+    window.addEventListener("rates-updated", handleRatesUpdated);
+    const interval = setInterval(fetchNotifications, 15 * 1000); // Poll every 15 seconds
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("rates-updated", handleRatesUpdated);
+    };
   }, []);
 
   useEffect(() => {

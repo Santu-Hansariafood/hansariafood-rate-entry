@@ -39,8 +39,9 @@ export default function CompanyList({
           params: { sort: "updatedAt_desc", limit: 5000 },
         });
 
+        // The API returns lastUpdated instead of updatedAt
         const sortedNotifications = response.data.sort(
-          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+          (a, b) => new Date(b.lastUpdated || b.updatedAt || 0) - new Date(a.lastUpdated || a.updatedAt || 0)
         );
 
         setNotifications(sortedNotifications);
@@ -50,8 +51,18 @@ export default function CompanyList({
     };
 
     fetchNotifications();
+
+    const handleRatesUpdated = () => {
+      fetchNotifications();
+    };
+
+    window.addEventListener("rates-updated", handleRatesUpdated);
     const interval = setInterval(fetchNotifications, 5000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("rates-updated", handleRatesUpdated);
+    };
   }, [completedCompanies]);
 
   useEffect(() => {

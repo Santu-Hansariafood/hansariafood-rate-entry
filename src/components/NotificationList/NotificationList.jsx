@@ -59,7 +59,8 @@ export default function NotificationList({ notifications = [] }) {
       return;
 
     filteredNotifications.forEach((n) => {
-      const uniqueId = `${n.company}-${n.location}-${n.newRateDate}-${n.newRate}`;
+      // Use lastUpdated and updateTime for uniqueId to ensure uniqueness
+      const uniqueId = `${n.company}-${n.location}-${n.lastUpdated || n.newRateDate}-${n.updateTime}-${n.newRate}`;
 
       if (!lastShownRef.current.includes(uniqueId)) {
         lastShownRef.current.push(uniqueId);
@@ -142,7 +143,7 @@ export default function NotificationList({ notifications = [] }) {
               const Icon = isRead ? CheckCircle : Info;
 
               const datePart = new Date(
-                n.newRateDate || n.updatedAt || Date.now()
+                n.lastUpdated || n.newRateDate || n.updatedAt || Date.now()
               ).toLocaleDateString("en-IN");
 
               const time = `${datePart}, ${n.updateTime || "N/A"}`;
@@ -151,7 +152,7 @@ export default function NotificationList({ notifications = [] }) {
                 <div
                   key={
                     n.id ||
-                    `${n.company}-${n.location}-${n.newRateDate || "no-date"}-${index}`
+                    `${n.company}-${n.location}-${n.lastUpdated || n.newRateDate || "no-date"}-${index}`
                   }
                   className={`group p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-1 ${
                     isRead ? "items-end text-right" : "items-start text-left"

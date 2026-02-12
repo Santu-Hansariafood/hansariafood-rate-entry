@@ -11,11 +11,14 @@ export default function useNotificationFilter(
     return [...(notifications || [])]
       .filter((n) => n.newRate)
       .sort((a, b) => {
-        const aDate = new Date(a.newRateDate || a.updatedAt || 0);
-        const bDate = new Date(b.newRateDate || b.updatedAt || 0);
+        // Use lastUpdated (from API) or updatedAt or fallback to 0
+        const aDate = new Date(a.lastUpdated || a.updatedAt || a.newRateDate || 0);
+        const bDate = new Date(b.lastUpdated || b.updatedAt || b.newRateDate || 0);
 
         const aTime = a.updateTime ? parseUpdateTime(a.updateTime) : 0;
         const bTime = b.updateTime ? parseUpdateTime(b.updateTime) : 0;
+        
+        // Combine date and time for sorting
         return bDate.getTime() + bTime - (aDate.getTime() + aTime);
       })
       .filter((n) => {
