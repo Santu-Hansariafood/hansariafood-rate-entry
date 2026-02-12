@@ -465,4 +465,3 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
     </div>
   );
 }
-}
