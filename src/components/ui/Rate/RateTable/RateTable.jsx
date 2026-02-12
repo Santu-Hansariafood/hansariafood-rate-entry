@@ -155,6 +155,10 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
 
       toast.success("Rate saved!");
       setEditIndex(null);
+      // Trigger notification update
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("rates-updated"));
+      }
       await fetchRates();
     } catch (error) {
       toast.error("Save failed.");
