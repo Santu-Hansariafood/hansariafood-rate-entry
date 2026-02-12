@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { X, ChevronDown, ChevronUp, MapPin, Truck, IndianRupee } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 
@@ -94,11 +94,19 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }
       const history = res.data || [];
 
       const initial = {};
+      const initialDestinations = {};
+      const initialFreightRates = {};
+
       data.location.forEach((loc) => {
-        initial[loc] = data.commodities.map((commodity) => {
+        initial[loc] = data.commodities.map((commodity, index) => {
           const entry = history.find(
             (r) => r.location === loc && r.commodity === commodity
           );
+
+          if (entry?.destinationLocation) {
+            initialDestinations[`${loc}_${index}`] = entry.destinationLocation;
+            initialFreightRates[`${loc}_${index}`] = entry.freightRate || 0;
+          }
 
           return {
             commodity,
@@ -112,6 +120,8 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }
       });
 
       setRates(initial);
+      setSelectedDestinations(initialDestinations);
+      setFreightRates(initialFreightRates);
     } catch (err) {
       console.error("Fetch error:", err);
     } finally {
@@ -151,6 +161,8 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }
         locationName: loc,
         commodityName: item.commodity,
         tempRate: item.tempRate,
+        destinationLocation: selectedDestinations[`${loc}_${index}`] || "",
+        freightRate: freightRates[`${loc}_${index}`] || 0,
       });
 
       if (onRateUpdate) {
@@ -261,39 +273,55 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                             />
 
                             <div className="flex flex-col gap-1.5 w-full">
-                              <label className="text-xs font-medium tracking-wide text-gray-600">
-                                Destination Location
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                                <MapPin size={12} className="text-emerald-500" />
+                                Destination
                               </label>
-                              <select
-                                value={selectedDestinations[`${loc}_${index}`] || ""}
-                                onChange={(e) => handleDestinationChange(loc, index, e.target.value)}
-                                className="w-full px-3.5 py-2 text-sm rounded-lg border border-gray-300 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-400/60 outline-none transition-all"
-                              >
-                                <option value="">Select Destination</option>
-                                {destinationLocations.map((dLoc) => (
-                                  <option key={dLoc} value={dLoc}>
-                                    {dLoc}
-                                  </option>
-                                ))}
-                              </select>
+                              <div className="relative group">
+                                <select
+                                  value={selectedDestinations[`${loc}_${index}`] || ""}
+                                  onChange={(e) => handleDestinationChange(loc, index, e.target.value)}
+                                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white hover:border-emerald-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all appearance-none cursor-pointer pr-8"
+                                >
+                                  <option value="">Select Destination</option>
+                                  {destinationLocations.map((dLoc) => (
+                                    <option key={dLoc} value={dLoc}>
+                                      {dLoc}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-emerald-500 transition-colors" />
+                              </div>
                             </div>
 
-                            <InputBox
-                              label="Freight Rate"
-                              value={freightRates[`${loc}_${index}`] || 0}
-                              readOnly
-                            />
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                                <Truck size={12} className="text-amber-500" />
+                                Freight
+                              </label>
+                              <div className="px-3 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50/50 text-gray-700 font-semibold flex items-center gap-1.5 shadow-inner">
+                                <span className="text-gray-400 text-xs">₹</span>
+                                {freightRates[`${loc}_${index}`] || 0}
+                              </div>
+                            </div>
 
                             <div className="flex flex-col gap-1.5 w-full">
-                              <label className="text-xs font-medium tracking-wide text-blue-600 font-bold">
+                              <label className="text-[11px] font-bold uppercase tracking-wider text-blue-600 flex items-center gap-1">
+                                <IndianRupee size={12} className="text-blue-500" />
                                 Landing Cost
                               </label>
-                              <div className="w-full px-3.5 py-2 text-sm rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold shadow-sm">
-                                ₹{(() => {
-                                  const currentRate = item.tempRate || (item.tempRates.length ? item.tempRates[item.tempRates.length - 1].rate : item.finalRate) || 0;
-                                  const freight = freightRates[`${loc}_${index}`] || 0;
-                                  return Number(currentRate) + Number(freight);
-                                })()}
+                              <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-[1px] shadow-sm">
+                                <div className="bg-white/80 backdrop-blur-sm px-3 py-2 rounded-[11px] flex items-center justify-between">
+                                  <span className="text-blue-700 font-black text-base">
+                                    <span className="text-blue-400 text-xs mr-0.5">₹</span>
+                                    {(() => {
+                                      const currentRate = item.tempRate || (item.tempRates.length ? item.tempRates[item.tempRates.length - 1].rate : item.finalRate) || 0;
+                                      const freight = freightRates[`${loc}_${index}`] || 0;
+                                      return (Number(currentRate) + Number(freight)).toLocaleString('en-IN');
+                                    })()}
+                                  </span>
+                                  <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse"></div>
+                                </div>
                               </div>
                             </div>
                           </div>
