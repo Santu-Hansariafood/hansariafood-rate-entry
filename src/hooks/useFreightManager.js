@@ -124,6 +124,7 @@ export const useFreightManager = () => {
       if (response.data.success) {
         setFreights(response.data.freights);
         setPagination(response.data.pagination);
+        console.log("Fetched freights:", response.data.freights); // Debug log
       }
     } catch (error) {
       console.error("Error fetching freights:", error);
@@ -135,13 +136,16 @@ export const useFreightManager = () => {
       const storedUserName = localStorage.getItem("userName");
       const storedUserObj = localStorage.getItem("user");
       
+      console.log("Storage check:", { storedUserName, storedUserObj }); // Debug log
+
       if (storedUserName) {
         setCurrentUser({ name: storedUserName });
       } else if (storedUserObj) {
         try {
           const parsed = JSON.parse(storedUserObj);
-          // Prioritize name, then registeredName, then mobile
-          const displayName = parsed.name || parsed.registeredName || parsed.mobile;
+          console.log("Parsed user:", parsed); // Debug log
+          // Prioritize registeredName, then name, then mobile
+          const displayName = parsed.registeredName || parsed.name || parsed.mobile;
           setCurrentUser({ name: displayName });
         } catch (e) {
           console.error("Error parsing user from storage", e);
@@ -255,8 +259,16 @@ export const useFreightManager = () => {
   };
 
   const handleEdit = (freight) => {
+    console.log("Editing freight:", freight); // Debug log
     if (!confirm("Are you sure you want to edit this freight entry?")) return;
     
+    // Use _id from freight object
+    const id = freight._id || freight.id;
+    if (!id) {
+        toast.error("Freight ID missing");
+        return;
+    }
+
     // Set commodity first to ensure locations list is correct
     if (freight.commodity && freight.commodity !== selectedCommodity) {
         setSelectedCommodity(freight.commodity);
@@ -269,11 +281,16 @@ export const useFreightManager = () => {
       deliveryLocation: freight.deliveryLocation,
       freightRate: freight.freightRate,
     });
-    setEditingId(freight._id);
+    setEditingId(id);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = async (id) => {
+    console.log("Deleting freight with ID:", id); // Debug log
+    if (!id) {
+        toast.error("Freight ID missing");
+        return;
+    }
     if (!confirm("Are you sure you want to delete this freight entry?")) return;
     try {
       const response = await axiosInstance.delete(`/freight/${id}`);
@@ -282,7 +299,8 @@ export const useFreightManager = () => {
         fetchFreights();
       }
     } catch (error) {
-      toast.error("Failed to delete freight");
+      console.error("Delete error:", error.response?.data || error.message);
+      toast.error(error.response?.data?.error || "Failed to delete freight");
     }
   };
 
