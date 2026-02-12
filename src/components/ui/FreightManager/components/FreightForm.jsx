@@ -16,12 +16,10 @@ const FreightForm = ({ context, isEdit = false }) => {
     selectedCommodity,
     formData,
     setFormData,
-    sourceLocations,
-    deliveryLocations,
-    sellerCompanies,
-    buyerCompanies,
-    handleCompanyChange,
-    handleDeliveryCompanyChange,
+    allSourceLocations,
+    allDeliveryLocations,
+    handleSourceLocationChange,
+    handleDeliveryLocationChange,
     handleSubmit,
   } = context;
 
@@ -30,72 +28,40 @@ const FreightForm = ({ context, isEdit = false }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
         <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-            <Building2 size={16} /> Source Details
+            <MapPin size={16} /> Source Location
           </h3>
 
           <div className="space-y-2">
             <Dropdown
-              key={`source-company-${selectedCommodity}`}
-              label="Company Name"
-              options={sellerCompanies.map((c) => ({
-                label: c.name,
-                value: c._id,
-              }))}
-              value={formData.company}
-              onChange={handleCompanyChange}
-              placeholder="Select Seller Company"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Dropdown
-              key={`source-location-${selectedCommodity}-${formData.company}`}
-              label="Assign Location"
-              options={sourceLocations.map((loc) => ({
+              key={`source-location-${selectedCommodity}`}
+              label="Select Location"
+              options={allSourceLocations.map((loc) => ({
                 label: loc,
                 value: loc,
               }))}
               value={formData.location}
-              onChange={(val) => setFormData({ ...formData, location: val })}
-              placeholder="Select Location"
-              disabled={!formData.company}
+              onChange={handleSourceLocationChange}
+              placeholder="Select Source Location"
             />
           </div>
         </div>
 
         <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
-            <Truck size={16} /> Delivery Details
+            <MapPin size={16} /> Destination Location
           </h3>
 
           <div className="space-y-2">
             <Dropdown
-              key={`delivery-company-${selectedCommodity}`}
-              label="Delivery Company"
-              options={buyerCompanies.map((c) => ({
-                label: c.name,
-                value: c._id,
-              }))}
-              value={formData.deliveryCompany}
-              onChange={handleDeliveryCompanyChange}
-              placeholder="Select Buyer Company"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Dropdown
-              key={`delivery-location-${selectedCommodity}-${formData.deliveryCompany}`}
-              label="Assign Location"
-              options={deliveryLocations.map((loc) => ({
+              key={`delivery-location-${selectedCommodity}`}
+              label="Select Location"
+              options={allDeliveryLocations.map((loc) => ({
                 label: loc,
                 value: loc,
               }))}
               value={formData.deliveryLocation}
-              onChange={(val) =>
-                setFormData({ ...formData, deliveryLocation: val })
-              }
-              placeholder="Select Location"
-              disabled={!formData.deliveryCompany}
+              onChange={handleDeliveryLocationChange}
+              placeholder="Select Destination Location"
             />
           </div>
         </div>

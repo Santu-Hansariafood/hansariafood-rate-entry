@@ -54,30 +54,20 @@ const FreightList = ({
       ),
     },
     {
-      header: "Loading Station",
-      accessor: "company",
+      header: "Source Location",
+      accessor: "location",
       cell: (item) => (
-        <div>
-          <div className="font-medium text-gray-900 dark:text-gray-100">
-            {item.company?.name}
-          </div>
-          <div className="text-sm text-gray-500 flex items-center gap-1">
-            <MapPin size={12} /> {item.location}
-          </div>
+        <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
+          <MapPin size={14} className="text-gray-400" /> {item.location}
         </div>
       ),
     },
     {
-      header: "Unloading Station",
-      accessor: "deliveryCompany",
+      header: "Destination Location",
+      accessor: "deliveryLocation",
       cell: (item) => (
-        <div>
-          <div className="font-medium text-gray-900 dark:text-gray-100">
-            {item.deliveryCompany?.name}
-          </div>
-          <div className="text-sm text-gray-500 flex items-center gap-1">
-            <MapPin size={12} /> {item.deliveryLocation}
-          </div>
+        <div className="flex items-center gap-2 font-medium text-gray-900 dark:text-gray-100">
+          <MapPin size={14} className="text-gray-400" /> {item.deliveryLocation}
         </div>
       ),
     },
