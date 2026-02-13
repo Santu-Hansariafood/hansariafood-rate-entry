@@ -11,17 +11,12 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-import useRateNotifications from "@/hooks/useRateNotifications/useRateNotifications";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 
 export default function LandingCost() {
-  const { notifications: soyaRates, loading: soyaLoading } = useRateNotifications("Soya");
-  const { notifications: mdocRates, loading: mdocLoading } = useRateNotifications("MDOC");
-  const { notifications: ddgsRates, loading: ddgsLoading } = useRateNotifications("DDGS");
-
   const [landingRates, setLandingRates] = useState([]);
   const [landingLoading, setLandingLoading] = useState(false);
 
@@ -29,7 +24,7 @@ export default function LandingCost() {
     const fetchLandingRates = async () => {
       try {
         setLandingLoading(true);
-        const res = await axiosInstance.get("/rate");
+        const res = await axiosInstance.get("/rate/today");
         setLandingRates(res.data || []);
       } catch (error) {
         console.error("Error fetching landing rates:", error);
@@ -45,13 +40,7 @@ export default function LandingCost() {
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
 
-  const allRates = useMemo(() => {
-    return [
-      ...soyaRates.map(r => ({ ...r, category: "Soya" })),
-      ...mdocRates.map(r => ({ ...r, category: "M DOC" })),
-      ...ddgsRates.map(r => ({ ...r, category: "DDGS" }))
-    ];
-  }, [soyaRates, mdocRates, ddgsRates]);
+  const isLoading = landingLoading;
 
   // Reset downstream selections when upstream changes
   useEffect(() => {
@@ -126,8 +115,6 @@ export default function LandingCost() {
       time: rateData.updateTime || "N/A"
     };
   }, [selectedLocation, selectedCompany, selectedCommodity, selectedCategory, landingRates]);
-
-  const isLoading = soyaLoading || mdocLoading || ddgsLoading || landingLoading;
 
   return (
     <Suspense fallback={<Loading />}>
