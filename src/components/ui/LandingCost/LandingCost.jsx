@@ -95,28 +95,19 @@ export default function LandingCost() {
         results.forEach(result => {
           result.data.forEach(r => {
             const commodityMatch = r.commodity.toLowerCase().includes(selectedCommodity.toLowerCase());
-            // Show all locations that match the commodity, even if not updated today
-            // But we will mark which ones are fresh
-            if (commodityMatch) {
+            const isUpdatedToday = r.newRate !== "" && r.newRate !== null;
+            
+            if (commodityMatch && isUpdatedToday) {
               allLocationRates.push({
                 ...r,
-                companyName: result.companyName,
-                isUpdatedToday: r.newRate !== "" && r.newRate !== null
+                companyName: result.companyName
               });
             }
           });
         });
 
-        // Sort by rate: High to Low
-        // Prioritize today's updates first, then by rate value
-        allLocationRates.sort((a, b) => {
-          if (a.isUpdatedToday && !b.isUpdatedToday) return -1;
-          if (!a.isUpdatedToday && b.isUpdatedToday) return 1;
-          
-          const rateA = parseFloat(a.newRate) || parseFloat(a.oldRate) || 0;
-          const rateB = parseFloat(b.newRate) || parseFloat(b.oldRate) || 0;
-          return rateB - rateA;
-        });
+        // Sort by rate (optional: lowest to highest)
+        allLocationRates.sort((a, b) => (parseFloat(a.newRate) || 0) - (parseFloat(b.newRate) || 0));
 
         setRates(allLocationRates);
       } catch (error) {
@@ -257,16 +248,11 @@ export default function LandingCost() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {selectedCommodity} Market Rates
+                    Today's {selectedCommodity} Rates
                   </h3>
-                  <div className="flex gap-2">
-                    <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                      {filteredDisplayRates.filter(r => r.isUpdatedToday).length} Updated Today
-                    </span>
-                    <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                      {filteredDisplayRates.length} Total Locations
-                    </span>
-                  </div>
+                  <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    {rates.length} Rates Found
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -275,12 +261,8 @@ export default function LandingCost() {
                       key={index}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`p-6 rounded-3xl text-white shadow-lg ${
-                        rate.isUpdatedToday 
-                          ? "bg-gradient-to-br from-green-600 to-green-700 shadow-green-500/20" 
-                          : "bg-gradient-to-br from-gray-500 to-gray-600 shadow-gray-500/20 opacity-90"
-                      }`}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-6 bg-gradient-to-br from-green-600 to-green-700 rounded-3xl text-white shadow-lg shadow-green-500/20"
                     >
                       <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
@@ -289,29 +271,32 @@ export default function LandingCost() {
                               <TrendingUp size={20} />
                             </div>
                             <div>
-                              <p className="text-white/80 text-[10px] font-medium uppercase tracking-widest">{rate.companyName}</p>
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-bold">{rate.location}</p>
-                                {rate.isUpdatedToday && (
-                                  <span className="text-[8px] bg-white/20 px-1.5 py-0.5 rounded-md uppercase font-black">Today</span>
-                                )}
-                              </div>
+                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest">{rate.companyName}</p>
+                              <p className="text-sm font-bold">{rate.location}</p>
                             </div>
                           </div>
                           <div className="text-right">
                             <h4 className="text-2xl font-black flex items-center justify-end gap-1">
                               <IndianRupee size={18} />
-                              {rate.newRate || rate.oldRate}
+                              {rate.newRate}
                             </h4>
                             <div className="flex flex-col items-end">
-                              <p className="text-[10px] text-white/70">per MT</p>
-                              {rate.isUpdatedToday && rate.oldRate > 0 && (
+                              <p className="text-[10px] text-green-100 opacity-80">per MT</p>
+                              {rate.oldRate > 0 && (
                                 <p className="text-[10px] text-red-200 line-through opacity-60">Prev: ₹{rate.oldRate}</p>
                               )}
-                              {!rate.isUpdatedToday && (
-                                <p className="text-[10px] text-white/50 italic">Last Updated Rate</p>
-                              )}
                             </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+                          <div className="flex items-center gap-2 text-[10px] opacity-80">
+                            <Clock size={12} />
+                            Today
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] opacity-80 justify-end">
+                            <History size={12} />
+                            {new Date(rate.date).toLocaleDateString('en-IN')}
                           </div>
                         </div>
                       </div>
