@@ -11,72 +11,47 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+import useRateNotifications from "@/hooks/useRateNotifications/useRateNotifications";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
-
-const NormalSelect = ({ label, options, value, onChange, disabled, placeholder }) => (
-  <div className="flex flex-col gap-2 w-full">
-    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">
-      {label}
-    </label>
-    <div className="relative group">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className="w-full appearance-none p-4 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-900 dark:text-white"
-      >
-        <option value="" className="text-gray-400">{placeholder}</option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-focus-within:text-green-500 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-      </div>
-    </div>
-  </div>
-);
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 
 export default function LandingCost() {
+  const { notifications: soyaRates, loading: soyaLoading } = useRateNotifications("Soya");
+  const { notifications: mdocRates, loading: mdocLoading } = useRateNotifications("MDOC");
+  const { notifications: ddgsRates, loading: ddgsLoading } = useRateNotifications("DDGS");
+
   const [landingRates, setLandingRates] = useState([]);
-  const [buyerCompanies, setBuyerCompanies] = useState([]);
   const [landingLoading, setLandingLoading] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchLandingRates = async () => {
       try {
         setLandingLoading(true);
-        const [rateRes, companyRes] = await Promise.all([
-          axiosInstance.get("/rate"),
-          axiosInstance.get("/manage-company")
-        ]);
-
-        // Filter only rates updated today
-        const todayRates = (rateRes.data || []).filter(r => r.hasNewRateToday);
-        setLandingRates(todayRates);
-
-        // Filter only buyer companies
-        const buyers = (companyRes.data || []).filter(c => 
-          c.type && (c.type.includes("buyer") || c.type === "buyer")
-        ).map(c => c.name);
-        setBuyerCompanies(buyers);
+        const res = await axiosInstance.get("/rate");
+        setLandingRates(res.data || []);
       } catch (error) {
-        console.error("Error fetching landing data:", error);
+        console.error("Error fetching landing rates:", error);
       } finally {
         setLandingLoading(false);
       }
     };
-    fetchData();
+    fetchLandingRates();
   }, []);
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCommodity, setSelectedCommodity] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
+
+  const allRates = useMemo(() => {
+    return [
+      ...soyaRates.map(r => ({ ...r, category: "Soya" })),
+      ...mdocRates.map(r => ({ ...r, category: "M DOC" })),
+      ...ddgsRates.map(r => ({ ...r, category: "DDGS" }))
+    ];
+  }, [soyaRates, mdocRates, ddgsRates]);
 
   // Reset downstream selections when upstream changes
   useEffect(() => {
@@ -118,12 +93,11 @@ export default function LandingCost() {
   const companyOptions = useMemo(() => {
     if (!selectedCommodity || !selectedCategory) return [];
     const filtered = landingRates.filter(r => 
-      r.commodity === selectedCommodity &&
-      buyerCompanies.includes(r.company)
+      r.commodity === selectedCommodity
     );
     const uniqueCompanies = Array.from(new Set(filtered.map(r => r.company)));
     return uniqueCompanies.map(name => ({ label: name, value: name }));
-  }, [selectedCommodity, selectedCategory, landingRates, buyerCompanies]);
+  }, [selectedCommodity, selectedCategory, landingRates]);
 
   const locationOptions = useMemo(() => {
     if (!selectedCompany || !selectedCommodity || !selectedCategory) return [];
@@ -153,7 +127,7 @@ export default function LandingCost() {
     };
   }, [selectedLocation, selectedCompany, selectedCommodity, selectedCategory, landingRates]);
 
-  const isLoading = landingLoading;
+  const isLoading = soyaLoading || mdocLoading || ddgsLoading || landingLoading;
 
   return (
     <Suspense fallback={<Loading />}>
@@ -171,14 +145,14 @@ export default function LandingCost() {
           <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl"></div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-            <NormalSelect
+            <Dropdown
               label="1. Select Category"
               placeholder="Choose Category..."
               options={categoryOptions}
               value={selectedCategory}
               onChange={setSelectedCategory}
             />
-            <NormalSelect
+            <Dropdown
               label="2. Select Commodity"
               placeholder="Choose Commodity..."
               options={commodityOptions}
@@ -186,7 +160,7 @@ export default function LandingCost() {
               onChange={setSelectedCommodity}
               disabled={!selectedCategory}
             />
-            <NormalSelect
+            <Dropdown
               label="3. Buyer company"
               placeholder="Choose Buyer company..."
               options={companyOptions}
@@ -194,7 +168,7 @@ export default function LandingCost() {
               onChange={setSelectedCompany}
               disabled={!selectedCommodity}
             />
-            <NormalSelect
+            <Dropdown
               label="4. Select Location"
               placeholder="Choose Location..."
               options={locationOptions}
