@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Building2, 
@@ -8,9 +8,10 @@ import {
   IndianRupee, 
   Clock, 
   Package, 
-  Search,
   ChevronRight,
-  Filter
+  TrendingUp,
+  History,
+  Info
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
@@ -18,109 +19,30 @@ import useRateNotifications from "@/hooks/useRateNotifications/useRateNotificati
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
-const CommodityCard = ({ type, notifications, loading }) => {
-  const [search, setSearch] = useState("");
-
-  const filteredNotifications = useMemo(() => {
-    return notifications.filter(n => 
-      n.companyName?.toLowerCase().includes(search.toLowerCase()) ||
-      n.location?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [notifications, search]);
-
-  const formatDate = (date) => {
-    if (!date) return "";
-    const d = new Date(date);
-    return d.toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
-
+const CustomSelect = ({ label, options, value, onChange, placeholder, icon: Icon, disabled }) => {
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden transition-all hover:shadow-md">
-      <div className={`px-5 py-4 bg-gradient-to-r ${
-        type === 'Soya' ? 'from-green-600 to-green-700' :
-        type === 'M DOC' ? 'from-emerald-600 to-emerald-700' :
-        'from-teal-600 to-teal-700'
-      }`}>
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Package size={20} />
-            {type} Rates
-          </h3>
-          <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-            {notifications.length} Updates
-          </span>
+    <div className="flex flex-col gap-2 w-full">
+      <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2 ml-1">
+        {Icon && <Icon size={14} className="text-green-600" />}
+        {label}
+      </label>
+      <div className="relative group">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className={`w-full appearance-none bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-5 py-4 text-sm font-medium focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm group-hover:border-gray-200 dark:group-hover:border-gray-600`}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+          <ChevronRight size={18} className="rotate-90" />
         </div>
-      </div>
-
-      <div className="p-3 border-b border-gray-100 dark:border-gray-800">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-          <input
-            type="text"
-            placeholder={`Search ${type} companies...`}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500 transition-all outline-none"
-          />
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
-        {loading ? (
-          <div className="p-10 flex justify-center"><Loading /></div>
-        ) : filteredNotifications.length === 0 ? (
-          <div className="p-10 text-center text-gray-400 text-sm">
-            No rates found 🚀
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {filteredNotifications.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600">
-                      <Building2 size={16} />
-                    </div>
-                    <h4 className="font-bold text-gray-900 dark:text-gray-100 text-sm group-hover:text-green-600 transition-colors">
-                      {item.companyName}
-                    </h4>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="flex items-center gap-1 font-extrabold text-green-700 dark:text-green-400 text-lg">
-                      <IndianRupee size={16} />
-                      {item.rate}
-                    </span>
-                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                      <Clock size={10} />
-                      {formatDate(item.date)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                    <MapPin size={12} className="text-gray-400" />
-                    <span>{item.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                    <Filter size={12} className="text-gray-400" />
-                    <span>{item.commodity}</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -131,64 +53,193 @@ export default function LandingCost() {
   const { notifications: mdocRates, loading: mdocLoading } = useRateNotifications("MDOC");
   const { notifications: ddgsRates, loading: ddgsLoading } = useRateNotifications("DDGS");
 
+  const [selectedCommodity, setSelectedCommodity] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+
+  const allRates = useMemo(() => {
+    return [
+      ...soyaRates.map(r => ({ ...r, type: "Soya" })),
+      ...mdocRates.map(r => ({ ...r, type: "M DOC" })),
+      ...ddgsRates.map(r => ({ ...r, type: "DDGS" }))
+    ];
+  }, [soyaRates, mdocRates, ddgsRates]);
+
+  // Reset downstream selections when upstream changes
+  useEffect(() => {
+    setSelectedCompany("");
+    setSelectedLocation("");
+  }, [selectedCommodity]);
+
+  useEffect(() => {
+    setSelectedLocation("");
+  }, [selectedCompany]);
+
+  // Options for selects
+  const commodityOptions = [
+    { label: "Soya", value: "Soya" },
+    { label: "M DOC", value: "M DOC" },
+    { label: "DDGS", value: "DDGS" }
+  ];
+
+  const companyOptions = useMemo(() => {
+    if (!selectedCommodity) return [];
+    const filtered = allRates.filter(r => r.type === selectedCommodity);
+    const uniqueCompanies = Array.from(new Set(filtered.map(r => r.companyName)));
+    return uniqueCompanies.map(name => ({ label: name, value: name }));
+  }, [selectedCommodity, allRates]);
+
+  const locationOptions = useMemo(() => {
+    if (!selectedCompany || !selectedCommodity) return [];
+    const filtered = allRates.filter(r => r.type === selectedCommodity && r.companyName === selectedCompany);
+    const uniqueLocations = Array.from(new Set(filtered.map(r => r.location)));
+    return uniqueLocations.map(loc => ({ label: loc, value: loc }));
+  }, [selectedCompany, selectedCommodity, allRates]);
+
+  const finalRate = useMemo(() => {
+    if (!selectedLocation || !selectedCompany || !selectedCommodity) return null;
+    return allRates.find(r => 
+      r.type === selectedCommodity && 
+      r.companyName === selectedCompany && 
+      r.location === selectedLocation
+    );
+  }, [selectedLocation, selectedCompany, selectedCommodity, allRates]);
+
+  const isLoading = soyaLoading || mdocLoading || ddgsLoading;
+
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <div>
-            <Title text="Landing Cost Dashboard" />
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Real-time commodity rates across different companies and locations
-            </p>
-          </div>
-          <div className="flex gap-2">
-             <div className="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-sm font-medium">Live Updates</span>
-             </div>
-          </div>
+      <div className="p-4 md:p-8 max-w-5xl mx-auto min-h-screen">
+        <div className="text-center mb-12">
+          <Title text="Landing Cost" />
+          <p className="text-gray-500 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
+            Select commodity, company, and location to view real-time landing rates across India.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <CommodityCard 
-            type="Soya" 
-            notifications={soyaRates} 
-            loading={soyaLoading} 
-          />
-          <CommodityCard 
-            type="M DOC" 
-            notifications={mdocRates} 
-            loading={mdocLoading} 
-          />
-          <CommodityCard 
-            type="DDGS" 
-            notifications={ddgsRates} 
-            loading={ddgsLoading} 
-          />
+        <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-800 p-6 md:p-10 mb-8 relative overflow-hidden">
+          {/* Decorative Background */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-green-500/5 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl"></div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+            <CustomSelect
+              label="1. Select Commodity"
+              icon={Package}
+              placeholder="Choose Commodity"
+              options={commodityOptions}
+              value={selectedCommodity}
+              onChange={setSelectedCommodity}
+              disabled={isLoading}
+            />
+            <CustomSelect
+              label="2. Select Company"
+              icon={Building2}
+              placeholder="Choose Company"
+              options={companyOptions}
+              value={selectedCompany}
+              onChange={setSelectedCompany}
+              disabled={!selectedCommodity || isLoading}
+            />
+            <CustomSelect
+              label="3. Select Location"
+              icon={MapPin}
+              placeholder="Choose Location"
+              options={locationOptions}
+              value={selectedLocation}
+              onChange={setSelectedLocation}
+              disabled={!selectedCompany || isLoading}
+            />
+          </div>
+
+          <AnimatePresence mode="wait">
+            {finalRate ? (
+              <motion.div
+                key="result"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mt-12 p-8 bg-gradient-to-br from-green-600 to-green-700 rounded-3xl text-white shadow-lg shadow-green-500/20"
+              >
+                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div className="flex items-center gap-6">
+                    <div className="p-5 bg-white/20 rounded-2xl backdrop-blur-md">
+                      <TrendingUp size={32} />
+                    </div>
+                    <div>
+                      <p className="text-green-100 text-sm font-medium uppercase tracking-widest mb-1">Current Landing Rate</p>
+                      <h3 className="text-4xl md:text-5xl font-black flex items-center gap-2">
+                        <IndianRupee size={32} />
+                        {finalRate.rate}
+                        <span className="text-xl font-normal opacity-80">/MT</span>
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
+                    <div className="bg-white/10 px-4 py-3 rounded-2xl backdrop-blur-sm">
+                      <p className="text-[10px] uppercase opacity-60 mb-1">Updated At</p>
+                      <p className="text-sm font-bold flex items-center gap-2">
+                        <Clock size={14} /> {finalRate.time || "N/A"}
+                      </p>
+                    </div>
+                    <div className="bg-white/10 px-4 py-3 rounded-2xl backdrop-blur-sm">
+                      <p className="text-[10px] uppercase opacity-60 mb-1">Date</p>
+                      <p className="text-sm font-bold flex items-center gap-2">
+                        <History size={14} /> {new Date(finalRate.date).toLocaleDateString('en-IN')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ) : selectedCommodity && !isLoading && companyOptions.length === 0 ? (
+              <motion.div
+                key="no-data"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-12 p-10 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl"
+              >
+                <div className="mx-auto w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-400">
+                  <Info size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Data Available</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">There are no rate updates for {selectedCommodity} today.</p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="placeholder"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-12 p-10 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-3xl"
+              >
+                <p className="text-gray-400 font-medium">Please complete the selection above to view the rate.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Brand footer or extra info can go here */}
+        {/* Brand Footer Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-12 p-6 bg-gradient-to-br from-green-900 to-emerald-900 rounded-3xl text-white shadow-xl overflow-hidden relative"
+          transition={{ delay: 0.2 }}
+          className="p-8 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row items-center justify-between gap-6"
         >
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Hansaria Food Private Limited</h2>
-              <p className="text-green-100/80 max-w-2xl">
-                Providing high-quality poultry and animal feed raw materials across India. 
-                Our landing cost dashboard helps you track real-time market fluctuations 
-                to make informed procurement decisions.
-              </p>
-            </div>
-            <button className="px-6 py-3 bg-white text-green-900 rounded-xl font-bold hover:bg-green-50 transition-colors flex items-center gap-2">
-              Contact Sales <ChevronRight size={18} />
-            </button>
+          <div className="flex items-center gap-4">
+             <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center text-green-600">
+                <Package size={24} />
+             </div>
+             <div>
+                <h4 className="font-bold text-gray-900 dark:text-white">Hansaria Food Private Limited</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Reliable procurement through data-driven insights.</p>
+             </div>
           </div>
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-green-400/10 rounded-full -ml-10 -mb-10 blur-2xl"></div>
+          <div className="flex gap-3">
+             <div className="px-4 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-xs font-bold uppercase tracking-wider">Live Market Data</span>
+             </div>
+          </div>
         </motion.div>
       </div>
     </Suspense>
