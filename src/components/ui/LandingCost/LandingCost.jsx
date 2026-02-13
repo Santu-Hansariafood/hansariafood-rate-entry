@@ -49,44 +49,77 @@ export default function LandingCost() {
     fetchCompanies();
   }, []);
 
-  // Fetch rates when selection is complete
+  // Fetch rates when commodity is selected
   useEffect(() => {
-    const fetchRates = async () => {
-      if (!selectedCompany || !selectedCommodity || !selectedLocation) {
+    const fetchAllRates = async () => {
+      if (!selectedCommodity) {
         setRates([]);
         return;
       }
 
       try {
         setRatesLoading(true);
-        const company = companies.find(c => c.name === selectedCompany);
-        if (!company?._id) return;
-
-        // Using /api/ratehistory/[id] to fetch all rates for the selected company
-        const res = await axiosInstance.get(`/ratehistory/${company._id}`);
         
-        // Filter for rates matching the selected commodity and having a final rate (newRate)
-        const allRates = res.data || [];
-        const todayStr = new Date().toISOString().split("T")[0];
-        
-        const filteredRates = allRates.filter(r => {
-          const commodityMatch = r.commodity.toLowerCase().includes(selectedCommodity.toLowerCase());
-          // Check if updated today (the API already provides the requested date's data)
-          const isUpdatedToday = r.newRate !== "" && r.newRate !== null;
-          return commodityMatch && isUpdatedToday;
+        // Filter companies that deal with the selected commodity
+        const filteredCompanies = companies.filter(company => {
+          if (!company.commodities || !Array.isArray(company.commodities)) return false;
+          return company.commodities.some(comm => 
+            comm.toLowerCase().includes(selectedCommodity.toLowerCase())
+          );
         });
 
-        setRates(filteredRates);
+        if (filteredCompanies.length === 0) {
+          setRates([]);
+          return;
+        }
+
+        // Fetch history for all filtered companies in parallel
+        const historyPromises = filteredCompanies.map(company => 
+          axiosInstance.get(`/ratehistory/${company._id}`)
+            .then(res => ({
+              companyName: company.name,
+              data: res.data || []
+            }))
+            .catch(err => {
+              console.error(`Error fetching history for ${company.name}:`, err);
+              return { companyName: company.name, data: [] };
+            })
+        );
+
+        const results = await Promise.all(historyPromises);
+        
+        // Flatten and filter for today's rates matching the selected commodity
+        const todayStr = new Date().toISOString().split("T")[0];
+        const allLocationRates = [];
+
+        results.forEach(result => {
+          result.data.forEach(r => {
+            const commodityMatch = r.commodity.toLowerCase().includes(selectedCommodity.toLowerCase());
+            const isUpdatedToday = r.newRate !== "" && r.newRate !== null;
+            
+            if (commodityMatch && isUpdatedToday) {
+              allLocationRates.push({
+                ...r,
+                companyName: result.companyName
+              });
+            }
+          });
+        });
+
+        // Sort by rate (optional: lowest to highest)
+        allLocationRates.sort((a, b) => (parseFloat(a.newRate) || 0) - (parseFloat(b.newRate) || 0));
+
+        setRates(allLocationRates);
       } catch (error) {
-        console.error("Error fetching rates:", error);
+        console.error("Error fetching all rates:", error);
         setRates([]);
       } finally {
         setRatesLoading(false);
       }
     };
 
-    fetchRates();
-  }, [selectedCompany, selectedCommodity, selectedLocation, companies]);
+    fetchAllRates();
+  }, [selectedCommodity, companies]);
 
   // Reset downstream selections
   useEffect(() => {
@@ -238,7 +271,7 @@ export default function LandingCost() {
                               <TrendingUp size={20} />
                             </div>
                             <div>
-                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest">{selectedCompany}</p>
+                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest">{rate.companyName}</p>
                               <p className="text-sm font-bold">{rate.location}</p>
                             </div>
                           </div>
