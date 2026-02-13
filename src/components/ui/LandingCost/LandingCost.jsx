@@ -3,10 +3,7 @@
 import { Suspense, useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  IndianRupee, 
-  Clock, 
   TrendingUp,
-  History,
   Info,
   X
 } from "lucide-react";
@@ -18,111 +15,71 @@ const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 
 export default function LandingCost() {
-  const [landingRates, setLandingRates] = useState([]);
-  const [landingLoading, setLandingLoading] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  
+  const [selectedCategory, setSelectedCategory] = useState("Feed Mills");
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedCommodity, setSelectedCommodity] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  
+  // Fetch companies from managecompany
   useEffect(() => {
-    const fetchLandingRates = async () => {
+    const fetchCompanies = async () => {
       try {
-        setLandingLoading(true);
+        setLoading(true);
         setError(null);
-        const res = await axiosInstance.get("/rate/today");
-        setLandingRates(res.data || []);
+        // Using limit=1000 to get all companies in this category
+        const res = await axiosInstance.get("/managecompany?category=Feed Mills&limit=1000");
+        setCompanies(res.data?.companies || []);
       } catch (error) {
-        console.error("Error fetching landing rates:", error);
-        setError("Failed to fetch rates. Please try again later.");
+        console.error("Error fetching companies:", error);
+        setError("Failed to fetch companies. Please try again later.");
       } finally {
-        setLandingLoading(false);
+        setLoading(false);
       }
     };
-    fetchLandingRates();
+    fetchCompanies();
   }, []);
 
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedCommodity, setSelectedCommodity] = useState("");
-  const [selectedCompany, setSelectedCompany] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
-
-  const isLoading = landingLoading;
-
-  // Reset downstream selections when upstream changes
+  // Reset downstream selections
   useEffect(() => {
     setSelectedCommodity("");
-    setSelectedCompany("");
-    setSelectedLocation("");
-  }, [selectedCategory]);
-
-  useEffect(() => {
-    setSelectedCompany("");
-    setSelectedLocation("");
-  }, [selectedCommodity]);
-
-  useEffect(() => {
     setSelectedLocation("");
   }, [selectedCompany]);
 
-  // Options for dropdowns
-  const categoryOptions = [
-    { label: "Soya", value: "Soya" },
-    { label: "M DOC", value: "M DOC" },
-    { label: "DDGS", value: "DDGS" }
-  ];
+  useEffect(() => {
+    setSelectedLocation("");
+  }, [selectedCommodity]);
 
-  const commodityOptions = useMemo(() => {
-    if (!selectedCategory || !Array.isArray(landingRates)) return [];
-    
-    // Filter landingRates by category (commodity name match)
-    const filtered = landingRates.filter(r => {
-      const comm = r.commodity?.toLowerCase() || "";
-      const cat = selectedCategory.toLowerCase();
-      
-      if (cat === "soya") return comm.includes("soya") || comm.includes("sbm");
-      if (cat === "m doc") return comm.includes("mdoc") || comm.includes("m doc");
-      if (cat === "ddgs") return comm.includes("ddgs");
-      return false;
-    });
-    
-    const uniqueCommodities = Array.from(new Set(filtered.map(r => r.commodity).filter(Boolean)));
-    return uniqueCommodities.map(name => ({ label: name, value: name }));
-  }, [selectedCategory, landingRates]);
+  // Dropdown Options
+  const categoryOptions = [{ label: "Feed Mills", value: "Feed Mills" }];
 
   const companyOptions = useMemo(() => {
-    if (!selectedCommodity || !selectedCategory || !Array.isArray(landingRates)) return [];
-    const filtered = landingRates.filter(r => 
-      r.commodity === selectedCommodity
-    );
-    const uniqueCompanies = Array.from(new Set(filtered.map(r => r.company).filter(Boolean)));
-    return uniqueCompanies.map(name => ({ label: name, value: name }));
-  }, [selectedCommodity, selectedCategory, landingRates]);
+    return companies.map(c => ({ label: c.name, value: c.name }));
+  }, [companies]);
+
+  const commodityOptions = useMemo(() => {
+    if (!selectedCompany) return [];
+    const company = companies.find(c => c.name === selectedCompany);
+    if (!company || !company.commodities) return [];
+    
+    const validCommodities = ["soya", "ddgs", "mdoc", "sbm"];
+    return company.commodities
+      .filter(comm => validCommodities.some(v => comm.toLowerCase().includes(v)))
+      .map(name => ({ label: name, value: name }));
+  }, [selectedCompany, companies]);
 
   const locationOptions = useMemo(() => {
-    if (!selectedCompany || !selectedCommodity || !selectedCategory || !Array.isArray(landingRates)) return [];
-    const filtered = landingRates.filter(r => 
-      r.commodity === selectedCommodity && 
-      r.company === selectedCompany
-    );
-    const uniqueLocations = Array.from(new Set(filtered.map(r => r.location).filter(Boolean)));
-    return uniqueLocations.map(loc => ({ label: loc, value: loc }));
-  }, [selectedCompany, selectedCommodity, selectedCategory, landingRates]);
+    if (!selectedCompany) return [];
+    const company = companies.find(c => c.name === selectedCompany);
+    if (!company || !company.location) return [];
+    
+    return company.location.map(loc => ({ label: loc, value: loc }));
+  }, [selectedCompany, companies]);
 
-  const finalRate = useMemo(() => {
-    if (!selectedLocation || !selectedCompany || !selectedCommodity || !selectedCategory) return null;
-    const rateData = landingRates.find(r => 
-      r.commodity === selectedCommodity && 
-      r.company === selectedCompany && 
-      r.location === selectedLocation
-    );
-
-    if (!rateData) return null;
-
-    return {
-      ...rateData,
-      rate: rateData.newRate, 
-      date: rateData.lastUpdated,
-      time: rateData.updateTime || "N/A"
-    };
-  }, [selectedLocation, selectedCompany, selectedCommodity, selectedCategory, landingRates]);
+  const isSelectionComplete = selectedCompany && selectedCommodity && selectedLocation;
 
   return (
     <Suspense fallback={<Loading />}>
@@ -130,38 +87,36 @@ export default function LandingCost() {
         <div className="text-center mb-12">
           <Title text="Landing Cost" />
           <p className="text-gray-500 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
-            Select category, commodity, buyer company, and location to view real-time landing rates.
+            Select category, buyer company, commodity, and location to manage landing cost details.
           </p>
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-800 p-6 md:p-10 mb-8 relative overflow-hidden">
-          {/* Decorative Background */}
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-green-500/5 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl"></div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
             <Dropdown
               label="1. Select Category"
-              placeholder="Choose Category..."
               options={categoryOptions}
               value={selectedCategory}
               onChange={setSelectedCategory}
             />
             <Dropdown
-              label="2. Select Commodity"
-              placeholder="Choose Commodity..."
-              options={commodityOptions}
-              value={selectedCommodity}
-              onChange={setSelectedCommodity}
-              disabled={!selectedCategory}
-            />
-            <Dropdown
-              label="3. Buyer company"
+              label="2. Buyer company"
               placeholder="Choose Buyer company..."
               options={companyOptions}
               value={selectedCompany}
               onChange={setSelectedCompany}
-              disabled={!selectedCommodity}
+              disabled={loading}
+            />
+            <Dropdown
+              label="3. Select Commodity"
+              placeholder="Choose Commodity..."
+              options={commodityOptions}
+              value={selectedCommodity}
+              onChange={setSelectedCommodity}
+              disabled={!selectedCompany}
             />
             <Dropdown
               label="4. Select Location"
@@ -169,7 +124,7 @@ export default function LandingCost() {
               options={locationOptions}
               value={selectedLocation}
               onChange={setSelectedLocation}
-              disabled={!selectedCompany}
+              disabled={!selectedCommodity}
             />
           </div>
 
@@ -193,7 +148,7 @@ export default function LandingCost() {
                   Retry
                 </button>
               </motion.div>
-            ) : finalRate ? (
+            ) : isSelectionComplete ? (
               <motion.div
                 key="result"
                 initial={{ opacity: 0, y: 20 }}
@@ -209,46 +164,17 @@ export default function LandingCost() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="bg-white/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">
-                          {finalRate.commodity}
+                          {selectedCommodity}
                         </span>
-                        <p className="text-green-100 text-sm font-medium uppercase tracking-widest">Current Landing Rate</p>
+                        <p className="text-green-100 text-sm font-medium uppercase tracking-widest">Selected Details</p>
                       </div>
-                      <h3 className="text-4xl md:text-5xl font-black flex items-center gap-2">
-                        <IndianRupee size={32} />
-                        {finalRate.rate}
-                        <span className="text-xl font-normal opacity-80">/MT</span>
+                      <h3 className="text-2xl md:text-3xl font-black">
+                        {selectedCompany}
                       </h3>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-                    <div className="bg-white/10 px-4 py-3 rounded-2xl backdrop-blur-sm">
-                      <p className="text-[10px] uppercase opacity-60 mb-1">Updated At</p>
-                      <p className="text-sm font-bold flex items-center gap-2">
-                        <Clock size={14} /> {finalRate.time || "N/A"}
-                      </p>
-                    </div>
-                    <div className="bg-white/10 px-4 py-3 rounded-2xl backdrop-blur-sm">
-                      <p className="text-[10px] uppercase opacity-60 mb-1">Date</p>
-                      <p className="text-sm font-bold flex items-center gap-2">
-                        <History size={14} /> {finalRate.date ? new Date(finalRate.date).toLocaleDateString('en-IN') : "N/A"}
-                      </p>
+                      <p className="text-green-100 opacity-80">{selectedLocation}</p>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            ) : selectedCategory && !isLoading && commodityOptions.length === 0 ? (
-              <motion.div
-                key="no-data"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-12 p-10 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl"
-              >
-                <div className="mx-auto w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-400">
-                  <Info size={32} />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Data Available</h3>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">There are no rate updates for {selectedCategory} today.</p>
               </motion.div>
             ) : (
               <motion.div
@@ -257,13 +183,12 @@ export default function LandingCost() {
                 animate={{ opacity: 1 }}
                 className="mt-12 p-10 text-center border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-3xl"
               >
-                <p className="text-gray-400 font-medium">Please complete the selection above to view the rate.</p>
+                <p className="text-gray-400 font-medium">Please complete the selection above to continue.</p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Brand Footer Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
