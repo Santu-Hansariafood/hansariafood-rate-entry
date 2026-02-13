@@ -63,12 +63,24 @@ export default function LandingCost() {
       try {
         setRatesLoading(true);
         
-        // Filter companies that deal with the selected commodity
+        // Filter companies that deal with the selected commodity or its base type
         const filteredCompanies = companies.filter(company => {
           if (!company.commodities || !Array.isArray(company.commodities)) return false;
-          return company.commodities.some(comm => 
-            comm.toLowerCase().includes(selectedCommodity.toLowerCase())
-          );
+          
+          return company.commodities.some(comm => {
+            const cLower = comm.toLowerCase();
+            const sLower = selectedCommodity.toLowerCase();
+            
+            // Direct match or substring
+            if (cLower.includes(sLower) || sLower.includes(cLower)) return true;
+            
+            // Base type match (e.g., if selected is "SBM 50%", match companies with "SBM")
+            const baseTypes = ["soya", "ddgs", "mdoc", "sbm"];
+            const selectedBase = baseTypes.find(b => sLower.includes(b));
+            if (!selectedBase) return false;
+            
+            return cLower.includes(selectedBase);
+          });
         });
 
         if (filteredCompanies.length === 0) {
@@ -91,28 +103,39 @@ export default function LandingCost() {
 
         const results = await Promise.all(historyPromises);
         
-        // Flatten and filter for rates matching the selected commodity
+        // Generate rates for all filtered companies and their locations
         const allLocationRates = [];
 
-        results.forEach(result => {
-          result.data.forEach(r => {
-            const commodityMatch = r.commodity.toLowerCase().includes(selectedCommodity.toLowerCase());
-            // Show rate if it has a new rate OR an old rate (latest available)
-            const hasAnyRate = (r.newRate !== "" && r.newRate !== null) || (r.oldRate !== 0 && r.oldRate !== null);
-            
-            if (commodityMatch && hasAnyRate) {
-              allLocationRates.push({
-                ...r,
-                companyName: result.companyName
-              });
-            }
+        filteredCompanies.forEach(company => {
+          const companyHistory = results.find(res => res.companyName === company.name)?.data || [];
+          
+          // Show all locations for each company that deals with this commodity
+          company.location.forEach(loc => {
+            const existingRate = companyHistory.find(r => 
+              r.location === loc && 
+              (r.commodity.toLowerCase().includes(selectedCommodity.toLowerCase()) || 
+               selectedCommodity.toLowerCase().includes(r.commodity.toLowerCase()))
+            );
+
+            allLocationRates.push({
+              companyName: company.name,
+              location: loc,
+              commodity: selectedCommodity,
+              newRate: existingRate?.newRate || "",
+              oldRate: existingRate?.oldRate || 0,
+              date: existingRate?.date || new Date().toISOString().split("T")[0],
+              ...existingRate
+            });
           });
         });
 
-        // Sort by rate (lowest to highest)
+        // Sort by rate (lowest to highest), putting N/A rates at the end
         allLocationRates.sort((a, b) => {
           const rateA = parseFloat(a.newRate) || parseFloat(a.oldRate) || 0;
           const rateB = parseFloat(b.newRate) || parseFloat(b.oldRate) || 0;
+          
+          if (rateA === 0 && rateB !== 0) return 1;
+          if (rateA !== 0 && rateB === 0) return -1;
           return rateA - rateB;
         });
 
@@ -309,7 +332,11 @@ export default function LandingCost() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="p-6 bg-gradient-to-br from-green-600 to-green-700 rounded-3xl text-white shadow-lg shadow-green-500/20"
+                      className={`p-6 rounded-3xl text-white shadow-lg ${
+                        rate.newRate || rate.oldRate 
+                          ? "bg-gradient-to-br from-green-600 to-green-700 shadow-green-500/20" 
+                          : "bg-gradient-to-br from-gray-600 to-gray-700 shadow-gray-500/20"
+                      }`}
                     >
                       <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
@@ -318,7 +345,7 @@ export default function LandingCost() {
                               <TrendingUp size={20} />
                             </div>
                             <div>
-                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest">{rate.companyName}</p>
+                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest opacity-70">{rate.companyName}</p>
                               <p className="text-sm font-bold">{rate.location}</p>
                             </div>
                           </div>
@@ -339,7 +366,7 @@ export default function LandingCost() {
                         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
                           <div className="flex items-center gap-2 text-[10px] opacity-80">
                             <Clock size={12} />
-                            {rate.newRate ? "Today" : "Latest Available"}
+                            {rate.newRate ? "Today" : (rate.oldRate ? "Latest Available" : "No Rate Available")}
                           </div>
                           <div className="flex items-center gap-2 text-[10px] opacity-80 justify-end">
                             <History size={12} />
