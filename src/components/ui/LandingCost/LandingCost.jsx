@@ -7,7 +7,8 @@ import {
   Clock, 
   TrendingUp,
   History,
-  Info
+  Info,
+  X
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
@@ -19,15 +20,18 @@ const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 export default function LandingCost() {
   const [landingRates, setLandingRates] = useState([]);
   const [landingLoading, setLandingLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchLandingRates = async () => {
       try {
         setLandingLoading(true);
+        setError(null);
         const res = await axiosInstance.get("/rate/today");
         setLandingRates(res.data || []);
       } catch (error) {
         console.error("Error fetching landing rates:", error);
+        setError("Failed to fetch rates. Please try again later.");
       } finally {
         setLandingLoading(false);
       }
@@ -66,35 +70,39 @@ export default function LandingCost() {
   ];
 
   const commodityOptions = useMemo(() => {
-    if (!selectedCategory) return [];
+    if (!selectedCategory || !Array.isArray(landingRates)) return [];
+    
     // Filter landingRates by category (commodity name match)
     const filtered = landingRates.filter(r => {
       const comm = r.commodity?.toLowerCase() || "";
-      if (selectedCategory === "Soya") return comm.includes("soya") || comm.includes("sbm");
-      if (selectedCategory === "M DOC") return comm.includes("mdoc") || comm.includes("m doc");
-      if (selectedCategory === "DDGS") return comm.includes("ddgs");
+      const cat = selectedCategory.toLowerCase();
+      
+      if (cat === "soya") return comm.includes("soya") || comm.includes("sbm");
+      if (cat === "m doc") return comm.includes("mdoc") || comm.includes("m doc");
+      if (cat === "ddgs") return comm.includes("ddgs");
       return false;
     });
-    const uniqueCommodities = Array.from(new Set(filtered.map(r => r.commodity)));
+    
+    const uniqueCommodities = Array.from(new Set(filtered.map(r => r.commodity).filter(Boolean)));
     return uniqueCommodities.map(name => ({ label: name, value: name }));
   }, [selectedCategory, landingRates]);
 
   const companyOptions = useMemo(() => {
-    if (!selectedCommodity || !selectedCategory) return [];
+    if (!selectedCommodity || !selectedCategory || !Array.isArray(landingRates)) return [];
     const filtered = landingRates.filter(r => 
       r.commodity === selectedCommodity
     );
-    const uniqueCompanies = Array.from(new Set(filtered.map(r => r.company)));
+    const uniqueCompanies = Array.from(new Set(filtered.map(r => r.company).filter(Boolean)));
     return uniqueCompanies.map(name => ({ label: name, value: name }));
   }, [selectedCommodity, selectedCategory, landingRates]);
 
   const locationOptions = useMemo(() => {
-    if (!selectedCompany || !selectedCommodity || !selectedCategory) return [];
+    if (!selectedCompany || !selectedCommodity || !selectedCategory || !Array.isArray(landingRates)) return [];
     const filtered = landingRates.filter(r => 
       r.commodity === selectedCommodity && 
       r.company === selectedCompany
     );
-    const uniqueLocations = Array.from(new Set(filtered.map(r => r.location)));
+    const uniqueLocations = Array.from(new Set(filtered.map(r => r.location).filter(Boolean)));
     return uniqueLocations.map(loc => ({ label: loc, value: loc }));
   }, [selectedCompany, selectedCommodity, selectedCategory, landingRates]);
 
@@ -166,7 +174,26 @@ export default function LandingCost() {
           </div>
 
           <AnimatePresence mode="wait">
-            {finalRate ? (
+            {error ? (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-12 p-10 text-center border-2 border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10 rounded-3xl"
+              >
+                <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4 text-red-500">
+                  <X size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-red-900 dark:text-red-400">Error Loading Data</h3>
+                <p className="text-red-600 dark:text-red-500/70 mt-1">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="mt-4 px-6 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors"
+                >
+                  Retry
+                </button>
+              </motion.div>
+            ) : finalRate ? (
               <motion.div
                 key="result"
                 initial={{ opacity: 0, y: 20 }}
