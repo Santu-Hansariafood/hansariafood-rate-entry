@@ -31,7 +31,7 @@ export async function GET(req) {
 
     const histories = await RateHistory.find(query).populate(
       "companyId",
-      "name"
+      "name type"
     );
 
     // Fallback: Manually fetch companies if populate failed
@@ -42,9 +42,9 @@ export async function GET(req) {
     let manualMap = {};
     if (missingIds.length > 0) {
       const found = await ManageCompany.find({ _id: { $in: missingIds } }).select(
-        "name"
+        "name type"
       );
-      found.forEach((c) => (manualMap[c._id.toString()] = c.name));
+      found.forEach((c) => (manualMap[c._id.toString()] = { name: c.name, type: c.type }));
     }
 
     let notifications = [];
@@ -58,14 +58,17 @@ export async function GET(req) {
         todayEntry.tempRates.length > 0
       ) {
         let cName = doc.companyId?.name;
+        let cType = doc.companyId?.type;
         if (!cName && doc.companyId) {
           const idStr = (doc.companyId._id || doc.companyId).toString();
-          cName = manualMap[idStr];
+          cName = manualMap[idStr]?.name;
+          cType = manualMap[idStr]?.type;
         }
 
         todayEntry.tempRates.forEach((rateUpdate) => {
           notifications.push({
             companyName: cName || "Unknown Company",
+            companyType: cType || [],
             location: doc.location,
             commodity: doc.commodity,
             rate: rateUpdate.rate,
