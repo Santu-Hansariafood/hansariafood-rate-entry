@@ -28,6 +28,7 @@ export default function MobileNav({
 
   const allRateDropdownItems = [
     { label: "Rate", path: "/rate" },
+    { label: "Landing Cost", path: "/landingcost" },
     { label: "Soya Rate", path: "/soyarate" },
     { label: "M DOC Rate", path: "/mdocrate" },
     { label: "DDGS Rate", path: "/ddgsrate" },
