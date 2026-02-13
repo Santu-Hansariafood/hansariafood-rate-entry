@@ -11,12 +11,25 @@ export async function GET(req) {
   try {
     await connectDB();
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get current time in IST
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+    const istTime = new Date(now.getTime() + istOffset);
+    
+    const startOfDayIST = new Date(istTime);
+    startOfDayIST.setUTCHours(0, 0, 0, 0);
+    
+    // Convert back to UTC for query
+    const startOfDayUTC = new Date(startOfDayIST.getTime() - istOffset);
 
-    // Find rates updated today
+    const endOfDayUTC = new Date(startOfDayUTC.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+    // Find rates updated today in IST
     const rates = await Rate.find({
-      newRateDate: { $gte: today }
+      newRateDate: { 
+        $gte: startOfDayUTC,
+        $lte: endOfDayUTC
+      }
     });
 
     const formattedRates = rates.map((rate) => {
