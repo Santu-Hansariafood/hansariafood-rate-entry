@@ -30,7 +30,13 @@ export default function LandingCost() {
       try {
         setLandingLoading(true);
         const res = await axiosInstance.get("/rate");
-        setLandingRates(res.data || []);
+        const today = new Date().toLocaleDateString('en-CA');
+        const filteredRates = (res.data || []).filter(rate => {
+          if (!rate.lastUpdated || !rate.newRate || Number(rate.newRate) === 0) return false;
+          const rateDate = new Date(rate.lastUpdated).toLocaleDateString('en-CA');
+          return rateDate === today;
+        });
+        setLandingRates(filteredRates);
       } catch (error) {
         console.error("Error fetching landing rates:", error);
       } finally {
