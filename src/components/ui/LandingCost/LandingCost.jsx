@@ -29,6 +29,13 @@ export default function LandingCost() {
 
   const [rates, setRates] = useState([]);
   const [ratesLoading, setRatesLoading] = useState(false);
+
+  const handleClear = () => {
+    setSelectedCompany("");
+    setSelectedCommodity("");
+    setSelectedLocation("");
+    setRates([]);
+  };
   
   // Fetch companies from managecompany
   useEffect(() => {
@@ -106,8 +113,8 @@ export default function LandingCost() {
           });
         });
 
-        // Sort by rate (optional: lowest to highest)
-        allLocationRates.sort((a, b) => (parseFloat(a.newRate) || 0) - (parseFloat(b.newRate) || 0));
+        // Sort by rate: High to Low
+        allLocationRates.sort((a, b) => (parseFloat(b.newRate) || 0) - (parseFloat(a.newRate) || 0));
 
         setRates(allLocationRates);
       } catch (error) {
@@ -149,7 +156,14 @@ export default function LandingCost() {
   }, [companies]);
 
   const commodityOptions = useMemo(() => {
-    if (!selectedCompany) return [];
+    if (!selectedCompany) {
+      // If no company selected, show all valid commodities from any company
+      const allComms = companies.flatMap(c => c.commodities || []);
+      const uniqueComms = [...new Set(allComms)]
+        .filter(comm => VALID_COMMODITIES.some(v => comm.toLowerCase().includes(v)));
+      return uniqueComms.map(name => ({ label: name, value: name }));
+    }
+    
     const company = companies.find(c => c.name === selectedCompany);
     if (!company || !company.commodities) return [];
     
@@ -159,14 +173,20 @@ export default function LandingCost() {
   }, [selectedCompany, companies]);
 
   const locationOptions = useMemo(() => {
-    if (!selectedCompany) return [];
-    const company = companies.find(c => c.name === selectedCompany);
-    if (!company || !company.location) return [];
-    
-    return company.location.map(loc => ({ label: loc, value: loc }));
-  }, [selectedCompany, companies]);
+    // Show unique locations from the fetched rates for the selected commodity
+    if (rates.length > 0) {
+      const uniqueLocations = [...new Set(rates.map(r => r.location))].sort();
+      return uniqueLocations.map(loc => ({ label: loc, value: loc }));
+    }
+    return [];
+  }, [rates]);
 
-  const isSelectionComplete = selectedCompany && selectedCommodity && selectedLocation;
+  const filteredDisplayRates = useMemo(() => {
+    if (!selectedLocation) return rates;
+    return rates.filter(r => r.location === selectedLocation);
+  }, [rates, selectedLocation]);
+
+  const isSelectionComplete = selectedCommodity;
 
   return (
     <Suspense fallback={<Loading />}>
@@ -203,7 +223,6 @@ export default function LandingCost() {
               options={commodityOptions}
               value={selectedCommodity}
               onChange={setSelectedCommodity}
-              disabled={!selectedCompany}
             />
             <Dropdown
               label="4. Select Location"
@@ -215,8 +234,19 @@ export default function LandingCost() {
             />
           </div>
 
+          <div className="mt-8 flex justify-end relative z-10">
+            <button
+              onClick={handleClear}
+              className="flex items-center gap-2 px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-red-500/20 active:scale-95"
+            >
+              <X size={18} />
+              Clear All
+            </button>
+          </div>
+
           <AnimatePresence mode="wait">
             {error ? (
+
               <motion.div
                 key="error"
                 initial={{ opacity: 0 }}
@@ -239,7 +269,7 @@ export default function LandingCost() {
               <div className="mt-12 flex justify-center">
                 <Loading />
               </div>
-            ) : rates.length > 0 ? (
+            ) : filteredDisplayRates.length > 0 ? (
               <motion.div
                 key="results"
                 initial={{ opacity: 0, y: 20 }}
@@ -251,12 +281,12 @@ export default function LandingCost() {
                     Today's {selectedCommodity} Rates
                   </h3>
                   <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    {rates.length} Rates Found
+                    {filteredDisplayRates.length} Rates Found
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {rates.map((rate, index) => (
+                  {filteredDisplayRates.map((rate, index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, x: -20 }}
