@@ -11,7 +11,8 @@ import {
   ChevronRight,
   TrendingUp,
   History,
-  Info
+  Info,
+  Layers
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
@@ -53,19 +54,26 @@ export default function LandingCost() {
   const { notifications: mdocRates, loading: mdocLoading } = useRateNotifications("MDOC");
   const { notifications: ddgsRates, loading: ddgsLoading } = useRateNotifications("DDGS");
 
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCommodity, setSelectedCommodity] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
 
   const allRates = useMemo(() => {
     return [
-      ...soyaRates.map(r => ({ ...r, type: "Soya" })),
-      ...mdocRates.map(r => ({ ...r, type: "M DOC" })),
-      ...ddgsRates.map(r => ({ ...r, type: "DDGS" }))
+      ...soyaRates.map(r => ({ ...r, category: "Soya" })),
+      ...mdocRates.map(r => ({ ...r, category: "M DOC" })),
+      ...ddgsRates.map(r => ({ ...r, category: "DDGS" }))
     ];
   }, [soyaRates, mdocRates, ddgsRates]);
 
   // Reset downstream selections when upstream changes
+  useEffect(() => {
+    setSelectedCommodity("");
+    setSelectedCompany("");
+    setSelectedLocation("");
+  }, [selectedCategory]);
+
   useEffect(() => {
     setSelectedCompany("");
     setSelectedLocation("");
@@ -76,44 +84,56 @@ export default function LandingCost() {
   }, [selectedCompany]);
 
   // Options for selects
-  const commodityOptions = [
+  const categoryOptions = [
     { label: "Soya", value: "Soya" },
     { label: "M DOC", value: "M DOC" },
     { label: "DDGS", value: "DDGS" }
   ];
 
+  const commodityOptions = useMemo(() => {
+    if (!selectedCategory) return [];
+    const filtered = allRates.filter(r => r.category === selectedCategory);
+    const uniqueCommodities = Array.from(new Set(filtered.map(r => r.commodity)));
+    return uniqueCommodities.map(name => ({ label: name, value: name }));
+  }, [selectedCategory, allRates]);
+
   const companyOptions = useMemo(() => {
-    if (!selectedCommodity) return [];
-    const filtered = allRates.filter(r => r.type === selectedCommodity);
+    if (!selectedCommodity || !selectedCategory) return [];
+    const filtered = allRates.filter(r => r.category === selectedCategory && r.commodity === selectedCommodity);
     const uniqueCompanies = Array.from(new Set(filtered.map(r => r.companyName)));
     return uniqueCompanies.map(name => ({ label: name, value: name }));
-  }, [selectedCommodity, allRates]);
+  }, [selectedCommodity, selectedCategory, allRates]);
 
   const locationOptions = useMemo(() => {
-    if (!selectedCompany || !selectedCommodity) return [];
-    const filtered = allRates.filter(r => r.type === selectedCommodity && r.companyName === selectedCompany);
+    if (!selectedCompany || !selectedCommodity || !selectedCategory) return [];
+    const filtered = allRates.filter(r => 
+      r.category === selectedCategory && 
+      r.commodity === selectedCommodity && 
+      r.companyName === selectedCompany
+    );
     const uniqueLocations = Array.from(new Set(filtered.map(r => r.location)));
     return uniqueLocations.map(loc => ({ label: loc, value: loc }));
-  }, [selectedCompany, selectedCommodity, allRates]);
+  }, [selectedCompany, selectedCommodity, selectedCategory, allRates]);
 
   const finalRate = useMemo(() => {
-    if (!selectedLocation || !selectedCompany || !selectedCommodity) return null;
+    if (!selectedLocation || !selectedCompany || !selectedCommodity || !selectedCategory) return null;
     return allRates.find(r => 
-      r.type === selectedCommodity && 
+      r.category === selectedCategory && 
+      r.commodity === selectedCommodity && 
       r.companyName === selectedCompany && 
       r.location === selectedLocation
     );
-  }, [selectedLocation, selectedCompany, selectedCommodity, allRates]);
+  }, [selectedLocation, selectedCompany, selectedCommodity, selectedCategory, allRates]);
 
   const isLoading = soyaLoading || mdocLoading || ddgsLoading;
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 md:p-8 max-w-5xl mx-auto min-h-screen">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-screen">
         <div className="text-center mb-12">
           <Title text="Landing Cost" />
           <p className="text-gray-500 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
-            Select commodity, company, and location to view real-time landing rates across India.
+            Select category, commodity, company, and location to view real-time landing rates.
           </p>
         </div>
 
@@ -122,18 +142,27 @@ export default function LandingCost() {
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-green-500/5 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl"></div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
             <CustomSelect
-              label="1. Select Commodity"
+              label="1. Select Category"
               icon={Package}
+              placeholder="Choose Category"
+              options={categoryOptions}
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              disabled={isLoading}
+            />
+            <CustomSelect
+              label="2. Select Commodity"
+              icon={Layers}
               placeholder="Choose Commodity"
               options={commodityOptions}
               value={selectedCommodity}
               onChange={setSelectedCommodity}
-              disabled={isLoading}
+              disabled={!selectedCategory || isLoading}
             />
             <CustomSelect
-              label="2. Select Company"
+              label="3. Select Company"
               icon={Building2}
               placeholder="Choose Company"
               options={companyOptions}
@@ -142,7 +171,7 @@ export default function LandingCost() {
               disabled={!selectedCommodity || isLoading}
             />
             <CustomSelect
-              label="3. Select Location"
+              label="4. Select Location"
               icon={MapPin}
               placeholder="Choose Location"
               options={locationOptions}
@@ -167,7 +196,12 @@ export default function LandingCost() {
                       <TrendingUp size={32} />
                     </div>
                     <div>
-                      <p className="text-green-100 text-sm font-medium uppercase tracking-widest mb-1">Current Landing Rate</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="bg-white/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">
+                          {finalRate.commodity}
+                        </span>
+                        <p className="text-green-100 text-sm font-medium uppercase tracking-widest">Current Landing Rate</p>
+                      </div>
                       <h3 className="text-4xl md:text-5xl font-black flex items-center gap-2">
                         <IndianRupee size={32} />
                         {finalRate.rate}
@@ -192,7 +226,7 @@ export default function LandingCost() {
                   </div>
                 </div>
               </motion.div>
-            ) : selectedCommodity && !isLoading && companyOptions.length === 0 ? (
+            ) : selectedCategory && !isLoading && commodityOptions.length === 0 ? (
               <motion.div
                 key="no-data"
                 initial={{ opacity: 0 }}
@@ -203,7 +237,7 @@ export default function LandingCost() {
                   <Info size={32} />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Data Available</h3>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">There are no rate updates for {selectedCommodity} today.</p>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">There are no rate updates for {selectedCategory} today.</p>
               </motion.div>
             ) : (
               <motion.div
