@@ -3,51 +3,18 @@
 import { Suspense, useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Building2, 
-  MapPin, 
   IndianRupee, 
   Clock, 
-  Package, 
-  ChevronRight,
   TrendingUp,
   History,
-  Info,
-  Layers
+  Info
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useRateNotifications from "@/hooks/useRateNotifications/useRateNotifications";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
-
-const CustomSelect = ({ label, options, value, onChange, placeholder, icon: Icon, disabled }) => {
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-2 ml-1">
-        {Icon && <Icon size={14} className="text-green-600" />}
-        {label}
-      </label>
-      <div className="relative group">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          className={`w-full appearance-none bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl px-5 py-4 text-sm font-medium focus:border-green-500 focus:ring-4 focus:ring-green-500/10 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm group-hover:border-gray-200 dark:group-hover:border-gray-600`}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-          <ChevronRight size={18} className="rotate-90" />
-        </div>
-      </div>
-    </div>
-  );
-};
+const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 
 export default function LandingCost() {
   const { notifications: soyaRates, loading: soyaLoading } = useRateNotifications("Soya");
@@ -83,7 +50,7 @@ export default function LandingCost() {
     setSelectedLocation("");
   }, [selectedCompany]);
 
-  // Options for selects
+  // Options for dropdowns
   const categoryOptions = [
     { label: "Soya", value: "Soya" },
     { label: "M DOC", value: "M DOC" },
@@ -99,7 +66,11 @@ export default function LandingCost() {
 
   const companyOptions = useMemo(() => {
     if (!selectedCommodity || !selectedCategory) return [];
-    const filtered = allRates.filter(r => r.category === selectedCategory && r.commodity === selectedCommodity);
+    const filtered = allRates.filter(r => 
+      r.category === selectedCategory && 
+      r.commodity === selectedCommodity &&
+      r.companyType.includes("buyer")
+    );
     const uniqueCompanies = Array.from(new Set(filtered.map(r => r.companyName)));
     return uniqueCompanies.map(name => ({ label: name, value: name }));
   }, [selectedCommodity, selectedCategory, allRates]);
@@ -133,7 +104,7 @@ export default function LandingCost() {
         <div className="text-center mb-12">
           <Title text="Landing Cost" />
           <p className="text-gray-500 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
-            Select category, commodity, company, and location to view real-time landing rates.
+            Select category, commodity, buyer company, and location to view real-time landing rates.
           </p>
         </div>
 
@@ -143,41 +114,36 @@ export default function LandingCost() {
           <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl"></div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-            <CustomSelect
+            <Dropdown
               label="1. Select Category"
-              icon={Package}
-              placeholder="Choose Category"
+              placeholder="Choose Category..."
               options={categoryOptions}
               value={selectedCategory}
               onChange={setSelectedCategory}
-              disabled={isLoading}
             />
-            <CustomSelect
+            <Dropdown
               label="2. Select Commodity"
-              icon={Layers}
-              placeholder="Choose Commodity"
+              placeholder="Choose Commodity..."
               options={commodityOptions}
               value={selectedCommodity}
               onChange={setSelectedCommodity}
-              disabled={!selectedCategory || isLoading}
+              disabled={!selectedCategory}
             />
-            <CustomSelect
-              label="3. Select Company"
-              icon={Building2}
-              placeholder="Choose Company"
+            <Dropdown
+              label="3. Buyer company"
+              placeholder="Choose Buyer company..."
               options={companyOptions}
               value={selectedCompany}
               onChange={setSelectedCompany}
-              disabled={!selectedCommodity || isLoading}
+              disabled={!selectedCommodity}
             />
-            <CustomSelect
+            <Dropdown
               label="4. Select Location"
-              icon={MapPin}
-              placeholder="Choose Location"
+              placeholder="Choose Location..."
               options={locationOptions}
               value={selectedLocation}
               onChange={setSelectedLocation}
-              disabled={!selectedCompany || isLoading}
+              disabled={!selectedCompany}
             />
           </div>
 
@@ -261,7 +227,7 @@ export default function LandingCost() {
         >
           <div className="flex items-center gap-4">
              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center text-green-600">
-                <Package size={24} />
+                <TrendingUp size={24} />
              </div>
              <div>
                 <h4 className="font-bold text-gray-900 dark:text-white">Hansaria Food Private Limited</h4>
