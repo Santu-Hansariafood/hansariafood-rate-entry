@@ -59,21 +59,24 @@ export default function LandingCost() {
 
       try {
         setRatesLoading(true);
-        // Using /api/rate to fetch all rates for the selected commodity
-        // The user wants to see all rates for that commodity (updated today)
-        const res = await axiosInstance.get(`/rate?commodity=${selectedCommodity}`);
+        const company = companies.find(c => c.name === selectedCompany);
+        if (!company?._id) return;
+
+        // Using /api/ratehistory/[id] to fetch all rates for the selected company
+        const res = await axiosInstance.get(`/ratehistory/${company._id}`);
         
-        // Filter for rates updated today and for the specific location if needed
-        // But the user said "display all the rates which is update for that spesific commodity"
+        // Filter for rates matching the selected commodity and having a final rate (newRate)
         const allRates = res.data || [];
-        const today = new Date().toDateString();
+        const todayStr = new Date().toISOString().split("T")[0];
         
-        const todayRates = allRates.filter(r => {
-          const rateDate = new Date(r.newRateDate).toDateString();
-          return rateDate === today;
+        const filteredRates = allRates.filter(r => {
+          const commodityMatch = r.commodity.toLowerCase().includes(selectedCommodity.toLowerCase());
+          // Check if updated today (the API already provides the requested date's data)
+          const isUpdatedToday = r.newRate !== "" && r.newRate !== null;
+          return commodityMatch && isUpdatedToday;
         });
 
-        setRates(todayRates);
+        setRates(filteredRates);
       } catch (error) {
         console.error("Error fetching rates:", error);
         setRates([]);
@@ -83,7 +86,7 @@ export default function LandingCost() {
     };
 
     fetchRates();
-  }, [selectedCompany, selectedCommodity, selectedLocation]);
+  }, [selectedCompany, selectedCommodity, selectedLocation, companies]);
 
   // Reset downstream selections
   useEffect(() => {
@@ -235,7 +238,7 @@ export default function LandingCost() {
                               <TrendingUp size={20} />
                             </div>
                             <div>
-                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest">{rate.company}</p>
+                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest">{selectedCompany}</p>
                               <p className="text-sm font-bold">{rate.location}</p>
                             </div>
                           </div>
@@ -244,18 +247,23 @@ export default function LandingCost() {
                               <IndianRupee size={18} />
                               {rate.newRate}
                             </h4>
-                            <p className="text-[10px] text-green-100 opacity-80">per MT</p>
+                            <div className="flex flex-col items-end">
+                              <p className="text-[10px] text-green-100 opacity-80">per MT</p>
+                              {rate.oldRate > 0 && (
+                                <p className="text-[10px] text-red-200 line-through opacity-60">Prev: ₹{rate.oldRate}</p>
+                              )}
+                            </div>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
                           <div className="flex items-center gap-2 text-[10px] opacity-80">
                             <Clock size={12} />
-                            {rate.updateTime || "N/A"}
+                            Today
                           </div>
                           <div className="flex items-center gap-2 text-[10px] opacity-80 justify-end">
                             <History size={12} />
-                            {new Date(rate.newRateDate).toLocaleDateString('en-IN')}
+                            {new Date(rate.date).toLocaleDateString('en-IN')}
                           </div>
                         </div>
                       </div>
