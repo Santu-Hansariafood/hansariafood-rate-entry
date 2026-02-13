@@ -5,7 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   TrendingUp,
   Info,
-  X
+  X,
+  IndianRupee,
+  Clock,
+  History
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
@@ -23,6 +26,9 @@ export default function LandingCost() {
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedCommodity, setSelectedCommodity] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
+
+  const [rates, setRates] = useState([]);
+  const [ratesLoading, setRatesLoading] = useState(false);
   
   // Fetch companies from managecompany
   useEffect(() => {
@@ -43,6 +49,42 @@ export default function LandingCost() {
     fetchCompanies();
   }, []);
 
+  // Fetch rates when selection is complete
+  useEffect(() => {
+    const fetchRates = async () => {
+      if (!selectedCompany || !selectedCommodity || !selectedLocation) {
+        setRates([]);
+        return;
+      }
+
+      try {
+        setRatesLoading(true);
+        // Using /api/rate to fetch all rates for the selected commodity
+        // The user wants to see all rates for that commodity (updated today)
+        const res = await axiosInstance.get(`/rate?commodity=${selectedCommodity}`);
+        
+        // Filter for rates updated today and for the specific location if needed
+        // But the user said "display all the rates which is update for that spesific commodity"
+        const allRates = res.data || [];
+        const today = new Date().toDateString();
+        
+        const todayRates = allRates.filter(r => {
+          const rateDate = new Date(r.newRateDate).toDateString();
+          return rateDate === today;
+        });
+
+        setRates(todayRates);
+      } catch (error) {
+        console.error("Error fetching rates:", error);
+        setRates([]);
+      } finally {
+        setRatesLoading(false);
+      }
+    };
+
+    fetchRates();
+  }, [selectedCompany, selectedCommodity, selectedLocation]);
+
   // Reset downstream selections
   useEffect(() => {
     setSelectedCommodity("");
@@ -53,11 +95,21 @@ export default function LandingCost() {
     setSelectedLocation("");
   }, [selectedCommodity]);
 
+  // Constants
+  const VALID_COMMODITIES = ["soya", "ddgs", "mdoc", "sbm"];
+
   // Dropdown Options
   const categoryOptions = [{ label: "Feed Mills", value: "Feed Mills" }];
 
   const companyOptions = useMemo(() => {
-    return companies.map(c => ({ label: c.name, value: c.name }));
+    return companies
+      .filter(company => {
+        if (!company.commodities || !Array.isArray(company.commodities)) return false;
+        return company.commodities.some(comm => 
+          VALID_COMMODITIES.some(v => comm.toLowerCase().includes(v))
+        );
+      })
+      .map(c => ({ label: c.name, value: c.name }));
   }, [companies]);
 
   const commodityOptions = useMemo(() => {
@@ -65,9 +117,8 @@ export default function LandingCost() {
     const company = companies.find(c => c.name === selectedCompany);
     if (!company || !company.commodities) return [];
     
-    const validCommodities = ["soya", "ddgs", "mdoc", "sbm"];
     return company.commodities
-      .filter(comm => validCommodities.some(v => comm.toLowerCase().includes(v)))
+      .filter(comm => VALID_COMMODITIES.some(v => comm.toLowerCase().includes(v)))
       .map(name => ({ label: name, value: name }));
   }, [selectedCompany, companies]);
 
@@ -148,33 +199,82 @@ export default function LandingCost() {
                   Retry
                 </button>
               </motion.div>
-            ) : isSelectionComplete ? (
+            ) : ratesLoading ? (
+              <div className="mt-12 flex justify-center">
+                <Loading />
+              </div>
+            ) : rates.length > 0 ? (
               <motion.div
-                key="result"
+                key="results"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="mt-12 p-8 bg-gradient-to-br from-green-600 to-green-700 rounded-3xl text-white shadow-lg shadow-green-500/20"
+                className="mt-12 space-y-6"
               >
-                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                  <div className="flex items-center gap-6">
-                    <div className="p-5 bg-white/20 rounded-2xl backdrop-blur-md">
-                      <TrendingUp size={32} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="bg-white/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">
-                          {selectedCommodity}
-                        </span>
-                        <p className="text-green-100 text-sm font-medium uppercase tracking-widest">Selected Details</p>
-                      </div>
-                      <h3 className="text-2xl md:text-3xl font-black">
-                        {selectedCompany}
-                      </h3>
-                      <p className="text-green-100 opacity-80">{selectedLocation}</p>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Today's {selectedCommodity} Rates
+                  </h3>
+                  <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    {rates.length} Rates Found
+                  </span>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {rates.map((rate, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-6 bg-gradient-to-br from-green-600 to-green-700 rounded-3xl text-white shadow-lg shadow-green-500/20"
+                    >
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md">
+                              <TrendingUp size={20} />
+                            </div>
+                            <div>
+                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest">{rate.company}</p>
+                              <p className="text-sm font-bold">{rate.location}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <h4 className="text-2xl font-black flex items-center justify-end gap-1">
+                              <IndianRupee size={18} />
+                              {rate.newRate}
+                            </h4>
+                            <p className="text-[10px] text-green-100 opacity-80">per MT</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+                          <div className="flex items-center gap-2 text-[10px] opacity-80">
+                            <Clock size={12} />
+                            {rate.updateTime || "N/A"}
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] opacity-80 justify-end">
+                            <History size={12} />
+                            {new Date(rate.newRateDate).toLocaleDateString('en-IN')}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            ) : selectedLocation && !ratesLoading ? (
+              <motion.div
+                key="no-data"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-12 p-10 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl"
+              >
+                <div className="mx-auto w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 text-gray-400">
+                  <Info size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Rate Updated</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">There is no rate update for {selectedCommodity} today.</p>
               </motion.div>
             ) : (
               <motion.div
