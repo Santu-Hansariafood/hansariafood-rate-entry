@@ -12,6 +12,7 @@ import {
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useRateNotifications from "@/hooks/useRateNotifications/useRateNotifications";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
@@ -20,6 +21,24 @@ export default function LandingCost() {
   const { notifications: soyaRates, loading: soyaLoading } = useRateNotifications("Soya");
   const { notifications: mdocRates, loading: mdocLoading } = useRateNotifications("MDOC");
   const { notifications: ddgsRates, loading: ddgsLoading } = useRateNotifications("DDGS");
+
+  const [landingRates, setLandingRates] = useState([]);
+  const [landingLoading, setLandingLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchLandingRates = async () => {
+      try {
+        setLandingLoading(true);
+        const res = await axiosInstance.get("/rate");
+        setLandingRates(res.data || []);
+      } catch (error) {
+        console.error("Error fetching landing rates:", error);
+      } finally {
+        setLandingLoading(false);
+      }
+    };
+    fetchLandingRates();
+  }, []);
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCommodity, setSelectedCommodity] = useState("");
@@ -59,44 +78,56 @@ export default function LandingCost() {
 
   const commodityOptions = useMemo(() => {
     if (!selectedCategory) return [];
-    const filtered = allRates.filter(r => r.category === selectedCategory);
+    // Filter landingRates by category (commodity name match)
+    const filtered = landingRates.filter(r => {
+      const comm = r.commodity?.toLowerCase() || "";
+      if (selectedCategory === "Soya") return comm.includes("soya") || comm.includes("sbm");
+      if (selectedCategory === "M DOC") return comm.includes("mdoc") || comm.includes("m doc");
+      if (selectedCategory === "DDGS") return comm.includes("ddgs");
+      return false;
+    });
     const uniqueCommodities = Array.from(new Set(filtered.map(r => r.commodity)));
     return uniqueCommodities.map(name => ({ label: name, value: name }));
-  }, [selectedCategory, allRates]);
+  }, [selectedCategory, landingRates]);
 
   const companyOptions = useMemo(() => {
     if (!selectedCommodity || !selectedCategory) return [];
-    const filtered = allRates.filter(r => 
-      r.category === selectedCategory && 
-      r.commodity === selectedCommodity &&
-      r.companyType.includes("buyer")
+    const filtered = landingRates.filter(r => 
+      r.commodity === selectedCommodity
     );
-    const uniqueCompanies = Array.from(new Set(filtered.map(r => r.companyName)));
+    const uniqueCompanies = Array.from(new Set(filtered.map(r => r.company)));
     return uniqueCompanies.map(name => ({ label: name, value: name }));
-  }, [selectedCommodity, selectedCategory, allRates]);
+  }, [selectedCommodity, selectedCategory, landingRates]);
 
   const locationOptions = useMemo(() => {
     if (!selectedCompany || !selectedCommodity || !selectedCategory) return [];
-    const filtered = allRates.filter(r => 
-      r.category === selectedCategory && 
+    const filtered = landingRates.filter(r => 
       r.commodity === selectedCommodity && 
-      r.companyName === selectedCompany
+      r.company === selectedCompany
     );
     const uniqueLocations = Array.from(new Set(filtered.map(r => r.location)));
     return uniqueLocations.map(loc => ({ label: loc, value: loc }));
-  }, [selectedCompany, selectedCommodity, selectedCategory, allRates]);
+  }, [selectedCompany, selectedCommodity, selectedCategory, landingRates]);
 
   const finalRate = useMemo(() => {
     if (!selectedLocation || !selectedCompany || !selectedCommodity || !selectedCategory) return null;
-    return allRates.find(r => 
-      r.category === selectedCategory && 
+    const rateData = landingRates.find(r => 
       r.commodity === selectedCommodity && 
-      r.companyName === selectedCompany && 
+      r.company === selectedCompany && 
       r.location === selectedLocation
     );
-  }, [selectedLocation, selectedCompany, selectedCommodity, selectedCategory, allRates]);
 
-  const isLoading = soyaLoading || mdocLoading || ddgsLoading;
+    if (!rateData) return null;
+
+    return {
+      ...rateData,
+      rate: rateData.newRate, 
+      date: rateData.lastUpdated,
+      time: rateData.updateTime || "N/A"
+    };
+  }, [selectedLocation, selectedCompany, selectedCommodity, selectedCategory, landingRates]);
+
+  const isLoading = soyaLoading || mdocLoading || ddgsLoading || landingLoading;
 
   return (
     <Suspense fallback={<Loading />}>
@@ -186,7 +217,7 @@ export default function LandingCost() {
                     <div className="bg-white/10 px-4 py-3 rounded-2xl backdrop-blur-sm">
                       <p className="text-[10px] uppercase opacity-60 mb-1">Date</p>
                       <p className="text-sm font-bold flex items-center gap-2">
-                        <History size={14} /> {new Date(finalRate.date).toLocaleDateString('en-IN')}
+                        <History size={14} /> {finalRate.date ? new Date(finalRate.date).toLocaleDateString('en-IN') : "N/A"}
                       </p>
                     </div>
                   </div>
