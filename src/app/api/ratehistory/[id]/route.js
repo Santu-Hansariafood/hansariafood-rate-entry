@@ -13,10 +13,14 @@ export async function GET(req, { params }) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const selectedDate =
-      searchParams.get("date") || new Date().toISOString().split("T")[0];
+    const selectedDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
+    const fullHistory = searchParams.get("fullHistory") === "true";
 
     const docs = await RateHistory.find({ companyId: id }).lean();
+
+    if (fullHistory) {
+      return NextResponse.json(docs, { status: 200 });
+    }
 
     const result = docs.map((doc) => {
       const history = [...doc.history].sort(
