@@ -30,6 +30,9 @@ export default function LandingCost() {
   const [rates, setRates] = useState([]);
   const [ratesLoading, setRatesLoading] = useState(false);
   
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
   // Fetch companies from managecompany
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -88,16 +91,16 @@ export default function LandingCost() {
 
         const results = await Promise.all(historyPromises);
         
-        // Flatten and filter for today's rates matching the selected commodity
-        const todayStr = new Date().toISOString().split("T")[0];
+        // Flatten and filter for rates matching the selected commodity
         const allLocationRates = [];
 
         results.forEach(result => {
           result.data.forEach(r => {
             const commodityMatch = r.commodity.toLowerCase().includes(selectedCommodity.toLowerCase());
-            const isUpdatedToday = r.newRate !== "" && r.newRate !== null;
+            // Show rate if it has a new rate OR an old rate (latest available)
+            const hasAnyRate = (r.newRate !== "" && r.newRate !== null) || (r.oldRate !== 0 && r.oldRate !== null);
             
-            if (commodityMatch && isUpdatedToday) {
+            if (commodityMatch && hasAnyRate) {
               allLocationRates.push({
                 ...r,
                 companyName: result.companyName
@@ -106,8 +109,12 @@ export default function LandingCost() {
           });
         });
 
-        // Sort by rate (optional: lowest to highest)
-        allLocationRates.sort((a, b) => (parseFloat(a.newRate) || 0) - (parseFloat(b.newRate) || 0));
+        // Sort by rate (lowest to highest)
+        allLocationRates.sort((a, b) => {
+          const rateA = parseFloat(a.newRate) || parseFloat(a.oldRate) || 0;
+          const rateB = parseFloat(b.newRate) || parseFloat(b.oldRate) || 0;
+          return rateA - rateB;
+        });
 
         setRates(allLocationRates);
       } catch (error) {
@@ -120,6 +127,46 @@ export default function LandingCost() {
 
     fetchAllRates();
   }, [selectedCommodity, companies]);
+
+  // Fetch specific history when location is selected
+  useEffect(() => {
+    const fetchSpecificHistory = async () => {
+      if (!selectedCompany || !selectedCommodity || !selectedLocation) {
+        setHistory([]);
+        return;
+      }
+
+      try {
+        setHistoryLoading(true);
+        const company = companies.find(c => c.name === selectedCompany);
+        if (!company) return;
+
+        const res = await axiosInstance.get(`/ratehistory/${company._id}?fullHistory=true`);
+        const allData = res.data || [];
+        
+        // Find the doc matching location and commodity
+        const match = allData.find(d => 
+          d.location === selectedLocation && 
+          d.commodity.toLowerCase().includes(selectedCommodity.toLowerCase())
+        );
+
+        if (match && match.history) {
+          // Sort history by date descending
+          const sortedHistory = [...match.history].sort((a, b) => new Date(b.date) - new Date(a.date));
+          setHistory(sortedHistory);
+        } else {
+          setHistory([]);
+        }
+      } catch (error) {
+        console.error("Error fetching specific history:", error);
+        setHistory([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    fetchSpecificHistory();
+  }, [selectedCompany, selectedCommodity, selectedLocation, companies]);
 
   // Reset downstream selections
   useEffect(() => {
@@ -248,7 +295,7 @@ export default function LandingCost() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                    Today's {selectedCommodity} Rates
+                    Latest {selectedCommodity} Market Rates
                   </h3>
                   <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                     {rates.length} Rates Found
@@ -278,11 +325,11 @@ export default function LandingCost() {
                           <div className="text-right">
                             <h4 className="text-2xl font-black flex items-center justify-end gap-1">
                               <IndianRupee size={18} />
-                              {rate.newRate}
+                              {rate.newRate || rate.oldRate || "N/A"}
                             </h4>
                             <div className="flex flex-col items-end">
                               <p className="text-[10px] text-green-100 opacity-80">per MT</p>
-                              {rate.oldRate > 0 && (
+                              {rate.newRate && rate.oldRate > 0 && (
                                 <p className="text-[10px] text-red-200 line-through opacity-60">Prev: ₹{rate.oldRate}</p>
                               )}
                             </div>
@@ -292,7 +339,7 @@ export default function LandingCost() {
                         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
                           <div className="flex items-center gap-2 text-[10px] opacity-80">
                             <Clock size={12} />
-                            Today
+                            {rate.newRate ? "Today" : "Latest Available"}
                           </div>
                           <div className="flex items-center gap-2 text-[10px] opacity-80 justify-end">
                             <History size={12} />
@@ -303,6 +350,91 @@ export default function LandingCost() {
                     </motion.div>
                   ))}
                 </div>
+
+                {/* Specific Selection History */}
+                {selectedLocation && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-12 pt-12 border-t border-gray-100 dark:border-gray-800"
+                  >
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Rate History</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          Showing historical rates for {selectedCompany} at {selectedLocation}
+                        </p>
+                      </div>
+                      <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                        <History size={14} />
+                        {history.length} Records
+                      </div>
+                    </div>
+
+                    {historyLoading ? (
+                      <div className="flex justify-center py-12">
+                        <Loading />
+                      </div>
+                    ) : history.length > 0 ? (
+                      <div className="overflow-hidden rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-gray-50/50 dark:bg-gray-800/50">
+                              <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                              <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Previous Rate</th>
+                              <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Final Rate</th>
+                              <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Changes</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            {history.map((h, i) => {
+                              const diff = h.finalRate - h.oldRate;
+                              return (
+                                <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500">
+                                        <Clock size={14} />
+                                      </div>
+                                      <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
+                                        {new Date(h.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    ₹{h.oldRate || 0}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">
+                                      ₹{h.finalRate || 0}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {diff !== 0 ? (
+                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                        diff > 0 
+                                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                      }`}>
+                                        {diff > 0 ? "+" : ""}{diff}
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-gray-400">-</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 bg-gray-50/50 dark:bg-gray-800/20 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
+                        <p className="text-gray-500 dark:text-gray-400">No historical data available for this selection.</p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
               </motion.div>
             ) : selectedLocation && !ratesLoading ? (
               <motion.div
