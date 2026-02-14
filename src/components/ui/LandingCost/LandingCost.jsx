@@ -64,7 +64,6 @@ export default function LandingCost() {
         const query = new URLSearchParams({
           commodity: selectedCommodity,
           date: dateStr,
-          category: selectedCategory || "",
         });
         if (selectedLocation) {
           query.set("destination", selectedLocation);
@@ -94,7 +93,7 @@ export default function LandingCost() {
     };
 
     fetchAllRates();
-  }, [selectedCommodity, selectedCategory, selectedLocation]);
+  }, [selectedCommodity, selectedLocation]);
 
   useEffect(() => {
     const fetchSpecificHistory = async () => {

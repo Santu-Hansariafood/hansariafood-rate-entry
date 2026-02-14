@@ -15,7 +15,7 @@ export async function GET(req) {
     const commodityQuery = searchParams.get("commodity");
     const selectedDate =
       searchParams.get("date") || new Date().toISOString().split("T")[0];
-    const category = searchParams.get("category"); // optional filter, e.g., "Feed Mills"
+    const category = searchParams.get("category"); // ignored for seller listings
     const destination = searchParams.get("destination"); // optional buyer location to include freight for this destination
 
     if (!commodityQuery) {
@@ -25,7 +25,10 @@ export async function GET(req) {
       );
     }
 
-    const commodityRegex = new RegExp(commodityQuery, "i");
+    // Escape regex special characters to avoid invalid patterns
+    const escapeRegex = (s) =>
+      s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
 
     // Fetch all rate history docs matching the commodity
     const docs = await RateHistory.find({ commodity: commodityRegex }).lean();
@@ -36,9 +39,8 @@ export async function GET(req) {
     // Join with ManageCompany to get company names (and filter by category if provided)
     const companyIds = [...new Set(docs.map((d) => String(d.companyId)))];
     const companyFilter = { _id: { $in: companyIds } };
-    if (category) {
-      companyFilter.category = category;
-    }
+    // Always target sellers for rate listing (buyers are not the source of rates)
+    companyFilter.type = "seller";
     const companies = await ManageCompany.find(companyFilter)
       .select("_id name")
       .lean();
@@ -48,8 +50,10 @@ export async function GET(req) {
     const results = docs
       .filter((doc) => companyMap.has(String(doc.companyId)))
       .map((doc) => {
-        const history = [...doc.history].sort(
-          (a, b) => new Date(b.date) - new Date(a.date)
+        const histArr = Array.isArray(doc.history) ? doc.history : [];
+        // dates are stored as YYYY-MM-DD strings; lexical sort works
+        const history = [...histArr].sort((a, b) =>
+          (b?.date || "").localeCompare(a?.date || "")
         );
         const today = history.find((h) => h.date === selectedDate);
         const previous = history.find((h) => h.date < selectedDate);
