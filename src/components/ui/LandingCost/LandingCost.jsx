@@ -271,6 +271,7 @@ export default function LandingCost() {
                         companyName: r.companyName,
                         location: r.location,
                         commodity: r.commodity,
+                        destination: r.destinationLocation || "",
                         baseRate: Number(r.newRate) || Number(r.oldRate) || 0,
                         freight: Number(r.freightRate) || 0,
                         landed: Number(r.landedRate) || (Number(r.newRate) || Number(r.oldRate) || 0),
@@ -281,6 +282,10 @@ export default function LandingCost() {
                         { header: "Company", accessor: "companyName" },
                         { header: "Location", accessor: "location" },
                         { header: "Commodity", accessor: "commodity" },
+                        {
+                          header: "Destination",
+                          cell: (row) => row.destination || "—",
+                        },
                         {
                           header: "Base Rate (₹)",
                           cell: (row) => `₹${row.baseRate}`,
