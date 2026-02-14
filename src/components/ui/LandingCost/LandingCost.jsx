@@ -258,34 +258,36 @@ export default function LandingCost() {
                 </div>
 
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
-                  <Table
-                    data={rates.map((r) => ({
-                      companyName: r.companyName,
-                      location: r.location,
-                      commodity: r.commodity,
-                      rate: Number(r.newRate) || Number(r.oldRate) || 0,
-                      previous: Number(r.oldRate) || 0,
-                      date: r.date,
-                    }))}
-                    columns={[
-                      { header: "Company", accessor: "companyName" },
-                      { header: "Location", accessor: "location" },
-                      { header: "Commodity", accessor: "commodity" },
-                      {
-                        header: "Rate (₹)",
-                        cell: (row) => `₹${row.rate}`,
-                      },
-                      {
-                        header: "Previous (₹)",
-                        cell: (row) => (row.previous ? `₹${row.previous}` : "—"),
-                      },
-                      {
-                        header: "Date",
-                        cell: (row) =>
-                          new Date(row.date).toLocaleDateString("en-IN"),
-                      },
-                    ]}
-                  />
+                  <div className="max-h-[70vh] overflow-y-auto">
+                    <Table
+                      data={rates.map((r) => ({
+                        companyName: r.companyName,
+                        location: r.location,
+                        commodity: r.commodity,
+                        rate: Number(r.newRate) || Number(r.oldRate) || 0,
+                        previous: Number(r.oldRate) || 0,
+                        date: r.date,
+                      }))}
+                      columns={[
+                        { header: "Company", accessor: "companyName" },
+                        { header: "Location", accessor: "location" },
+                        { header: "Commodity", accessor: "commodity" },
+                        {
+                          header: "Rate (₹)",
+                          cell: (row) => `₹${row.rate}`,
+                        },
+                        {
+                          header: "Previous (₹)",
+                          cell: (row) => (row.previous ? `₹${row.previous}` : "—"),
+                        },
+                        {
+                          header: "Date",
+                          cell: (row) =>
+                            new Date(row.date).toLocaleDateString("en-IN"),
+                        },
+                      ]}
+                    />
+                  </div>
                 </div>
               </motion.div>
             ) : selectedCommodity && !ratesLoading ? (
