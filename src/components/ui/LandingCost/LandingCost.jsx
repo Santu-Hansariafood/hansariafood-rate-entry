@@ -16,6 +16,7 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
+const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 
 export default function LandingCost() {
   const [companies, setCompanies] = useState([]);
@@ -59,76 +60,24 @@ export default function LandingCost() {
 
       try {
         setRatesLoading(true);
-        
-        const filteredCompanies = companies.filter(company => {
-          if (!company.commodities || !Array.isArray(company.commodities)) return false;
-          
-          return company.commodities.some(comm => {
-            const cLower = comm.toLowerCase();
-            const sLower = selectedCommodity.toLowerCase();
-            
-            if (cLower.includes(sLower) || sLower.includes(cLower)) return true;
-            
-            const baseTypes = ["soya", "ddgs", "mdoc", "sbm"];
-            const selectedBase = baseTypes.find(b => sLower.includes(b));
-            if (!selectedBase) return false;
-            
-            return cLower.includes(selectedBase);
-          });
-        });
-
-        if (filteredCompanies.length === 0) {
-          setRates([]);
-          return;
-        }
-
-        const historyPromises = filteredCompanies.map(company => 
-          axiosInstance.get(`/ratehistory/${company._id}`)
-            .then(res => ({
-              companyName: company.name,
-              data: res.data || []
-            }))
-            .catch(err => {
-              console.error(`Error fetching history for ${company.name}:`, err);
-              return { companyName: company.name, data: [] };
-            })
+        const dateStr = new Date().toISOString().split("T")[0];
+        const res = await axiosInstance.get(
+          `/ratehistory/by-commodity?commodity=${encodeURIComponent(
+            selectedCommodity
+          )}&date=${dateStr}&category=${encodeURIComponent(selectedCategory)}`
         );
+        const items = Array.isArray(res.data) ? res.data : [];
 
-        const results = await Promise.all(historyPromises);
-        
-        const allLocationRates = [];
-
-        filteredCompanies.forEach(company => {
-          const companyHistory = results.find(res => res.companyName === company.name)?.data || [];
-          
-          company.location.forEach(loc => {
-            const existingRate = companyHistory.find(r => 
-              r.location === loc && 
-              (r.commodity.toLowerCase().includes(selectedCommodity.toLowerCase()) || 
-               selectedCommodity.toLowerCase().includes(r.commodity.toLowerCase()))
-            );
-
-            if (existingRate && (existingRate.newRate || existingRate.oldRate)) {
-              allLocationRates.push({
-                companyName: company.name,
-                location: loc,
-                commodity: selectedCommodity,
-                newRate: existingRate?.newRate || "",
-                oldRate: existingRate?.oldRate || 0,
-                date: existingRate?.date || new Date().toISOString().split("T")[0],
-                ...existingRate
-              });
-            }
+        // Only keep entries with a rate and sort by effective rate ascending (lowest first)
+        const filteredSorted = items
+          .filter((r) => (r.newRate && Number(r.newRate)) || (r.oldRate && Number(r.oldRate)))
+          .sort((a, b) => {
+            const rateA = Number(a.newRate) || Number(a.oldRate) || 0;
+            const rateB = Number(b.newRate) || Number(b.oldRate) || 0;
+            return rateA - rateB;
           });
-        });
 
-        allLocationRates.sort((a, b) => {
-          const rateA = parseFloat(a.newRate) || parseFloat(a.oldRate) || 0;
-          const rateB = parseFloat(b.newRate) || parseFloat(b.oldRate) || 0;
-          return rateB - rateA;
-        });
-
-        setRates(allLocationRates);
+        setRates(filteredSorted);
       } catch (error) {
         console.error("Error fetching all rates:", error);
         setRates([]);
@@ -138,7 +87,7 @@ export default function LandingCost() {
     };
 
     fetchAllRates();
-  }, [selectedCommodity, companies]);
+  }, [selectedCommodity, selectedCategory]);
 
   useEffect(() => {
     const fetchSpecificHistory = async () => {
@@ -292,7 +241,7 @@ export default function LandingCost() {
               <div className="mt-12 flex justify-center">
                 <Loading />
               </div>
-            ) : rates.length > 0 ? (
+            ) : selectedCommodity && rates.length > 0 ? (
               <motion.div
                 key="results"
                 initial={{ opacity: 0, y: 20 }}
@@ -308,144 +257,38 @@ export default function LandingCost() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {rates.map((rate, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`p-6 rounded-3xl text-white shadow-lg ${
-                        rate.newRate || rate.oldRate 
-                          ? "bg-gradient-to-br from-green-600 to-green-700 shadow-green-500/20" 
-                          : "bg-gradient-to-br from-gray-600 to-gray-700 shadow-gray-500/20"
-                      }`}
-                    >
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md">
-                              <TrendingUp size={20} />
-                            </div>
-                            <div>
-                              <p className="text-green-100 text-[10px] font-medium uppercase tracking-widest opacity-70">{rate.companyName}</p>
-                              <p className="text-sm font-bold">{rate.location}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <h4 className="text-2xl font-black flex items-center justify-end gap-1">
-                              <IndianRupee size={18} />
-                              {rate.newRate || rate.oldRate || "N/A"}
-                            </h4>
-                            <div className="flex flex-col items-end">
-                              <p className="text-[10px] text-green-100 opacity-80">per MT</p>
-                              {rate.newRate && rate.oldRate > 0 && (
-                                <p className="text-[10px] text-red-200 line-through opacity-60">Prev: ₹{rate.oldRate}</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
-                          <div className="flex items-center gap-2 text-[10px] opacity-80">
-                            <Clock size={12} />
-                            {rate.newRate ? "Today" : (rate.oldRate ? "Latest Available" : "No Rate Available")}
-                          </div>
-                          <div className="flex items-center gap-2 text-[10px] opacity-80 justify-end">
-                            <History size={12} />
-                            {new Date(rate.date).toLocaleDateString('en-IN')}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
+                  <Table
+                    data={rates.map((r) => ({
+                      companyName: r.companyName,
+                      location: r.location,
+                      commodity: r.commodity,
+                      rate: Number(r.newRate) || Number(r.oldRate) || 0,
+                      previous: Number(r.oldRate) || 0,
+                      date: r.date,
+                    }))}
+                    columns={[
+                      { header: "Company", accessor: "companyName" },
+                      { header: "Location", accessor: "location" },
+                      { header: "Commodity", accessor: "commodity" },
+                      {
+                        header: "Rate (₹)",
+                        cell: (row) => `₹${row.rate}`,
+                      },
+                      {
+                        header: "Previous (₹)",
+                        cell: (row) => (row.previous ? `₹${row.previous}` : "—"),
+                      },
+                      {
+                        header: "Date",
+                        cell: (row) =>
+                          new Date(row.date).toLocaleDateString("en-IN"),
+                      },
+                    ]}
+                  />
                 </div>
-
-                {selectedLocation && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-12 pt-12 border-t border-gray-100 dark:border-gray-800"
-                  >
-                    <div className="flex items-center justify-between mb-8">
-                      <div>
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Rate History</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Showing historical rates for {selectedCompany} at {selectedLocation}
-                        </p>
-                      </div>
-                      <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-                        <History size={14} />
-                        {history.length} Records
-                      </div>
-                    </div>
-
-                    {historyLoading ? (
-                      <div className="flex justify-center py-12">
-                        <Loading />
-                      </div>
-                    ) : history.length > 0 ? (
-                      <div className="overflow-hidden rounded-3xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
-                        <table className="w-full text-left border-collapse">
-                          <thead>
-                            <tr className="bg-gray-50/50 dark:bg-gray-800/50">
-                              <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                              <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Previous Rate</th>
-                              <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Final Rate</th>
-                              <th className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Changes</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                            {history.map((h, i) => {
-                              const diff = h.finalRate - h.oldRate;
-                              return (
-                                <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center gap-2">
-                                      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500">
-                                        <Clock size={14} />
-                                      </div>
-                                      <span className="text-sm font-medium text-gray-900 dark:text-gray-200">
-                                        {new Date(h.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    ₹{h.oldRate || 0}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">
-                                      ₹{h.finalRate || 0}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    {diff !== 0 ? (
-                                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                                        diff > 0 
-                                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
-                                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                                      }`}>
-                                        {diff > 0 ? "+" : ""}{diff}
-                                      </span>
-                                    ) : (
-                                      <span className="text-xs text-gray-400">-</span>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 bg-gray-50/50 dark:bg-gray-800/20 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800">
-                        <p className="text-gray-500 dark:text-gray-400">No historical data available for this selection.</p>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
               </motion.div>
-            ) : selectedLocation && !ratesLoading ? (
+            ) : selectedCommodity && !ratesLoading ? (
               <motion.div
                 key="no-data"
                 initial={{ opacity: 0 }}
@@ -456,7 +299,7 @@ export default function LandingCost() {
                   <Info size={32} />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Rate Updated</h3>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">There is no rate update for {selectedCommodity} today.</p>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">There is no rate available for {selectedCommodity}.</p>
               </motion.div>
             ) : (
               <motion.div
