@@ -16,6 +16,7 @@ export async function GET(req) {
     const selectedDate =
       searchParams.get("date") || new Date().toISOString().split("T")[0];
     const category = searchParams.get("category"); // optional filter, e.g., "Feed Mills"
+    const destination = searchParams.get("destination"); // optional buyer location to include freight for this destination
 
     if (!commodityQuery) {
       return NextResponse.json(
@@ -43,7 +44,7 @@ export async function GET(req) {
       .lean();
     const companyMap = new Map(companies.map((c) => [String(c._id), c.name]));
 
-    // Map docs -> flattened entries for the selectedDate (same logic as /ratehistory/[id])
+    // Map docs -> flattened entries for the selectedDate (same logic as /ratehistory/[id]) plus landedRate
     const results = docs
       .filter((doc) => companyMap.has(String(doc.companyId)))
       .map((doc) => {
@@ -52,6 +53,21 @@ export async function GET(req) {
         );
         const today = history.find((h) => h.date === selectedDate);
         const previous = history.find((h) => h.date < selectedDate);
+
+        const baseRate =
+          (today?.finalRate != null ? today.finalRate : undefined) ??
+          (previous?.finalRate != null ? previous.finalRate : 0) ??
+          0;
+        const todayFreight = today?.freightRate || 0;
+        const todayDestination = today?.destinationLocation || "";
+
+        // Add freight only if destination is provided and matches the record's destination
+        const shouldAddFreight =
+          destination &&
+          todayDestination &&
+          todayDestination.toLowerCase().trim() ===
+            destination.toLowerCase().trim();
+        const landedRate = shouldAddFreight ? baseRate + todayFreight : baseRate;
 
         return {
           companyId: doc.companyId,
@@ -65,6 +81,7 @@ export async function GET(req) {
           destinationLocation: today?.destinationLocation || "",
           freightRate: today?.freightRate || 0,
           date: selectedDate,
+          landedRate,
         };
       });
 
@@ -77,4 +94,3 @@ export async function GET(req) {
     );
   }
 }
-

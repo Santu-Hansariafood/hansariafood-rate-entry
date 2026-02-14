@@ -61,19 +61,26 @@ export default function LandingCost() {
       try {
         setRatesLoading(true);
         const dateStr = new Date().toISOString().split("T")[0];
-        const res = await axiosInstance.get(
-          `/ratehistory/by-commodity?commodity=${encodeURIComponent(
-            selectedCommodity
-          )}&date=${dateStr}&category=${encodeURIComponent(selectedCategory)}`
-        );
+        const query = new URLSearchParams({
+          commodity: selectedCommodity,
+          date: dateStr,
+          category: selectedCategory || "",
+        });
+        if (selectedLocation) {
+          query.set("destination", selectedLocation);
+        }
+        const res = await axiosInstance.get(`/ratehistory/by-commodity?${query.toString()}`);
         const items = Array.isArray(res.data) ? res.data : [];
 
-        // Only keep entries with a rate and sort by effective rate ascending (lowest first)
+        // Only keep entries with a rate and sort by landed rate (or base) ascending (lowest first)
         const filteredSorted = items
-          .filter((r) => (r.newRate && Number(r.newRate)) || (r.oldRate && Number(r.oldRate)))
+          .filter((r) => {
+            const base = Number(r.newRate) || Number(r.oldRate) || 0;
+            return base > 0;
+          })
           .sort((a, b) => {
-            const rateA = Number(a.newRate) || Number(a.oldRate) || 0;
-            const rateB = Number(b.newRate) || Number(b.oldRate) || 0;
+            const rateA = Number(a.landedRate) || Number(a.newRate) || Number(a.oldRate) || 0;
+            const rateB = Number(b.landedRate) || Number(b.newRate) || Number(b.oldRate) || 0;
             return rateA - rateB;
           });
 
@@ -87,7 +94,7 @@ export default function LandingCost() {
     };
 
     fetchAllRates();
-  }, [selectedCommodity, selectedCategory]);
+  }, [selectedCommodity, selectedCategory, selectedLocation]);
 
   useEffect(() => {
     const fetchSpecificHistory = async () => {
@@ -264,7 +271,9 @@ export default function LandingCost() {
                         companyName: r.companyName,
                         location: r.location,
                         commodity: r.commodity,
-                        rate: Number(r.newRate) || Number(r.oldRate) || 0,
+                        baseRate: Number(r.newRate) || Number(r.oldRate) || 0,
+                        freight: Number(r.freightRate) || 0,
+                        landed: Number(r.landedRate) || (Number(r.newRate) || Number(r.oldRate) || 0),
                         previous: Number(r.oldRate) || 0,
                         date: r.date,
                       }))}
@@ -273,8 +282,16 @@ export default function LandingCost() {
                         { header: "Location", accessor: "location" },
                         { header: "Commodity", accessor: "commodity" },
                         {
-                          header: "Rate (₹)",
-                          cell: (row) => `₹${row.rate}`,
+                          header: "Base Rate (₹)",
+                          cell: (row) => `₹${row.baseRate}`,
+                        },
+                        {
+                          header: "Freight (₹)",
+                          cell: (row) => (row.freight ? `+ ₹${row.freight}` : "—"),
+                        },
+                        {
+                          header: "Landed (₹)",
+                          cell: (row) => `₹${row.landed}`,
                         },
                         {
                           header: "Previous (₹)",
