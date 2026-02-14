@@ -117,26 +117,26 @@ export default function LandingCost() {
                selectedCommodity.toLowerCase().includes(r.commodity.toLowerCase()))
             );
 
-            allLocationRates.push({
-              companyName: company.name,
-              location: loc,
-              commodity: selectedCommodity,
-              newRate: existingRate?.newRate || "",
-              oldRate: existingRate?.oldRate || 0,
-              date: existingRate?.date || new Date().toISOString().split("T")[0],
-              ...existingRate
-            });
+            // Only push if there is a rate (newRate or oldRate)
+            if (existingRate && (existingRate.newRate || existingRate.oldRate)) {
+              allLocationRates.push({
+                companyName: company.name,
+                location: loc,
+                commodity: selectedCommodity,
+                newRate: existingRate?.newRate || "",
+                oldRate: existingRate?.oldRate || 0,
+                date: existingRate?.date || new Date().toISOString().split("T")[0],
+                ...existingRate
+              });
+            }
           });
         });
 
-        // Sort by rate (lowest to highest), putting N/A rates at the end
+        // Sort by rate (Highest to Lowest)
         allLocationRates.sort((a, b) => {
           const rateA = parseFloat(a.newRate) || parseFloat(a.oldRate) || 0;
           const rateB = parseFloat(b.newRate) || parseFloat(b.oldRate) || 0;
-          
-          if (rateA === 0 && rateB !== 0) return 1;
-          if (rateA !== 0 && rateB === 0) return -1;
-          return rateA - rateB;
+          return rateB - rateA;
         });
 
         setRates(allLocationRates);
