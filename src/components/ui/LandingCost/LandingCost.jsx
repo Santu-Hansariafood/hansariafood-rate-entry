@@ -33,13 +33,11 @@ export default function LandingCost() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  // Fetch companies from managecompany
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
         setLoading(true);
         setError(null);
-        // Using limit=1000 to get all companies in this category
         const res = await axiosInstance.get("/managecompany?category=Feed Mills&limit=1000");
         setCompanies(res.data?.companies || []);
       } catch (error) {
@@ -52,7 +50,6 @@ export default function LandingCost() {
     fetchCompanies();
   }, []);
 
-  // Fetch rates when commodity is selected
   useEffect(() => {
     const fetchAllRates = async () => {
       if (!selectedCommodity) {
@@ -63,7 +60,6 @@ export default function LandingCost() {
       try {
         setRatesLoading(true);
         
-        // Filter companies that deal with the selected commodity or its base type
         const filteredCompanies = companies.filter(company => {
           if (!company.commodities || !Array.isArray(company.commodities)) return false;
           
@@ -71,10 +67,8 @@ export default function LandingCost() {
             const cLower = comm.toLowerCase();
             const sLower = selectedCommodity.toLowerCase();
             
-            // Direct match or substring
             if (cLower.includes(sLower) || sLower.includes(cLower)) return true;
             
-            // Base type match (e.g., if selected is "SBM 50%", match companies with "SBM")
             const baseTypes = ["soya", "ddgs", "mdoc", "sbm"];
             const selectedBase = baseTypes.find(b => sLower.includes(b));
             if (!selectedBase) return false;
@@ -88,7 +82,6 @@ export default function LandingCost() {
           return;
         }
 
-        // Fetch history for all filtered companies in parallel
         const historyPromises = filteredCompanies.map(company => 
           axiosInstance.get(`/ratehistory/${company._id}`)
             .then(res => ({
@@ -103,13 +96,11 @@ export default function LandingCost() {
 
         const results = await Promise.all(historyPromises);
         
-        // Generate rates for all filtered companies and their locations
         const allLocationRates = [];
 
         filteredCompanies.forEach(company => {
           const companyHistory = results.find(res => res.companyName === company.name)?.data || [];
           
-          // Show all locations for each company that deals with this commodity
           company.location.forEach(loc => {
             const existingRate = companyHistory.find(r => 
               r.location === loc && 
@@ -117,7 +108,6 @@ export default function LandingCost() {
                selectedCommodity.toLowerCase().includes(r.commodity.toLowerCase()))
             );
 
-            // Only push if there is a rate (newRate or oldRate)
             if (existingRate && (existingRate.newRate || existingRate.oldRate)) {
               allLocationRates.push({
                 companyName: company.name,
@@ -132,7 +122,6 @@ export default function LandingCost() {
           });
         });
 
-        // Sort by rate (Highest to Lowest)
         allLocationRates.sort((a, b) => {
           const rateA = parseFloat(a.newRate) || parseFloat(a.oldRate) || 0;
           const rateB = parseFloat(b.newRate) || parseFloat(b.oldRate) || 0;
@@ -151,7 +140,6 @@ export default function LandingCost() {
     fetchAllRates();
   }, [selectedCommodity, companies]);
 
-  // Fetch specific history when location is selected
   useEffect(() => {
     const fetchSpecificHistory = async () => {
       if (!selectedCompany || !selectedCommodity || !selectedLocation) {
@@ -167,14 +155,12 @@ export default function LandingCost() {
         const res = await axiosInstance.get(`/ratehistory/${company._id}?fullHistory=true`);
         const allData = res.data || [];
         
-        // Find the doc matching location and commodity
         const match = allData.find(d => 
           d.location === selectedLocation && 
           d.commodity.toLowerCase().includes(selectedCommodity.toLowerCase())
         );
 
         if (match && match.history) {
-          // Sort history by date descending
           const sortedHistory = [...match.history].sort((a, b) => new Date(b.date) - new Date(a.date));
           setHistory(sortedHistory);
         } else {
@@ -191,7 +177,6 @@ export default function LandingCost() {
     fetchSpecificHistory();
   }, [selectedCompany, selectedCommodity, selectedLocation, companies]);
 
-  // Reset downstream selections
   useEffect(() => {
     setSelectedCommodity("");
     setSelectedLocation("");
@@ -201,10 +186,8 @@ export default function LandingCost() {
     setSelectedLocation("");
   }, [selectedCommodity]);
 
-  // Constants
   const VALID_COMMODITIES = ["soya", "ddgs", "mdoc", "sbm"];
 
-  // Dropdown Options
   const categoryOptions = [{ label: "Feed Mills", value: "Feed Mills" }];
 
   const companyOptions = useMemo(() => {
@@ -378,7 +361,6 @@ export default function LandingCost() {
                   ))}
                 </div>
 
-                {/* Specific Selection History */}
                 {selectedLocation && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
