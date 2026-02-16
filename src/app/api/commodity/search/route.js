@@ -23,6 +23,7 @@ export async function GET(req) {
 
     let pattern = escapeRegex(query);
     pattern = pattern.replace(/\s+/g, "\\s*");
+    pattern = pattern.replace(/%/g, "\\s*%");
 
     const filter =
       query.length > 0
