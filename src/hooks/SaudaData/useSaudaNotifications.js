@@ -40,7 +40,20 @@ export default function useSaudaNotifications() {
       const all = res.data.notifications || [];
 
       const filtered = filterAndSortToday(all);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtered));
+      const limited = filtered.slice(0, 200);
+
+      const compact = limited.map((item) => ({
+        company: item.company,
+        location: item.location,
+        commodity: item.commodity,
+        tons: item.tons,
+        date: item.date,
+        time: item.time,
+      }));
+
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(compact));
+      } catch {}
 
       if (filtered.length === 0) {
         setNotifications([]);
@@ -62,7 +75,7 @@ export default function useSaudaNotifications() {
         rateMap.set(key, rate);
       });
 
-      const enriched = filtered.map((item) => {
+      const enriched = limited.map((item) => {
         const key = `${item.company}|${item.location}|${item.commodity}`;
         const match = rateMap.get(key);
 

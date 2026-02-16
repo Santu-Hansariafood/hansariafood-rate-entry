@@ -285,21 +285,22 @@ export default function LandingCost() {
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
                   <div className="max-h-[70vh] overflow-y-auto">
                     <Table
-                      data={rates.map((r) => ({
+                      data={rates.map((r, index) => ({
+                        slno: index + 1,
                         companyName: r.companyName,
                         location: r.location,
                         commodity: r.commodity,
-                        destination: selectedLocation || r.destinationLocation || "",
+                        destination: selectedLocation,
                         baseRate: Number(r.newRate) || Number(r.oldRate) || 0,
                         freight: Number(r.freightRate) || 0,
                         landed: Number(r.landedRate) || (Number(r.newRate) || Number(r.oldRate) || 0),
-                        previous: Number(r.oldRate) || 0,
                         date: r.date,
                       }))}
                       columns={[
+                        { header: "Sl No", accessor: "slno" },
                         { header: "Company", accessor: "companyName" },
-                        { header: "Location", accessor: "location" },
                         { header: "Commodity", accessor: "commodity" },
+                        { header: "Location", accessor: "location" },
                         {
                           header: "Destination",
                           cell: (row) => row.destination || "—",
@@ -315,10 +316,6 @@ export default function LandingCost() {
                         {
                           header: "Landed (₹)",
                           cell: (row) => `₹${row.landed}`,
-                        },
-                        {
-                          header: "Previous (₹)",
-                          cell: (row) => (row.previous ? `₹${row.previous}` : "—"),
                         },
                         {
                           header: "Date",

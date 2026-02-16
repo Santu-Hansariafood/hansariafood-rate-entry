@@ -15,6 +15,10 @@ const DesktopNav = dynamic(() => import("./DesktopNav/DesktopNav"), {
 const MobileNav = dynamic(() => import("./MobileNav/MobileNav"), {
   ssr: false,
 });
+const CookieBanner = dynamic(
+  () => import("@/components/common/CookieBanner/CookieBanner"),
+  { ssr: false }
+);
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -74,66 +78,69 @@ export default function Header() {
   if (!isMounted) return <div className="h-20 bg-black" />;
 
   return (
-    <header
-      className={`fixed top-0 w-full z-50 transition-all duration-300
-        ${
-          isScrolled
-            ? "bg-black/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
-            : "bg-black"
-        }
-      `}
-    >
-      <div className="container mx-auto flex items-center justify-between px-4 py-3 md:px-8">
-        <Logo />
+    <>
+      <header
+        className={`fixed top-0 w-full z-50 transition-all duration-300
+          ${
+            isScrolled
+              ? "bg-black/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
+              : "bg-black"
+          }
+        `}
+      >
+        <div className="container mx-auto flex items-center justify-between px-4 py-3 md:px-8">
+          <Logo />
 
-        {session && (
-          <button
-            className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle Menu"
-          >
-            {menuOpen ? (
-              <X size={28} className="text-white" />
-            ) : (
-              <Menu size={28} className="text-white" />
-            )}
-          </button>
-        )}
-
-        {session ? (
-          <DesktopNav
-            activeLink={activeLink}
-            setActiveLink={setActiveLink}
-            notifications={notifications}
-            currentUserMobile={session?.user?.mobile}
-            currentUserPages={session?.user?.pages}
-          />
-        ) : (
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <a
-              href="/"
-              className="flex items-center gap-2 bg-emerald-500/90 text-white px-6 py-2.5 rounded-xl
-                         hover:bg-emerald-600 transition-all duration-300
-                         shadow-lg hover:shadow-emerald-500/30"
+          {session && (
+            <button
+              className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Toggle Menu"
             >
-              Login
-            </a>
-          </motion.div>
-        )}
-      </div>
-      <AnimatePresence>
-        {menuOpen && session && (
-          <MobileNav
-            isOpen={menuOpen}
-            setIsOpen={setMenuOpen}
-            activeLink={activeLink}
-            setActiveLink={setActiveLink}
-            notifications={notifications}
-            currentUserMobile={session?.user?.mobile}
-            currentUserPages={session?.user?.pages}
-          />
-        )}
-      </AnimatePresence>
-    </header>
+              {menuOpen ? (
+                <X size={28} className="text-white" />
+              ) : (
+                <Menu size={28} className="text-white" />
+              )}
+            </button>
+          )}
+
+          {session ? (
+            <DesktopNav
+              activeLink={activeLink}
+              setActiveLink={setActiveLink}
+              notifications={notifications}
+              currentUserMobile={session?.user?.mobile}
+              currentUserPages={session?.user?.pages}
+            />
+          ) : (
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <a
+                href="/"
+                className="flex items-center gap-2 bg-emerald-500/90 text-white px-6 py-2.5 rounded-xl
+                           hover:bg-emerald-600 transition-all duration-300
+                           shadow-lg hover:shadow-emerald-500/30"
+              >
+                Login
+              </a>
+            </motion.div>
+          )}
+        </div>
+        <AnimatePresence>
+          {menuOpen && session && (
+            <MobileNav
+              isOpen={menuOpen}
+              setIsOpen={setMenuOpen}
+              activeLink={activeLink}
+              setActiveLink={setActiveLink}
+              notifications={notifications}
+              currentUserMobile={session?.user?.mobile}
+              currentUserPages={session?.user?.pages}
+            />
+          )}
+        </AnimatePresence>
+      </header>
+      <CookieBanner />
+    </>
   );
 }
