@@ -113,11 +113,16 @@ export default function LandingCost() {
           return true;
         });
 
-        // Only keep entries with a rate and sort by landed rate (or base) ascending (lowest first)
+        // Only keep entries with an effective rate:
+        // - final/new or old rate
+        // - or at least one temp rate for today
         const filteredSorted = items
           .filter((r) => {
             const base = Number(r.newRate) || Number(r.oldRate) || 0;
-            return base > 0;
+            const hasTemp =
+              Array.isArray(r.tempRates) &&
+              r.tempRates.some((t) => Number(t.rate) > 0);
+            return base > 0 || hasTemp;
           })
           .sort((a, b) => {
             const rateA = Number(a.landedRate) || Number(a.newRate) || Number(a.oldRate) || 0;
