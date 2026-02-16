@@ -25,16 +25,37 @@ export async function GET(req) {
       );
     }
 
-    const escapeRegex = (s) =>
-      s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    const commodityRegex = new RegExp(
-      `^${escapeRegex(commodityQuery.trim())}$`,
-      "i"
-    );
-    const matchFilter = { commodity: commodityRegex };
+    const raw = commodityQuery.trim();
+    const lower = raw.toLowerCase();
 
-    const docs = await RateHistory.find(matchFilter).lean();
+    // 1) Try exact match first (case-insensitive)
+    const exactRegex = new RegExp(`^${escapeRegex(raw)}$`, "i");
+    let docs = await RateHistory.find({ commodity: exactRegex }).lean();
+
+    // 2) If nothing found, fall back to a looser "contains" match,
+    // with special handling for SBM / MDOC style names.
+    if (!docs.length) {
+      let fallbackRegex;
+
+      if (lower.includes("sbm")) {
+        // Match any SBM variant (e.g. "SBM 46%", "SBM 48 DOC", etc.)
+        fallbackRegex = /sbm/i;
+      } else if (lower.includes("mdoc") || lower.includes("m doc")) {
+        // Match "M DOC", "MDOC", with/without space
+        fallbackRegex = /m\s*doc/i;
+      } else if (lower.includes("ddgs")) {
+        // Generic DDGS fallback
+        fallbackRegex = /ddgs/i;
+      } else {
+        // Generic "contains" fallback
+        fallbackRegex = new RegExp(escapeRegex(raw), "i");
+      }
+
+      docs = await RateHistory.find({ commodity: fallbackRegex }).lean();
+    }
+
     if (!docs.length) {
       return NextResponse.json([], { status: 200 });
     }
