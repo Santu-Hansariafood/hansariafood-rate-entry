@@ -25,11 +25,26 @@ export async function GET(req) {
       );
     }
 
-    const escapeRegex = (s) =>
-      s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
+    const lower = commodityQuery.trim().toLowerCase();
 
-    const docs = await RateHistory.find({ commodity: commodityRegex }).lean();
+    let matchFilter;
+
+    if (lower.includes("soya") || lower.includes("sbm")) {
+      matchFilter = {
+        commodity: { $regex: /(soya|sbm)/i },
+      };
+    } else if (lower.includes("mdoc") || lower.includes("m doc")) {
+      matchFilter = {
+        commodity: { $regex: /(mdoc|m doc)/i },
+      };
+    } else {
+      const escapeRegex = (s) =>
+        s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
+      matchFilter = { commodity: commodityRegex };
+    }
+
+    const docs = await RateHistory.find(matchFilter).lean();
     if (!docs.length) {
       return NextResponse.json([], { status: 200 });
     }
