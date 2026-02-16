@@ -30,10 +30,20 @@ export async function GET(req) {
     let docs = [];
 
     if (normalizedCommodity === "soya") {
+      const soyaSbmVariants = [
+        "SBM 46%",
+        "SBM 47%",
+        "SBM 48%",
+        "SBM 49%",
+        "SBM 50%",
+        "SBM 51%",
+      ];
+
       docs = await RateHistory.find({
         $or: [
           { commodity: { $regex: /soya/i } },
-          { commodity: { $regex: /sbm/i } },
+          { commodity: { $regex: /soyabean/i } },
+          { commodity: { $in: soyaSbmVariants } },
         ],
       }).lean();
     } else {
