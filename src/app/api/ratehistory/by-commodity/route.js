@@ -60,21 +60,39 @@ export async function GET(req) {
       return NextResponse.json([], { status: 200 });
     }
 
-    // Collect only valid (non-null) companyIds to avoid cast errors
+    // Keep only docs with a valid ObjectId-shaped companyId
+    const safeDocs = docs.filter((d) => {
+      if (!d.companyId) return false;
+      const str = String(d.companyId);
+      return /^[0-9a-fA-F]{24}$/.test(str);
+    });
+
+    if (!safeDocs.length) {
+      return NextResponse.json([], { status: 200 });
+    }
+
     const companyIds = [
-      ...new Set(
-        docs
-          .map((d) => d.companyId)
-          .filter((id) => !!id)
-          .map((id) => String(id))
-      ),
+      ...new Set(safeDocs.map((d) => String(d.companyId))),
     ];
-    const companyFilter = { _id: { $in: companyIds } };
-    companyFilter.type = "seller";
-    const companies = await ManageCompany.find(companyFilter)
-      .select("_id name")
-      .lean();
-    const companyMap = new Map(companies.map((c) => [String(c._id), c.name]));
+
+    const companyFilter = { _id: { $in: companyIds }, type: "seller" };
+
+    let companies = [];
+    try {
+      companies = await ManageCompany.find(companyFilter)
+        .select("_id name")
+        .lean();
+    } catch (err) {
+      console.error(
+        "GET ratehistory/by-commodity company lookup error:",
+        err
+      );
+      companies = [];
+    }
+
+    const companyMap = new Map(
+      companies.map((c) => [String(c._id), c.name])
+    );
 
     const toTime = (value) => {
       if (!value) return 0;
@@ -84,7 +102,7 @@ export async function GET(req) {
       return Number.isNaN(time) ? 0 : time;
     };
 
-    const results = docs
+    const results = safeDocs
       .filter((doc) => companyMap.has(String(doc.companyId)))
       .map((doc) => {
         const histArr = Array.isArray(doc.history) ? doc.history : [];

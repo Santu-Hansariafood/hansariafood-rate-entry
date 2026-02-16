@@ -56,7 +56,7 @@ export async function GET(req, { params }) {
   } catch (error) {
     console.error("GET ratehistory error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", detail: error.message },
       { status: 500 }
     );
   }
@@ -204,7 +204,7 @@ export async function POST(req, { params }) {
   } catch (error) {
     console.error("POST ratehistory error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", detail: error.message },
       { status: 500 }
     );
   }
