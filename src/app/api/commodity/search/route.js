@@ -21,11 +21,14 @@ export async function GET(req) {
     const escapeRegex = (s) =>
       s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+    let pattern = escapeRegex(query);
+    pattern = pattern.replace(/\s+/g, "\\s*");
+
     const filter =
       query.length > 0
         ? {
             name: {
-              $regex: escapeRegex(query),
+              $regex: pattern,
               $options: "i",
             },
           }
@@ -53,4 +56,3 @@ export async function GET(req) {
     );
   }
 }
-
