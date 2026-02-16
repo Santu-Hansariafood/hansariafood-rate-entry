@@ -289,7 +289,7 @@ export default function LandingCost() {
                         companyName: r.companyName,
                         location: r.location,
                         commodity: r.commodity,
-                        destination: r.destinationLocation || selectedLocation || "",
+                        destination: selectedLocation || r.destinationLocation || "",
                         baseRate: Number(r.newRate) || Number(r.oldRate) || 0,
                         freight: Number(r.freightRate) || 0,
                         landed: Number(r.landedRate) || (Number(r.newRate) || Number(r.oldRate) || 0),
