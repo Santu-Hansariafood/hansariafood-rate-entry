@@ -57,12 +57,20 @@ export async function GET(req) {
       .lean();
     const companyMap = new Map(companies.map((c) => [String(c._id), c.name]));
 
+    const toTime = (value) => {
+      if (!value) return 0;
+      const date =
+        value instanceof Date ? value : new Date(value);
+      const time = date.getTime();
+      return Number.isNaN(time) ? 0 : time;
+    };
+
     const results = docs
       .filter((doc) => companyMap.has(String(doc.companyId)))
       .map((doc) => {
         const histArr = Array.isArray(doc.history) ? doc.history : [];
-        const history = [...histArr].sort((a, b) =>
-          (b?.date || "").localeCompare(a?.date || "")
+        const history = [...histArr].sort(
+          (a, b) => toTime(b?.date) - toTime(a?.date)
         );
         const today = history.find((h) => h.date === selectedDate);
         const previous = history.find((h) => h.date < selectedDate);
