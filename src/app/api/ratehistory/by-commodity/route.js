@@ -25,13 +25,24 @@ export async function GET(req) {
       );
     }
 
-    // Escape regex special characters to avoid invalid patterns
-    const escapeRegex = (s) =>
-      s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
+    const normalizedCommodity = commodityQuery.trim().toLowerCase();
 
-    // Fetch all rate history docs matching the commodity
-    const docs = await RateHistory.find({ commodity: commodityRegex }).lean();
+    let docs = [];
+
+    if (normalizedCommodity === "soya") {
+      docs = await RateHistory.find({
+        $or: [
+          { commodity: { $regex: /soya/i } },
+          { commodity: { $regex: /sbm/i } },
+        ],
+      }).lean();
+    } else {
+      const escapeRegex = (s) =>
+        s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
+
+      docs = await RateHistory.find({ commodity: commodityRegex }).lean();
+    }
     if (!docs.length) {
       return NextResponse.json([], { status: 200 });
     }
