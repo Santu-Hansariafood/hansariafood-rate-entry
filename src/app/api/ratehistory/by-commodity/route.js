@@ -27,19 +27,26 @@ export async function GET(req) {
 
     const lower = commodityQuery.trim().toLowerCase();
 
+    const escapeRegex = (s) =>
+      s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
     let matchFilter;
 
     if (lower.includes("soya") || lower.includes("sbm")) {
-      matchFilter = {
-        commodity: { $regex: /(soya|sbm)/i },
-      };
+      const hasSpecificVariant = /[0-9%]/.test(lower);
+      if (hasSpecificVariant) {
+        const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
+        matchFilter = { commodity: commodityRegex };
+      } else {
+        matchFilter = {
+          commodity: { $regex: /(soya|sbm)/i },
+        };
+      }
     } else if (lower.includes("mdoc") || lower.includes("m doc")) {
       matchFilter = {
         commodity: { $regex: /(mdoc|m doc)/i },
       };
     } else {
-      const escapeRegex = (s) =>
-        s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
       matchFilter = { commodity: commodityRegex };
     }
