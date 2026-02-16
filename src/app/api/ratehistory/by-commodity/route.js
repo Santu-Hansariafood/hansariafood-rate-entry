@@ -25,34 +25,11 @@ export async function GET(req) {
       );
     }
 
-    const normalizedCommodity = commodityQuery.trim().toLowerCase();
+    const escapeRegex = (s) =>
+      s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
 
-    let docs = [];
-
-    if (normalizedCommodity === "soya") {
-      const soyaSbmVariants = [
-        "SBM 46%",
-        "SBM 47%",
-        "SBM 48%",
-        "SBM 49%",
-        "SBM 50%",
-        "SBM 51%",
-      ];
-
-      docs = await RateHistory.find({
-        $or: [
-          { commodity: { $regex: /soya/i } },
-          { commodity: { $regex: /soyabean/i } },
-          { commodity: { $in: soyaSbmVariants } },
-        ],
-      }).lean();
-    } else {
-      const escapeRegex = (s) =>
-        s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const commodityRegex = new RegExp(escapeRegex(commodityQuery), "i");
-
-      docs = await RateHistory.find({ commodity: commodityRegex }).lean();
-    }
+    const docs = await RateHistory.find({ commodity: commodityRegex }).lean();
     if (!docs.length) {
       return NextResponse.json([], { status: 200 });
     }

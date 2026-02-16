@@ -61,15 +61,57 @@ export default function LandingCost() {
       try {
         setRatesLoading(true);
         const dateStr = new Date().toISOString().split("T")[0];
-        const query = new URLSearchParams({
-          commodity: selectedCommodity,
-          date: dateStr,
-        });
-        if (selectedLocation) {
-          query.set("destination", selectedLocation);
+        const baseCommodity = selectedCommodity.trim();
+        const lower = baseCommodity.toLowerCase();
+
+        const fetchForCommodity = async (commodityLabel) => {
+          const query = new URLSearchParams({
+            commodity: commodityLabel,
+            date: dateStr,
+          });
+          if (selectedLocation) {
+            query.set("destination", selectedLocation);
+          }
+          const res = await axiosInstance.get(
+            `/ratehistory/by-commodity?${query.toString()}`
+          );
+          return Array.isArray(res.data) ? res.data : [];
+        };
+
+        let allItems = [];
+
+        if (lower === "soya") {
+          const variants = [
+            "Soya",
+            "Soyabean",
+            "SBM 46%",
+            "SBM 47%",
+            "SBM 48%",
+            "SBM 49%",
+            "SBM 50%",
+            "SBM 51%",
+          ];
+
+          const responses = await Promise.all(
+            variants.map((v) =>
+              fetchForCommodity(v).catch(() => [])
+            )
+          );
+
+          responses.forEach((arr) => {
+            allItems = allItems.concat(arr);
+          });
+        } else {
+          allItems = await fetchForCommodity(baseCommodity);
         }
-        const res = await axiosInstance.get(`/ratehistory/by-commodity?${query.toString()}`);
-        const items = Array.isArray(res.data) ? res.data : [];
+
+        const seen = new Set();
+        const items = allItems.filter((r) => {
+          const key = `${String(r.companyId || "")}|${r.location}|${r.commodity}|${r.date}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
 
         // Only keep entries with a rate and sort by landed rate (or base) ascending (lowest first)
         const filteredSorted = items
