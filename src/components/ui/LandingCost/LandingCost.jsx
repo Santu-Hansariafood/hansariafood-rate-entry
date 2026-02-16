@@ -337,6 +337,89 @@ export default function LandingCost() {
           </AnimatePresence>
         </div>
 
+        {isSelectionComplete && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-8 p-6 md:p-8 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600">
+                  <History size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    {selectedCommodity} rate history
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {selectedCompany} • {selectedLocation}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <Clock size={14} />
+                <span>Latest updates first</span>
+              </div>
+            </div>
+
+            {historyLoading ? (
+              <div className="flex justify-center py-6">
+                <Loading />
+              </div>
+            ) : history.length === 0 ? (
+              <div className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                No historical rates found for this selection.
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                {history.map((entry, idx) => {
+                  const baseRate = Number(entry.finalRate ?? entry.oldRate ?? 0) || 0;
+                  const freight = Number(entry.freightRate || 0);
+                  const landed = baseRate + freight;
+
+                  return (
+                    <div
+                      key={`${entry.date}-${idx}`}
+                      className="flex items-center justify-between rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700">
+                          <IndianRupee size={18} />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                            ₹{landed.toLocaleString("en-IN")}
+                            {freight ? (
+                              <span className="ml-2 text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                                (₹{baseRate.toLocaleString("en-IN")} + ₹{freight.toLocaleString("en-IN")} freight)
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                            Previous: {entry.oldRate ? `₹${Number(entry.oldRate).toLocaleString("en-IN")}` : "—"}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                          {new Date(entry.date).toLocaleDateString("en-IN")}
+                        </div>
+                        {entry.destinationLocation ? (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                            Destination: {entry.destinationLocation}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        )}
+
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
