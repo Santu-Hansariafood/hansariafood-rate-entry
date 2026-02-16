@@ -39,7 +39,15 @@ export async function GET(req) {
       return NextResponse.json([], { status: 200 });
     }
 
-    const companyIds = [...new Set(docs.map((d) => String(d.companyId)))];
+    // Collect only valid (non-null) companyIds to avoid cast errors
+    const companyIds = [
+      ...new Set(
+        docs
+          .map((d) => d.companyId)
+          .filter((id) => !!id)
+          .map((id) => String(id))
+      ),
+    ];
     const companyFilter = { _id: { $in: companyIds } };
     companyFilter.type = "seller";
     const companies = await ManageCompany.find(companyFilter)

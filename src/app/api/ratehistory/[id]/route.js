@@ -22,9 +22,18 @@ export async function GET(req, { params }) {
       return NextResponse.json(docs, { status: 200 });
     }
 
+    const toTime = (value) => {
+      if (!value) return 0;
+      const date =
+        value instanceof Date ? value : new Date(value);
+      const time = date.getTime();
+      return Number.isNaN(time) ? 0 : time;
+    };
+
     const result = docs.map((doc) => {
-      const history = [...doc.history].sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
+      const histArr = Array.isArray(doc.history) ? doc.history : [];
+      const history = [...histArr].sort(
+        (a, b) => toTime(b?.date) - toTime(a?.date)
       );
 
       const today = history.find((h) => h.date === selectedDate);
