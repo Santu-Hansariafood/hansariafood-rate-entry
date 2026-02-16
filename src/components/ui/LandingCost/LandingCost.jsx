@@ -34,6 +34,39 @@ export default function LandingCost() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  const COMMODITY_GROUPS = [
+    {
+      id: "soya",
+      label: "Soya / SBM",
+      keywords: ["soya", "sbm"],
+    },
+    {
+      id: "ddgs",
+      label: "Maize DDGS",
+      keywords: ["ddgs"],
+    },
+    {
+      id: "mdoc",
+      label: "M DOC",
+      keywords: ["mdoc", "m doc"],
+    },
+  ];
+
+  const getCommodityGroup = (id) =>
+    COMMODITY_GROUPS.find((g) => g.id === id) || null;
+
+  const getCommodityKeywords = (id) => {
+    const group = getCommodityGroup(id);
+    if (group) return group.keywords;
+    if (!id) return [];
+    return [id.toLowerCase()];
+  };
+
+  const selectedCommodityLabel = useMemo(() => {
+    const group = getCommodityGroup(selectedCommodity);
+    return group ? group.label : selectedCommodity;
+  }, [selectedCommodity]);
+
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -124,11 +157,13 @@ export default function LandingCost() {
 
         const res = await axiosInstance.get(`/ratehistory/${company._id}?fullHistory=true`);
         const allData = res.data || [];
-        
-        const match = allData.find(d => 
-          d.location === selectedLocation && 
-          d.commodity.toLowerCase().includes(selectedCommodity.toLowerCase())
-        );
+        const keywords = getCommodityKeywords(selectedCommodity);
+
+        const match = allData.find((d) => {
+          if (d.location !== selectedLocation) return false;
+          const comm = String(d.commodity || "").toLowerCase();
+          return keywords.some((k) => comm.includes(k));
+        });
 
         if (match && match.history) {
           const sortedHistory = [...match.history].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -156,16 +191,17 @@ export default function LandingCost() {
     setSelectedLocation("");
   }, [selectedCommodity]);
 
-  const VALID_COMMODITIES = ["soya", "ddgs", "mdoc", "sbm"];
-
   const categoryOptions = [{ label: "Feed Mills", value: "Feed Mills" }];
 
   const companyOptions = useMemo(() => {
     return companies
       .filter(company => {
         if (!company.commodities || !Array.isArray(company.commodities)) return false;
-        return company.commodities.some(comm => 
-          VALID_COMMODITIES.some(v => comm.toLowerCase().includes(v))
+        const comms = company.commodities.map((c) => String(c || "").toLowerCase());
+        return COMMODITY_GROUPS.some((group) =>
+          comms.some((comm) =>
+            group.keywords.some((k) => comm.includes(k))
+          )
         );
       })
       .map(c => ({ label: c.name, value: c.name }));
@@ -175,10 +211,16 @@ export default function LandingCost() {
     if (!selectedCompany) return [];
     const company = companies.find(c => c.name === selectedCompany);
     if (!company || !company.commodities) return [];
-    
-    return company.commodities
-      .filter(comm => VALID_COMMODITIES.some(v => comm.toLowerCase().includes(v)))
-      .map(name => ({ label: name, value: name }));
+
+    const comms = company.commodities.map((c) => String(c || "").toLowerCase());
+
+    return COMMODITY_GROUPS
+      .filter((group) =>
+        comms.some((comm) =>
+          group.keywords.some((k) => comm.includes(k))
+        )
+      )
+      .map((group) => ({ label: group.label, value: group.id }));
   }, [selectedCompany, companies]);
 
   const locationOptions = useMemo(() => {
@@ -271,7 +313,7 @@ export default function LandingCost() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                    Latest {selectedCommodity} Market Rates
+                    Latest {selectedCommodityLabel} Market Rates
                   </h3>
                   <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                     {rates.length} Rates Found
@@ -337,7 +379,7 @@ export default function LandingCost() {
                   <Info size={32} />
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">No Rate Updated</h3>
-                <p className="text-gray-500 dark:text-gray-400 mt-1">There is no rate available for {selectedCommodity}.</p>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">There is no rate available for {selectedCommodityLabel}.</p>
               </motion.div>
             ) : (
               <motion.div
@@ -366,7 +408,7 @@ export default function LandingCost() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                    {selectedCommodity} rate history
+                    {selectedCommodityLabel} rate history
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {selectedCompany} • {selectedLocation}
