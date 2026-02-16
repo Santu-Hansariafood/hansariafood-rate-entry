@@ -78,29 +78,71 @@ export default function LandingCost() {
           return Array.isArray(res.data) ? res.data : [];
         };
 
+        const sbmVariantsLower = [
+          "sbm 46%",
+          "sbm 47%",
+          "sbm 48%",
+          "sbm 49%",
+          "sbm 50%",
+          "sbm 51%",
+        ];
+
         let allItems = [];
 
-        if (lower === "soya") {
-          const variants = [
-            "Soya",
-            "Soyabean",
-            "SBM 46%",
-            "SBM 47%",
-            "SBM 48%",
-            "SBM 49%",
-            "SBM 50%",
-            "SBM 51%",
-          ];
+        if (sbmVariantsLower.includes(lower) || lower === "soya") {
+          const soyaCompaniesRes = await axiosInstance.get("/soyacompany");
+          const soyaCompanies = soyaCompaniesRes.data?.companies || [];
 
-          const responses = await Promise.all(
-            variants.map((v) =>
-              fetchForCommodity(v).catch(() => [])
-            )
-          );
+          for (const company of soyaCompanies) {
+            const res = await axiosInstance.get(
+              `/ratehistory/${company._id}?date=${dateStr}`
+            );
+            const history = Array.isArray(res.data) ? res.data : [];
 
-          responses.forEach((arr) => {
-            allItems = allItems.concat(arr);
-          });
+            history.forEach((r) => {
+              if (!r || !r.commodity || !r.location) return;
+
+              const rLower = String(r.commodity).toLowerCase();
+
+              if (lower === "soya") {
+                const isSbm = sbmVariantsLower.includes(rLower);
+                const hasSoyaWord =
+                  rLower.includes("soya") || rLower.includes("soyabean");
+                if (!isSbm && !hasSoyaWord) return;
+              } else if (rLower !== lower) {
+                return;
+              }
+
+              const base =
+                Number(r.newRate ?? r.finalRate ?? r.oldRate ?? 0) || 0;
+              const freight = Number(r.freightRate || 0);
+
+              const dest = String(r.destinationLocation || "").toLowerCase().trim();
+              const selectedDest = selectedLocation
+                ? selectedLocation.toLowerCase().trim()
+                : "";
+
+              const addFreight =
+                selectedDest && dest && dest === selectedDest;
+
+              const landedRate = addFreight ? base + freight : base;
+
+              allItems.push({
+                companyId: company._id,
+                companyName: company.name,
+                location: r.location,
+                commodity: r.commodity,
+                oldRate: r.oldRate ?? 0,
+                tempRates: r.tempRates || [],
+                newRate: r.newRate ?? r.finalRate ?? "",
+                others: r.others || "",
+                destinationLocation: r.destinationLocation || "",
+                freightRate: r.freightRate || 0,
+                date: r.date,
+                landedRate,
+              });
+            });
+          }
         } else {
           allItems = await fetchForCommodity(baseCommodity);
         }
@@ -113,9 +155,6 @@ export default function LandingCost() {
           return true;
         });
 
-        // Only keep entries with an effective rate:
-        // - final/new or old rate
-        // - or at least one temp rate for today
         const filteredSorted = items
           .filter((r) => {
             const base = Number(r.newRate) || Number(r.oldRate) || 0;

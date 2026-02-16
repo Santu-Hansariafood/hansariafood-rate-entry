@@ -15,8 +15,8 @@ export async function GET(req) {
     const commodityQuery = searchParams.get("commodity");
     const selectedDate =
       searchParams.get("date") || new Date().toISOString().split("T")[0];
-    const category = searchParams.get("category"); // ignored for seller listings
-    const destination = searchParams.get("destination"); // optional buyer location to include freight for this destination
+    const category = searchParams.get("category");
+    const destination = searchParams.get("destination");
 
     if (!commodityQuery) {
       return NextResponse.json(
@@ -34,22 +34,18 @@ export async function GET(req) {
       return NextResponse.json([], { status: 200 });
     }
 
-    // Join with ManageCompany to get company names (and filter by category if provided)
     const companyIds = [...new Set(docs.map((d) => String(d.companyId)))];
     const companyFilter = { _id: { $in: companyIds } };
-    // Always target sellers for rate listing (buyers are not the source of rates)
     companyFilter.type = "seller";
     const companies = await ManageCompany.find(companyFilter)
       .select("_id name")
       .lean();
     const companyMap = new Map(companies.map((c) => [String(c._id), c.name]));
 
-    // Map docs -> flattened entries for the selectedDate (same logic as /ratehistory/[id]) plus landedRate
     const results = docs
       .filter((doc) => companyMap.has(String(doc.companyId)))
       .map((doc) => {
         const histArr = Array.isArray(doc.history) ? doc.history : [];
-        // dates are stored as YYYY-MM-DD strings; lexical sort works
         const history = [...histArr].sort((a, b) =>
           (b?.date || "").localeCompare(a?.date || "")
         );
@@ -63,7 +59,6 @@ export async function GET(req) {
         const todayFreight = today?.freightRate || 0;
         const todayDestination = today?.destinationLocation || "";
 
-        // Add freight only if destination is provided and matches the record's destination
         const shouldAddFreight =
           destination &&
           todayDestination &&
