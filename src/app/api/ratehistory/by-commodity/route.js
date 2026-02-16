@@ -60,7 +60,6 @@ export async function GET(req) {
       return NextResponse.json([], { status: 200 });
     }
 
-    // Keep only docs with a valid ObjectId-shaped companyId
     const safeDocs = docs.filter((d) => {
       if (!d.companyId) return false;
       const str = String(d.companyId);
