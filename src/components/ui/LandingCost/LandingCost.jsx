@@ -34,7 +34,7 @@ export default function LandingCost() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  const VALID_COMMODITIES = ["soya", "ddgs", "mdoc", "sbm"];
+  const VALID_COMMODITIES = ["soya", "sbm", "ddgs", "m doc", "mdoc"];
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -173,12 +173,16 @@ export default function LandingCost() {
 
   const commodityOptions = useMemo(() => {
     if (!selectedCompany) return [];
-    const company = companies.find(c => c.name === selectedCompany);
-    if (!company || !company.commodities) return [];
-    
+    const company = companies.find((c) => c.name === selectedCompany);
+    if (!company || !Array.isArray(company.commodities)) return [];
+
     return company.commodities
-      .filter(comm => VALID_COMMODITIES.some(v => comm.toLowerCase().includes(v)))
-      .map(name => ({ label: name, value: name }));
+      .filter((comm) => {
+        const c = comm.toLowerCase();
+        if (c.includes("sbm")) return true;
+        return VALID_COMMODITIES.some((v) => c.includes(v));
+      })
+      .map((name) => ({ label: name, value: name }));
   }, [selectedCompany, companies]);
 
   const locationOptions = useMemo(() => {
