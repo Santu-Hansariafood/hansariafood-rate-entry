@@ -4,7 +4,7 @@ export const ADMINS = (process.env.NEXT_PUBLIC_ADMIN_MOBILES || "").split(
 
 export const NAV_CONFIG = [
   { label: "Rate", type: "dropdown", key: "rate", allowed: [] },
-  { label: "Landing Cost", path: "/landingcost", allowed: [] },
+  // { label: "Landing Cost", path: "/landingcost", allowed: [] },
   { label: "Sauda", path: "/sauda", allowed: [] },
   { label: "Company", type: "dropdown", key: "company", allowed: [] },
   { label: "Register", path: "/register", allowed: [] },
