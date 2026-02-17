@@ -38,6 +38,15 @@ export default function LandingCost() {
 
   const VALID_COMMODITIES = ["soya", "sbm", "ddgs", "m doc", "mdoc"];
 
+  const getFreightCommodityKey = (commodity) => {
+    if (!commodity) return "";
+    const lower = commodity.toLowerCase();
+    if (lower.includes("sbm") || lower.includes("soya")) return "Soya";
+    if (lower.includes("ddgs")) return "Maize DDGS";
+    if (lower.includes("mdoc") || lower.includes("m doc")) return "M DOC";
+    return commodity;
+  };
+
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
@@ -122,8 +131,9 @@ export default function LandingCost() {
       }
 
       try {
+        const freightCommodity = getFreightCommodityKey(selectedCommodity);
         const query = new URLSearchParams({
-          commodity: selectedCommodity,
+          commodity: freightCommodity,
           search: selectedLocation,
           limit: "1000",
         });
