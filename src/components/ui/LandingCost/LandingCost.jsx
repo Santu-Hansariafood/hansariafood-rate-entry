@@ -34,6 +34,8 @@ export default function LandingCost() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  const [freightMap, setFreightMap] = useState({});
+
   const VALID_COMMODITIES = ["soya", "sbm", "ddgs", "m doc", "mdoc"];
 
   useEffect(() => {
@@ -110,6 +112,51 @@ export default function LandingCost() {
     };
 
     fetchAllRates();
+  }, [selectedCommodity, selectedLocation]);
+
+  useEffect(() => {
+    const fetchFreightRates = async () => {
+      if (!selectedCommodity || !selectedLocation) {
+        setFreightMap({});
+        return;
+      }
+
+      try {
+        const query = new URLSearchParams({
+          commodity: selectedCommodity,
+          search: selectedLocation,
+          limit: "1000",
+        });
+
+        const res = await axiosInstance.get(`/freight?${query.toString()}`);
+        const freights = res.data?.freights || [];
+
+        const nextMap = {};
+        const destKey = selectedLocation.toLowerCase().trim();
+
+        freights.forEach((f) => {
+          const loc = String(f.location || "").toLowerCase().trim();
+          const delivery = String(f.deliveryLocation || "").toLowerCase().trim();
+          if (!loc || delivery !== destKey) return;
+
+          const key = `${loc}|${destKey}`;
+          const existing = nextMap[key];
+          if (
+            !existing ||
+            new Date(f.createdAt) > new Date(existing.createdAt)
+          ) {
+            nextMap[key] = f;
+          }
+        });
+
+        setFreightMap(nextMap);
+      } catch (error) {
+        console.error("Error fetching freight rates:", error);
+        setFreightMap({});
+      }
+    };
+
+    fetchFreightRates();
   }, [selectedCommodity, selectedLocation]);
 
   useEffect(() => {
@@ -285,17 +332,38 @@ export default function LandingCost() {
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
                   <div className="max-h-[70vh] overflow-y-auto">
                     <Table
-                      data={rates.map((r, index) => ({
-                        slno: index + 1,
-                        companyName: r.companyName,
-                        location: r.location,
-                        commodity: r.commodity,
-                        destination: selectedLocation,
-                        baseRate: Number(r.newRate) || Number(r.oldRate) || 0,
-                        freight: Number(r.freightRate) || 0,
-                        landed: Number(r.landedRate) || (Number(r.newRate) || Number(r.oldRate) || 0),
-                        date: r.date,
-                      }))}
+                      data={rates.map((r, index) => {
+                        const baseRate =
+                          Number(r.newRate) || Number(r.oldRate) || 0;
+
+                        let freight = 0;
+                        const destKey = selectedLocation
+                          ? selectedLocation.toLowerCase().trim()
+                          : "";
+                        if (destKey && r.location) {
+                          const key = `${String(r.location)
+                            .toLowerCase()
+                            .trim()}|${destKey}`;
+                          const freightDoc = freightMap[key];
+                          if (freightDoc) {
+                            freight = Number(freightDoc.freightRate) || 0;
+                          }
+                        }
+
+                        const landed = baseRate + freight;
+
+                        return {
+                          slno: index + 1,
+                          companyName: r.companyName,
+                          location: r.location,
+                          commodity: r.commodity,
+                          destination: selectedLocation,
+                          baseRate,
+                          freight,
+                          landed,
+                          date: r.date,
+                        };
+                      })}
                       columns={[
                         { header: "Sl No", accessor: "slno" },
                         { header: "Company", accessor: "companyName" },
@@ -311,7 +379,7 @@ export default function LandingCost() {
                         },
                         {
                           header: "Freight (₹)",
-                          cell: (row) => (row.freight ? `+ ₹${row.freight}` : "—"),
+                          cell: (row) => `₹${row.freight}`,
                         },
                         {
                           header: "Landed (₹)",
