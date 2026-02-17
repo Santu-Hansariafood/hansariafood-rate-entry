@@ -64,13 +64,29 @@ export default function useRateAnalysis({
 
   const getFilteredCompanies = useCallback(() => {
     const term = (searchTerm || "").trim().toLowerCase();
+    const filterLower = (filterType || "").toLowerCase();
+
     const list = companies.filter((company) => {
+      const types = Array.isArray(company.type)
+        ? company.type
+        : company.type
+        ? [company.type]
+        : [];
+
       const matchesType =
-        filterType === "all" ||
-        (Array.isArray(company.type) && company.type.includes(filterType));
+        filterLower === "all" ||
+        types.some(
+          (t) => (t || "").toString().toLowerCase() === filterLower
+        );
+
       const matchesSearch =
         term === "" || (company.name || "").toLowerCase().includes(term);
-      return matchesType && matchesSearch;
+
+      const stats = companyStats[company.name];
+      const hasRates =
+        stats && (stats.latestRate != null || stats.freshnessDays != null);
+
+      return matchesType && matchesSearch && hasRates;
     });
     const score = (c) => {
       const stats = companyStats[c.name] || {};

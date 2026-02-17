@@ -118,7 +118,7 @@ const useSaudaData = () => {
       }
 
       if (!cachedStatus) {
-        const saudaChunks = chunkArray(companyNames, 100);
+        const saudaChunks = chunkArray(companyNames, 300);
         const saudaRequests = saudaChunks.map((chunk) =>
           axiosInstance
             .get(`/save-sauda?companies=${chunk.join(",")}&date=${today}`)

@@ -239,11 +239,16 @@ export async function GET(req) {
     }
 
     if (companies && date) {
-      const companyList = companies.split(",").map(c => c.trim()).filter(Boolean);
+      const companyList = companies
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
       const entries = await SaudaEntry.find({
         company: { $in: companyList },
-        date: date
-      });
+        date: date,
+      })
+        .select("company saudaEntries")
+        .lean();
       
       const entriesMap = {};
       entries.forEach(entry => {
@@ -257,7 +262,7 @@ export async function GET(req) {
     if (company) query.company = company;
     if (date) query.date = date;
 
-    const entry = await SaudaEntry.findOne(query);
+    const entry = await SaudaEntry.findOne(query).lean();
     return NextResponse.json({ entry }, { status: 200 });
   } catch (error) {
     console.error("Error in GET /save-sauda:", error);
