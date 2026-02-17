@@ -336,10 +336,11 @@ export default function LandingCost() {
                         const baseRate =
                           Number(r.newRate) || Number(r.oldRate) || 0;
 
+                        const destKey = (selectedLocation || r.destinationLocation || "")
+                          .toLowerCase()
+                          .trim();
+
                         let freight = 0;
-                        const destKey = selectedLocation
-                          ? selectedLocation.toLowerCase().trim()
-                          : "";
                         if (destKey && r.location) {
                           const key = `${String(r.location)
                             .toLowerCase()
@@ -351,13 +352,14 @@ export default function LandingCost() {
                         }
 
                         const landed = baseRate + freight;
+                        const destination = selectedLocation || r.destinationLocation || "";
 
                         return {
                           slno: index + 1,
                           companyName: r.companyName,
                           location: r.location,
                           commodity: r.commodity,
-                          destination: selectedLocation,
+                          destination,
                           baseRate,
                           freight,
                           landed,
