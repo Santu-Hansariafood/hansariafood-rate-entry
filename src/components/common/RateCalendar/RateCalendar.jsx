@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Loading from "../Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,8 +14,7 @@ import {
   Search,
   Clock,
 } from "lucide-react";
-import useCompanies from "@/hooks/RateCalendar/useCompanies";
-import useRates from "@/hooks/RateCalendar/useRates";
+import useRateAnalysisData from "@/hooks/RateCalendar/useRateAnalysisData";
 import useRateAnalysis from "@/hooks/RateCalendar/useRateAnalysis";
 import Title from "../Title/Title";
 
@@ -37,12 +36,18 @@ export default function RateCalendar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
 
-  const { companies, loading: companiesLoading } = useCompanies();
-  const {
-    allRates,
-    scopedRates,
-    loading: ratesLoading,
-  } = useRates({ company: selectedCompany, commodity: selectedCommodity });
+  const { companies, allRates, loading: analysisLoading } =
+    useRateAnalysisData();
+
+  const scopedRates = useMemo(
+    () =>
+      allRates.filter(
+        (rate) =>
+          (!selectedCompany || rate.company === selectedCompany) &&
+          (!selectedCommodity || rate.commodity === selectedCommodity)
+      ),
+    [allRates, selectedCompany, selectedCommodity]
+  );
   const {
     companyStats,
     filteredCompanies,
@@ -63,7 +68,7 @@ export default function RateCalendar() {
     filterType,
   });
 
-  const loading = companiesLoading || ratesLoading;
+  const loading = analysisLoading;
 
   const handleCompanyClick = (company) => {
     setSelectedCompany(company.name);
