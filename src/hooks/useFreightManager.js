@@ -176,11 +176,6 @@ export const useFreightManager = () => {
   }, [selectedCommodity, editingId]);
 
   const downloadFreightExcel = useCallback(async () => {
-    if (!formData.location) {
-      toast.error("Please select a Source Location first");
-      return;
-    }
-
     try {
       setLoading(true);
       const workbook = XLSX.utils.book_new();
@@ -203,18 +198,10 @@ export const useFreightManager = () => {
           continue;
         }
 
-        const data = response.data.freights.filter(
-          (item) => item.location === formData.location
-        );
-
-        if (data.length === 0) {
-          continue;
-        }
-
         const rows = [];
         rows.push(["Source Location", "Destination Location", "Freight Rate"]);
 
-        data.forEach((item) => {
+        response.data.freights.forEach((item) => {
           rows.push([
             item.location || "",
             item.deliveryLocation || "",
@@ -231,7 +218,7 @@ export const useFreightManager = () => {
       }
 
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-        toast.warn("No freight data available to export for this Source Location");
+        toast.warn("No freight data available to export");
         return;
       }
 
@@ -242,7 +229,7 @@ export const useFreightManager = () => {
     } finally {
       setLoading(false);
     }
-  }, [formData.location]);
+  }, []);
 
 
   const allSourceLocations = useMemo(() => {
