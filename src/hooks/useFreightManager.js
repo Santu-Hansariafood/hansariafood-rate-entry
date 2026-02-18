@@ -281,6 +281,11 @@ export const useFreightManager = () => {
       return;
     }
 
+    if (formData.location === formData.deliveryLocation) {
+      toast.error("Source Location and Destination Location are same");
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
