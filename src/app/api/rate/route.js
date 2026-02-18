@@ -99,7 +99,11 @@ export async function GET(req) {
     if (company && company !== "all") query.company = company;
     if (commodity && commodity !== "all") query.commodity = commodity;
 
-    const rates = await Rate.find(query);
+    const rates = await Rate.find(query)
+      .select(
+        "company location commodity oldRates newRate newRateDate quantity payment others updateTime mobile"
+      )
+      .lean();
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

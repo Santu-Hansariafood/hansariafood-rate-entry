@@ -31,12 +31,13 @@ export default function FreightManager() {
     handleEdit,
     handleDelete,
     resetForm,
+    downloadFreightExcel,
   } = freightManager;
 
   return (
     <Suspense fallback={<Loading />}>
     <div className="w-full max-w-6xl mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-      <FreightHeader />
+      <FreightHeader onDownloadExcel={downloadFreightExcel} />
 
       <CommodityTabs 
         selectedCommodity={selectedCommodity} 

@@ -12,5 +12,8 @@ const SaudaStatusSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+SaudaStatusSchema.index({ saudaNo: 1 });
+SaudaStatusSchema.index({ status: 1, updatedAt: -1 });
+
 export default mongoose.models.SaudaStatus ||
   mongoose.model("SaudaStatus", SaudaStatusSchema);

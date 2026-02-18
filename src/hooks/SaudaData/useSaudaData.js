@@ -118,6 +118,7 @@ const useSaudaData = () => {
       }
 
       if (!cachedStatus) {
+        setLoading(false);
         const saudaChunks = chunkArray(companyNames, 300);
         const saudaRequests = saudaChunks.map((chunk) =>
           axiosInstance
@@ -169,12 +170,12 @@ const useSaudaData = () => {
         setCachedData(`${CACHE_KEYS.saudaStatus}_${today}`, saudaStatuses);
       } else {
         setSaudaStatusMap(cachedStatus);
+        setLoading(false);
       }
     } catch (err) {
       console.error(err);
       toast.error("Failed to load sauda data");
     } finally {
-      setLoading(false);
       isFetchingRef.current = false;
     }
   }, [today, getCachedData, setCachedData]);

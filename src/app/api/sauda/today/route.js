@@ -17,7 +17,9 @@ export async function GET(req) {
     const dateParam = searchParams.get("date");
     const today = dateParam || new Date().toLocaleDateString("en-GB").replace(/\//g, "-");
     
-    const entries = await SaudaEntry.find({ date: today }).lean();
+    const entries = await SaudaEntry.find({ date: today })
+      .select("company date mobile saudaEntries")
+      .lean();
     
     const saudaList = [];
     

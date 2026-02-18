@@ -34,5 +34,9 @@ const TagSaudaSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+TagSaudaSchema.index({ saudaNo: 1 });
+TagSaudaSchema.index({ date: 1 });
+TagSaudaSchema.index({ type: 1, status: 1 });
+
 export default mongoose.models.TagSauda ||
   mongoose.model("TagSauda", TagSaudaSchema);

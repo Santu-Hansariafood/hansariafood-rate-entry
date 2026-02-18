@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
+import * as XLSX from "xlsx";
 
 export const COMMODITIES = ["Maize DDGS", "M DOC", "Soya"];
 
@@ -174,6 +175,93 @@ export const useFreightManager = () => {
     }
   }, [selectedCommodity, editingId]);
 
+  const downloadFreightExcel = useCallback(async () => {
+    try {
+      setLoading(true);
+      const workbook = XLSX.utils.book_new();
+
+      for (const commodity of COMMODITIES) {
+        const response = await axiosInstance.get("/freight", {
+          params: {
+            commodity,
+            page: 1,
+            limit: 100000,
+          },
+        });
+
+        if (
+          !response.data ||
+          !response.data.success ||
+          !Array.isArray(response.data.freights) ||
+          response.data.freights.length === 0
+        ) {
+          continue;
+        }
+
+        const data = response.data.freights;
+
+        const sourcesSet = new Set();
+        const destinationsSet = new Set();
+
+        data.forEach((item) => {
+          if (item.location) sourcesSet.add(item.location);
+          if (item.deliveryLocation) destinationsSet.add(item.deliveryLocation);
+        });
+
+        const sources = Array.from(sourcesSet).sort();
+        const destinations = Array.from(destinationsSet).sort();
+
+        const matrix = new Map();
+
+        data.forEach((item) => {
+          const src = item.location;
+          const dest = item.deliveryLocation;
+          if (!src || !dest) return;
+
+          if (!matrix.has(src)) {
+            matrix.set(src, {});
+          }
+
+          const row = matrix.get(src);
+
+          if (row[dest] == null) {
+            row[dest] = item.freightRate;
+          }
+        });
+
+        const rows = [];
+        rows.push(["Source Location", ...destinations]);
+
+        sources.forEach((src) => {
+          const row = matrix.get(src) || {};
+          const rowData = [src];
+          destinations.forEach((dest) => {
+            rowData.push(row[dest] != null ? row[dest] : "");
+          });
+          rows.push(rowData);
+        });
+
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+        let sheetName = commodity;
+        if (sheetName.length > 31) {
+          sheetName = sheetName.slice(0, 31);
+        }
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      }
+
+      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+        toast.warn("No freight data available to export");
+        return;
+      }
+
+      XLSX.writeFile(workbook, "freight_rates.xlsx");
+    } catch (error) {
+      console.error("Error exporting freight excel:", error);
+      toast.error("Failed to download freight Excel");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
 
   const allSourceLocations = useMemo(() => {
@@ -335,5 +423,6 @@ export const useFreightManager = () => {
     handleEdit,
     handleDelete,
     resetForm,
+    downloadFreightExcel,
   };
 };

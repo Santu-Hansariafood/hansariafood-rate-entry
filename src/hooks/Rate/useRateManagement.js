@@ -23,48 +23,36 @@ export default function useRateManagement() {
     );
   }, [allCompanies, selectedCompany]);
 
-  const checkAllCompanies = useCallback(async (companyCommoditiesMap) => {
-    try {
-      const statusMap = {};
+  const checkAllCompanies = useCallback((companyCommoditiesMap, rates) => {
+    const statusMap = {};
 
-      await Promise.all(
-        Object.entries(companyCommoditiesMap).map(
-          async ([company, commodities]) => {
-            try {
-              if (commodities.length === 0) {
-                statusMap[company] = false;
-                return;
-              }
+    const rateMap = new Map();
+    (Array.isArray(rates) ? rates : []).forEach((rate) => {
+      if (!rate || !rate.company || !rate.commodity) return;
+      const key = `${rate.company}|||${rate.commodity}`;
+      const list = rateMap.get(key) || [];
+      list.push(rate);
+      rateMap.set(key, list);
+    });
 
-              const responses = await Promise.all(
-                commodities.map(async (cmd) => {
-                  try {
-                    const { data } = await axiosInstance.get(
-                      `/rate?company=${encodeURIComponent(
-                        company
-                      )}&commodity=${encodeURIComponent(cmd)}`
-                    );
-                    return data.every(
-                      (r) => r.hasNewRateToday && r.commodity === cmd
-                    );
-                  } catch {
-                    return false;
-                  }
-                })
-              );
+    Object.entries(companyCommoditiesMap).forEach(([company, commodities]) => {
+      if (!Array.isArray(commodities) || commodities.length === 0) {
+        statusMap[company] = false;
+        return;
+      }
 
-              statusMap[company] = responses.every(Boolean);
-            } catch {
-              statusMap[company] = false;
-            }
-          }
-        )
-      );
+      const allComplete = commodities.every((cmd) => {
+        const key = `${company}|||${cmd}`;
+        const list = rateMap.get(key) || [];
+        return list.some(
+          (r) => r.hasNewRateToday && r.commodity === cmd
+        );
+      });
 
-      setCompletedCompanies(statusMap);
-    } catch (e) {
-      console.error("Error in checkAllCompanies:", e);
-    }
+      statusMap[company] = allComplete;
+    });
+
+    setCompletedCompanies(statusMap);
   }, []);
 
   const fetchCompanies = useCallback(async () => {
@@ -100,7 +88,11 @@ export default function useRateManagement() {
       setCompanies(names);
 
       if (names.length > 0) {
-        await checkAllCompanies(companyMap);
+        const ratesRes = await axiosInstance.get("/rate");
+        const allRates = Array.isArray(ratesRes.data) ? ratesRes.data : [];
+        checkAllCompanies(companyMap, allRates);
+      } else {
+        setCompletedCompanies({});
       }
     } catch {
       toast.error("Failed to fetch companies");
