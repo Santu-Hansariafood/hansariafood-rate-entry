@@ -61,7 +61,6 @@ export default function useRateManagement() {
       const params = new URLSearchParams();
       Object.entries(filters).forEach(([key, value]) => {
         if (!value || value === "all") return;
-
         if (Array.isArray(value)) {
           value.forEach((v) => params.append(key, v));
         } else {
@@ -70,7 +69,6 @@ export default function useRateManagement() {
       });
       params.append("page", currentPage);
       params.append("limit", itemsPerPage);
-
       params.append("excludeTodayNoBuying", "true");
 
       const { data } = await axiosInstance.get(`/managecompany?${params}`);
@@ -86,17 +84,25 @@ export default function useRateManagement() {
       });
 
       setCompanies(names);
+      setLoading(false);
 
       if (names.length > 0) {
-        const ratesRes = await axiosInstance.get("/rate");
-        const allRates = Array.isArray(ratesRes.data) ? ratesRes.data : [];
-        checkAllCompanies(companyMap, allRates);
+        axiosInstance
+          .get("/rate")
+          .then((ratesRes) => {
+            const allRates = Array.isArray(ratesRes.data)
+              ? ratesRes.data
+              : [];
+            checkAllCompanies(companyMap, allRates);
+          })
+          .catch(() => {
+            setCompletedCompanies({});
+          });
       } else {
         setCompletedCompanies({});
       }
     } catch {
       toast.error("Failed to fetch companies");
-    } finally {
       setLoading(false);
     }
   }, [filters, currentPage, checkAllCompanies]);

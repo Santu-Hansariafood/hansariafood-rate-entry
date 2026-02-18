@@ -176,6 +176,11 @@ export const useFreightManager = () => {
   }, [selectedCommodity, editingId]);
 
   const downloadFreightExcel = useCallback(async () => {
+    if (!formData.location) {
+      toast.error("Please select a Source Location first");
+      return;
+    }
+
     try {
       setLoading(true);
       const workbook = XLSX.utils.book_new();
@@ -198,47 +203,23 @@ export const useFreightManager = () => {
           continue;
         }
 
-        const data = response.data.freights;
+        const data = response.data.freights.filter(
+          (item) => item.location === formData.location
+        );
 
-        const sourcesSet = new Set();
-        const destinationsSet = new Set();
-
-        data.forEach((item) => {
-          if (item.location) sourcesSet.add(item.location);
-          if (item.deliveryLocation) destinationsSet.add(item.deliveryLocation);
-        });
-
-        const sources = Array.from(sourcesSet).sort();
-        const destinations = Array.from(destinationsSet).sort();
-
-        const matrix = new Map();
-
-        data.forEach((item) => {
-          const src = item.location;
-          const dest = item.deliveryLocation;
-          if (!src || !dest) return;
-
-          if (!matrix.has(src)) {
-            matrix.set(src, {});
-          }
-
-          const row = matrix.get(src);
-
-          if (row[dest] == null) {
-            row[dest] = item.freightRate;
-          }
-        });
+        if (data.length === 0) {
+          continue;
+        }
 
         const rows = [];
-        rows.push(["Source Location", ...destinations]);
+        rows.push(["Source Location", "Destination Location", "Freight Rate"]);
 
-        sources.forEach((src) => {
-          const row = matrix.get(src) || {};
-          const rowData = [src];
-          destinations.forEach((dest) => {
-            rowData.push(row[dest] != null ? row[dest] : "");
-          });
-          rows.push(rowData);
+        data.forEach((item) => {
+          rows.push([
+            item.location || "",
+            item.deliveryLocation || "",
+            item.freightRate != null ? item.freightRate : "",
+          ]);
         });
 
         const worksheet = XLSX.utils.aoa_to_sheet(rows);
@@ -250,7 +231,7 @@ export const useFreightManager = () => {
       }
 
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-        toast.warn("No freight data available to export");
+        toast.warn("No freight data available to export for this Source Location");
         return;
       }
 
@@ -261,7 +242,7 @@ export const useFreightManager = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [formData.location]);
 
 
   const allSourceLocations = useMemo(() => {
