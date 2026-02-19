@@ -1,256 +1,58 @@
 "use client";
 
-import { Suspense, useState, useMemo, useEffect } from "react";
+import { Suspense, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {
   TrendingUp,
   Info,
   X,
   IndianRupee,
   Clock,
-  History
+  History,
+  Download,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { toast } from "react-toastify";
+import useLandingCost from "@/hooks/LandingCost/useLandingCost";
+import { exportLandingCostToExcel } from "@/utils/landingCostExcel";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 
 export default function LandingCost() {
-  const [companies, setCompanies] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  
-  const [selectedCategory, setSelectedCategory] = useState("Feed Mills");
-  const [selectedCompany, setSelectedCompany] = useState("");
-  const [selectedCommodity, setSelectedCommodity] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const {
+    companies,
+    loading,
+    error,
+    selectedCategory,
+    setSelectedCategory,
+    selectedCompany,
+    setSelectedCompany,
+    selectedCommodity,
+    setSelectedCommodity,
+    selectedLocation,
+    setSelectedLocation,
+    rates,
+    ratesLoading,
+    history,
+    historyLoading,
+    categoryOptions,
+    companyOptions,
+    commodityOptions,
+    locationOptions,
+    isSelectionComplete,
+    tableRows,
+  } = useLandingCost();
 
-  const [rates, setRates] = useState([]);
-  const [ratesLoading, setRatesLoading] = useState(false);
-  
-  const [history, setHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-
-  const [freightMap, setFreightMap] = useState({});
-
-  const VALID_COMMODITIES = ["soya", "sbm", "ddgs", "m doc", "mdoc"];
-
-  const getFreightCommodityKey = (commodity) => {
-    if (!commodity) return "";
-    const lower = commodity.toLowerCase();
-    if (lower.includes("sbm") || lower.includes("soya")) return "Soya";
-    if (lower.includes("ddgs")) return "Maize DDGS";
-    if (lower.includes("mdoc") || lower.includes("m doc")) return "M DOC";
-    return commodity;
-  };
-
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await axiosInstance.get("/managecompany?category=Feed Mills&limit=1000");
-        setCompanies(res.data?.companies || []);
-      } catch (error) {
-        console.error("Error fetching companies:", error);
-        setError("Failed to fetch companies. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCompanies();
-  }, []);
-
-  useEffect(() => {
-    const fetchAllRates = async () => {
-      if (!selectedCommodity) {
-        setRates([]);
-        return;
-      }
-
-      try {
-        setRatesLoading(true);
-        const dateStr = new Date().toISOString().split("T")[0];
-
-        const query = new URLSearchParams({
-          commodity: selectedCommodity,
-          date: dateStr,
-        });
-        if (selectedLocation) {
-          query.set("destination", selectedLocation);
-        }
-
-        const res = await axiosInstance.get(
-          `/ratehistory/by-commodity?${query.toString()}`
-        );
-
-        const allItems = Array.isArray(res.data) ? res.data : [];
-
-        const seen = new Set();
-        const items = allItems.filter((r) => {
-          const key = `${String(r.companyId || "")}|${r.location}|${r.commodity}|${r.date}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-
-        const filteredSorted = items
-          .filter((r) => {
-            const base = Number(r.newRate) || Number(r.oldRate) || 0;
-            const hasTemp =
-              Array.isArray(r.tempRates) &&
-              r.tempRates.some((t) => Number(t.rate) > 0);
-            return base > 0 || hasTemp;
-          })
-          .sort((a, b) => {
-            const rateA = Number(a.landedRate) || Number(a.newRate) || Number(a.oldRate) || 0;
-            const rateB = Number(b.landedRate) || Number(b.newRate) || Number(b.oldRate) || 0;
-            return rateA - rateB;
-          });
-
-        setRates(filteredSorted);
-      } catch (error) {
-        console.error("Error fetching all rates:", error);
-        setRates([]);
-      } finally {
-        setRatesLoading(false);
-      }
-    };
-
-    fetchAllRates();
-  }, [selectedCommodity, selectedLocation]);
-
-  useEffect(() => {
-    const fetchFreightRates = async () => {
-      if (!selectedCommodity || !selectedLocation) {
-        setFreightMap({});
-        return;
-      }
-
-      try {
-        const freightCommodity = getFreightCommodityKey(selectedCommodity);
-        const query = new URLSearchParams({
-          commodity: freightCommodity,
-          search: selectedLocation,
-          limit: "1000",
-        });
-
-        const res = await axiosInstance.get(`/freight?${query.toString()}`);
-        const freights = res.data?.freights || [];
-
-        const nextMap = {};
-        const destKey = selectedLocation.toLowerCase().trim();
-
-        freights.forEach((f) => {
-          const loc = String(f.location || "").toLowerCase().trim();
-          const delivery = String(f.deliveryLocation || "").toLowerCase().trim();
-          if (!loc || delivery !== destKey) return;
-
-          const key = `${loc}|${destKey}`;
-          const existing = nextMap[key];
-          if (
-            !existing ||
-            new Date(f.createdAt) > new Date(existing.createdAt)
-          ) {
-            nextMap[key] = f;
-          }
-        });
-
-        setFreightMap(nextMap);
-      } catch (error) {
-        console.error("Error fetching freight rates:", error);
-        setFreightMap({});
-      }
-    };
-
-    fetchFreightRates();
-  }, [selectedCommodity, selectedLocation]);
-
-  useEffect(() => {
-    const fetchSpecificHistory = async () => {
-      if (!selectedCompany || !selectedCommodity || !selectedLocation) {
-        setHistory([]);
-        return;
-      }
-
-      try {
-        setHistoryLoading(true);
-        const company = companies.find(c => c.name === selectedCompany);
-        if (!company) return;
-
-        const res = await axiosInstance.get(`/ratehistory/${company._id}?fullHistory=true`);
-        const allData = res.data || [];
-        
-        const match = allData.find(d => 
-          d.location === selectedLocation && 
-          d.commodity.toLowerCase().includes(selectedCommodity.toLowerCase())
-        );
-
-        if (match && match.history) {
-          const sortedHistory = [...match.history].sort((a, b) => new Date(b.date) - new Date(a.date));
-          setHistory(sortedHistory);
-        } else {
-          setHistory([]);
-        }
-      } catch (error) {
-        console.error("Error fetching specific history:", error);
-        setHistory([]);
-      } finally {
-        setHistoryLoading(false);
-      }
-    };
-
-    fetchSpecificHistory();
-  }, [selectedCompany, selectedCommodity, selectedLocation, companies]);
-
-  useEffect(() => {
-    setSelectedCommodity("");
-    setSelectedLocation("");
-  }, [selectedCompany]);
-
-  useEffect(() => {
-    setSelectedLocation("");
-  }, [selectedCommodity]);
-
-  const categoryOptions = [{ label: "Feed Mills", value: "Feed Mills" }];
-
-  const companyOptions = useMemo(() => {
-    return companies
-      .filter(company => {
-        if (!company.commodities || !Array.isArray(company.commodities)) return false;
-        return company.commodities.some(comm => 
-          VALID_COMMODITIES.some(v => comm.toLowerCase().includes(v))
-        );
-      })
-      .map(c => ({ label: c.name, value: c.name }));
-  }, [companies]);
-
-  const commodityOptions = useMemo(() => {
-    if (!selectedCompany) return [];
-    const company = companies.find((c) => c.name === selectedCompany);
-    if (!company || !Array.isArray(company.commodities)) return [];
-
-    return company.commodities
-      .filter((comm) => {
-        const c = comm.toLowerCase();
-        if (c.includes("sbm")) return true;
-        return VALID_COMMODITIES.some((v) => c.includes(v));
-      })
-      .map((name) => ({ label: name, value: name }));
-  }, [selectedCompany, companies]);
-
-  const locationOptions = useMemo(() => {
-    if (!selectedCompany) return [];
-    const company = companies.find(c => c.name === selectedCompany);
-    if (!company || !company.location) return [];
-    
-    return company.location.map(loc => ({ label: loc, value: loc }));
-  }, [selectedCompany, companies]);
-
-  const isSelectionComplete = selectedCompany && selectedCommodity && selectedLocation;
+  const handleDownloadExcel = useCallback(() => {
+    if (!selectedCommodity || tableRows.length === 0) {
+      toast.warn("No landing cost data available to export");
+      return;
+    }
+    exportLandingCostToExcel(tableRows, selectedCommodity, selectedLocation);
+  }, [selectedCommodity, selectedLocation, tableRows]);
 
   return (
     <Suspense fallback={<Loading />}>
@@ -334,48 +136,25 @@ export default function LandingCost() {
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                     Latest {selectedCommodity} Market Rates
                   </h3>
-                  <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    {rates.length} Rates Found
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                      {rates.length} Rates Found
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleDownloadExcel}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Excel
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
                   <div className="max-h-[70vh] overflow-y-auto">
                     <Table
-                      data={rates.map((r, index) => {
-                        const baseRate =
-                          Number(r.newRate) || Number(r.oldRate) || 0;
-
-                        const destKey = (selectedLocation || r.destinationLocation || "")
-                          .toLowerCase()
-                          .trim();
-
-                        let freight = 0;
-                        if (destKey && r.location) {
-                          const key = `${String(r.location)
-                            .toLowerCase()
-                            .trim()}|${destKey}`;
-                          const freightDoc = freightMap[key];
-                          if (freightDoc) {
-                            freight = Number(freightDoc.freightRate) || 0;
-                          }
-                        }
-
-                        const landed = baseRate + freight;
-                        const destination = selectedLocation || r.destinationLocation || "";
-
-                        return {
-                          slno: index + 1,
-                          companyName: r.companyName,
-                          location: r.location,
-                          commodity: r.commodity,
-                          destination,
-                          baseRate,
-                          freight,
-                          landed,
-                          date: r.date,
-                        };
-                      })}
+                      data={tableRows}
                       columns={[
                         { header: "Sl No", accessor: "slno" },
                         { header: "Company", accessor: "companyName" },
