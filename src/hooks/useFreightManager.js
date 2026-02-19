@@ -252,22 +252,32 @@ export const useFreightManager = () => {
       if (
         !response.data ||
         !response.data.success ||
-        !Array.isArray(response.data.freights) ||
-        response.data.freights.length === 0
+        !Array.isArray(response.data.freights)
       ) {
-        toast.warn("No freight data found for selected Source Location");
+        toast.error("Failed to load freight data for mapping");
         return;
       }
+
+      const rateByDestination = new Map();
+      response.data.freights.forEach((item) => {
+        const dest = item.deliveryLocation || "";
+        if (!dest) return;
+        rateByDestination.set(
+          dest,
+          item.freightRate != null ? item.freightRate : ""
+        );
+      });
 
       const rows = [];
       rows.push(["Source Location", "Destination Location", "Freight Rate"]);
 
-      response.data.freights.forEach((item) => {
-        rows.push([
-          item.location || "",
-          item.deliveryLocation || "",
-          item.freightRate != null ? item.freightRate : "",
-        ]);
+      allDeliveryLocations.forEach((dest) => {
+        if (!dest) return;
+        if (dest === formData.location) return;
+        const rate = rateByDestination.has(dest)
+          ? rateByDestination.get(dest)
+          : "";
+        rows.push([formData.location, dest, rate]);
       });
 
       const worksheet = XLSX.utils.aoa_to_sheet(rows);
@@ -291,7 +301,7 @@ export const useFreightManager = () => {
     } finally {
       setLoading(false);
     }
-  }, [formData.location, selectedCommodity]);
+  }, [formData.location, selectedCommodity, allDeliveryLocations]);
 
 
   const allSourceLocations = useMemo(() => {
