@@ -231,79 +231,6 @@ export const useFreightManager = () => {
     }
   }, []);
 
-  const downloadSourceMappingExcel = useCallback(async () => {
-    if (!formData.location) {
-      toast.error("Please select Source Location to download mapping Excel");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response = await axiosInstance.get("/freight", {
-        params: {
-          commodity: selectedCommodity,
-          location: formData.location,
-          page: 1,
-          limit: 100000,
-        },
-      });
-
-      if (
-        !response.data ||
-        !response.data.success ||
-        !Array.isArray(response.data.freights)
-      ) {
-        toast.error("Failed to load freight data for mapping");
-        return;
-      }
-
-      const rateByDestination = new Map();
-      response.data.freights.forEach((item) => {
-        const dest = item.deliveryLocation || "";
-        if (!dest) return;
-        rateByDestination.set(
-          dest,
-          item.freightRate != null ? item.freightRate : ""
-        );
-      });
-
-      const rows = [];
-      rows.push(["Source Location", "Destination Location", "Freight Rate"]);
-
-      allDeliveryLocations.forEach((dest) => {
-        if (!dest) return;
-        if (dest === formData.location) return;
-        const rate = rateByDestination.has(dest)
-          ? rateByDestination.get(dest)
-          : "";
-        rows.push([formData.location, dest, rate]);
-      });
-
-      const worksheet = XLSX.utils.aoa_to_sheet(rows);
-      const workbook = XLSX.utils.book_new();
-
-      let sheetName = formData.location || "Source";
-      if (sheetName.length > 31) {
-        sheetName = sheetName.slice(0, 31);
-      }
-
-      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-
-      const safeSource =
-        (formData.location || "source").replace(/[/\\?%*:|"<>]/g, "_") ||
-        "source";
-
-      XLSX.writeFile(workbook, `freight_mapping_${safeSource}.xlsx`);
-    } catch (error) {
-      console.error("Error exporting source mapping excel:", error);
-      toast.error("Failed to download source mapping Excel");
-    } finally {
-      setLoading(false);
-    }
-  }, [formData.location, selectedCommodity, allDeliveryLocations]);
-
-
   const allSourceLocations = useMemo(() => {
     const locations = new Set();
     sellerCompanies.forEach(c => {
@@ -469,6 +396,5 @@ export const useFreightManager = () => {
     handleDelete,
     resetForm,
     downloadFreightExcel,
-    downloadSourceMappingExcel,
   };
 };
