@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import {
   NAV_CONFIG,
@@ -48,6 +48,21 @@ export default function DesktopNav({
 }) {
   const [openCompanyDropdown, setOpenCompanyDropdown] = useState(false);
   const [openRateDropdown, setOpenRateDropdown] = useState(false);
+  const navRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (navRef.current && !navRef.current.contains(event.target)) {
+        setOpenCompanyDropdown(false);
+        setOpenRateDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const rateDropdownItems = useMemo(
     () => filterByMobile(RATE_DROPDOWN, currentUserMobile, currentUserPages),
@@ -93,7 +108,7 @@ export default function DesktopNav({
     )?.label || "Company";
 
   return (
-    <nav className="hidden md:flex items-center">
+    <nav ref={navRef} className="hidden md:flex items-center">
       <ul className="flex items-center gap-8 text-sm md:text-[15px] font-medium relative">
         {navLinks.map((item) => {
           const { label, path, type, key } = item;

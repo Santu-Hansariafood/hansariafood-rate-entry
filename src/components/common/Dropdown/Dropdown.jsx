@@ -16,6 +16,7 @@ const Dropdown = ({
   onChange,
   isMulti = false,
   placeholder = "Search...",
+  clearOnEmpty = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -39,10 +40,14 @@ const Dropdown = ({
     if (isMulti && Array.isArray(value)) {
       setSearchTerm("");
     } else {
-      const selected = normalizedOptions.find((opt) => opt.value === value);
-      if (selected) setSearchTerm(selected.label);
+      if (clearOnEmpty && (value === null || value === undefined || value === "")) {
+        setSearchTerm("");
+      } else {
+        const selected = normalizedOptions.find((opt) => opt.value === value);
+        if (selected) setSearchTerm(selected.label);
+      }
     }
-  }, [value, normalizedOptions, isMulti]);
+  }, [value, normalizedOptions, isMulti, clearOnEmpty]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

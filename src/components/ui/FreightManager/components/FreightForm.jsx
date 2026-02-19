@@ -8,6 +8,7 @@ import {
   Save,
   Loader2,
   ArrowRight,
+  Download,
 } from "lucide-react";
 
 const FreightForm = ({ context, isEdit = false }) => {
@@ -21,6 +22,7 @@ const FreightForm = ({ context, isEdit = false }) => {
     handleSourceLocationChange,
     handleDeliveryLocationChange,
     handleSubmit,
+    downloadSourceMappingExcel,
   } = context;
 
   return (
@@ -42,6 +44,7 @@ const FreightForm = ({ context, isEdit = false }) => {
               value={formData.location}
               onChange={handleSourceLocationChange}
               placeholder="Select Source Location"
+              clearOnEmpty={true}
             />
           </div>
         </div>
@@ -62,6 +65,7 @@ const FreightForm = ({ context, isEdit = false }) => {
               value={formData.deliveryLocation}
               onChange={handleDeliveryLocationChange}
               placeholder="Select Destination Location"
+              clearOnEmpty={true}
             />
           </div>
         </div>
@@ -88,7 +92,7 @@ const FreightForm = ({ context, isEdit = false }) => {
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col md:flex-row gap-4">
         <button
           type="submit"
           disabled={loading}
@@ -100,6 +104,16 @@ const FreightForm = ({ context, isEdit = false }) => {
             <Save className="w-5 h-5" />
           )}
           {isEdit ? "Update Freight" : "Add Freight"}
+        </button>
+
+        <button
+          type="button"
+          disabled={loading || !formData.location}
+          onClick={downloadSourceMappingExcel}
+          className="md:w-auto w-full py-4 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-md flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <Download className="w-4 h-4" />
+          Download Source Mapping
         </button>
       </div>
     </form>
