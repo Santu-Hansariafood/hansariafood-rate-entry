@@ -45,12 +45,15 @@ export default function DesktopNav({
   setActiveLink,
   notifications,
   currentUserMobile,
+  currentUserName,
   currentUserPages = [],
 }) {
   const [openCompanyDropdown, setOpenCompanyDropdown] = useState(false);
   const [openRateDropdown, setOpenRateDropdown] = useState(false);
   const [openProfileDropdown, setOpenProfileDropdown] = useState(false);
   const [status, setStatus] = useState("active");
+  const [otherStatuses, setOtherStatuses] = useState([]);
+  const lastHeartbeatRef = useRef(0);
   const navRef = useRef(null);
 
   useEffect(() => {
@@ -86,6 +89,34 @@ export default function DesktopNav({
 
     fetchStatus();
   }, [currentUserMobile]);
+
+  useEffect(() => {
+    if (!currentUserMobile) return;
+    const handleActivity = () => {
+      const now = Date.now();
+      if (now - lastHeartbeatRef.current < 60 * 1000) return;
+      lastHeartbeatRef.current = now;
+      axiosInstance
+        .post("/employee-status", {
+          mobile: currentUserMobile,
+          status,
+          name: currentUserName,
+        })
+        .catch((error) => {
+          console.error("Failed to send activity heartbeat", error);
+        });
+    };
+
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+    window.addEventListener("click", handleActivity);
+
+    return () => {
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      window.removeEventListener("click", handleActivity);
+    };
+  }, [currentUserMobile, currentUserName, status]);
 
   const rateDropdownItems = useMemo(
     () => filterByMobile(RATE_DROPDOWN, currentUserMobile, currentUserPages),
@@ -137,6 +168,21 @@ export default function DesktopNav({
   ];
 
   const currentStatus = statusOptions.find((s) => s.key === status) || statusOptions[0];
+
+  const filteredOtherStatuses = useMemo(() => {
+    if (!otherStatuses || !Array.isArray(otherStatuses)) return [];
+    return otherStatuses
+      .filter(
+        (s) =>
+          s.mobile !== currentUserMobile &&
+          s.status &&
+          s.status !== "active"
+      )
+      .map((s) => ({
+        ...s,
+        displayName: s.name || s.mobile,
+      }));
+  }, [otherStatuses, currentUserMobile]);
 
   return (
     <nav ref={navRef} className="hidden md:flex items-center">
@@ -364,9 +410,25 @@ export default function DesktopNav({
                             await axiosInstance.post("/employee-status", {
                               mobile: currentUserMobile,
                               status: s.key,
+                              name: currentUserName,
                             });
+                            if (s.key !== "active") {
+                              const res = await axiosInstance.get(
+                                `/employee-status?excludeMobile=${encodeURIComponent(
+                                  currentUserMobile
+                                )}&nonActiveOnly=true`
+                              );
+                              setOtherStatuses(
+                                Array.isArray(res.data) ? res.data : []
+                              );
+                            } else {
+                              setOtherStatuses([]);
+                            }
                           } catch (error) {
-                            console.error("Failed to update employee status", error);
+                            console.error(
+                              "Failed to update employee status",
+                              error
+                            );
                           }
                         }}
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition
@@ -384,6 +446,38 @@ export default function DesktopNav({
                     ))}
                   </div>
                 </div>
+
+                {status !== "active" && filteredOtherStatuses.length > 0 && (
+                  <div className="px-4 py-2 border-b border-white/10">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-white/60 mb-2">
+                      Others status
+                    </p>
+                    <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                      {filteredOtherStatuses.map((s) => {
+                        const color =
+                          s.status === "busy"
+                            ? "bg-amber-400"
+                            : "bg-red-400";
+                        const label =
+                          s.status === "busy" ? "Busy" : "Not available";
+                        return (
+                          <div
+                            key={s.mobile}
+                            className="flex items-center justify-between text-xs text-white/80"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`h-2.5 w-2.5 rounded-full ${color}`}
+                              />
+                              <span>{s.displayName}</span>
+                            </div>
+                            <span className="text-white/60">{label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="button"

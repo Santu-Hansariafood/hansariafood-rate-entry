@@ -111,6 +111,7 @@ export default function Header() {
               setActiveLink={setActiveLink}
               notifications={notifications}
               currentUserMobile={session?.user?.mobile}
+              currentUserName={session?.user?.name}
               currentUserPages={session?.user?.pages}
             />
           ) : (

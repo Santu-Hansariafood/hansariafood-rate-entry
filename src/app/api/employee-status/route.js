@@ -14,27 +14,38 @@ export async function GET(req) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const mobile = searchParams.get("mobile");
+    const excludeMobile = searchParams.get("excludeMobile");
+    const nonActiveOnly = searchParams.get("nonActiveOnly") === "true";
 
     const filter = {};
     if (mobile) {
       filter.mobile = mobile;
+    } else if (excludeMobile) {
+      filter.mobile = { $ne: excludeMobile };
     }
 
     const rawStatuses = await EmployeeStatus.find(filter)
-      .select("mobile status updatedAt")
+      .select("mobile name status updatedAt")
+      .sort({ name: 1, mobile: 1 })
+      .limit(200)
       .lean();
 
     const now = Date.now();
     const INACTIVE_MS = 10 * 60 * 1000;
 
-    const statuses = rawStatuses.map((s) => {
+    let statuses = rawStatuses.map((s) => {
       const updated = s.updatedAt ? new Date(s.updatedAt).getTime() : 0;
       const isStale = !updated || now - updated > INACTIVE_MS;
+      const effectiveStatus = isStale ? "not_available" : s.status;
       return {
         ...s,
-        status: isStale ? "not_available" : s.status,
+        status: effectiveStatus,
       };
     });
+
+    if (nonActiveOnly) {
+      statuses = statuses.filter((s) => s.status !== "active");
+    }
 
     return NextResponse.json(statuses, { status: 200 });
   } catch (error) {
@@ -53,7 +64,7 @@ export async function POST(req) {
 
   try {
     await connectDB();
-    const { mobile, status } = await req.json();
+    const { mobile, name, status } = await req.json();
 
     if (!mobile || !ALLOWED_STATUS.includes(status)) {
       return NextResponse.json(
@@ -64,7 +75,7 @@ export async function POST(req) {
 
     const updated = await EmployeeStatus.findOneAndUpdate(
       { mobile },
-      { status, updatedAt: new Date() },
+      { status, updatedAt: new Date(), ...(name ? { name } : {}) },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     )
       .select("mobile status updatedAt")
