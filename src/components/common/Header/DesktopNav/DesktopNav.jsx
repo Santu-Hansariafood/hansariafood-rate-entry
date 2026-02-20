@@ -11,6 +11,7 @@ import {
   COMPANY_DROPDOWN,
   ADMINS,
 } from "@/config/navigation";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const NotificationBell = dynamic(() =>
   import("../NotificationBell/NotificationBell")
@@ -48,6 +49,8 @@ export default function DesktopNav({
 }) {
   const [openCompanyDropdown, setOpenCompanyDropdown] = useState(false);
   const [openRateDropdown, setOpenRateDropdown] = useState(false);
+  const [openProfileDropdown, setOpenProfileDropdown] = useState(false);
+  const [status, setStatus] = useState("active");
   const navRef = useRef(null);
 
   useEffect(() => {
@@ -55,6 +58,7 @@ export default function DesktopNav({
       if (navRef.current && !navRef.current.contains(event.target)) {
         setOpenCompanyDropdown(false);
         setOpenRateDropdown(false);
+        setOpenProfileDropdown(false);
       }
     };
 
@@ -63,6 +67,25 @@ export default function DesktopNav({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (!currentUserMobile) return;
+      try {
+        const res = await axiosInstance.get(
+          `/employee-status?mobile=${encodeURIComponent(currentUserMobile)}`
+        );
+        const list = Array.isArray(res.data) ? res.data : [];
+        if (list[0]?.status) {
+          setStatus(list[0].status);
+        }
+      } catch (error) {
+        console.error("Failed to fetch employee status", error);
+      }
+    };
+
+    fetchStatus();
+  }, [currentUserMobile]);
 
   const rateDropdownItems = useMemo(
     () => filterByMobile(RATE_DROPDOWN, currentUserMobile, currentUserPages),
@@ -106,6 +129,14 @@ export default function DesktopNav({
     companyDropdownItems.find(
       (i) => activeLink && activeLink.startsWith(i.path)
     )?.label || "Company";
+
+  const statusOptions = [
+    { key: "active", label: "Active", color: "bg-emerald-400" },
+    { key: "busy", label: "Busy", color: "bg-amber-400" },
+    { key: "not_available", label: "Not available", color: "bg-red-400" },
+  ];
+
+  const currentStatus = statusOptions.find((s) => s.key === status) || statusOptions[0];
 
   return (
     <nav ref={navRef} className="hidden md:flex items-center">
@@ -273,9 +304,103 @@ export default function DesktopNav({
 
         <NotificationBell notifications={notifications} />
 
-        <motion.li whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <LogoutButton />
-        </motion.li>
+        <li className="relative ml-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setOpenProfileDropdown((v) => !v)}
+            className="relative flex items-center justify-center h-9 w-9 rounded-full border border-emerald-400/70 bg-emerald-500/20 text-white shadow-sm"
+            aria-label="Open profile menu"
+          >
+            <span className="text-xs font-semibold">
+              {currentUserMobile ? currentUserMobile.slice(-2) : "U"}
+            </span>
+            <span
+              className={`absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-black ${
+                currentStatus.color
+              }`}
+            />
+          </motion.button>
+
+          <AnimatePresence>
+            {openProfileDropdown && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                transition={{ duration: 0.2 }}
+                className="absolute right-0 mt-3 w-64 backdrop-blur-xl bg-black/80 border border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50"
+              >
+                <div className="px-4 pt-4 pb-3 flex items-center gap-3 border-b border-white/10">
+                  <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-emerald-500/30 text-white text-sm font-semibold">
+                    {currentUserMobile ? currentUserMobile.slice(-2) : "U"}
+                    <span
+                      className={`absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-black ${currentStatus.color}`}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-white">
+                      Profile
+                    </span>
+                    <span className="text-xs text-white/60">
+                      {currentUserMobile || "User"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="px-4 py-3 border-b border-white/10">
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-white/60 mb-2">
+                    Status
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {statusOptions.map((s) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={async () => {
+                          setStatus(s.key);
+                          if (!currentUserMobile) return;
+                          try {
+                            await axiosInstance.post("/employee-status", {
+                              mobile: currentUserMobile,
+                              status: s.key,
+                            });
+                          } catch (error) {
+                            console.error("Failed to update employee status", error);
+                          }
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition
+                          ${
+                            status === s.key
+                              ? "bg-white/15 text-white"
+                              : "bg-white/5 text-white/70 hover:bg-white/10"
+                          }`}
+                      >
+                        <span
+                          className={`h-2 w-2 rounded-full ${s.color}`}
+                        />
+                        <span>{s.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="w-full text-left px-4 py-3 text-sm text-white/90 hover:bg-white/10 flex items-center justify-between"
+                  onClick={() => setOpenProfileDropdown(false)}
+                >
+                  <span>Profile</span>
+                  <span className="text-xs text-white/50">View</span>
+                </button>
+
+                <div className="px-4 pb-4 pt-2">
+                  <LogoutButton />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </li>
       </ul>
     </nav>
   );

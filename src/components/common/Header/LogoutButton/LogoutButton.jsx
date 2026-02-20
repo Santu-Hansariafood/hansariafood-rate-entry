@@ -1,16 +1,40 @@
-"use client";
+\"use client\";
 
 import { LogOut } from "lucide-react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import Loading from "../../Loading/Loading";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 export default function LogoutButton() {
   const [loading, setLoading] = useState(false);
+  const { data: session } = useSession();
 
   const handleLogout = async () => {
     setLoading(true);
+    const mobileFromSession = session?.user?.mobile;
+    let mobileFromStorage;
+    try {
+      const stored = localStorage.getItem("user");
+      mobileFromStorage = stored ? JSON.parse(stored).mobile : undefined;
+    } catch {
+      mobileFromStorage = undefined;
+    }
+
+    const mobile = mobileFromSession || mobileFromStorage;
+
+    if (mobile) {
+      try {
+        await axiosInstance.post("/employee-status", {
+          mobile,
+          status: "not_available",
+        });
+      } catch (e) {
+        console.error("Failed to set not_available status on logout", e);
+      }
+    }
+
     localStorage.clear();
 
     await signOut({

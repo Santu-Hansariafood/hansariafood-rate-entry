@@ -1,10 +1,11 @@
-"use client";
+\"use client\";
 
 import { useState, useCallback } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 export default function useLoginForm() {
   const [mobile, setMobile] = useState("");
@@ -59,6 +60,14 @@ export default function useLoginForm() {
       } else {
         localStorage.setItem("user", JSON.stringify({ mobile }));
         setGlobalMobile(mobile);
+        try {
+          await axiosInstance.post("/employee-status", {
+            mobile,
+            status: "active",
+          });
+        } catch (e) {
+          console.error("Failed to set active status on login", e);
+        }
         router.push("/dashboard");
       }
     },
