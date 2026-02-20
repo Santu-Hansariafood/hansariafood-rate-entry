@@ -27,7 +27,7 @@ export default function Login() {
   return (
     <Suspense fallback={<Loading />}>
       <main
-        className="flex min-h-screen items-center justify-center 
+        className="flex min-h-screen items-center justify-center px-4 sm:px-6
           bg-gradient-to-br from-green-50 via-white to-green-100 
           dark:from-gray-900 dark:via-gray-950 dark:to-gray-900 
           transition-colors duration-500"
@@ -36,11 +36,11 @@ export default function Login() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="w-full max-w-md p-8 rounded-3xl shadow-xl 
+          className="w-full max-w-sm sm:max-w-md px-5 py-6 sm:px-8 sm:py-8 rounded-3xl shadow-xl 
             bg-white/80 dark:bg-gray-900/80 
             backdrop-blur-lg border border-gray-200 dark:border-gray-700"
         >
-          <div className="text-center mb-8">
+          <div className="text-center mb-6 sm:mb-8">
             <Title text="Welcome Back" />
             <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
               Sign in to continue
@@ -48,7 +48,7 @@ export default function Login() {
           </div>
           <form
             onSubmit={handleSubmit}
-            className="space-y-6"
+            className="space-y-5 sm:space-y-6"
             aria-describedby="form-errors"
           >
             <div>
@@ -98,7 +98,7 @@ export default function Login() {
                   {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                 </button>
               </div>
-              <div className="text-right mt-2">
+              <div className="flex justify-end mt-2">
                 <Link
                   href="/forgot-password"
                   className="text-sm text-green-600 hover:underline dark:text-green-400"
@@ -119,9 +119,9 @@ export default function Login() {
               </motion.p>
             )}
             <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="w-full bg-green-500 text-white py-3 rounded-xl font-semibold 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full bg-green-500 text-white py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-base
                 hover:bg-green-600 shadow-lg hover:shadow-xl 
                 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-300"
             >

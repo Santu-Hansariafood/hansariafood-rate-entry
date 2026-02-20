@@ -88,19 +88,19 @@ export default function Header() {
           }
         `}
       >
-        <div className="container mx-auto flex items-center justify-between px-4 py-3 md:px-8">
+        <div className="container mx-auto flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 md:px-8">
           <Logo />
 
           {session && (
             <button
-              className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+              className="md:hidden p-1.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
               onClick={() => setMenuOpen((v) => !v)}
               aria-label="Toggle Menu"
             >
               {menuOpen ? (
-                <X size={28} className="text-white" />
+                <X size={24} className="text-white" />
               ) : (
-                <Menu size={28} className="text-white" />
+                <Menu size={24} className="text-white" />
               )}
             </button>
           )}
@@ -117,9 +117,9 @@ export default function Header() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <a
                 href="/"
-                className="flex items-center gap-2 bg-emerald-500/90 text-white px-6 py-2.5 rounded-xl
+                className="flex items-center justify-center gap-2 bg-emerald-500/90 text-white text-xs sm:text-sm px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl
                            hover:bg-emerald-600 transition-all duration-300
-                           shadow-lg hover:shadow-emerald-500/30"
+                           shadow-lg hover:shadow-emerald-500/30 whitespace-nowrap"
               >
                 Login
               </a>
