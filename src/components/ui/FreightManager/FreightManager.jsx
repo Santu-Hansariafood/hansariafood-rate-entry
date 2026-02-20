@@ -4,12 +4,12 @@ import React, { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useFreightManager } from "@/hooks/useFreightManager";
 import Loading from "@/components/common/Loading/Loading";
-const FreightHeader =dynamic(() => import("./components/FreightHeader"));
-const CommodityTabs =dynamic(() => import("./components/CommodityTabs"));
-const FreightForm =dynamic(() => import("./components/FreightForm"));
-const FreightList =dynamic(() => import("./components/FreightList"));
-const EditFreightModal =dynamic(() => import("./components/EditFreightModal"));
-const ViewFreightModal =dynamic(() => import("./components/ViewFreightModal"));
+const FreightHeader = dynamic(() => import("./components/FreightHeader"));
+const CommodityTabs = dynamic(() => import("./components/CommodityTabs"));
+const FreightForm = dynamic(() => import("./components/FreightForm"));
+const FreightList = dynamic(() => import("./components/FreightList"));
+const EditFreightModal = dynamic(() => import("./components/EditFreightModal"));
+const ViewFreightModal = dynamic(() => import("./components/ViewFreightModal"));
 
 export default function FreightManager() {
   const freightManager = useFreightManager();
@@ -36,42 +36,46 @@ export default function FreightManager() {
 
   return (
     <Suspense fallback={<Loading />}>
-    <div className="w-full max-w-6xl mx-auto mt-10 p-6 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
-      <FreightHeader onDownloadExcel={downloadFreightExcel} />
+      <div className="w-full max-w-6xl mx-auto mt-10 space-y-6">
+        <div className="rounded-3xl border border-emerald-100/70 dark:border-emerald-500/20 bg-gradient-to-r from-emerald-50/80 via-white to-sky-50/80 dark:from-emerald-950/60 dark:via-slate-950/80 dark:to-sky-950/60 shadow-lg px-5 py-4 md:px-8 md:py-6">
+          <FreightHeader onDownloadExcel={downloadFreightExcel} />
+        </div>
 
-      <CommodityTabs 
-        selectedCommodity={selectedCommodity} 
-        setSelectedCommodity={setSelectedCommodity} 
-        setPagination={setPagination} 
-      />
+        <div className="p-6 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
+          <CommodityTabs
+            selectedCommodity={selectedCommodity}
+            setSelectedCommodity={setSelectedCommodity}
+            setPagination={setPagination}
+          />
 
-      {!editingId && <FreightForm context={freightManager} />}
+          {!editingId && <FreightForm context={freightManager} />}
 
-      <FreightList
-        freights={freights}
-        pagination={pagination}
-        setPagination={setPagination}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        selectedCreator={selectedCreator}
-        setSelectedCreator={setSelectedCreator}
-        creators={creators}
-        setViewingFreight={setViewingFreight}
-        handleEdit={handleEdit}
-        handleDelete={handleDelete}
-      />
+          <FreightList
+            freights={freights}
+            pagination={pagination}
+            setPagination={setPagination}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedCreator={selectedCreator}
+            setSelectedCreator={setSelectedCreator}
+            creators={creators}
+            setViewingFreight={setViewingFreight}
+            handleEdit={handleEdit}
+            handleDelete={handleDelete}
+          />
+        </div>
 
-      <EditFreightModal 
-        isEditModalOpen={isEditModalOpen} 
-        resetForm={resetForm} 
-        freightManager={freightManager} 
-      />
+        <EditFreightModal
+          isEditModalOpen={isEditModalOpen}
+          resetForm={resetForm}
+          freightManager={freightManager}
+        />
 
-      <ViewFreightModal 
-        viewingFreight={viewingFreight} 
-        setViewingFreight={setViewingFreight} 
-      />
-    </div>
+        <ViewFreightModal
+          viewingFreight={viewingFreight}
+          setViewingFreight={setViewingFreight}
+        />
+      </div>
     </Suspense>
   );
 }

@@ -56,49 +56,105 @@ export default function LandingCost() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-screen">
-        <div className="text-center mb-12">
-          <Title text="Landing Cost" />
-          <p className="text-gray-500 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
-            Select category, buyer company, commodity, and location to manage landing cost details.
-          </p>
-        </div>
+      <div className="p-4 md:p-8 max-w-6xl mx-auto min-h-screen space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="mb-2"
+        >
+          <div className="relative overflow-hidden rounded-3xl border border-emerald-100/70 dark:border-emerald-500/20 bg-gradient-to-r from-emerald-50/80 via-white to-sky-50/80 dark:from-emerald-950/60 dark:via-slate-950/80 dark:to-sky-950/60 shadow-lg">
+            <div className="absolute -right-20 -top-16 h-40 w-40 rounded-full bg-emerald-400/20 blur-3xl" />
+            <div className="absolute -left-16 -bottom-16 h-40 w-40 rounded-full bg-sky-400/15 blur-3xl" />
+            <div className="relative flex flex-col gap-6 px-6 py-6 md:px-10 md:py-8 md:flex-row md:items-center">
+              <div className="flex items-center justify-center md:justify-start">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg">
+                  <TrendingUp className="w-7 h-7" />
+                </div>
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <Title text="Landing Cost" />
+                <p className="mt-2 max-w-xl text-sm md:text-base text-gray-500 dark:text-gray-400 mx-auto md:mx-0">
+                  Select category, buyer company, commodity, and location to see live landed cost with freight included.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2 text-xs md:text-[11px] text-gray-600 dark:text-gray-300">
+                {selectedCommodity && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
+                    <IndianRupee className="w-3 h-3 text-emerald-500" />
+                    {selectedCommodity}
+                  </span>
+                )}
+                {selectedCompany && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
+                    <History className="w-3 h-3 text-sky-500" />
+                    {selectedCompany}
+                  </span>
+                )}
+                {selectedLocation && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
+                    <Clock className="w-3 h-3 text-amber-500" />
+                    {selectedLocation}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-800 p-6 md:p-10 mb-8 relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-green-500/5 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl"></div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-            <Dropdown
-              label="1. Select Category"
-              options={categoryOptions}
-              value={selectedCategory}
-              onChange={setSelectedCategory}
-            />
-            <Dropdown
-              label="2. Buyer company"
-              placeholder="Choose Buyer company..."
-              options={companyOptions}
-              value={selectedCompany}
-              onChange={setSelectedCompany}
-              disabled={loading}
-            />
-            <Dropdown
-              label="3. Select Commodity"
-              placeholder="Choose Commodity..."
-              options={commodityOptions}
-              value={selectedCommodity}
-              onChange={setSelectedCommodity}
-              disabled={!selectedCompany}
-            />
-            <Dropdown
-              label="4. Select Location"
-              placeholder="Choose Location..."
-              options={locationOptions}
-              value={selectedLocation}
-              onChange={setSelectedLocation}
-              disabled={!selectedCommodity}
-            />
+          <div className="relative z-10 space-y-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-6 items-center rounded-full bg-emerald-50 text-emerald-700 px-3 text-xs font-semibold tracking-wide dark:bg-emerald-900/30">
+                  Step 1
+                </span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Configure your market selection
+                </p>
+              </div>
+              {isSelectionComplete && (
+                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  Ready • Showing landed cost and history
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Dropdown
+                label="1. Select Category"
+                options={categoryOptions}
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+              />
+              <Dropdown
+                label="2. Buyer company"
+                placeholder="Choose Buyer company..."
+                options={companyOptions}
+                value={selectedCompany}
+                onChange={setSelectedCompany}
+                disabled={loading}
+              />
+              <Dropdown
+                label="3. Select Commodity"
+                placeholder="Choose Commodity..."
+                options={commodityOptions}
+                value={selectedCommodity}
+                onChange={setSelectedCommodity}
+                disabled={!selectedCompany}
+              />
+              <Dropdown
+                label="4. Select Location"
+                placeholder="Choose Location..."
+                options={locationOptions}
+                value={selectedLocation}
+                onChange={setSelectedLocation}
+                disabled={!selectedCommodity}
+              />
+            </div>
           </div>
 
           <AnimatePresence mode="wait">
