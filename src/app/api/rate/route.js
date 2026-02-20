@@ -94,19 +94,25 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const company = searchParams.get("company");
     const commodity = searchParams.get("commodity");
+    const todayOnly = searchParams.get("todayOnly") === "true";
 
     const query = {};
     if (company && company !== "all") query.company = company;
     if (commodity && commodity !== "all") query.commodity = commodity;
 
-    const rates = await Rate.find(query)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dbQuery = {
+      ...query,
+      ...(todayOnly ? { newRateDate: { $gte: today } } : {}),
+    };
+
+    const rates = await Rate.find(dbQuery)
       .select(
         "company location commodity oldRates newRate newRateDate quantity payment others updateTime mobile"
       )
       .lean();
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     const formattedRates = rates.map((rate) => {
       const lastUpdated = new Date(rate.newRateDate);

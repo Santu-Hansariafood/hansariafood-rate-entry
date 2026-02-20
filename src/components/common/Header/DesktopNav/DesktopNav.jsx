@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
 import {
   NAV_CONFIG,
@@ -89,6 +89,28 @@ export default function DesktopNav({
 
     fetchStatus();
   }, [currentUserMobile]);
+
+  const loadOtherStatuses = useCallback(
+    async (mobile) => {
+      if (!mobile) return;
+      try {
+        const res = await axiosInstance.get(
+          `/employee-status?excludeMobile=${encodeURIComponent(
+            mobile
+          )}&nonActiveOnly=true`
+        );
+        setOtherStatuses(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.error("Failed to fetch other employee statuses", error);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!currentUserMobile) return;
+    loadOtherStatuses(currentUserMobile);
+  }, [currentUserMobile, loadOtherStatuses]);
 
   useEffect(() => {
     if (!currentUserMobile) return;
@@ -427,18 +449,7 @@ export default function DesktopNav({
                               status: s.key,
                               name: currentUserName,
                             });
-                            if (s.key !== "active") {
-                              const res = await axiosInstance.get(
-                                `/employee-status?excludeMobile=${encodeURIComponent(
-                                  currentUserMobile
-                                )}&nonActiveOnly=true`
-                              );
-                              setOtherStatuses(
-                                Array.isArray(res.data) ? res.data : []
-                              );
-                            } else {
-                              setOtherStatuses([]);
-                            }
+                            await loadOtherStatuses(currentUserMobile);
                           } catch (error) {
                             console.error(
                               "Failed to update employee status",
@@ -462,7 +473,7 @@ export default function DesktopNav({
                   </div>
                 </div>
 
-                {status !== "active" && filteredOtherStatuses.length > 0 && (
+                {filteredOtherStatuses.length > 0 && (
                   <div className="px-4 py-2 border-b border-white/10">
                     <p className="text-[11px] uppercase tracking-[0.16em] text-white/60 mb-2">
                       Others status

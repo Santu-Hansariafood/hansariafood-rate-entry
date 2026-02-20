@@ -21,7 +21,7 @@ const useRateEntries = () => {
       setLoading(true);
       try {
         const [ratesRes, usersRes, saudaRes] = await Promise.all([
-          axiosInstance.get("/rate"),
+          axiosInstance.get("/rate?todayOnly=true"),
           axiosInstance.get("/auth/register"),
           axiosInstance.get(`/sauda/today?date=${date}`),
         ]);

@@ -71,7 +71,7 @@ export default function useSaudaNotifications() {
         ) {
           allRates = rateCacheRef.current.data;
         } else {
-          const ratesRes = await axiosInstance.get("/rate");
+          const ratesRes = await axiosInstance.get("/rate?todayOnly=true");
           allRates = Array.isArray(ratesRes.data) ? ratesRes.data : [];
           rateCacheRef.current = { data: allRates, lastFetched: now };
         }

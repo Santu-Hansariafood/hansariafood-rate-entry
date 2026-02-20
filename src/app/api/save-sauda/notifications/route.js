@@ -21,6 +21,7 @@ export async function GET(req) {
     const todayString = getTodayString();
 
     const entries = await SaudaEntry.find({ date: todayString })
+      .select("company date time saudaEntries buyer seller createdAt")
       .sort({ createdAt: -1 })
       .lean();
 

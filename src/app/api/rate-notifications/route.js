@@ -29,10 +29,10 @@ export async function GET(req) {
       }
     }
 
-    const histories = await RateHistory.find(query).populate(
-      "companyId",
-      "name type"
-    );
+    const histories = await RateHistory.find(query)
+      .select("companyId location commodity history")
+      .populate("companyId", "name type")
+      .lean();
 
     // Fallback: Manually fetch companies if populate failed
     const missingIds = histories
@@ -41,10 +41,12 @@ export async function GET(req) {
 
     let manualMap = {};
     if (missingIds.length > 0) {
-      const found = await ManageCompany.find({ _id: { $in: missingIds } }).select(
-        "name type"
+      const found = await ManageCompany.find({ _id: { $in: missingIds } })
+        .select("name type")
+        .lean();
+      found.forEach(
+        (c) => (manualMap[c._id.toString()] = { name: c.name, type: c.type })
       );
-      found.forEach((c) => (manualMap[c._id.toString()] = { name: c.name, type: c.type }));
     }
 
     let notifications = [];
