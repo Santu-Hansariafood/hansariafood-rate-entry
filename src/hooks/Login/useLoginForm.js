@@ -1,4 +1,4 @@
-\"use client\";
+"use client";
 
 import { useState, useCallback } from "react";
 import { signIn } from "next-auth/react";
