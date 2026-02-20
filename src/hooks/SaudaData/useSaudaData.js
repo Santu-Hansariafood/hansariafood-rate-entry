@@ -99,11 +99,18 @@ const useSaudaData = () => {
       }
       const [companiesRes, ratesRes] = await Promise.all([
         axiosInstance.get(`/companies?limit=10000`),
-        axiosInstance.get(`/rate`),
+        axiosInstance.get(`/rate/status`),
       ]);
 
       const fetchedAllCompanies = companiesRes.data.companies || [];
-      const allRates = ratesRes.data || [];
+      const allRatesRaw = ratesRes.data || [];
+      const allRates = Array.isArray(allRatesRaw)
+        ? allRatesRaw.map((r) => ({
+            company: r.company,
+            hasNewRateToday: true,
+            newRate: 1,
+          }))
+        : [];
 
       setAllCompanies(fetchedAllCompanies);
       setRateData(allRates);

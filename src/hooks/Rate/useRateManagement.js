@@ -88,12 +88,17 @@ export default function useRateManagement() {
 
       if (names.length > 0) {
         axiosInstance
-          .get("/rate")
+          .get("/rate/status")
           .then((ratesRes) => {
-            const allRates = Array.isArray(ratesRes.data)
+            const rawRates = Array.isArray(ratesRes.data)
               ? ratesRes.data
               : [];
-            checkAllCompanies(companyMap, allRates);
+            const normalizedRates = rawRates.map((r) => ({
+              company: r.company,
+              commodity: r.commodity,
+              hasNewRateToday: true,
+            }));
+            checkAllCompanies(companyMap, normalizedRates);
           })
           .catch(() => {
             setCompletedCompanies({});

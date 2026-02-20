@@ -93,8 +93,9 @@ export default function DesktopNav({
   useEffect(() => {
     if (!currentUserMobile) return;
     const handleActivity = () => {
+      if (document.visibilityState !== "visible") return;
       const now = Date.now();
-      if (now - lastHeartbeatRef.current < 60 * 1000) return;
+      if (now - lastHeartbeatRef.current < 5 * 60 * 1000) return;
       lastHeartbeatRef.current = now;
       axiosInstance
         .post("/employee-status", {
@@ -355,11 +356,18 @@ export default function DesktopNav({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => setOpenProfileDropdown((v) => !v)}
-            className="relative flex items-center justify-center h-9 w-9 rounded-full border border-emerald-400/70 bg-emerald-500/20 text-white shadow-sm"
+            className="relative flex items-center justify-center h-9 w-9 rounded-full border border-emerald-400/70 bg-emerald-500/20 text-white shadow-sm uppercase"
             aria-label="Open profile menu"
           >
             <span className="text-xs font-semibold">
-              {currentUserMobile ? currentUserMobile.slice(-2) : "U"}
+              {currentUserName
+                ? currentUserName
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((part) => part[0])
+                    .join("")
+                    .slice(0, 2)
+                : "U"}
             </span>
             <span
               className={`absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-black ${
@@ -378,18 +386,25 @@ export default function DesktopNav({
                 className="absolute right-0 mt-3 w-64 backdrop-blur-xl bg-black/80 border border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50"
               >
                 <div className="px-4 pt-4 pb-3 flex items-center gap-3 border-b border-white/10">
-                  <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-emerald-500/30 text-white text-sm font-semibold">
-                    {currentUserMobile ? currentUserMobile.slice(-2) : "U"}
+                  <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-emerald-500/30 text-white text-sm font-semibold uppercase">
+                    {currentUserName
+                      ? currentUserName
+                          .split(" ")
+                          .filter(Boolean)
+                          .map((part) => part[0])
+                          .join("")
+                          .slice(0, 2)
+                      : "U"}
                     <span
                       className={`absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-black ${currentStatus.color}`}
                     />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-white">
-                      Profile
+                      {currentUserName || "Profile"}
                     </span>
                     <span className="text-xs text-white/60">
-                      {currentUserMobile || "User"}
+                      Logged in user
                     </span>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
@@ -10,6 +10,7 @@ export default function useSaudaNotifications() {
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const rateCacheRef = useRef({ data: [], lastFetched: 0 });
 
   const getTodayString = useCallback(() => {
     const today = new Date();
@@ -63,8 +64,17 @@ export default function useSaudaNotifications() {
 
       let allRates = [];
       try {
-        const ratesRes = await axiosInstance.get("/rate");
-        allRates = ratesRes.data || [];
+        const now = Date.now();
+        if (
+          rateCacheRef.current.data.length > 0 &&
+          now - rateCacheRef.current.lastFetched < 5 * 60 * 1000
+        ) {
+          allRates = rateCacheRef.current.data;
+        } else {
+          const ratesRes = await axiosInstance.get("/rate");
+          allRates = Array.isArray(ratesRes.data) ? ratesRes.data : [];
+          rateCacheRef.current = { data: allRates, lastFetched: now };
+        }
       } catch (err) {
         console.warn("Failed to fetch rates:", err);
       }
