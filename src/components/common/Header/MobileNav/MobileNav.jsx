@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, X } from "lucide-react";
 import { ADMINS } from "@/config/navigation";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const NotificationBell = dynamic(() =>
   import("../NotificationBell/NotificationBell")
@@ -20,11 +21,23 @@ export default function MobileNav({
   setActiveLink,
   notifications,
   currentUserMobile,
+  currentUserName,
   currentUserPages = [],
 }) {
   const [rateDropdownOpen, setRateDropdownOpen] = useState(false);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
+  const [status, setStatus] = useState("active");
+  const [otherStatuses, setOtherStatuses] = useState([]);
   const isAdmin = ADMINS.includes(currentUserMobile);
+
+  const statusOptions = [
+    { key: "active", label: "Active", color: "bg-emerald-400" },
+    { key: "busy", label: "Busy", color: "bg-amber-400" },
+    { key: "not_available", label: "Not available", color: "bg-red-400" },
+  ];
+
+  const currentStatus =
+    statusOptions.find((s) => s.key === status) || statusOptions[0];
 
   const allRateDropdownItems = [
     { label: "Rate", path: "/rate" },
@@ -66,6 +79,54 @@ export default function MobileNav({
     const path = `/${label.toLowerCase().replace(/ /g, "")}`;
     return currentUserPages.includes(path);
   });
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (!currentUserMobile) return;
+      try {
+        const res = await axiosInstance.get(
+          `/employee-status?mobile=${encodeURIComponent(currentUserMobile)}`
+        );
+        const list = Array.isArray(res.data) ? res.data : [];
+        if (list[0]?.status) {
+          setStatus(list[0].status);
+        }
+      } catch (error) {
+        console.error("Failed to fetch employee status (mobile)", error);
+      }
+    };
+
+    fetchStatus();
+  }, [currentUserMobile]);
+
+  const loadOtherStatuses = async (mobile) => {
+    if (!mobile) return;
+    try {
+      const res = await axiosInstance.get(
+        `/employee-status?excludeMobile=${encodeURIComponent(
+          mobile
+        )}&nonActiveOnly=true`
+      );
+      setOtherStatuses(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error("Failed to fetch other employee statuses (mobile)", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!currentUserMobile) return;
+    loadOtherStatuses(currentUserMobile);
+  }, [currentUserMobile]);
+
+  const filteredOtherStatuses = (otherStatuses || [])
+    .filter(
+      (s) =>
+        s.mobile !== currentUserMobile && s.status && s.status !== "active"
+    )
+    .map((s) => ({
+      ...s,
+      displayName: s.name || s.mobile,
+    }));
 
   useEffect(() => {
     if (!isOpen) return;
@@ -164,6 +225,109 @@ export default function MobileNav({
                 animate="visible"
                 className="flex flex-col gap-1.5"
               >
+                <motion.li
+                  variants={itemVariants}
+                  className="mb-3 pb-3 border-b border-gray-800/50"
+                >
+                  <div className="flex items-center gap-3 px-4">
+                    <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-emerald-500/30 text-white text-sm font-semibold uppercase">
+                      {currentUserName
+                        ? currentUserName
+                            .split(" ")
+                            .filter(Boolean)
+                            .map((part) => part[0])
+                            .join("")
+                            .slice(0, 2)
+                        : "U"}
+                      <span
+                        className={`absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-black ${currentStatus.color}`}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-white">
+                        {currentUserName || "Profile"}
+                      </span>
+                      <span className="text-xs text-white/60">
+                        Logged in user
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 px-4">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-white/60 mb-2">
+                      Status
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {statusOptions.map((s) => (
+                        <button
+                          key={s.key}
+                          type="button"
+                          onClick={async () => {
+                            setStatus(s.key);
+                            if (!currentUserMobile) return;
+                            try {
+                              await axiosInstance.post("/employee-status", {
+                                mobile: currentUserMobile,
+                                status: s.key,
+                                name: currentUserName,
+                              });
+                              await loadOtherStatuses(currentUserMobile);
+                            } catch (error) {
+                              console.error(
+                                "Failed to update employee status (mobile)",
+                                error
+                              );
+                            }
+                          }}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition
+                          ${
+                            status === s.key
+                              ? "bg-white/15 text-white"
+                              : "bg-white/5 text-white/70 hover:bg-white/10"
+                          }`}
+                        >
+                          <span
+                            className={`h-2 w-2 rounded-full ${s.color}`}
+                          />
+                          <span>{s.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {filteredOtherStatuses.length > 0 && (
+                    <div className="mt-3 px-4">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-white/60 mb-2">
+                        Others status
+                      </p>
+                      <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                        {filteredOtherStatuses.map((s) => {
+                          const color =
+                            s.status === "busy"
+                              ? "bg-amber-400"
+                              : "bg-red-400";
+                          const label =
+                            s.status === "busy" ? "Busy" : "Not available";
+                          return (
+                            <div
+                              key={s.mobile}
+                              className="flex items-center justify-between text-xs text-white/80"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`h-2.5 w-2.5 rounded-full ${color}`}
+                                />
+                                <span>{s.displayName}</span>
+                              </div>
+                              <span className="text-white/60">{label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </motion.li>
+
                 {/* Rate Dropdown */}
                 {rateDropdownItems.length > 0 && (
                 <motion.li variants={itemVariants}>

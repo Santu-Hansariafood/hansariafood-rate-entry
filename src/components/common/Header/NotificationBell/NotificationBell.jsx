@@ -57,7 +57,7 @@ export default function NotificationBell({ notifications }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 mt-2 w-96 z-50"
+              className="absolute right-2 mt-2 w-[min(24rem,calc(100vw-1.5rem))] z-50"
             >
               <NotificationList notifications={notifications} />
             </motion.div>
