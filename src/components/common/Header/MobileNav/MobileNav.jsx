@@ -27,17 +27,15 @@ export default function MobileNav({
   const [rateDropdownOpen, setRateDropdownOpen] = useState(false);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [status, setStatus] = useState("active");
+  const [displayStatus, setDisplayStatus] = useState("available");
   const [otherStatuses, setOtherStatuses] = useState([]);
   const isAdmin = ADMINS.includes(currentUserMobile);
 
   const statusOptions = [
-    { key: "active", label: "Active", color: "bg-emerald-400" },
+    { key: "active", label: "Available", color: "bg-emerald-400" },
     { key: "busy", label: "Busy", color: "bg-amber-400" },
-    { key: "not_available", label: "Not available", color: "bg-red-400" },
+    { key: "not_available", label: "Not logged in", color: "bg-red-400" },
   ];
-
-  const currentStatus =
-    statusOptions.find((s) => s.key === status) || statusOptions[0];
 
   const allRateDropdownItems = [
     { label: "Rate", path: "/rate" },
@@ -90,6 +88,17 @@ export default function MobileNav({
         const list = Array.isArray(res.data) ? res.data : [];
         if (list[0]?.status) {
           setStatus(list[0].status);
+          if (list[0].effectiveStatus) {
+            setDisplayStatus(list[0].effectiveStatus);
+          } else {
+            setDisplayStatus(
+              list[0].status === "busy"
+                ? "busy"
+                : list[0].status === "not_available"
+                ? "not_logged_in"
+                : "available"
+            );
+          }
         }
       } catch (error) {
         console.error("Failed to fetch employee status (mobile)", error);
@@ -121,7 +130,9 @@ export default function MobileNav({
   const filteredOtherStatuses = (otherStatuses || [])
     .filter(
       (s) =>
-        s.mobile !== currentUserMobile && s.status && s.status !== "active"
+        s.mobile !== currentUserMobile &&
+        s.effectiveStatus &&
+        s.effectiveStatus !== "available"
     )
     .map((s) => ({
       ...s,
@@ -240,7 +251,14 @@ export default function MobileNav({
                             .slice(0, 2)
                         : "U"}
                       <span
-                        className={`absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-black ${currentStatus.color}`}
+                        className={`absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-black ${
+                          displayStatus === "available"
+                            ? "bg-emerald-400"
+                            : displayStatus === "busy" ||
+                              displayStatus === "away"
+                            ? "bg-amber-400"
+                            : "bg-red-400"
+                        }`}
                       />
                     </div>
                     <div className="flex flex-col">
@@ -248,7 +266,13 @@ export default function MobileNav({
                         {currentUserName || "Profile"}
                       </span>
                       <span className="text-xs text-white/60">
-                        Logged in user
+                        {displayStatus === "available"
+                          ? "Available"
+                          : displayStatus === "busy"
+                          ? "Busy"
+                          : displayStatus === "away"
+                          ? "Away"
+                          : "Not logged in"}
                       </span>
                     </div>
                   </div>
@@ -264,6 +288,13 @@ export default function MobileNav({
                           type="button"
                           onClick={async () => {
                             setStatus(s.key);
+                            setDisplayStatus(
+                              s.key === "busy"
+                                ? "busy"
+                                : s.key === "not_available"
+                                ? "not_logged_in"
+                                : "available"
+                            );
                             if (!currentUserMobile) return;
                             try {
                               await axiosInstance.post("/employee-status", {
@@ -303,11 +334,16 @@ export default function MobileNav({
                       <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
                         {filteredOtherStatuses.map((s) => {
                           const color =
-                            s.status === "busy"
+                            s.effectiveStatus === "busy" ||
+                            s.effectiveStatus === "away"
                               ? "bg-amber-400"
                               : "bg-red-400";
                           const label =
-                            s.status === "busy" ? "Busy" : "Not available";
+                            s.effectiveStatus === "busy"
+                              ? "Busy"
+                              : s.effectiveStatus === "away"
+                              ? "Away"
+                              : "Not logged in";
                           return (
                             <div
                               key={s.mobile}
@@ -318,8 +354,10 @@ export default function MobileNav({
                                   className={`h-2.5 w-2.5 rounded-full ${color}`}
                                 />
                                 <span>{s.displayName}</span>
+                                <span className="text-white/60 text-[11px]">
+                                  {label}
+                                </span>
                               </div>
-                              <span className="text-white/60">{label}</span>
                             </div>
                           );
                         })}

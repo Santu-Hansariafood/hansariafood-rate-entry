@@ -36,15 +36,27 @@ export async function GET(req) {
     let statuses = rawStatuses.map((s) => {
       const updated = s.updatedAt ? new Date(s.updatedAt).getTime() : 0;
       const isStale = !updated || now - updated > INACTIVE_MS;
-      const effectiveStatus = isStale ? "not_available" : s.status;
+
+      let effectiveStatus = "not_logged_in";
+
+      if (s.status === "not_available") {
+        effectiveStatus = "not_logged_in";
+      } else if (isStale) {
+        effectiveStatus = "away";
+      } else if (s.status === "active") {
+        effectiveStatus = "available";
+      } else if (s.status === "busy") {
+        effectiveStatus = "busy";
+      }
+
       return {
         ...s,
-        status: effectiveStatus,
+        effectiveStatus,
       };
     });
 
     if (nonActiveOnly) {
-      statuses = statuses.filter((s) => s.status !== "active");
+      statuses = statuses.filter((s) => s.effectiveStatus !== "available");
     }
 
     return NextResponse.json(statuses, { status: 200 });

@@ -16,6 +16,7 @@ import Loading from "@/components/common/Loading/Loading";
 import { toast } from "react-toastify";
 import useLandingCost from "@/hooks/LandingCost/useLandingCost";
 import { exportLandingCostToExcel } from "@/utils/landingCostExcel";
+import DownloadLandingCostPDF from "./DownloadLandingCostPDF";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
@@ -78,26 +79,28 @@ export default function LandingCost() {
                   Select category, buyer company, commodity, and location to see live landed cost with freight included.
                 </p>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs md:text-[11px] text-gray-600 dark:text-gray-300">
-                {selectedCommodity && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
-                    <IndianRupee className="w-3 h-3 text-emerald-500" />
-                    {selectedCommodity}
-                  </span>
-                )}
-                {selectedCompany && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
-                    <History className="w-3 h-3 text-sky-500" />
-                    {selectedCompany}
-                  </span>
-                )}
-                {selectedLocation && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
-                    <Clock className="w-3 h-3 text-amber-500" />
-                    {selectedLocation}
-                  </span>
-                )}
-              </div>
+              {selectedCompany || selectedCommodity || selectedLocation ? (
+                <div className="flex flex-wrap items-center justify-center gap-2 text-xs md:text-[11px] text-gray-600 dark:text-gray-300">
+                  {selectedCompany && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
+                      <History className="w-3 h-3 text-sky-500" />
+                      {selectedCompany}
+                    </span>
+                  )}
+                  {selectedCommodity && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
+                      <IndianRupee className="w-3 h-3 text-emerald-500" />
+                      {selectedCommodity}
+                    </span>
+                  )}
+                  {selectedLocation && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
+                      <Clock className="w-3 h-3 text-amber-500" />
+                      {selectedLocation}
+                    </span>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
         </motion.div>
@@ -196,14 +199,22 @@ export default function LandingCost() {
                     <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                       {rates.length} Rates Found
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleDownloadExcel}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download Excel
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDownloadExcel}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                        Excel
+                      </button>
+                      <DownloadLandingCostPDF
+                        tableRows={tableRows}
+                        selectedCompany={selectedCompany}
+                        selectedCommodity={selectedCommodity}
+                        selectedLocation={selectedLocation}
+                      />
+                    </div>
                   </div>
                 </div>
 
