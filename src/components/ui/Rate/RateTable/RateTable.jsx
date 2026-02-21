@@ -18,7 +18,12 @@ const RateTableModal = dynamic(
   { loading: () => <Loading /> }
 );
 
-export default function RateTable({ selectedCompany, onClose, commodity }) {
+export default function RateTable({
+  selectedCompany,
+  onClose,
+  selectedCompanyObj,
+  commodity,
+}) {
   const { mobile } = useUser();
   const [rates, setRates] = useState([]);
   const [allRates, setAllRates] = useState([]);
@@ -32,71 +37,69 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
   );
 
   const fetchRates = useCallback(async () => {
+    if (!selectedCompanyObj) {
+      toast.error("Company not found");
+      return;
+    }
+
     try {
-      const [{ data: companyData }, { data: locationData }] = await Promise.all(
-        [
-          axiosInstance.get("/managecompany?limit=1000"),
-          axiosInstance.get("/location?limit=1000"),
-        ]
+      const { data: allCompanyRates } = await axiosInstance.get(
+        `/rate?company=${encodeURIComponent(
+          selectedCompany.trim()
+        )}&commodity=all`
       );
 
-      const locationMap = {};
-      locationData.locations.forEach((loc) => {
-        locationMap[loc.name.trim().toUpperCase()] = loc.state;
+      const companyLocations = Array.isArray(selectedCompanyObj.location)
+        ? selectedCompanyObj.location
+        : [];
+      const companyCommodities = Array.isArray(selectedCompanyObj.commodities)
+        ? selectedCompanyObj.commodities
+        : [];
+      const companyMobiles = Array.isArray(selectedCompanyObj.mobileNumbers)
+        ? selectedCompanyObj.mobileNumbers
+        : [];
+
+      const rateMap = new Map();
+      (Array.isArray(allCompanyRates) ? allCompanyRates : []).forEach((r) => {
+        if (!r || !r.location || !r.commodity) return;
+        const key = `${r.location.trim()}|||${r.commodity}`;
+        rateMap.set(key, r);
       });
-
-      const company = companyData.companies.find(
-        (c) => c.name.trim() === selectedCompany.trim()
-      );
-
-      if (!company) {
-        toast.error("Company not found");
-        return;
-      }
 
       const commoditySet = new Set();
       const initialRates = [];
 
-      await Promise.all(
-        company.commodities.map(async (cmd) => {
-          const { data: cmdRates } = await axiosInstance.get(
-            `/rate?company=${encodeURIComponent(
-              selectedCompany.trim()
-            )}&commodity=${encodeURIComponent(cmd)}`
+      companyCommodities.forEach((cmd) => {
+        commoditySet.add(cmd);
+
+        companyLocations.forEach((loc) => {
+          const cleanLoc = loc.trim();
+          const key = `${cleanLoc}|||${cmd}`;
+          const matched = rateMap.get(key);
+
+          const mobileMatch = companyMobiles.find(
+            (entry) =>
+              entry.location.trim() === cleanLoc && entry.commodity === cmd
           );
 
-          commoditySet.add(cmd);
-
-          company.location.forEach((loc) => {
-            const cleanLoc = loc.trim();
-            const matched = cmdRates.find(
-              (r) => r.location.trim() === cleanLoc && r.commodity === cmd
-            );
-
-            const mobileMatch = company.mobileNumbers?.find(
-              (entry) =>
-                entry.location.trim() === cleanLoc && entry.commodity === cmd
-            );
-
-            initialRates.push({
-              location: cleanLoc,
-              state: locationMap[cleanLoc.toUpperCase()] || "Unknown",
-              commodity: cmd,
-              oldRate: matched?.oldRates?.at(-1) || "—",
-              newRate: matched?.newRate ?? "",
-              quantity: matched?.quantity ?? "",
-              payment: matched?.payment ?? "",
-              others: matched?.others ?? "",
-              isUpdated: !!matched?.newRate,
-              lastUpdated: matched?.lastUpdated
-                ? new Date(matched.lastUpdated)
-                : null,
-              primaryMobile: mobileMatch?.primaryMobile || "N/A",
-              contactPerson: mobileMatch?.contactPerson || "N/A",
-            });
+          initialRates.push({
+            location: cleanLoc,
+            state: selectedCompanyObj.state || "Unknown",
+            commodity: cmd,
+            oldRate: matched?.oldRates?.at(-1) || "—",
+            newRate: matched?.newRate ?? "",
+            quantity: matched?.quantity ?? "",
+            payment: matched?.payment ?? "",
+            others: matched?.others ?? "",
+            isUpdated: !!matched?.newRate,
+            lastUpdated: matched?.lastUpdated
+              ? new Date(matched.lastUpdated)
+              : null,
+            primaryMobile: mobileMatch?.primaryMobile || "N/A",
+            contactPerson: mobileMatch?.contactPerson || "N/A",
           });
-        })
-      );
+        });
+      });
 
       const sortedRates = initialRates.sort((a, b) => {
         if (!a.isUpdated && b.isUpdated) return -1;
@@ -113,7 +116,7 @@ export default function RateTable({ selectedCompany, onClose, commodity }) {
       toast.error("Failed to fetch rates");
       console.error("fetchRates error:", err);
     }
-  }, [selectedCompany]);
+  }, [selectedCompany, selectedCompanyObj]);
 
   useEffect(() => {
     fetchRates();
