@@ -40,30 +40,28 @@ export default function RateTable({
     if (!selectedCompany) return;
 
     try {
-      let companyObj = selectedCompanyObj;
+      const { data } = await axiosInstance.get("/managecompany", {
+        params: {
+          search: selectedCompany.trim(),
+          type: "buyer",
+        },
+      });
 
-      if (!companyObj) {
-        const { data } = await axiosInstance.get("/managecompany", {
-          params: {
-            search: selectedCompany.trim(),
-            type: "buyer",
-            limit: 50,
-          },
-        });
+      const list = Array.isArray(data?.companies) ? data.companies : [];
+      const normalizedName = selectedCompany.trim().toLowerCase();
 
-        const list = Array.isArray(data?.companies) ? data.companies : [];
-        companyObj =
-          list.find(
-            (c) =>
-              c.name &&
-              c.name.trim().toLowerCase() ===
-                selectedCompany.trim().toLowerCase()
-          ) || list[0];
+      let companies = list.filter(
+        (c) =>
+          c.name && c.name.trim().toLowerCase() === normalizedName
+      );
 
-        if (!companyObj) {
-          toast.error("Company not found");
-          return;
-        }
+      if (!companies.length && selectedCompanyObj) {
+        companies = [selectedCompanyObj];
+      }
+
+      if (!companies.length) {
+        toast.error("Company not found");
+        return;
       }
 
       const { data: allCompanyRates } = await axiosInstance.get(
@@ -71,16 +69,6 @@ export default function RateTable({
           selectedCompany.trim()
         )}&commodity=all`
       );
-
-      const companyLocations = Array.isArray(companyObj.location)
-        ? companyObj.location
-        : [];
-      const companyCommodities = Array.isArray(companyObj.commodities)
-        ? companyObj.commodities
-        : [];
-      const companyMobiles = Array.isArray(companyObj.mobileNumbers)
-        ? companyObj.mobileNumbers
-        : [];
 
       const rateMap = new Map();
       (Array.isArray(allCompanyRates) ? allCompanyRates : []).forEach((r) => {
@@ -92,47 +80,59 @@ export default function RateTable({
       const commoditySet = new Set();
       const initialRates = [];
 
-      companyCommodities.forEach((cmd) => {
-        commoditySet.add(cmd);
+      companies.forEach((company) => {
+        const companyLocations = Array.isArray(company.location)
+          ? company.location
+          : [];
+        const companyCommodities = Array.isArray(company.commodities)
+          ? company.commodities
+          : [];
+        const companyMobiles = Array.isArray(company.mobileNumbers)
+          ? company.mobileNumbers
+          : [];
 
-        companyLocations.forEach((loc) => {
-          const cleanLoc =
-            typeof loc === "string"
-              ? loc.trim()
-              : (loc?.name || "").toString().trim();
+        companyCommodities.forEach((cmd) => {
+          commoditySet.add(cmd);
 
-          if (!cleanLoc) return;
+          companyLocations.forEach((loc) => {
+            const cleanLoc =
+              typeof loc === "string"
+                ? loc.trim()
+                : (loc?.name || "").toString().trim();
 
-          const rowState =
-            typeof loc === "string"
-              ? companyObj.state || "Unknown"
-              : loc?.state || companyObj.state || "Unknown";
+            if (!cleanLoc) return;
 
-          const key = `${cleanLoc}|||${cmd}`;
-          const matched = rateMap.get(key);
+            const rowState =
+              typeof loc === "string"
+                ? company.state || "Unknown"
+                : loc?.state || company.state || "Unknown";
 
-          const mobileMatch = companyMobiles.find(
-            (entry) =>
-              entry.location &&
-              entry.location.trim() === cleanLoc &&
-              entry.commodity === cmd
-          );
+            const key = `${cleanLoc}|||${cmd}`;
+            const matched = rateMap.get(key);
 
-          initialRates.push({
-            location: cleanLoc,
-            state: rowState,
-            commodity: cmd,
-            oldRate: matched?.oldRates?.at(-1) || "—",
-            newRate: matched?.newRate ?? "",
-            quantity: matched?.quantity ?? "",
-            payment: matched?.payment ?? "",
-            others: matched?.others ?? "",
-            isUpdated: !!matched?.newRate,
-            lastUpdated: matched?.lastUpdated
-              ? new Date(matched.lastUpdated)
-              : null,
-            primaryMobile: mobileMatch?.primaryMobile || "N/A",
-            contactPerson: mobileMatch?.contactPerson || "N/A",
+            const mobileMatch = companyMobiles.find(
+              (entry) =>
+                entry.location &&
+                entry.location.trim() === cleanLoc &&
+                entry.commodity === cmd
+            );
+
+            initialRates.push({
+              location: cleanLoc,
+              state: rowState,
+              commodity: cmd,
+              oldRate: matched?.oldRates?.at(-1) || "—",
+              newRate: matched?.newRate ?? "",
+              quantity: matched?.quantity ?? "",
+              payment: matched?.payment ?? "",
+              others: matched?.others ?? "",
+              isUpdated: !!matched?.newRate,
+              lastUpdated: matched?.lastUpdated
+                ? new Date(matched.lastUpdated)
+                : null,
+              primaryMobile: mobileMatch?.primaryMobile || "N/A",
+              contactPerson: mobileMatch?.contactPerson || "N/A",
+            });
           });
         });
       });
