@@ -37,26 +37,49 @@ export default function RateTable({
   );
 
   const fetchRates = useCallback(async () => {
-    if (!selectedCompanyObj) {
-      toast.error("Company not found");
-      return;
-    }
+    if (!selectedCompany) return;
 
     try {
+      let companyObj = selectedCompanyObj;
+
+      if (!companyObj) {
+        const { data } = await axiosInstance.get("/managecompany", {
+          params: {
+            search: selectedCompany.trim(),
+            type: "buyer",
+            limit: 50,
+          },
+        });
+
+        const list = Array.isArray(data?.companies) ? data.companies : [];
+        companyObj =
+          list.find(
+            (c) =>
+              c.name &&
+              c.name.trim().toLowerCase() ===
+                selectedCompany.trim().toLowerCase()
+          ) || list[0];
+
+        if (!companyObj) {
+          toast.error("Company not found");
+          return;
+        }
+      }
+
       const { data: allCompanyRates } = await axiosInstance.get(
         `/rate?company=${encodeURIComponent(
           selectedCompany.trim()
         )}&commodity=all`
       );
 
-      const companyLocations = Array.isArray(selectedCompanyObj.location)
-        ? selectedCompanyObj.location
+      const companyLocations = Array.isArray(companyObj.location)
+        ? companyObj.location
         : [];
-      const companyCommodities = Array.isArray(selectedCompanyObj.commodities)
-        ? selectedCompanyObj.commodities
+      const companyCommodities = Array.isArray(companyObj.commodities)
+        ? companyObj.commodities
         : [];
-      const companyMobiles = Array.isArray(selectedCompanyObj.mobileNumbers)
-        ? selectedCompanyObj.mobileNumbers
+      const companyMobiles = Array.isArray(companyObj.mobileNumbers)
+        ? companyObj.mobileNumbers
         : [];
 
       const rateMap = new Map();
@@ -84,7 +107,7 @@ export default function RateTable({
 
           initialRates.push({
             location: cleanLoc,
-            state: selectedCompanyObj.state || "Unknown",
+            state: companyObj.state || "Unknown",
             commodity: cmd,
             oldRate: matched?.oldRates?.at(-1) || "—",
             newRate: matched?.newRate ?? "",
