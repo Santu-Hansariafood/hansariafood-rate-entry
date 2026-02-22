@@ -96,18 +96,31 @@ export default function RateTable({
         commoditySet.add(cmd);
 
         companyLocations.forEach((loc) => {
-          const cleanLoc = loc.trim();
+          const cleanLoc =
+            typeof loc === "string"
+              ? loc.trim()
+              : (loc?.name || "").toString().trim();
+
+          if (!cleanLoc) return;
+
+          const rowState =
+            typeof loc === "string"
+              ? companyObj.state || "Unknown"
+              : loc?.state || companyObj.state || "Unknown";
+
           const key = `${cleanLoc}|||${cmd}`;
           const matched = rateMap.get(key);
 
           const mobileMatch = companyMobiles.find(
             (entry) =>
-              entry.location.trim() === cleanLoc && entry.commodity === cmd
+              entry.location &&
+              entry.location.trim() === cleanLoc &&
+              entry.commodity === cmd
           );
 
           initialRates.push({
             location: cleanLoc,
-            state: companyObj.state || "Unknown",
+            state: rowState,
             commodity: cmd,
             oldRate: matched?.oldRates?.at(-1) || "—",
             newRate: matched?.newRate ?? "",
