@@ -13,10 +13,49 @@ import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 import { useUser } from "@/context/UserContext";
 
+let locationStateMapCache = null;
+let locationStateMapPromise = null;
+
 const RateTableModal = dynamic(
   () => import("./RateTableModal/RateTableModal"),
   { loading: () => <Loading /> }
 );
+
+const getLocationStateMap = async () => {
+  if (locationStateMapCache) return locationStateMapCache;
+  if (!locationStateMapPromise) {
+    locationStateMapPromise = (async () => {
+      const all = [];
+      let page = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await axiosInstance.get(`/location?page=${page}`);
+        const locData = Array.isArray(res.data)
+          ? res.data
+          : res.data.locations || [];
+
+        if (locData.length === 0) {
+          hasMore = false;
+        } else {
+          all.push(...locData);
+          page += 1;
+        }
+      }
+
+      const map = new Map();
+      all.forEach((loc) => {
+        if (!loc || !loc.name) return;
+        map.set(loc.name.toString().trim(), loc.state || "Unknown");
+      });
+
+      locationStateMapCache = map;
+      return map;
+    })();
+  }
+
+  return locationStateMapPromise;
+};
 
 export default function RateTable({
   selectedCompany,
@@ -40,14 +79,25 @@ export default function RateTable({
     if (!selectedCompany) return;
 
     try {
-      const { data } = await axiosInstance.get("/managecompany", {
-        params: {
-          search: selectedCompany.trim(),
-          type: "buyer",
-        },
-      });
+      const companyName = selectedCompany.trim();
+      const rateUrl = `/rate?company=${encodeURIComponent(
+        companyName
+      )}&commodity=all`;
 
-      const list = Array.isArray(data?.companies) ? data.companies : [];
+      const [companyRes, locationStateMap, rateRes] = await Promise.all([
+        axiosInstance.get("/managecompany", {
+          params: {
+            search: companyName,
+            type: "buyer",
+          },
+        }),
+        getLocationStateMap(),
+        axiosInstance.get(rateUrl),
+      ]);
+
+      const list = Array.isArray(companyRes.data?.companies)
+        ? companyRes.data.companies
+        : [];
       const normalizedName = selectedCompany.trim().toLowerCase();
 
       let companies = list.filter(
@@ -64,43 +114,7 @@ export default function RateTable({
         return;
       }
 
-      const loadAllLocations = async () => {
-        const all = [];
-        let page = 1;
-        let hasMore = true;
-
-        while (hasMore) {
-          const res = await axiosInstance.get(`/location?page=${page}`);
-          const locData = Array.isArray(res.data)
-            ? res.data
-            : res.data.locations || [];
-
-          if (locData.length === 0) {
-            hasMore = false;
-          } else {
-            all.push(...locData);
-            page += 1;
-          }
-        }
-
-        return all;
-      };
-
-      const allLocations = await loadAllLocations();
-      const locationStateMap = new Map();
-      allLocations.forEach((loc) => {
-        if (!loc || !loc.name) return;
-        locationStateMap.set(
-          loc.name.toString().trim(),
-          loc.state || "Unknown"
-        );
-      });
-
-      const { data: allCompanyRates } = await axiosInstance.get(
-        `/rate?company=${encodeURIComponent(
-          selectedCompany.trim()
-        )}&commodity=all`
-      );
+      const allCompanyRates = rateRes.data;
 
       const rateMap = new Map();
       (Array.isArray(allCompanyRates) ? allCompanyRates : []).forEach((r) => {
