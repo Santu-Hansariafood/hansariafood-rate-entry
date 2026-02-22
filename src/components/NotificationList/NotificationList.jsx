@@ -72,14 +72,14 @@ export default function NotificationList({ notifications = [] }) {
       return;
 
     filteredNotifications.forEach((n) => {
-      // Use lastUpdated and updateTime for uniqueId to ensure uniqueness
-      const uniqueId = `${n.company}-${n.location}-${n.lastUpdated || n.newRateDate}-${n.updateTime}-${n.newRate}`;
+      const companyName = n.company || n.companyName || "Unknown Company";
+      const uniqueId = `${companyName}-${n.location}-${n.lastUpdated || n.newRateDate || n.date}-${n.updateTime || n.time}-${n.newRate || n.rate}`;
 
       if (!lastShownRef.current.includes(uniqueId)) {
         lastShownRef.current.push(uniqueId);
 
-        const title = `${n.company} (${n.location})`;
-        const body = `New rate for ${n.commodity}: ₹${n.newRate}`;
+        const title = `${companyName} (${n.location})`;
+        const body = `New rate for ${n.commodity}: ₹${n.newRate || n.rate}`;
         const icon = "/favicon.ico";
 
         try {
@@ -170,7 +170,11 @@ export default function NotificationList({ notifications = [] }) {
               const Icon = isRead ? CheckCircle : Info;
 
               const datePart = new Date(
-                n.lastUpdated || n.newRateDate || n.updatedAt || Date.now()
+                n.lastUpdated ||
+                  n.newRateDate ||
+                  n.updatedAt ||
+                  n.date ||
+                  Date.now()
               ).toLocaleDateString("en-IN");
 
               const time = `${datePart}, ${n.updateTime || "N/A"}`;
@@ -179,7 +183,9 @@ export default function NotificationList({ notifications = [] }) {
                 <div
                   key={
                     n.id ||
-                    `${n.company}-${n.location}-${n.lastUpdated || n.newRateDate || "no-date"}-${index}`
+                    `${
+                      n.company || n.companyName || "Unknown Company"
+                    }-${n.location}-${n.lastUpdated || n.newRateDate || n.date || "no-date"}-${index}`
                   }
                   className={`group p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-1 ${
                     isRead ? "items-end text-right" : "items-start text-left"
@@ -196,7 +202,7 @@ export default function NotificationList({ notifications = [] }) {
                     <div>
                       <div className="font-medium">
                         <span className="text-green-600 dark:text-green-400">
-                          {n.company}
+                          {n.company || n.companyName || "Unknown Company"}
                         </span>{" "}
                         (
                         <span className="text-yellow-600 dark:text-yellow-400">
@@ -206,10 +212,10 @@ export default function NotificationList({ notifications = [] }) {
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-blue-600 dark:text-blue-400">
-                          {capitalizeFirst(n.commodity || "N/A")}
+                          {capitalizeFirst(n.commodity || n.type || "N/A")}
                         </span>
                         <span className="font-semibold text-red-500 dark:text-red-400">
-                          ₹{n.newRate}
+                          ₹{n.newRate || n.rate}
                         </span>
                         {n.quantity && (
                           <span className="text-orange-500 dark:text-orange-400 font-medium">
