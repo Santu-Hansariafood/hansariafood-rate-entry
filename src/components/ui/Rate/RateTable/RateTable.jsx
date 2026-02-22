@@ -64,6 +64,38 @@ export default function RateTable({
         return;
       }
 
+      const loadAllLocations = async () => {
+        const all = [];
+        let page = 1;
+        let hasMore = true;
+
+        while (hasMore) {
+          const res = await axiosInstance.get(`/location?page=${page}`);
+          const locData = Array.isArray(res.data)
+            ? res.data
+            : res.data.locations || [];
+
+          if (locData.length === 0) {
+            hasMore = false;
+          } else {
+            all.push(...locData);
+            page += 1;
+          }
+        }
+
+        return all;
+      };
+
+      const allLocations = await loadAllLocations();
+      const locationStateMap = new Map();
+      allLocations.forEach((loc) => {
+        if (!loc || !loc.name) return;
+        locationStateMap.set(
+          loc.name.toString().trim(),
+          loc.state || "Unknown"
+        );
+      });
+
       const { data: allCompanyRates } = await axiosInstance.get(
         `/rate?company=${encodeURIComponent(
           selectedCompany.trim()
@@ -102,10 +134,12 @@ export default function RateTable({
 
             if (!cleanLoc) return;
 
+            const mappedState = locationStateMap.get(cleanLoc);
             const rowState =
-              typeof loc === "string"
+              mappedState ||
+              (typeof loc === "string"
                 ? company.state || "Unknown"
-                : loc?.state || company.state || "Unknown";
+                : loc?.state || company.state || "Unknown");
 
             const key = `${cleanLoc}|||${cmd}`;
             const matched = rateMap.get(key);
@@ -138,9 +172,15 @@ export default function RateTable({
       });
 
       const sortedRates = initialRates.sort((a, b) => {
-        if (!a.isUpdated && b.isUpdated) return -1;
-        if (a.isUpdated && !b.isUpdated) return 1;
-        return (b.lastUpdated || 0) - (a.lastUpdated || 0);
+        const stateCompare = (a.state || "").localeCompare(b.state || "");
+        if (stateCompare !== 0) return stateCompare;
+
+        const locationCompare = (a.location || "").localeCompare(
+          b.location || ""
+        );
+        if (locationCompare !== 0) return locationCompare;
+
+        return (a.commodity || "").localeCompare(b.commodity || "");
       });
 
       startTransition(() => {
