@@ -51,7 +51,6 @@ export default function DesktopNav({
   const [openCompanyDropdown, setOpenCompanyDropdown] = useState(false);
   const [openRateDropdown, setOpenRateDropdown] = useState(false);
   const [openProfileDropdown, setOpenProfileDropdown] = useState(false);
-  const [status, setStatus] = useState("active");
   const [displayStatus, setDisplayStatus] = useState("available");
   const [otherStatuses, setOtherStatuses] = useState([]);
   const lastHeartbeatRef = useRef(0);
@@ -72,35 +71,36 @@ export default function DesktopNav({
     };
   }, []);
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      if (!currentUserMobile) return;
+  const fetchCurrentStatus = useCallback(
+    async (mobile) => {
+      if (!mobile) return;
       try {
         const res = await axiosInstance.get(
-          `/employee-status?mobile=${encodeURIComponent(currentUserMobile)}`
+          `/employee-status?mobile=${encodeURIComponent(mobile)}`
         );
         const list = Array.isArray(res.data) ? res.data : [];
-        if (list[0]?.status) {
-          setStatus(list[0].status);
-          if (list[0].effectiveStatus) {
-            setDisplayStatus(list[0].effectiveStatus);
-          } else {
-            setDisplayStatus(
-              list[0].status === "busy"
-                ? "busy"
-                : list[0].status === "not_available"
-                ? "not_logged_in"
-                : "available"
-            );
-          }
+        if (list[0]?.effectiveStatus) {
+          setDisplayStatus(list[0].effectiveStatus);
+        } else if (list[0]?.status) {
+          setDisplayStatus(
+            list[0].status === "busy"
+              ? "busy"
+              : list[0].status === "not_available"
+              ? "not_logged_in"
+              : "available"
+          );
         }
       } catch (error) {
         console.error("Failed to fetch employee status", error);
       }
-    };
+    },
+    []
+  );
 
-    fetchStatus();
-  }, [currentUserMobile]);
+  useEffect(() => {
+    if (!currentUserMobile) return;
+    fetchCurrentStatus(currentUserMobile);
+  }, [currentUserMobile, fetchCurrentStatus]);
 
   const loadOtherStatuses = useCallback(
     async (mobile) => {
@@ -126,6 +126,19 @@ export default function DesktopNav({
 
   useEffect(() => {
     if (!currentUserMobile) return;
+
+    const intervalId = setInterval(() => {
+      fetchCurrentStatus(currentUserMobile);
+      loadOtherStatuses(currentUserMobile);
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [currentUserMobile, fetchCurrentStatus, loadOtherStatuses]);
+
+  useEffect(() => {
+    if (!currentUserMobile) return;
     const handleActivity = () => {
       if (document.visibilityState !== "visible") return;
       const now = Date.now();
@@ -134,7 +147,7 @@ export default function DesktopNav({
       axiosInstance
         .post("/employee-status", {
           mobile: currentUserMobile,
-          status,
+          status: "active",
           name: currentUserName,
         })
         .catch((error) => {
@@ -151,7 +164,7 @@ export default function DesktopNav({
       window.removeEventListener("keydown", handleActivity);
       window.removeEventListener("click", handleActivity);
     };
-  }, [currentUserMobile, currentUserName, status]);
+  }, [currentUserMobile, currentUserName]);
 
   const rateDropdownItems = useMemo(
     () => filterByMobile(RATE_DROPDOWN, currentUserMobile, currentUserPages),
@@ -195,14 +208,6 @@ export default function DesktopNav({
     companyDropdownItems.find(
       (i) => activeLink && activeLink.startsWith(i.path)
     )?.label || "Company";
-
-  const statusOptions = [
-    { key: "active", label: "Available", color: "bg-emerald-400" },
-    { key: "busy", label: "Busy", color: "bg-amber-400" },
-    { key: "not_available", label: "Not logged in", color: "bg-red-400" },
-  ];
-
-  const currentStatus = statusOptions.find((s) => s.key === status) || statusOptions[0];
 
   const filteredOtherStatuses = useMemo(() => {
     if (!otherStatuses || !Array.isArray(otherStatuses)) return [];
@@ -461,55 +466,6 @@ export default function DesktopNav({
                         ? "Away"
                         : "Not logged in"}
                     </span>
-                  </div>
-                </div>
-
-                <div className="px-4 py-3 border-b border-white/10">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-white/60 mb-2">
-                    Status
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {statusOptions.map((s) => (
-                      <button
-                        key={s.key}
-                        type="button"
-                        onClick={async () => {
-                          setStatus(s.key);
-                          setDisplayStatus(
-                            s.key === "busy"
-                              ? "busy"
-                              : s.key === "not_available"
-                              ? "not_logged_in"
-                              : "available"
-                          );
-                          if (!currentUserMobile) return;
-                          try {
-                            await axiosInstance.post("/employee-status", {
-                              mobile: currentUserMobile,
-                              status: s.key,
-                              name: currentUserName,
-                            });
-                            await loadOtherStatuses(currentUserMobile);
-                          } catch (error) {
-                            console.error(
-                              "Failed to update employee status",
-                              error
-                            );
-                          }
-                        }}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition
-                          ${
-                            status === s.key
-                              ? "bg-white/15 text-white"
-                              : "bg-white/5 text-white/70 hover:bg-white/10"
-                          }`}
-                      >
-                        <span
-                          className={`h-2 w-2 rounded-full ${s.color}`}
-                        />
-                        <span>{s.label}</span>
-                      </button>
-                    ))}
                   </div>
                 </div>
 
