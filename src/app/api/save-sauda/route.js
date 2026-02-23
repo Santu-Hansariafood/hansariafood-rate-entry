@@ -54,16 +54,6 @@ export async function POST(req) {
     }
 
     const normalizedEntries = {};
-    const existingSaudaNumbers = new Set();
-    if (existingEntry) {
-      for (const [, entries] of existingEntry.saudaEntries.entries()) {
-        for (const entry of entries) {
-          if (entry.saudaNo) {
-            existingSaudaNumbers.add(entry.saudaNo);
-          }
-        }
-      }
-    }
 
     for (const [key, list] of Object.entries(saudaEntries)) {
       if (!Array.isArray(list)) continue;
@@ -71,22 +61,6 @@ export async function POST(req) {
       const processedEntries = [];
       for (const entry of list) {
         let saudaNumber = String(entry.saudaNo || "").trim();
-
-        if (!saudaNumber && existingEntry) {
-          const existingList = existingEntry.saudaEntries.get(key) || [];
-
-          const matchingEntry = existingList.find(
-            (existingEntry) =>
-              existingEntry.commodity === (entry.commodity || "").trim() &&
-              existingEntry.sellerCompany ===
-                (entry.sellerCompany || "").trim() &&
-              Math.abs(existingEntry.tons - (Number(entry.tons) || 0)) < 0.001
-          );
-
-          if (matchingEntry && matchingEntry.saudaNo) {
-            saudaNumber = matchingEntry.saudaNo;
-          }
-        }
 
         if (!saudaNumber) {
           saudaNumber = await SaudaEntry.getNextSaudaNumber(date);

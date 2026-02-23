@@ -109,14 +109,14 @@ export async function GET(req) {
           (a, b) => toTime(b?.date) - toTime(a?.date)
         );
         const today = history.find((h) => h.date === selectedDate);
-        const previous = history.find((h) => h.date < selectedDate);
 
-        const baseRate =
-          (today?.finalRate != null ? today.finalRate : undefined) ??
-          (previous?.finalRate != null ? previous.finalRate : 0) ??
-          0;
-        const todayFreight = today?.freightRate || 0;
-        const todayDestination = today?.destinationLocation || "";
+        if (!today) {
+          return null;
+        }
+
+        const baseRate = Number(today.finalRate) || 0;
+        const todayFreight = Number(today.freightRate) || 0;
+        const todayDestination = today.destinationLocation || "";
 
         const shouldAddFreight =
           destination &&
@@ -130,16 +130,17 @@ export async function GET(req) {
           companyName: companyMap.get(String(doc.companyId)),
           location: doc.location,
           commodity: doc.commodity,
-          oldRate: today?.oldRate ?? previous?.finalRate ?? 0,
-          tempRates: today?.tempRates || [],
-          newRate: today?.finalRate || "",
-          others: today?.others || "",
-          destinationLocation: today?.destinationLocation || "",
-          freightRate: today?.freightRate || 0,
+          oldRate: Number(today.oldRate) || 0,
+          tempRates: Array.isArray(today.tempRates) ? today.tempRates : [],
+          newRate: today.finalRate || "",
+          others: today.others || "",
+          destinationLocation: today.destinationLocation || "",
+          freightRate: todayFreight,
           date: selectedDate,
           landedRate,
         };
-      });
+      })
+      .filter(Boolean);
 
     return NextResponse.json(results, { status: 200 });
   } catch (error) {
