@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, X } from "lucide-react";
@@ -26,16 +26,10 @@ export default function MobileNav({
 }) {
   const [rateDropdownOpen, setRateDropdownOpen] = useState(false);
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
-  const [status, setStatus] = useState("active");
   const [displayStatus, setDisplayStatus] = useState("available");
   const [otherStatuses, setOtherStatuses] = useState([]);
+  const lastHeartbeatRef = useRef(0);
   const isAdmin = ADMINS.includes(currentUserMobile);
-
-  const statusOptions = [
-    { key: "active", label: "Available", color: "bg-emerald-400" },
-    { key: "busy", label: "Busy", color: "bg-amber-400" },
-    { key: "not_available", label: "Not logged in", color: "bg-red-400" },
-  ];
 
   const allRateDropdownItems = [
     { label: "Rate", path: "/rate" },
@@ -86,19 +80,16 @@ export default function MobileNav({
           `/employee-status?mobile=${encodeURIComponent(currentUserMobile)}`
         );
         const list = Array.isArray(res.data) ? res.data : [];
-        if (list[0]?.status) {
-          setStatus(list[0].status);
-          if (list[0].effectiveStatus) {
-            setDisplayStatus(list[0].effectiveStatus);
-          } else {
-            setDisplayStatus(
-              list[0].status === "busy"
-                ? "busy"
-                : list[0].status === "not_available"
-                ? "not_logged_in"
-                : "available"
-            );
-          }
+        if (list[0]?.effectiveStatus) {
+          setDisplayStatus(list[0].effectiveStatus);
+        } else if (list[0]?.status) {
+          setDisplayStatus(
+            list[0].status === "busy"
+              ? "busy"
+              : list[0].status === "not_available"
+              ? "not_logged_in"
+              : "available"
+          );
         }
       } catch (error) {
         console.error("Failed to fetch employee status (mobile)", error);
@@ -125,6 +116,72 @@ export default function MobileNav({
   useEffect(() => {
     if (!currentUserMobile) return;
     loadOtherStatuses(currentUserMobile);
+  }, [currentUserMobile]);
+
+  useEffect(() => {
+    if (!currentUserMobile) return;
+
+    const handleActivity = () => {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - lastHeartbeatRef.current < 5 * 60 * 1000) return;
+      lastHeartbeatRef.current = now;
+      axiosInstance
+        .post("/employee-status", {
+          mobile: currentUserMobile,
+          status: "active",
+          name: currentUserName,
+        })
+        .catch((error) => {
+          console.error("Failed to send activity heartbeat (mobile)", error);
+        });
+    };
+
+    window.addEventListener("touchstart", handleActivity);
+    window.addEventListener("touchmove", handleActivity);
+    window.addEventListener("scroll", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+
+    return () => {
+      window.removeEventListener("touchstart", handleActivity);
+      window.removeEventListener("touchmove", handleActivity);
+      window.removeEventListener("scroll", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+    };
+  }, [currentUserMobile, currentUserName]);
+
+  useEffect(() => {
+    if (!currentUserMobile) return;
+
+    const intervalId = setInterval(() => {
+      (async () => {
+        try {
+          const res = await axiosInstance.get(
+            `/employee-status?mobile=${encodeURIComponent(currentUserMobile)}`
+          );
+          const list = Array.isArray(res.data) ? res.data : [];
+          if (list[0]?.effectiveStatus) {
+            setDisplayStatus(list[0].effectiveStatus);
+          } else if (list[0]?.status) {
+            setDisplayStatus(
+              list[0].status === "busy"
+                ? "busy"
+                : list[0].status === "not_available"
+                ? "not_logged_in"
+                : "available"
+            );
+          }
+        } catch (error) {
+          console.error("Failed to refresh employee status (mobile)", error);
+        }
+        try {
+          await loadOtherStatuses(currentUserMobile);
+        } catch {
+        }
+      })();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(intervalId);
   }, [currentUserMobile]);
 
   const filteredOtherStatuses = (otherStatuses || [])
@@ -274,55 +331,6 @@ export default function MobileNav({
                           ? "Away"
                           : "Not logged in"}
                       </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 px-4">
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-white/60 mb-2">
-                      Status
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {statusOptions.map((s) => (
-                        <button
-                          key={s.key}
-                          type="button"
-                          onClick={async () => {
-                            setStatus(s.key);
-                            setDisplayStatus(
-                              s.key === "busy"
-                                ? "busy"
-                                : s.key === "not_available"
-                                ? "not_logged_in"
-                                : "available"
-                            );
-                            if (!currentUserMobile) return;
-                            try {
-                              await axiosInstance.post("/employee-status", {
-                                mobile: currentUserMobile,
-                                status: s.key,
-                                name: currentUserName,
-                              });
-                              await loadOtherStatuses(currentUserMobile);
-                            } catch (error) {
-                              console.error(
-                                "Failed to update employee status (mobile)",
-                                error
-                              );
-                            }
-                          }}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition
-                          ${
-                            status === s.key
-                              ? "bg-white/15 text-white"
-                              : "bg-white/5 text-white/70 hover:bg-white/10"
-                          }`}
-                        >
-                          <span
-                            className={`h-2 w-2 rounded-full ${s.color}`}
-                          />
-                          <span>{s.label}</span>
-                        </button>
-                      ))}
                     </div>
                   </div>
 
