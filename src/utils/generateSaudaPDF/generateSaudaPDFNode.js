@@ -64,6 +64,8 @@ export async function generateSaudaPDFNode({
 
   const body = [];
   let totalTons = 0;
+  const formatSaudaNo = (value) =>
+    value ? value.toString().slice(-4) : "";
 
   Object.entries(saudaEntries).forEach(([key, list]) => {
     const [unit, com] = key.split("-");
@@ -98,7 +100,7 @@ export async function generateSaudaPDFNode({
         com,
         `${rate}`,
         `${tons} Tons\n${detailsLine}`,
-        row.saudaNo || "",
+        formatSaudaNo(row.saudaNo),
       ]);
     });
   });

@@ -58,7 +58,17 @@ const usePreviousSauda = () => {
       });
 
       const withSerial = flatEntries
-        .sort((a, b) => Number(a.saudaNo) - Number(b.saudaNo))
+        .sort((a, b) => {
+          const numA = parseInt(
+            (a.saudaNo ? a.saudaNo.toString().slice(-4) : "0"),
+            10
+          );
+          const numB = parseInt(
+            (b.saudaNo ? b.saudaNo.toString().slice(-4) : "0"),
+            10
+          );
+          return numA - numB;
+        })
         .map((entry, index) => ({
           sl: index + 1,
           ...entry,

@@ -32,6 +32,9 @@ const PreviousSauda = () => {
     fetchStatuses,
   } = usePreviousSauda();
 
+  const formatSaudaNo = (value) =>
+    value ? value.toString().slice(-4) : "";
+
   const handleMarkDone = useCallback(
     async (item) => {
       try {
@@ -67,6 +70,7 @@ const PreviousSauda = () => {
 
       return {
         ...item,
+        saudaNo: formatSaudaNo(item.saudaNo),
         sl: index + 1,
         consigneeName: item.consignee?.split("-")[0] || "",
         statusText: currentStatus,

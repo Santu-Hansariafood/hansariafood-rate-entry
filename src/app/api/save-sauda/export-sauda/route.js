@@ -17,6 +17,8 @@ export async function GET(req) {
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sauda Entries");
+    const formatSaudaNo = (value) =>
+      value ? value.toString().slice(-4) : "";
 
     worksheet.columns = [
       { header: "Date", key: "date", width: 15 },
@@ -43,7 +45,7 @@ export async function GET(req) {
             unit: item.unit,
             tons: item.tons,
             finalRate: item.finalRate,
-            saudaNo: item.saudaNo,
+            saudaNo: formatSaudaNo(item.saudaNo),
             description: item.description,
           });
         });

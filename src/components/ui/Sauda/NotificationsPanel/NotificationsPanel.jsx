@@ -12,10 +12,19 @@ const NotificationsPanel = ({ onClose }) => {
   const { loading, searchQuery, setSearchQuery, filteredNotifications } =
     useSaudaNotifications();
 
+  const formatSaudaNo = (value) =>
+    value ? value.toString().slice(-4) : "";
+
   const sortedNotifications = useMemo(() => {
     return [...filteredNotifications].sort((a, b) => {
-      const saudaA = Number(a.saudaNo) || 0;
-      const saudaB = Number(b.saudaNo) || 0;
+      const saudaA = parseInt(
+        (a.saudaNo ? a.saudaNo.toString().slice(-4) : "0"),
+        10
+      );
+      const saudaB = parseInt(
+        (b.saudaNo ? b.saudaNo.toString().slice(-4) : "0"),
+        10
+      );
       return saudaB - saudaA;
     });
   }, [filteredNotifications]);
@@ -30,7 +39,7 @@ const NotificationsPanel = ({ onClose }) => {
       `*Commodity:* ${item.commodity}`,
       `*Tons:* ${item.tons}`,
       `*Rate:* ₹${item.rate ?? "N/A"}`,
-      item.saudaNo ? `*Sauda No:* ${item.saudaNo}` : null,
+      item.saudaNo ? `*Sauda No:* ${formatSaudaNo(item.saudaNo)}` : null,
       item.buyerName ? `*Buyer:* ${item.buyerName}` : null,
       item.sellerCompany ? `*Seller Company:* ${item.sellerCompany}` : null,
       item.payment !== null &&
@@ -171,7 +180,9 @@ const NotificationsPanel = ({ onClose }) => {
                   {item.sellerCompany && (
                     <div>🏢 Company: {item.sellerCompany}</div>
                   )}
-                  {item.saudaNo && <div># Sauda No: {item.saudaNo}</div>}
+                  {item.saudaNo && (
+                    <div># Sauda No: {formatSaudaNo(item.saudaNo)}</div>
+                  )}
                   {item.others && <div>✍️ Notes: {item.others}</div>}
                 </div>
               </li>

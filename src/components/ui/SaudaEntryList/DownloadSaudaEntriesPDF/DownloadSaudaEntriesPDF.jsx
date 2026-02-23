@@ -68,6 +68,8 @@ const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
     }
 
     const tableBody = [];
+    const formatSaudaNo = (value) =>
+      value ? value.toString().slice(-4) : "-";
 
     saudaGroups.forEach(([mobile, data]) => {
       const userName = mobileToName[mobile] || mobile;
@@ -88,7 +90,7 @@ const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
       data.saudas.forEach((sauda) => {
         tableBody.push([
           sauda.company,
-          sauda.saudaNo || "-",
+          formatSaudaNo(sauda.saudaNo),
           sauda.commodity,
           `${sauda.tons} Tons`,
           `Rs. ${sauda.finalRate}`,

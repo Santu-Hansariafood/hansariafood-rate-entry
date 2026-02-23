@@ -14,6 +14,8 @@ export const generateSaudaEmailTemplate = ({
   let summaryBlock = "";
 
   const entriesList = [];
+  const formatSaudaNo = (value) =>
+    value ? value.toString().slice(-4) : "-";
   
   if (saudaEntries instanceof Map) {
       for (const [key, list] of saudaEntries.entries()) {
@@ -50,7 +52,7 @@ export const generateSaudaEmailTemplate = ({
            <p style="margin: 2px 0;"><strong>Commodity:</strong> ${entry.commodity || "-"}</p>
            <p style="margin: 2px 0;"><strong>Tons:</strong> ${tons}</p>
            <p style="margin: 2px 0;"><strong>Rate:</strong> ₹${rate}</p>
-           <p style="margin: 2px 0;"><strong>Sauda No:</strong> ${entry.saudaNo || "-"}</p>
+           <p style="margin: 2px 0;"><strong>Sauda No:</strong> ${formatSaudaNo(entry.saudaNo)}</p>
            <p style="margin: 2px 0;"><strong>Buyer:</strong> ${company || "-"}</p>
            <p style="margin: 2px 0;"><strong>Seller Company:</strong> ${entry.sellerCompany || "-"}</p>
            <p style="margin: 2px 0;"><strong>Delivery Date:</strong> ${entry.deliveryDate || "-"}</p>
@@ -71,7 +73,7 @@ export const generateSaudaEmailTemplate = ({
         <td style="padding: 8px;">${entry.sellerName || "-"}</td>
         <td style="padding: 8px;">${entry.deliveryDate || "-"}</td>
         <td style="padding: 8px;">${entry.others || "-"}</td>
-        <td style="padding: 8px; text-align: center; color: #dc2626;">${entry.saudaNo || "-"}</td>
+        <td style="padding: 8px; text-align: center; color: #dc2626;">${formatSaudaNo(entry.saudaNo)}</td>
       </tr>
     `;
   });

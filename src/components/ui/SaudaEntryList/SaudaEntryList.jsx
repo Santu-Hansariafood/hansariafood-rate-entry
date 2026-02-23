@@ -19,6 +19,9 @@ const SaudaEntryList = () => {
   const [expandedMobile, setExpandedMobile] = useState(null);
   const today = useToday();
 
+  const formatSaudaNo = (value) =>
+    value ? value.toString().slice(-4) : "";
+
   const toggleExpand = (mobile) =>
     setExpandedMobile((prev) => (prev === mobile ? null : mobile));
 
@@ -132,7 +135,7 @@ const SaudaEntryList = () => {
                                   {sauda.company}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  Sauda #{sauda.saudaNo}
+                                  Sauda #{formatSaudaNo(sauda.saudaNo)}
                                 </div>
                               </div>
                               <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300 mt-2">
