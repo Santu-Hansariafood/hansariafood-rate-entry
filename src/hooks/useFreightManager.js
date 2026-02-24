@@ -117,7 +117,6 @@ export const useFreightManager = () => {
     try {
       const response = await axiosInstance.get("/freight", {
         params: {
-          commodity: selectedCommodity,
           page: pagination.page,
           limit: pagination.limit,
           search: searchTerm,
@@ -131,7 +130,7 @@ export const useFreightManager = () => {
     } catch (error) {
       console.error("Error fetching freights:", error);
     }
-  }, [selectedCommodity, pagination.page, pagination.limit, searchTerm, selectedCreator]);
+  }, [pagination.page, pagination.limit, searchTerm, selectedCreator]);
 
   useEffect(() => {
     if (session?.user) {
