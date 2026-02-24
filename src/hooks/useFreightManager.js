@@ -118,6 +118,7 @@ export const useFreightManager = () => {
       const response = await axiosInstance.get("/freight", {
         params: {
           commodity: selectedCommodity,
+          commodity: selectedCommodity,
           page: pagination.page,
           limit: pagination.limit,
           search: searchTerm,
@@ -129,7 +130,7 @@ export const useFreightManager = () => {
         setPagination(response.data.pagination);
       }
     } catch (error) {
-      console.error("Error fetching freights:", error);
+      console.error("Error feselectedCommodity, tching freights:", error);
     }
   }, [selectedCommodity, pagination.page, pagination.limit, searchTerm, selectedCreator]);
 
