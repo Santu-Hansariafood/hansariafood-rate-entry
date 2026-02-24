@@ -109,9 +109,7 @@ export default function MobileNav({
     if (!mobile) return;
     try {
       const res = await axiosInstance.get(
-        `/employee-status?excludeMobile=${encodeURIComponent(
-          mobile
-        )}&nonActiveOnly=true`
+        `/employee-status?excludeMobile=${encodeURIComponent(mobile)}`
       );
       setOtherStatuses(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
@@ -191,12 +189,7 @@ export default function MobileNav({
   }, [currentUserMobile]);
 
   const filteredOtherStatuses = (otherStatuses || [])
-    .filter(
-      (s) =>
-        s.mobile !== currentUserMobile &&
-        s.effectiveStatus &&
-        s.effectiveStatus !== "available"
-    )
+    .filter((s) => s.mobile !== currentUserMobile && s.effectiveStatus)
     .map((s) => ({
       ...s,
       displayName: s.name || s.mobile,
@@ -353,8 +346,10 @@ export default function MobileNav({
                       <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
                         {filteredOtherStatuses.map((s) => {
                           const color =
-                            s.effectiveStatus === "busy" ||
-                            s.effectiveStatus === "away"
+                            s.effectiveStatus === "available"
+                              ? "bg-emerald-400"
+                              : s.effectiveStatus === "busy" ||
+                                s.effectiveStatus === "away"
                               ? "bg-amber-400"
                               : "bg-red-400";
                           const label =
@@ -374,8 +369,9 @@ export default function MobileNav({
                                 />
                                 <span
                                   title={
-                                    s.onlineLabel
-                                      ? `Logged in: ${s.onlineLabel}`
+                                    s.statusDurationLabel || s.onlineLabel
+                                      ? s.statusDurationLabel ||
+                                        `Online: ${s.onlineLabel}`
                                       : undefined
                                   }
                                 >

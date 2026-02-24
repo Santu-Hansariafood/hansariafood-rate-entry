@@ -33,6 +33,21 @@ export async function GET(req) {
     const now = Date.now();
     const INACTIVE_MS = 10 * 60 * 1000;
 
+    const formatDuration = (ms) => {
+      if (!ms || ms <= 0) return "Just now";
+      const totalMinutes = Math.floor(ms / (60 * 1000));
+      if (totalMinutes < 60) return `${totalMinutes} min`;
+      const hours = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      if (hours < 24) {
+        return mins ? `${hours}h ${mins}m` : `${hours}h`;
+      }
+      const days = Math.floor(hours / 24);
+      const remHours = hours % 24;
+      if (remHours === 0) return `${days}d`;
+      return `${days}d ${remHours}h`;
+    };
+
     let statuses = rawStatuses.map((s) => {
       const updated = s.updatedAt ? new Date(s.updatedAt).getTime() : 0;
       const isStale = !updated || now - updated > INACTIVE_MS;
@@ -51,24 +66,28 @@ export async function GET(req) {
 
       let onlineMinutes = null;
       let onlineLabel = "";
+      let statusDurationLabel = "";
 
       if (s.loginAt && effectiveStatus !== "not_logged_in") {
         const loginTime = new Date(s.loginAt).getTime();
         if (!Number.isNaN(loginTime)) {
-          const diffMinutes = Math.floor((now - loginTime) / (60 * 1000));
-          if (diffMinutes <= 0) {
-            onlineMinutes = 0;
-            onlineLabel = "Just now";
-          } else if (diffMinutes < 60) {
-            onlineMinutes = diffMinutes;
-            onlineLabel = `${diffMinutes} min`;
-          } else {
-            const hours = Math.floor(diffMinutes / 60);
-            const mins = diffMinutes % 60;
-            onlineMinutes = diffMinutes;
-            onlineLabel = mins ? `${hours}h ${mins}m` : `${hours}h`;
-          }
+          const diffMs = now - loginTime;
+          onlineMinutes = Math.floor(diffMs / (60 * 1000));
+          onlineLabel = formatDuration(diffMs);
+          statusDurationLabel = `Online: ${onlineLabel}`;
         }
+      }
+
+      if (effectiveStatus === "away" && updated) {
+        const diffMs = now - updated;
+        const label = formatDuration(diffMs);
+        statusDurationLabel = `Away: ${label}`;
+      }
+
+      if (effectiveStatus === "not_logged_in" && updated) {
+        const diffMs = now - updated;
+        const label = formatDuration(diffMs);
+        statusDurationLabel = `Logged out: ${label} ago`;
       }
 
       return {
@@ -76,6 +95,7 @@ export async function GET(req) {
         effectiveStatus,
         onlineMinutes,
         onlineLabel,
+        statusDurationLabel,
       };
     });
 
