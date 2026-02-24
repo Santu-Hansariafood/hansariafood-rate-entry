@@ -28,6 +28,7 @@ export default function MobileNav({
   const [companyDropdownOpen, setCompanyDropdownOpen] = useState(false);
   const [displayStatus, setDisplayStatus] = useState("available");
   const [otherStatuses, setOtherStatuses] = useState([]);
+  const [onlineLabel, setOnlineLabel] = useState("");
   const lastHeartbeatRef = useRef(0);
   const isAdmin = ADMINS.includes(currentUserMobile);
 
@@ -90,6 +91,11 @@ export default function MobileNav({
               ? "not_logged_in"
               : "available"
           );
+        }
+        if (typeof list[0]?.onlineLabel === "string") {
+          setOnlineLabel(list[0].onlineLabel);
+        } else {
+          setOnlineLabel("");
         }
       } catch (error) {
         console.error("Failed to fetch employee status (mobile)", error);
@@ -331,6 +337,11 @@ export default function MobileNav({
                           ? "Away"
                           : "Not logged in"}
                       </span>
+                      {onlineLabel && (
+                        <span className="text-[11px] text-white/50">
+                          Logged in: {onlineLabel}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -361,7 +372,15 @@ export default function MobileNav({
                                 <span
                                   className={`h-2.5 w-2.5 rounded-full ${color}`}
                                 />
-                                <span>{s.displayName}</span>
+                                <span
+                                  title={
+                                    s.onlineLabel
+                                      ? `Logged in: ${s.onlineLabel}`
+                                      : undefined
+                                  }
+                                >
+                                  {s.displayName}
+                                </span>
                                 <span className="text-white/60 text-[11px]">
                                   {label}
                                 </span>

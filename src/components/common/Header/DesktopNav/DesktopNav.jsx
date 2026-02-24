@@ -52,6 +52,7 @@ export default function DesktopNav({
   const [openRateDropdown, setOpenRateDropdown] = useState(false);
   const [openProfileDropdown, setOpenProfileDropdown] = useState(false);
   const [displayStatus, setDisplayStatus] = useState("available");
+  const [onlineLabel, setOnlineLabel] = useState("");
   const [otherStatuses, setOtherStatuses] = useState([]);
   const lastHeartbeatRef = useRef(0);
   const navRef = useRef(null);
@@ -89,6 +90,11 @@ export default function DesktopNav({
               ? "not_logged_in"
               : "available"
           );
+        }
+        if (typeof list[0]?.onlineLabel === "string") {
+          setOnlineLabel(list[0].onlineLabel);
+        } else {
+          setOnlineLabel("");
         }
       } catch (error) {
         console.error("Failed to fetch employee status", error);
@@ -463,9 +469,14 @@ export default function DesktopNav({
                         : displayStatus === "busy"
                         ? "Busy"
                         : displayStatus === "away"
-                        ? "Away"
-                        : "Not logged in"}
+                          ? "Away"
+                          : "Not logged in"}
                     </span>
+                    {onlineLabel && (
+                      <span className="text-[11px] text-white/50">
+                        Logged in: {onlineLabel}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -496,7 +507,15 @@ export default function DesktopNav({
                               <span
                                 className={`h-2.5 w-2.5 rounded-full ${color}`}
                               />
-                              <span>{s.displayName}</span>
+                              <span
+                                title={
+                                  s.onlineLabel
+                                    ? `Logged in: ${s.onlineLabel}`
+                                    : undefined
+                                }
+                              >
+                                {s.displayName}
+                              </span>
                               <span className="text-white/60 text-[11px]">
                                 {label}
                               </span>
@@ -507,15 +526,6 @@ export default function DesktopNav({
                     </div>
                   </div>
                 )}
-
-                <button
-                  type="button"
-                  className="w-full text-left px-4 py-3 text-sm text-white/90 hover:bg-white/10 flex items-center justify-between"
-                  onClick={() => setOpenProfileDropdown(false)}
-                >
-                  <span>Profile</span>
-                  <span className="text-xs text-white/50">View</span>
-                </button>
 
                 <div className="px-4 pb-4 pt-2">
                   <LogoutButton />

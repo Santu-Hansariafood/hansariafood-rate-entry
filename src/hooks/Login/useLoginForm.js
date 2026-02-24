@@ -64,6 +64,7 @@ export default function useLoginForm() {
           await axiosInstance.post("/employee-status", {
             mobile,
             status: "active",
+            loginEvent: true,
           });
         } catch (e) {
           console.error("Failed to set active status on login", e);

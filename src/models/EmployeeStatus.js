@@ -10,6 +10,7 @@ const EmployeeStatusSchema = new mongoose.Schema(
       default: "active",
     },
     updatedAt: { type: Date, default: Date.now },
+    loginAt: { type: Date, default: null },
   },
   { timestamps: { createdAt: true, updatedAt: true } }
 );

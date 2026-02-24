@@ -25,7 +25,7 @@ export async function GET(req) {
     }
 
     const rawStatuses = await EmployeeStatus.find(filter)
-      .select("mobile name status updatedAt")
+      .select("mobile name status updatedAt loginAt")
       .sort({ name: 1, mobile: 1 })
       .limit(200)
       .lean();
@@ -49,9 +49,33 @@ export async function GET(req) {
         effectiveStatus = "busy";
       }
 
+      let onlineMinutes = null;
+      let onlineLabel = "";
+
+      if (s.loginAt && effectiveStatus !== "not_logged_in") {
+        const loginTime = new Date(s.loginAt).getTime();
+        if (!Number.isNaN(loginTime)) {
+          const diffMinutes = Math.floor((now - loginTime) / (60 * 1000));
+          if (diffMinutes <= 0) {
+            onlineMinutes = 0;
+            onlineLabel = "Just now";
+          } else if (diffMinutes < 60) {
+            onlineMinutes = diffMinutes;
+            onlineLabel = `${diffMinutes} min`;
+          } else {
+            const hours = Math.floor(diffMinutes / 60);
+            const mins = diffMinutes % 60;
+            onlineMinutes = diffMinutes;
+            onlineLabel = mins ? `${hours}h ${mins}m` : `${hours}h`;
+          }
+        }
+      }
+
       return {
         ...s,
         effectiveStatus,
+        onlineMinutes,
+        onlineLabel,
       };
     });
 
@@ -76,7 +100,7 @@ export async function POST(req) {
 
   try {
     await connectDB();
-    const { mobile, name, status } = await req.json();
+    const { mobile, name, status, loginEvent } = await req.json();
 
     if (!mobile || !ALLOWED_STATUS.includes(status)) {
       return NextResponse.json(
@@ -85,12 +109,26 @@ export async function POST(req) {
       );
     }
 
+    const update = {
+      status,
+      updatedAt: new Date(),
+      ...(name ? { name } : {}),
+    };
+
+    if (status === "active" && loginEvent) {
+      update.loginAt = new Date();
+    }
+
+    if (status === "not_available") {
+      update.loginAt = null;
+    }
+
     const updated = await EmployeeStatus.findOneAndUpdate(
       { mobile },
-      { status, updatedAt: new Date(), ...(name ? { name } : {}) },
+      update,
       { upsert: true, new: true, setDefaultsOnInsert: true }
     )
-      .select("mobile status updatedAt")
+      .select("mobile name status updatedAt loginAt")
       .lean();
 
     return NextResponse.json(updated, { status: 200 });
