@@ -7,6 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, X } from "lucide-react";
 import { ADMINS } from "@/config/navigation";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import {
+  StatusDot,
+  buildStatusTitle,
+} from "../StatusIndicator/StatusIndicator";
 
 const NotificationBell = dynamic(() =>
   import("../NotificationBell/NotificationBell")
@@ -324,29 +328,21 @@ export default function MobileNav({
                             .join("")
                             .slice(0, 2)
                         : "U"}
-                      <span
-                        className={`absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-black ${
-                          displayStatus === "available"
-                            ? "bg-emerald-400"
-                            : displayStatus === "busy" ||
-                              displayStatus === "away"
-                            ? "bg-amber-400"
-                            : "bg-red-400"
-                        }`}
+                      <StatusDot
+                        status={displayStatus}
+                        className="absolute bottom-0.5 right-0.5 ring-2 ring-black"
                       />
                     </div>
-                    <div className="flex flex-col">
+                    <div
+                      className="flex flex-col"
+                      title={buildStatusTitle(
+                        displayStatus,
+                        null,
+                        onlineLabel || ""
+                      )}
+                    >
                       <span className="text-sm font-semibold text-white">
                         {currentUserName || "Profile"}
-                      </span>
-                      <span className="text-xs text-white/60">
-                        {displayStatus === "available"
-                          ? "Available"
-                          : displayStatus === "busy"
-                          ? "Busy"
-                          : displayStatus === "away"
-                          ? "Away"
-                          : "Not logged in"}
                       </span>
                       {onlineLabel && (
                         <span className="text-[11px] text-white/50">
@@ -363,41 +359,19 @@ export default function MobileNav({
                       </p>
                       <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
                         {filteredOtherStatuses.map((s) => {
-                          const color =
-                            s.effectiveStatus === "available"
-                              ? "bg-emerald-400"
-                              : s.effectiveStatus === "busy" ||
-                                s.effectiveStatus === "away"
-                              ? "bg-amber-400"
-                              : "bg-red-400";
-                          const label =
-                            s.effectiveStatus === "busy"
-                              ? "Busy"
-                              : s.effectiveStatus === "away"
-                              ? "Away"
-                              : "Not logged in";
+                          const title = buildStatusTitle(
+                            s.effectiveStatus,
+                            s.statusDurationLabel,
+                            s.onlineLabel
+                          );
                           return (
                             <div
                               key={s.mobile}
                               className="flex items-center justify-between text-xs text-white/80"
                             >
                               <div className="flex items-center gap-2">
-                                <span
-                                  className={`h-2.5 w-2.5 rounded-full ${color}`}
-                                />
-                                <span
-                                  title={
-                                    s.statusDurationLabel || s.onlineLabel
-                                      ? s.statusDurationLabel ||
-                                        `Online: ${s.onlineLabel}`
-                                      : undefined
-                                  }
-                                >
-                                  {s.displayName}
-                                </span>
-                                <span className="text-white/60 text-[11px]">
-                                  {label}
-                                </span>
+                                <StatusDot status={s.effectiveStatus} />
+                                <span title={title}>{s.displayName}</span>
                               </div>
                             </div>
                           );
