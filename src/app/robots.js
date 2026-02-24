@@ -9,6 +9,8 @@ export default function robots() {
           "/soyarate",
           "/mdocrate",
           "/ddgsrate",
+          "/landingcost",
+          "/freight",
           "/company",
           "/sellercompany",
           "/buyercompany",
@@ -16,6 +18,7 @@ export default function robots() {
           "/soya",
           "/mdoc",
           "/ddgs",
+          "/privacy-policy",
         ],
         disallow: [
           "/managecompany",

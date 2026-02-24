@@ -1,8 +1,12 @@
 import LandingCost from "@/components/ui/LandingCost/LandingCost";
 
 export const metadata = {
-  title: "Landing Cost | Hansaria Food Pvt. Ltd.",
-  description: "View real-time landing cost for Soya, M DOC, and DDGS commodities.",
+  title: "Landing Cost",
+  description:
+    "Calculate real-time landed cost for Soya DOC, M DOC and DDGS with integrated freight.",
+  alternates: {
+    canonical: "/landingcost",
+  },
 };
 
 export default function LandingCostPage() {

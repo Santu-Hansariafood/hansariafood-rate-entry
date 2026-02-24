@@ -1,7 +1,14 @@
-"use client";
-
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+
+export const metadata = {
+  title: "Daily Commodity Rates",
+  description:
+    "Track live poultry feed raw material rates for Soya DOC, maize, DDGS and more.",
+  alternates: {
+    canonical: "/rate",
+  },
+};
 
 const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
