@@ -53,7 +53,7 @@ export async function generateMetadata() {
     console.error("Metadata fetch error:", error);
   }
 
-  const baseKeywords = "hansaria food, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India";
+  const baseKeywords = "hansaria food, Gopal Agarwal, India Maize, leading maize supplier in India, brokerage services, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India";
   
   const keywords = commodityKeywords 
     ? `${baseKeywords}, ${commodityKeywords}`
@@ -63,12 +63,12 @@ export async function generateMetadata() {
     metadataBase: new URL("https://www.hansariafood.site"),
 
     title: {
-      default: "Hansaria Food Private Limited",
+      default: "Hansaria Food Private Limited | Leading Maize Supplier in India",
       template: "%s | Hansaria Food Pvt. Ltd.",
     },
 
     description:
-      "Hansaria Food Private Limited is a trusted poultry and animal feed raw material supplier in India, providing high-quality maize, soya DOC, rice DDGS and bulk feed ingredients with reliable logistics and competitive pricing.",
+      "Hansaria Food Private Limited, led by Gopal Agarwal in Kolkata, is a leading maize supplier in India and a trusted provider of brokerage services for poultry and animal feed raw materials including soya DOC, rice DDGS and bulk feed ingredients.",
 
     keywords: keywords,
 
@@ -96,17 +96,18 @@ export async function generateMetadata() {
 
     openGraph: {
       title:
-        "Hansaria Food Pvt. Ltd. | Trusted Poultry Feed Raw Material Supplier in India",
+        "Hansaria Food Pvt. Ltd. | Leading Maize Supplier in India & Brokerage Services",
       description:
-        "Supplier of maize, soya DOC, DDGS and bulk feed ingredients with reliable logistics and competitive pricing. Trusted by poultry farms and feed manufacturers across India.",
+        "Hansaria Food Pvt. Ltd., led by Gopal Agarwal, is India's leading maize supplier and brokerage firm for soya DOC, DDGS and poultry feed ingredients.",
       url: "https://www.hansariafood.site",
       siteName: "Hansaria Food Private Limited",
+      locale: "en_IN",
       images: [
         {
           url: "/images/og-image1.png",
           width: 1200,
           height: 630,
-          alt: "Hansaria Food Pvt. Ltd. Poultry Feed Supplier",
+          alt: "Hansaria Food Pvt. Ltd. Leading Maize Supplier India",
         },
       ],
       type: "website",
@@ -115,9 +116,9 @@ export async function generateMetadata() {
     twitter: {
       card: "summary_large_image",
       title:
-        "Hansaria Food Pvt. Ltd. | Poultry Feed Raw Materials & Commodity Trading",
+        "Hansaria Food Pvt. Ltd. | Leading Maize Supplier & Brokerage Services",
       description:
-        "Leading supplier of maize, soya DOC, DDGS and animal feed ingredients across India.",
+        "Leading supplier of maize, soya DOC, DDGS and animal feed ingredients across India, led by Gopal Agarwal Kolkata.",
       images: ["/images/og-image1.png"],
     },
 
@@ -152,7 +153,7 @@ export default function RootLayout({ children }) {
               url: "https://www.hansariafood.site",
               logo: "https://www.hansariafood.site/images/og-image1.png",
               description:
-                "Supplier of poultry and animal feed raw materials in India including maize, soya DOC and DDGS with reliable logistics.",
+                "Hansaria Food Private Limited, led by Gopal Agarwal, is a leading maize supplier in India and trusted brokerage firm for poultry feed raw materials like soya DOC and DDGS.",
 
               founder: [
                 { "@type": "Person", name: "Gopal Agarwal" },
