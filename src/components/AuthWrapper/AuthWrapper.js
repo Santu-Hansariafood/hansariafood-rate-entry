@@ -17,6 +17,9 @@ const PUBLIC_PATHS = [
   "/api",
   "/_next",
   "/favicon.ico",
+  "/sitemap.xml",
+  "/robots.txt",
+  "/manifest.json",
 ];
 
 const AuthWrapper = ({ children, allowedRoles }) => {
