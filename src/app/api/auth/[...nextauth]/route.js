@@ -65,18 +65,34 @@ export const authOptions = {
             throw new Error("Invalid credentials");
           }
 
+          const now = new Date();
+
+          // Check for 15-day inactivity policy
+          const lastLogin = user.lastLogin ? new Date(user.lastLogin) : null;
+          if (lastLogin) {
+            const diffTimeInactivity = Math.abs(now - lastLogin);
+            const diffDaysInactivity = Math.floor(diffTimeInactivity / (1000 * 60 * 60 * 24));
+            
+            if (diffDaysInactivity >= 15) {
+              console.error("Auth Failed: Account inactive for 15+ days for user:", user.name);
+              throw new Error("Your account has been inactive for more than 15 days. For security reasons, you must reset your password to log in again.");
+            }
+          }
+
           // Check for password expiration (30 days)
           const lastReset = user.passwordLastReset ? new Date(user.passwordLastReset) : null;
           if (lastReset) {
-            const now = new Date();
-            const diffTime = Math.abs(now - lastReset);
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const diffTimeReset = Math.abs(now - lastReset);
+            const diffDaysReset = Math.floor(diffTimeReset / (1000 * 60 * 60 * 24));
             
-            if (diffDays >= 30) {
+            if (diffDaysReset >= 30) {
               console.error("Auth Failed: Password expired for user:", user.name);
               throw new Error("Your password has expired. Please reset it to continue.");
             }
           }
+
+          // Update lastLogin timestamp on successful login
+          await User.findByIdAndUpdate(user._id, { lastLogin: now });
 
           const forwardedFor = getHeader("x-forwarded-for");
           const ip = forwardedFor?.split(",")[0] || req.ip || "global";

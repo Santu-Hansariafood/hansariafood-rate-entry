@@ -10,6 +10,7 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date },
   passwordLastReset: { type: Date, default: Date.now },
   lastReminderSent: { type: Date },
+  lastLogin: { type: Date, default: Date.now },
 });
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);

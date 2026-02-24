@@ -86,6 +86,7 @@ export async function PUT(req) {
 
       user.password = await bcrypt.hash(password, 10);
       user.passwordLastReset = new Date();
+      user.lastLogin = new Date(); // Reset inactivity counter on password update
       message = "Password updated successfully";
     }
 

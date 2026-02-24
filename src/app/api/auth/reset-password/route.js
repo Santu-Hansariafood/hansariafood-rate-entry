@@ -64,6 +64,7 @@ export async function POST(req) {
     user.resetPasswordOtp = undefined;
     user.resetPasswordExpires = undefined;
     user.passwordLastReset = new Date();
+    user.lastLogin = new Date(); // Reset inactivity counter on password reset
     await user.save();
 
     return NextResponse.json(
