@@ -5,11 +5,11 @@ import { ExternalLink } from "lucide-react";
 const FooterLinks = () => {
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      whileInView={{ opacity: 1, x: 0 }}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       viewport={{ once: true }}
-      className="flex items-center gap-6 text-sm"
+      className="flex flex-col items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm"
     >
       <a
         href="https://hansariafood.shop"
@@ -25,6 +25,28 @@ const FooterLinks = () => {
         Click to Generate Bill and Bids
         <ExternalLink size={14} />
       </a>
+      <div className="flex flex-wrap items-center justify-center gap-2 text-gray-300">
+        <a
+          href="/privacy-policy"
+          className="hover:text-emerald-400 transition-colors duration-300"
+        >
+          Privacy Policy
+        </a>
+        <span className="text-gray-500">|</span>
+        <a
+          href="/terms-and-conditions"
+          className="hover:text-emerald-400 transition-colors duration-300"
+        >
+          Terms &amp; Conditions
+        </a>
+        <span className="text-gray-500">|</span>
+        <a
+          href="/broker-commission-policy"
+          className="hover:text-emerald-400 transition-colors duration-300"
+        >
+          Broker Commission Policy
+        </a>
+      </div>
     </motion.div>
   );
 };

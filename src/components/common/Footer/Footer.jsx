@@ -29,9 +29,9 @@ const Footer = () => {
       >
         <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
 
-        <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <FooterCopyright />
+        <div className="container mx-auto flex flex-col items-center justify-center gap-3">
           <FooterLinks />
+          <FooterCopyright />
         </div>
       </motion.footer>
     </Suspense>

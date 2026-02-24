@@ -19,6 +19,8 @@ export default function robots() {
           "/mdoc",
           "/ddgs",
           "/privacy-policy",
+          "/terms-and-conditions",
+          "/broker-commission-policy",
         ],
         disallow: [
           "/managecompany",
