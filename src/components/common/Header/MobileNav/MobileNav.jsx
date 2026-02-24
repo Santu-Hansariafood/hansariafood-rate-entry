@@ -193,7 +193,25 @@ export default function MobileNav({
     .map((s) => ({
       ...s,
       displayName: s.name || s.mobile,
-    }));
+    }))
+    .sort((a, b) => {
+      const statusOrder = {
+        available: 0,
+        busy: 1,
+        away: 2,
+        not_logged_in: 3,
+      };
+      const pa =
+        statusOrder[a.effectiveStatus] != null
+          ? statusOrder[a.effectiveStatus]
+          : 99;
+      const pb =
+        statusOrder[b.effectiveStatus] != null
+          ? statusOrder[b.effectiveStatus]
+          : 99;
+      if (pa !== pb) return pa - pb;
+      return (a.displayName || "").localeCompare(b.displayName || "");
+    });
 
   useEffect(() => {
     if (!isOpen) return;
