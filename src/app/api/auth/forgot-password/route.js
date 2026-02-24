@@ -3,8 +3,13 @@ import User from "@/models/User";
 import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { getOtpEmailTemplate } from "@/lib/email/templates/otpTemplate";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 export async function POST(req) {
+  if (!verifyApiKey(req)) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     await connectDB();
     const { email, mobile } = await req.json();

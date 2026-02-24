@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
-import { Card, CardContent, TextField, Button, Typography, Box, CircularProgress, Grid } from '@mui/material';
-import axios from 'axios';
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  CircularProgress,
+  Grid,
+} from "@mui/material";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const SaudaDetailsBox = () => {
   const [saudaNumber, setSaudaNumber] = useState('');
@@ -18,7 +27,9 @@ const SaudaDetailsBox = () => {
     setError('');
     
     try {
-      const response = await axios.get(`/api/sauda/getSaudaByNumber?saudaNumber=${saudaNumber.trim()}`);
+      const response = await axiosInstance.get(
+        `/sauda/getSaudaByNumber?saudaNumber=${saudaNumber.trim()}`
+      );
       if (response.data.success) {
         setSaudaDetails(response.data.data);
       } else {
