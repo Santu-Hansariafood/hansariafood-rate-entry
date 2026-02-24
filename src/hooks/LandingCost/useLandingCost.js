@@ -122,15 +122,13 @@ export default function useLandingCost() {
 
   useEffect(() => {
     const fetchFreightRates = async () => {
-      if (!selectedCommodity || !selectedLocation) {
+      if (!selectedLocation) {
         setFreightMap({});
         return;
       }
 
       try {
-        const freightCommodity = getFreightCommodityKey(selectedCommodity);
         const query = new URLSearchParams({
-          commodity: freightCommodity,
           search: selectedLocation,
           limit: "1000",
         });
@@ -166,7 +164,7 @@ export default function useLandingCost() {
     };
 
     fetchFreightRates();
-  }, [selectedCommodity, selectedLocation]);
+  }, [selectedLocation]);
 
   useEffect(() => {
     const fetchSpecificHistory = async () => {
@@ -322,4 +320,3 @@ export default function useLandingCost() {
     tableRows,
   };
 }
-
