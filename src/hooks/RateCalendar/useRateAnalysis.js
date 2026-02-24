@@ -22,6 +22,8 @@ export default function useRateAnalysis({
   const getCompanyStats = useCallback(() => {
     const now = new Date();
     const byCompany = {};
+    if (!Array.isArray(allRates)) return byCompany;
+
     for (const r of allRates) {
       let lastDate = r.lastUpdated ? new Date(r.lastUpdated) : null;
       if (!lastDate) {
@@ -38,11 +40,14 @@ export default function useRateAnalysis({
         ? Math.floor((now - lastDate) / (1000 * 60 * 60 * 24))
         : null;
       const latestRate =
-        r.hasNewRateToday && r.newRate !== ""
+        r.hasNewRateToday && r.newRate !== "" && r.newRate != null
           ? Number(r.newRate)
           : (() => {
               const lastOld = (r.oldRates || []).at(-1);
-              return lastOld ? Number(String(lastOld).split(" ")[0]) : null;
+              if (!lastOld) return null;
+              const ratePart = String(lastOld).split(" ")[0];
+              const rateNum = Number(ratePart.replace(/[^0-9.\-]/g, ""));
+              return isNaN(rateNum) ? null : rateNum;
             })();
       const existing = byCompany[r.company] || {
         latestRate: null,
@@ -113,34 +118,36 @@ export default function useRateAnalysis({
   );
 
   const getTopRatesByCommodity = useCallback(() => {
+    if (!Array.isArray(allRates) || allRates.length === 0) return {};
     const now = new Date();
     const grouped = {};
-    if (!Array.isArray(allRates)) return {};
 
     for (const r of allRates) {
       if (!r || !r.commodity) continue;
 
-      const commodity = r.commodity || "N.A";
+      const commodity = r.commodity;
       const lastDate = r.lastUpdated ? new Date(r.lastUpdated) : null;
       let freshnessDays = null;
-      if (lastDate)
+      if (lastDate) {
         freshnessDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+      }
+      
       const old = Array.isArray(r.oldRates) ? r.oldRates : [];
-      const lastOldParsed =
-        old.length > 0
-          ? parseOldRate(old[old.length - 1])
-          : { rate: null, date: null };
-      const prevOldParsed =
-        old.length > 1
-          ? parseOldRate(old[old.length - 2])
-          : { rate: null, date: null };
+      const lastOldStr = old.length > 0 ? old[old.length - 1] : null;
+      const prevOldStr = old.length > 1 ? old[old.length - 2] : null;
+
+      const lastOldParsed = lastOldStr ? parseOldRate(lastOldStr) : { rate: null, date: null };
+      const prevOldParsed = prevOldStr ? parseOldRate(prevOldStr) : { rate: null, date: null };
+
       const latest =
-        r.hasNewRateToday && r.newRate !== ""
+        r.hasNewRateToday && r.newRate !== "" && r.newRate != null
           ? Number(r.newRate)
           : lastOldParsed.rate;
+      
       const previous = r.hasNewRateToday
         ? lastOldParsed.rate
         : prevOldParsed.rate;
+
       let changeAbs = null;
       let changePct = null;
       if (
@@ -151,6 +158,7 @@ export default function useRateAnalysis({
         changeAbs = latest - previous;
         changePct = (changeAbs / previous) * 100;
       }
+      
       if (!grouped[commodity]) grouped[commodity] = [];
       grouped[commodity].push({
         company: r.company,
@@ -308,16 +316,20 @@ export default function useRateAnalysis({
       : [];
     old.forEach((s) => {
       const parsed = parseOldRate(s);
-      if (parsed.rate && parsed.date) {
+      if (parsed.rate !== null && parsed.date && parsed.date.includes("/")) {
         const [dd, mm, yyyy] = parsed.date.split("/");
-        const iso = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
-        rows.push({
-          date: iso,
-          rate: parsed.rate,
-          type: "Old",
-          quantity: "",
-          mobile: "",
-        });
+        if (dd && mm && yyyy) {
+          const iso = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
+          if (!isNaN(iso.getTime())) {
+            rows.push({
+              date: iso,
+              rate: parsed.rate,
+              type: "Old",
+              quantity: "",
+              mobile: "",
+            });
+          }
+        }
       }
     });
     rows.sort((a, b) => b.date - a.date);

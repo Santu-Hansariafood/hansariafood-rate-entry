@@ -46,11 +46,24 @@ export async function generateMetadata() {
   let commodityKeywords = "";
   
   try {
-    await connectDB();
-    const commodities = await Commodity.find({});
-    commodityKeywords = commodities.map(c => c.name).join(", ");
+    // Use a race to prevent database issues from hanging the whole page
+    const fetchCommodities = async () => {
+      await connectDB();
+      return await Commodity.find({}).select("name").lean();
+    };
+
+    const commodities = await Promise.race([
+      fetchCommodities(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Metadata fetch timeout")), 2500)
+      ),
+    ]);
+
+    if (Array.isArray(commodities)) {
+      commodityKeywords = commodities.map((c) => c.name).join(", ");
+    }
   } catch (error) {
-    console.error("Metadata fetch error:", error);
+    console.error("Metadata fetch error:", error.message);
   }
 
   const baseKeywords = "hansaria food, Gopal Agarwal, India Maize, leading maize supplier in India, brokerage services, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India";

@@ -7,10 +7,14 @@ export default function useRateAnalysisData() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axiosInstance.get("/rate-analysis");
+        const res = await axiosInstance.get("/rate-analysis", {
+          signal: controller.signal,
+        });
         const data = res.data || {};
         const listCompanies = Array.isArray(data.companies)
           ? data.companies
@@ -19,15 +23,21 @@ export default function useRateAnalysisData() {
         setCompanies(listCompanies);
         setAllRates(listRates);
       } catch (error) {
-        console.error("Error fetching rate analysis data:", error);
-        setCompanies([]);
-        setAllRates([]);
+        if (error.name !== "CanceledError" && error.name !== "AbortError") {
+          console.error("Error fetching rate analysis data:", error);
+          setCompanies([]);
+          setAllRates([]);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return { companies, allRates, loading };

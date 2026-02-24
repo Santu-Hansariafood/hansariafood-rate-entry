@@ -80,11 +80,27 @@ export default function RateCalendar() {
   const handleCommoditySelect = (commodity) => {
     setSelectedCommodity(commodity);
     setShowCommodityPopup(false);
-    const companyData = companies.find((c) => c.name === selectedCompany);
-    if (companyData && Array.isArray(companyData.location)) {
-      if (companyData.location.length > 1) setShowLocationPopup(true);
-      else if (companyData.location.length === 1)
-        setSelectedLocation(companyData.location[0]);
+    
+    // Determine available locations for this specific commodity
+    const commodityLocations = Array.from(
+      new Set(
+        allRates
+          .filter(
+            (d) =>
+              d.company === selectedCompany &&
+              d.commodity === commodity
+          )
+          .map((d) => d.location)
+      )
+    );
+
+    if (commodityLocations.length > 1) {
+      setShowLocationPopup(true);
+      setSelectedLocation(""); // Reset location to force selection
+    } else if (commodityLocations.length === 1) {
+      setSelectedLocation(commodityLocations[0]);
+    } else {
+      setSelectedLocation("");
     }
   };
 
@@ -263,7 +279,7 @@ export default function RateCalendar() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <KPIItem
                       label="Latest Rate"
-                      value={analysis?.latestRate ?? "-"}
+                      value={analysis?.latestRate != null ? `₹${analysis.latestRate}` : "-"}
                       sub={
                         analysis?.hasNewToday ? (
                           <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
@@ -274,13 +290,13 @@ export default function RateCalendar() {
                     />
                     <KPIItem
                       label="Previous Rate"
-                      value={analysis?.previousRate ?? "-"}
+                      value={analysis?.previousRate != null ? `₹${analysis.previousRate}` : "-"}
                     />
                     <KPIItem
                       label="Change"
                       value={
                         typeof analysis?.changeAbs === "number"
-                          ? `${analysis.changeAbs.toFixed(0)}${
+                          ? `${analysis.changeAbs >= 0 ? "+" : ""}₹${Math.abs(analysis.changeAbs).toFixed(0)}${
                               typeof analysis.changePct === "number"
                                 ? ` (${analysis.changePct.toFixed(1)}%)`
                                 : ""

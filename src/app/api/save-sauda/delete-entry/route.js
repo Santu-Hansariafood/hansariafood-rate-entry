@@ -7,14 +7,13 @@ import { authOptions } from "../../auth/[...nextauth]/route";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { generateDeletedSaudaEmailTemplate } from "@/lib/email/templates/deletedSaudaTemplate";
 
-await connectDB();
-
 export async function POST(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    await connectDB();
     const {
       company,
       date,

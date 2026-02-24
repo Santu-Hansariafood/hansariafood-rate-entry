@@ -64,6 +64,7 @@ export default function RateGraph({ rateData, company, location }) {
     }
 
     return ratesArray.sort((a, b) => {
+      if (!a.date || !b.date) return 0;
       const da = new Date(a.date.split("/").reverse().join("-"));
       const db = new Date(b.date.split("/").reverse().join("-"));
       return da - db;
@@ -105,8 +106,9 @@ export default function RateGraph({ rateData, company, location }) {
       : "rgba(243, 156, 18, 0.6)"
   );
 
-  const minRate = Math.min(...rates.filter((r) => r > 0));
-  const baseY = Math.floor(minRate - 5);
+  const validRates = rates.filter((r) => r > 0);
+  const minRate = validRates.length > 0 ? Math.min(...validRates) : 0;
+  const baseY = minRate > 0 ? Math.floor(minRate - 5) : 0;
 
   const data = {
     labels,

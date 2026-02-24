@@ -4,14 +4,13 @@ import ManageCompany from "@/models/ManageCompany";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
-
 export async function GET(req) {
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    await connectDB();
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type");
     const search = searchParams.get("search") || "";
