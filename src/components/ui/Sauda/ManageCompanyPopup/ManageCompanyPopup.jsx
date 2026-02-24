@@ -152,6 +152,8 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
                 removeRow={removeRow}
                 saveStatus={saveStatus}
                 sellers={sellers}
+                date={today}
+                mobile={mobile}
               />
             )}
           </div>

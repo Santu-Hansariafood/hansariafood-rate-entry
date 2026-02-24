@@ -7,7 +7,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
-import { generateSaudaPDFNode } from "@/utils/generateSaudaPDF/generateSaudaPDFNode";
 
 await connectDB();
 
@@ -141,27 +140,12 @@ export async function POST(req) {
         userName,
       });
 
-      const pdfBuffer = await generateSaudaPDFNode({
-        company: existingEntry.company,
-        date: existingEntry.date,
-        saudaEntries: saudaEntriesObject,
-      });
-
       if (recipients.length > 0) {
         await sendEmail({
           to: recipients.join(", "),
           subject: `Sauda Report - ${existingEntry.company} - ${existingEntry.date}`,
           text: `Please view the Sauda Report for ${existingEntry.company} dated ${existingEntry.date} in the email body.`,
           html: emailHtml,
-          attachments: [
-            {
-              filename: `${existingEntry.company}_${existingEntry.date.replace(
-                /\//g,
-                "-"
-              )}_sauda.pdf`,
-              content: pdfBuffer,
-            },
-          ],
         });
       }
     } catch (emailError) {

@@ -1,11 +1,20 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { toast } from "react-toastify";
 
 const normalize = (s) => s?.trim().toLowerCase() || "";
-const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
+const Dropdown = dynamic(
+  () => import("@/components/common/Dropdown/Dropdown")
+);
+const Modal = dynamic(
+  () => import("@/components/common/Modal/Modal"),
+  { suspense: true }
+);
+
 export default function SaudaTable({
   company,
   rateMap,
@@ -17,8 +26,106 @@ export default function SaudaTable({
   removeRow,
   saveStatus,
   sellers,
+  date,
+  mobile,
 }) {
   let sl = 0;
+  const [removeDialog, setRemoveDialog] = useState({
+    open: false,
+    key: "",
+    idx: null,
+    reason: "",
+    error: "",
+  });
+
+  const openRemoveDialog = (key, idx) => {
+    setRemoveDialog({
+      open: true,
+      key,
+      idx,
+      reason: "",
+      error: "",
+    });
+  };
+
+  const closeRemoveDialog = () => {
+    setRemoveDialog((prev) => ({
+      ...prev,
+      open: false,
+      reason: "",
+      error: "",
+    }));
+  };
+
+  const handleReasonChange = (e) => {
+    const value = e.target.value;
+    setRemoveDialog((prev) => ({
+      ...prev,
+      reason: value,
+      error: "",
+    }));
+  };
+
+  const handleConfirmRemove = async () => {
+    const trimmed = removeDialog.reason.trim().replace(/\s+/g, " ");
+    const words = trimmed ? trimmed.split(" ") : [];
+    if (!trimmed) {
+      setRemoveDialog((prev) => ({
+        ...prev,
+        error: "Reason is required",
+      }));
+      return;
+    }
+    if (words.length > 3) {
+      setRemoveDialog((prev) => ({
+        ...prev,
+        error: "Reason must be up to 3 words",
+      }));
+      return;
+    }
+    if (removeDialog.key && removeDialog.idx != null) {
+      try {
+        const list = entries[removeDialog.key] || [];
+        const saudaEntry = list[removeDialog.idx];
+
+        if (saudaEntry) {
+          await axiosInstance.post("/save-sauda/delete-entry", {
+            company: company.name,
+            date,
+            saudaEntry: {
+              saudaNo: saudaEntry.saudaNo,
+              unit: saudaEntry.unit || removeDialog.key.split("-")[0] || "",
+              commodity:
+                saudaEntry.commodity ||
+                removeDialog.key.split("-")[1] ||
+                "",
+              tons: saudaEntry.tons,
+              finalRate: saudaEntry.finalRate,
+              sellerName: saudaEntry.sellerName,
+              sellerCompany: saudaEntry.sellerCompany,
+              deliveryDate: saudaEntry.deliveryDate,
+              others: saudaEntry.others,
+            },
+            reason: trimmed,
+            mobile,
+          });
+        }
+
+        removeRow(removeDialog.key, removeDialog.idx);
+        toast.success("Sauda deleted and logged successfully");
+      } catch (error) {
+        console.error("Failed to log deleted sauda:", error);
+        toast.error("Failed to log deleted sauda");
+      }
+    }
+    setRemoveDialog({
+      open: false,
+      key: "",
+      idx: null,
+      reason: "",
+      error: "",
+    });
+  };
 
   return (
     <Suspense fallback={<Loading />}>
@@ -271,7 +378,7 @@ export default function SaudaTable({
                               </button>
                               <button
                                 type="button"
-                                onClick={() => removeRow(key, idx)}
+                                onClick={() => openRemoveDialog(key, idx)}
                                 className="rounded bg-red-600 dark:bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
                               >
                                 Remove
@@ -319,6 +426,42 @@ export default function SaudaTable({
           </tbody>
         </table>
       </div>
+      {removeDialog.open && (
+        <Modal onClose={closeRemoveDialog}>
+          <div className="p-6 dark:bg-gray-900 dark:text-gray-200">
+            <h2 className="text-lg font-semibold mb-4">Are you sure to remove?</h2>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+              Please enter a reason (maximum 3 words) before removing.
+            </p>
+            <input
+              type="text"
+              value={removeDialog.reason}
+              onChange={handleReasonChange}
+              className="border border-gray-300 dark:border-gray-600 p-2 w-full mb-2 rounded bg-white dark:bg-gray-800 dark:text-gray-200"
+              placeholder="Reason"
+            />
+            {removeDialog.error && (
+              <p className="text-red-600 dark:text-red-400 text-sm mb-2">
+                {removeDialog.error}
+              </p>
+            )}
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:text-gray-200 rounded"
+                onClick={closeRemoveDialog}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
+                onClick={handleConfirmRemove}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </Suspense>
   );
 }
