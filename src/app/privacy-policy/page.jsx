@@ -1,6 +1,13 @@
-"use client";
-
 import policy from "@/data/cookiePolicy.json";
+
+export const metadata = {
+  title: "Privacy, Cookie and Site Policy",
+  description:
+    "Read Hansaria Food’s privacy, cookie and site usage policy for rate and freight tools.",
+  alternates: {
+    canonical: "/privacy-policy",
+  },
+};
 
 export default function PrivacyPolicyPage() {
   return (
@@ -23,4 +30,3 @@ export default function PrivacyPolicyPage() {
     </main>
   );
 }
-
