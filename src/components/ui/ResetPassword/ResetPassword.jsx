@@ -42,6 +42,9 @@ const ResetPassword = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <p className="text-[10px] text-gray-500 mt-1">
+            * Password must be at least 8 characters, including letters, numbers, and special characters.
+          </p>
           <InputBox
             label="Confirm New Password"
             type="password"

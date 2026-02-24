@@ -41,10 +41,29 @@ export async function POST(req) {
       );
     }
 
+    // Password validation: length, letter, number, special char
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return NextResponse.json(
+        { message: "Password must be at least 8 characters long and include letters, numbers, and special characters." },
+        { status: 400 }
+      );
+    }
+
+    // Check if new password is same as old
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return NextResponse.json(
+        { message: "New password cannot be the same as the current password." },
+        { status: 400 }
+      );
+    }
+
     const hash = await bcrypt.hash(newPassword, 10);
     user.password = hash;
     user.resetPasswordOtp = undefined;
     user.resetPasswordExpires = undefined;
+    user.passwordLastReset = new Date();
     await user.save();
 
     return NextResponse.json(

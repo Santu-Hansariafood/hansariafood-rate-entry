@@ -26,6 +26,12 @@ export async function POST(req) {
         if (existing.email === email) return error("Email already registered", 400);
     }
 
+    // Password complexity check
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return error("Password must be at least 8 chars, including letters, numbers, and special characters.", 400);
+    }
+
     const hash = await bcrypt.hash(password, 10);
     await User.create({ name, mobile, email, password: hash });
 
@@ -66,7 +72,20 @@ export async function PUT(req) {
     let message = "User updated successfully";
 
     if (password) {
+      // Password complexity check
+      const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordRegex.test(password)) {
+        return error("Password must be at least 8 chars, including letters, numbers, and special characters.", 400);
+      }
+
+      // Check if new password is same as old
+      const isSamePassword = await bcrypt.compare(password, user.password);
+      if (isSamePassword) {
+        return error("New password cannot be the same as the current password.", 400);
+      }
+
       user.password = await bcrypt.hash(password, 10);
+      user.passwordLastReset = new Date();
       message = "Password updated successfully";
     }
 

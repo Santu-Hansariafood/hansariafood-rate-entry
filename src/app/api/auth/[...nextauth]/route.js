@@ -65,6 +65,19 @@ export const authOptions = {
             throw new Error("Invalid credentials");
           }
 
+          // Check for password expiration (30 days)
+          const lastReset = user.passwordLastReset ? new Date(user.passwordLastReset) : null;
+          if (lastReset) {
+            const now = new Date();
+            const diffTime = Math.abs(now - lastReset);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays >= 30) {
+              console.error("Auth Failed: Password expired for user:", user.name);
+              throw new Error("Your password has expired. Please reset it to continue.");
+            }
+          }
+
           const forwardedFor = getHeader("x-forwarded-for");
           const ip = forwardedFor?.split(",")[0] || req.ip || "global";
           const userId = user._id.toString();

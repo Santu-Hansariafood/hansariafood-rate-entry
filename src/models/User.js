@@ -8,6 +8,8 @@ const UserSchema = new mongoose.Schema({
   pages: { type: [String], default: [] },
   resetPasswordOtp: { type: String },
   resetPasswordExpires: { type: Date },
+  passwordLastReset: { type: Date, default: Date.now },
+  lastReminderSent: { type: Date },
 });
 
 export default mongoose.models.User || mongoose.model("User", UserSchema);
