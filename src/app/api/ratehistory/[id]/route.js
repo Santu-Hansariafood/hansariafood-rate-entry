@@ -142,7 +142,6 @@ export async function POST(req, { params }) {
           "history.$.freightRate": Number(freightRate) || 0,
         };
       } else if (destinationLocation !== undefined || freightRate !== undefined) {
-        // Even if finalRate is not provided, update destination and freight if they are
         update.$set = {
           ...(update.$set || {}),
           "history.$.destinationLocation": destinationLocation || "",

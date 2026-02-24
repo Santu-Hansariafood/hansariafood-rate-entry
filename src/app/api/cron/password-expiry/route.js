@@ -19,8 +19,6 @@ export async function GET(req) {
     const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
     const twentyFiveDaysAgo = new Date(now.getTime() - (25 * 24 * 60 * 60 * 1000));
 
-    // Find users whose password was reset between 25 and 30 days ago
-    // and who haven't received a reminder today
     const startOfToday = new Date(now.setHours(0, 0, 0, 0));
     
     const usersToRemind = await User.find({
@@ -40,7 +38,6 @@ export async function GET(req) {
       const diffTime = Math.abs(now - lastReset);
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       
-      // We only care about the window of 25 to 30 days
       if (diffDays >= 25) {
         const daysRemaining = Math.max(0, 30 - diffDays);
         

@@ -36,9 +36,6 @@ export async function GET(req) {
     }
 
     if (search) {
-      // We need to search in populated fields (company name) or direct fields (location)
-      // Since MongoDB doesn't easily search populated fields in a simple find query without aggregate,
-      // we might need to fetch companies matching the name first.
       
       const companyIds = await ManageCompany.find({
         name: { $regex: search, $options: "i" },
@@ -121,7 +118,7 @@ export async function POST(req) {
       deliveryCompany,
       deliveryLocation,
       freightRate,
-      previousRate: freightRate, // Initial previous rate same as current
+      previousRate: freightRate,
       createdBy,
     });
 

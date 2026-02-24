@@ -41,7 +41,6 @@ export async function POST(req) {
       );
     }
 
-    // Password validation: length, letter, number, special char
     const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       return NextResponse.json(
@@ -50,7 +49,6 @@ export async function POST(req) {
       );
     }
 
-    // Check if new password is same as old
     const isSamePassword = await bcrypt.compare(newPassword, user.password);
     if (isSamePassword) {
       return NextResponse.json(
@@ -64,7 +62,7 @@ export async function POST(req) {
     user.resetPasswordOtp = undefined;
     user.resetPasswordExpires = undefined;
     user.passwordLastReset = new Date();
-    user.lastLogin = new Date(); // Reset inactivity counter on password reset
+    user.lastLogin = new Date();
     await user.save();
 
     return NextResponse.json(

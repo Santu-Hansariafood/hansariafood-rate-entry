@@ -25,7 +25,6 @@ export async function PUT(req, { params }) {
 
     let updates = { ...otherUpdates };
     
-    // If rate is changing, update previousRate
     if (freightRate !== undefined && freightRate !== existingFreight.freightRate) {
       updates.freightRate = freightRate;
       updates.previousRate = existingFreight.freightRate;

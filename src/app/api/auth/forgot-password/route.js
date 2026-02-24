@@ -45,7 +45,6 @@ export async function POST(req) {
     user.resetPasswordExpires = expires;
     await user.save();
 
-    // Send Email
     await sendEmail({
       to: user.email,
       subject: "Password Reset Code - Hansaria Food",

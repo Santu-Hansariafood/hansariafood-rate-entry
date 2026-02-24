@@ -67,7 +67,6 @@ export const authOptions = {
 
           const now = new Date();
 
-          // Check for 15-day inactivity policy
           const lastLogin = user.lastLogin ? new Date(user.lastLogin) : null;
           if (lastLogin) {
             const diffTimeInactivity = Math.abs(now - lastLogin);
@@ -79,7 +78,6 @@ export const authOptions = {
             }
           }
 
-          // Check for password expiration (30 days)
           const lastReset = user.passwordLastReset ? new Date(user.passwordLastReset) : null;
           if (lastReset) {
             const diffTimeReset = Math.abs(now - lastReset);
@@ -91,7 +89,6 @@ export const authOptions = {
             }
           }
 
-          // Update lastLogin timestamp on successful login
           await User.findByIdAndUpdate(user._id, { lastLogin: now });
 
           const forwardedFor = getHeader("x-forwarded-for");
