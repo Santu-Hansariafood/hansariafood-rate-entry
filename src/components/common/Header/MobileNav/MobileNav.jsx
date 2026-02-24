@@ -357,7 +357,7 @@ export default function MobileNav({
                       <p className="text-[11px] uppercase tracking-[0.16em] text-white/60 mb-2">
                         Others status
                       </p>
-                      <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                      <div className="space-y-1 max-h-40 overflow-y-auto pr-1 scrollbar-hidden">
                         {filteredOtherStatuses.map((s) => {
                           const title = buildStatusTitle(
                             s.effectiveStatus,
