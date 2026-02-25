@@ -26,6 +26,9 @@ const BadgePill = dynamic(() => import("./components/BadgePill"));
 const KPIItem = dynamic(() => import("./components/KPIItem"));
 const CompanyCard = dynamic(() => import("./components/CompanyCard"));
 const TopRateRow = dynamic(() => import("./components/TopRateRow"));
+const MonthlyAnalysisModal = dynamic(() =>
+  import("./MonthlyAnalysisModal")
+);
 
 export default function RateCalendar() {
   const [selectedCompany, setSelectedCompany] = useState("");
@@ -33,6 +36,7 @@ export default function RateCalendar() {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [showCommodityPopup, setShowCommodityPopup] = useState(false);
   const [showLocationPopup, setShowLocationPopup] = useState(false);
+  const [showMonthlyModal, setShowMonthlyModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
 
@@ -53,6 +57,7 @@ export default function RateCalendar() {
     filteredCompanies,
     topRatesByCommodity,
     availableCommodities,
+    allCommodities,
     availableLocations,
     selectedEntry,
     analysis,
@@ -179,9 +184,18 @@ export default function RateCalendar() {
 
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                    Top Rates
-                  </h2>
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                      Top Rates
+                    </h2>
+                    <button
+                      onClick={() => setShowMonthlyModal(true)}
+                      className="flex items-center gap-2 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      Monthly Report
+                    </button>
+                  </div>
                   <BadgePill intent="info">
                     auto refresh and auto sorted
                   </BadgePill>
@@ -536,7 +550,13 @@ export default function RateCalendar() {
             </motion.div>
           )}
         </AnimatePresence>
+</div>
       </div>
+      <MonthlyAnalysisModal
+        isOpen={showMonthlyModal}
+        onClose={() => setShowMonthlyModal(false)}
+        commodities={allCommodities}
+      />
     </Suspense>
   );
 }

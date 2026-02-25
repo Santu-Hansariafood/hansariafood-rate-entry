@@ -338,11 +338,17 @@ export default function useRateAnalysis({
 
   const dateWiseRates = useMemo(() => getDateWiseRates(), [getDateWiseRates]);
 
+  const allCommodities = useMemo(() => {
+    if (!Array.isArray(allRates)) return [];
+    return Array.from(new Set(allRates.map((r) => r.commodity))).sort();
+  }, [allRates]);
+
   return {
     companyStats,
     filteredCompanies,
     topRatesByCommodity,
     availableCommodities,
+    allCommodities,
     availableLocations,
     selectedEntry,
     analysis,
