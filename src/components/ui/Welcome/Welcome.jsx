@@ -8,6 +8,7 @@ import Loading from "@/components/common/Loading/Loading";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ADMINS } from "@/config/navigation";
+import { useSession } from "next-auth/react";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 
@@ -38,13 +39,18 @@ const SaudaTonsChart = dynamic(
 
 export default function Welcome() {
   const { mobile } = useUser();
+  const { data: session } = useSession();
   const [name, setName] = useState("Guest");
   const [assignedCompanies, setAssignedCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  const effectiveMobile = useMemo(() => {
+    return mobile || session?.user?.mobile || "";
+  }, [mobile, session?.user?.mobile]);
+
   const isAdmin = useMemo(() => {
-    return mobile && ADMINS.includes(mobile.toString());
-  }, [mobile]);
+    return effectiveMobile && ADMINS.includes(effectiveMobile.toString());
+  }, [effectiveMobile]);
 
   const formatName = useCallback((str) => {
     return str
@@ -57,35 +63,39 @@ export default function Welcome() {
     try {
       setLoading(true);
 
-      const [userResponse, companyResponse] = await Promise.all([
-        axiosInstance.get("/auth/register"),
-        axiosInstance.get(`/user-companies?mobile=${mobile}`),
-      ]);
-
-      const users = Array.isArray(userResponse.data?.users)
-        ? userResponse.data.users
-        : [];
-
-      const userData = users.find(
-        (user) => user.mobile.toString() === mobile?.toString()
+      const companyResponse = await axiosInstance.get(
+        `/user-companies?mobile=${encodeURIComponent(effectiveMobile)}`
       );
-      if (userData && userData.name) {
-        const formattedName = formatName(userData.name);
-        setName(formattedName);
-        localStorage.setItem("mobile", userData.mobile);
+
+      const sessionName = session?.user?.name;
+      if (sessionName) {
+        const formatted = formatName(sessionName);
+        setName(formatted);
+        localStorage.setItem("userName", formatted);
       } else {
-         const storedName = localStorage.getItem("userName");
-         if(storedName) {
-            setName(storedName);
-         } else {
-            setName("Guest");
-         }
-      }
-      
-      if(userData && userData.name) {
-         localStorage.setItem("userName", formatName(userData.name));
+        try {
+          const userResponse = await axiosInstance.get("/auth/register");
+          const users = Array.isArray(userResponse.data?.users)
+            ? userResponse.data.users
+            : [];
+          const userData = users.find(
+            (u) => u.mobile?.toString() === effectiveMobile?.toString()
+          );
+          if (userData?.name) {
+            const formatted = formatName(userData.name);
+            setName(formatted);
+            localStorage.setItem("userName", formatted);
+          } else {
+            const storedName = localStorage.getItem("userName");
+            setName(storedName || "Guest");
+          }
+        } catch {
+          const storedName = localStorage.getItem("userName");
+          setName(storedName || "Guest");
+        }
       }
 
+      if (effectiveMobile) localStorage.setItem("mobile", effectiveMobile);
       setAssignedCompanies(companyResponse.data?.companies ?? []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -93,11 +103,11 @@ export default function Welcome() {
     } finally {
       setLoading(false);
     }
-  }, [mobile, formatName]);
+  }, [effectiveMobile, formatName, session?.user?.name]);
 
   useEffect(() => {
-    if (mobile) fetchUserData();
-  }, [mobile, fetchUserData]);
+    if (effectiveMobile) fetchUserData();
+  }, [effectiveMobile, fetchUserData]);
 
   const assignedCompaniesList = useMemo(() => {
     if (assignedCompanies.length === 0) {
@@ -178,6 +188,9 @@ export default function Welcome() {
           </div>
 
           <AdminDashboard />
+          <div className="w-full max-w-7xl mx-auto px-4 mt-8">
+            <TeamTasksPreview mobile={effectiveMobile} />
+          </div>
         </div>
       </Suspense>
     );
@@ -262,6 +275,9 @@ export default function Welcome() {
             </div>
           )}
         </div>
+        <div className="mt-12">
+          <TeamTasksPreview mobile={effectiveMobile} />
+        </div>
       </motion.div>
     </div>
   </Suspense>
@@ -290,4 +306,107 @@ const AdminDashboard = () => (
     </section>
   </div>
 );
+
+const TeamTasksPreview = ({ mobile }) => {
+  const { data: session } = useSession();
+  const [tasks, setTasks] = useState([]);
+  const [usersByMobile, setUsersByMobile] = useState({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const myMobile = mobile || session?.user?.mobile || "";
+
+  const fetchTasks = useCallback(async () => {
+    if (!myMobile) return;
+    try {
+      setIsRefreshing(true);
+      const [tasksRes, usersRes] = await Promise.all([
+        axiosInstance.get(`/tasks?mobile=${encodeURIComponent(myMobile)}`),
+        axiosInstance.get("/auth/register"),
+      ]);
+
+      const taskList = tasksRes?.data;
+      setTasks(Array.isArray(taskList) ? taskList : []);
+
+      const usersPayload = usersRes?.data;
+      const users = Array.isArray(usersPayload?.users)
+        ? usersPayload.users
+        : Array.isArray(usersPayload)
+        ? usersPayload
+        : [];
+      const map = {};
+      for (const u of users) {
+        if (u?.mobile == null) continue;
+        const key = String(u.mobile);
+        if (!map[key] && typeof u.name === "string") map[key] = u.name;
+      }
+      setUsersByMobile(map);
+    } catch (error) {
+      console.error("Failed to fetch tasks", error);
+      setTasks([]);
+      setUsersByMobile({});
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [myMobile]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  const pendingAssignedToMe = useMemo(() => {
+    if (!myMobile) return [];
+    return tasks
+      .filter((t) =>
+        t?.receivers?.some((r) => String(r.mobile) === String(myMobile))
+      )
+      .filter((t) => t.status === "pending")
+      .slice(0, 6);
+  }, [tasks, myMobile]);
+
+  return (
+    <div className="rounded-2xl border border-white/20 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl shadow-lg p-6">
+      <div className="flex items-center justify-between gap-4">
+        <Title text="Team Tasks" />
+        <button
+          type="button"
+          onClick={fetchTasks}
+          className="text-xs font-semibold px-3 py-1.5 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-60"
+          disabled={isRefreshing || !myMobile}
+        >
+          {isRefreshing ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
+
+      {pendingAssignedToMe.length === 0 ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+          No pending tasks assigned to you.
+        </p>
+      ) : (
+        <div className="mt-4 space-y-3">
+          {pendingAssignedToMe.map((t) => (
+            <div
+              key={t._id}
+              className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/40 p-4"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                  From: {usersByMobile[String(t.sender)] || t.senderName || t.sender}
+                </p>
+                <span className="text-[10px] text-gray-400">
+                  {t.createdAt ? new Date(t.createdAt).toLocaleString() : ""}
+                </span>
+              </div>
+              <p className="text-sm text-gray-900 dark:text-gray-100 mt-2">
+                {t.content}
+              </p>
+            </div>
+          ))}
+          <p className="text-[11px] text-gray-400">
+            Use the Team Tasks button (bottom-right) to assign and close tasks.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
 

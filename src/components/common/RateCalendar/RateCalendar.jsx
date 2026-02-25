@@ -84,7 +84,6 @@ export default function RateCalendar() {
   const handleCommoditySelect = (commodity) => {
     setSelectedCommodity(commodity);
     
-    // Determine available locations for this specific commodity
     const commodityLocations = Array.from(
       new Set(
         allRates
@@ -99,7 +98,7 @@ export default function RateCalendar() {
 
     if (commodityLocations.length > 1) {
       setActivePopup("location");
-      setSelectedLocation(""); // Reset location to force selection
+      setSelectedLocation("");
     } else {
       setActivePopup(null);
       if (commodityLocations.length === 1) {
