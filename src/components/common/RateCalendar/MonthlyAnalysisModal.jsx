@@ -14,7 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Calendar, Package, ArrowUp, ArrowDown, Hash, TrendingUp, Info } from "lucide-react";
+import { Calendar, Package, ArrowUp, ArrowDown, Hash, TrendingUp, Info, Clock } from "lucide-react";
 import Loading from "../Loading/Loading";
 
 ChartJS.register(
@@ -44,8 +44,14 @@ export default function MonthlyAnalysisModal({ isOpen, onClose, commodities }) {
     }
   }, [isOpen, commodity, startDate, endDate, fetchMonthlyAnalysis]);
 
+  useEffect(() => {
+    if (commodities.length > 0 && !commodity) {
+      setCommodity(commodities[0]);
+    }
+  }, [commodities, commodity]);
+
   const chartData = useMemo(() => {
-    if (!data?.monthlyData) return null;
+    if (!data?.monthlyData || data.monthlyData.length === 0) return null;
     return {
       labels: data.monthlyData.map((m) => m.month),
       datasets: [
@@ -78,8 +84,8 @@ export default function MonthlyAnalysisModal({ isOpen, onClose, commodities }) {
   if (!isOpen) return null;
 
   return (
-    <Modal onClose={onClose} className="max-w-5xl h-[90vh] flex flex-col">
-      <div className="p-6 overflow-y-auto flex-1">
+    <Modal onClose={onClose} className="max-w-6xl h-[90vh] flex flex-col">
+      <div className="p-6 overflow-y-auto flex-1 bg-white dark:bg-slate-900 rounded-2xl">
         <div className="flex flex-col gap-6">
           {/* Header & Selectors */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
@@ -106,51 +112,15 @@ export default function MonthlyAnalysisModal({ isOpen, onClose, commodities }) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent text-sm outline-none border-none p-0 focus:ring-0 w-32"
+                  className="bg-transparent text-sm outline-none border-none p-0 focus:ring-0 w-32 dark:text-slate-200"
                 />
                 <span className="text-slate-300">|</span>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent text-sm outline-none border-none p-0 focus:ring-0 w-32"
+                  className="bg-transparent text-sm outline-none border-none p-0 focus:ring-0 w-32 dark:text-slate-200"
                 />
-              </div>
-
-              {/* Detailed Recent Points */}
-              <div className="lg:col-span-12 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-500" />
-                  Recent Rate Updates (Last 50)
-                </h3>
-                <div className="overflow-x-auto max-h-80">
-                  <table className="w-full text-sm">
-                    <thead className="sticky top-0 bg-white dark:bg-slate-900 shadow-sm">
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500">
-                        <th className="text-left py-3 px-4">Date</th>
-                        <th className="text-left py-3 px-4">Company</th>
-                        <th className="text-left py-3 px-4">Location</th>
-                        <th className="text-right py-3 px-4">Rate (₹)</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                      {data.allDataPoints.slice().reverse().map((p, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
-                            {new Date(p.date).toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric"
-                            })}
-                          </td>
-                          <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{p.company}</td>
-                          <td className="py-3 px-4 text-slate-500">{p.location}</td>
-                          <td className="py-3 px-4 text-right font-bold text-slate-900 dark:text-slate-100">₹{p.rate}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
               </div>
             </div>
           </div>
@@ -159,7 +129,7 @@ export default function MonthlyAnalysisModal({ isOpen, onClose, commodities }) {
             <div className="h-64 flex items-center justify-center">
               <Loading />
             </div>
-          ) : data ? (
+          ) : data && data.summary ? (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Summary Cards */}
               <div className="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -186,10 +156,10 @@ export default function MonthlyAnalysisModal({ isOpen, onClose, commodities }) {
               </div>
 
               {/* Monthly Trend Chart */}
-              <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm min-h-[300px]">
                 <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100">Monthly Price Trend</h3>
-                <div className="h-64">
-                  {chartData && <Line data={chartData} options={chartOptions} />}
+                <div className="h-[250px]">
+                  {chartData ? <Line data={chartData} options={chartOptions} /> : <div className="flex items-center justify-center h-full text-slate-400">Not enough data for trend chart</div>}
                 </div>
               </div>
 
@@ -234,6 +204,42 @@ export default function MonthlyAnalysisModal({ isOpen, onClose, commodities }) {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Detailed Recent Points */}
+              <div className="lg:col-span-12 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-blue-500" />
+                  Recent Rate Updates (Last 50)
+                </h3>
+                <div className="overflow-x-auto max-h-80">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-white dark:bg-slate-900 shadow-sm">
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-500">
+                        <th className="text-left py-3 px-4">Date</th>
+                        <th className="text-left py-3 px-4">Company</th>
+                        <th className="text-left py-3 px-4">Location</th>
+                        <th className="text-right py-3 px-4">Rate (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                      {data.allDataPoints.slice().reverse().map((p, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                          <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
+                            {new Date(p.date).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric"
+                            })}
+                          </td>
+                          <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{p.company}</td>
+                          <td className="py-3 px-4 text-slate-500">{p.location}</td>
+                          <td className="py-3 px-4 text-right font-bold text-slate-900 dark:text-slate-100">₹{p.rate}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
