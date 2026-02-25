@@ -222,7 +222,7 @@ export default function useRateAnalysis({
     // Always derive available locations from actual rates data to ensure they match selected commodity
     const locationsFromRates = Array.from(
       new Set(
-        scopedRates
+        allRates
           .filter(
             (d) =>
               d.company === selectedCompany &&
@@ -244,7 +244,7 @@ export default function useRateAnalysis({
     }
 
     return [];
-  }, [companies, selectedCompany, selectedCommodity, scopedRates]);
+  }, [allRates, companies, selectedCompany, selectedCommodity]);
 
   const availableLocations = useMemo(
     () => getAvailableLocations(),

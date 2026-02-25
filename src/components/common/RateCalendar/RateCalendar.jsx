@@ -34,8 +34,7 @@ export default function RateCalendar() {
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedCommodity, setSelectedCommodity] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [showCommodityPopup, setShowCommodityPopup] = useState(false);
-  const [showLocationPopup, setShowLocationPopup] = useState(false);
+  const [activePopup, setActivePopup] = useState(null); // 'commodity' | 'location' | null
   const [showMonthlyModal, setShowMonthlyModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -79,12 +78,11 @@ export default function RateCalendar() {
     setSelectedCompany(company.name);
     setSelectedCommodity("");
     setSelectedLocation("");
-    setShowCommodityPopup(true);
+    setActivePopup("commodity");
   };
 
   const handleCommoditySelect = (commodity) => {
     setSelectedCommodity(commodity);
-    setShowCommodityPopup(false);
     
     // Determine available locations for this specific commodity
     const commodityLocations = Array.from(
@@ -100,18 +98,21 @@ export default function RateCalendar() {
     );
 
     if (commodityLocations.length > 1) {
-      setShowLocationPopup(true);
+      setActivePopup("location");
       setSelectedLocation(""); // Reset location to force selection
-    } else if (commodityLocations.length === 1) {
-      setSelectedLocation(commodityLocations[0]);
     } else {
-      setSelectedLocation("");
+      setActivePopup(null);
+      if (commodityLocations.length === 1) {
+        setSelectedLocation(commodityLocations[0]);
+      } else {
+        setSelectedLocation("");
+      }
     }
   };
 
   const handleLocationSelect = (location) => {
     setSelectedLocation(location);
-    setShowLocationPopup(false);
+    setActivePopup(null);
   };
 
   return (
@@ -457,103 +458,103 @@ export default function RateCalendar() {
             </div>
           </div>
 
-          <AnimatePresence>
-            {showCommodityPopup && (
+        <AnimatePresence mode="wait">
+          {activePopup === "commodity" && (
+            <motion.div
+              key="commodity-popup"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            >
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl dark:bg-slate-900 dark:text-slate-100"
               >
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl dark:bg-slate-900 dark:text-slate-100"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                      Select Commodity
-                    </h3>
-                    <button
-                      onClick={() => setShowCommodityPopup(false)}
-                      className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-                    {availableCommodities.length > 0 ? (
-                      availableCommodities.map((commodity, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleCommoditySelect(commodity)}
-                          className="w-full p-3 text-left rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 dark:border-slate-700 dark:hover:bg-slate-800"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                            <span className="font-medium text-slate-800 dark:text-slate-100">
-                              {commodity}
-                            </span>
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-slate-500 dark:text-slate-400">
-                        No commodities found for this company.
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {showLocationPopup && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              >
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl dark:bg-slate-900 dark:text-slate-100"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                      Select Location
-                    </h3>
-                    <button
-                      onClick={() => setShowLocationPopup(false)}
-                      className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-                    {availableLocations.map((location, idx) => (
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                    Select Commodity
+                  </h3>
+                  <button
+                    onClick={() => setActivePopup(null)}
+                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                  {availableCommodities.length > 0 ? (
+                    availableCommodities.map((commodity, idx) => (
                       <button
                         key={idx}
-                        onClick={() => handleLocationSelect(location)}
+                        onClick={() => handleCommoditySelect(commodity)}
                         className="w-full p-3 text-left rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 dark:border-slate-700 dark:hover:bg-slate-800"
                       >
                         <div className="flex items-center gap-3">
-                          <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                           <span className="font-medium text-slate-800 dark:text-slate-100">
-                            {location}
+                            {commodity}
                           </span>
                         </div>
                       </button>
-                    ))}
-                  </div>
-                </motion.div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-slate-500 dark:text-slate-400">
+                      No commodities found for this company.
+                    </div>
+                  )}
+                </div>
               </motion.div>
-            )}
-          </AnimatePresence>
+            </motion.div>
+          )}
+
+          {activePopup === "location" && (
+            <motion.div
+              key="location-popup"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl dark:bg-slate-900 dark:text-slate-100"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                    Select Location
+                  </h3>
+                  <button
+                    onClick={() => setActivePopup(null)}
+                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                  {availableLocations.map((location, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleLocationSelect(location)}
+                      className="w-full p-3 text-left rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 dark:border-slate-700 dark:hover:bg-slate-800"
+                    >
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <span className="font-medium text-slate-800 dark:text-slate-100">
+                          {location}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         </div>
 
         <Suspense fallback={null}>
