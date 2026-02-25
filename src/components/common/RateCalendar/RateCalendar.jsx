@@ -115,58 +115,60 @@ export default function RateCalendar() {
   };
 
   return (
-    <Suspense fallback={<Loading />}>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-          <div className="flex">
-            <div className="w-80 bg-white/80 backdrop-blur-sm border-r border-white/30 shadow-xl dark:bg-slate-900/60 dark:border-slate-800">
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                    Companies
-                  </h2>
-                </div>
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search company..."
-                      className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                    />
-                  </div>
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
-                  >
-                    <option value="all">All</option>
-                    <option value="buyer">Buyer</option>
-                    <option value="seller">Seller</option>
-                  </select>
-                </div>
-                {loading ? (
-                  <Loading />
-                ) : (
-                  <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto pr-2">
-                    {filteredCompanies.map((company) => (
-                      <CompanyCard
-                        key={company._id}
-                        company={company}
-                        selected={selectedCompany === company.name}
-                        onClick={() => handleCompanyClick(company)}
-                        freshnessDays={
-                          (companyStats[company.name] || {}).freshnessDays
-                        }
-                        latestRate={(companyStats[company.name] || {}).latestRate}
-                      />
-                    ))}
-                  </div>
-                )}
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
+        <div className="flex">
+          <div className="w-80 bg-white/80 backdrop-blur-sm border-r border-white/30 shadow-xl dark:bg-slate-900/60 dark:border-slate-800">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                  Companies
+                </h2>
               </div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search company..."
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
+                  />
+                </div>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="px-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/80 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-100"
+                >
+                  <option value="all">All</option>
+                  <option value="buyer">Buyer</option>
+                  <option value="seller">Seller</option>
+                </select>
+              </div>
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loading />
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[calc(100vh-240px)] overflow-y-auto pr-2">
+                  {filteredCompanies.map((company) => (
+                    <CompanyCard
+                      key={company._id}
+                      company={company}
+                      selected={selectedCompany === company.name}
+                      onClick={() => handleCompanyClick(company)}
+                      freshnessDays={
+                        (companyStats[company.name] || {}).freshnessDays
+                      }
+                      latestRate={(companyStats[company.name] || {}).latestRate}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
 
             <div className="flex-1 p-6">
               <div className="max-w-6xl mx-auto">
@@ -344,13 +346,15 @@ export default function RateCalendar() {
                           <BadgePill intent="warning">Old</BadgePill>
                         </div>
                       </div>
-                      <div className="p-6">
+                    <div className="p-6">
+                      <Suspense fallback={<div className="h-64 flex items-center justify-center"><Loading /></div>}>
                         <RateGraph
                           rateData={scopedRates}
                           company={selectedCompany}
                           location={selectedLocation}
                         />
-                      </div>
+                      </Suspense>
+                    </div>
                     </div>
 
                     <div className="bg-white rounded-2xl border border-slate-200 shadow dark:bg-slate-900 dark:border-slate-800">
@@ -551,11 +555,14 @@ export default function RateCalendar() {
             )}
           </AnimatePresence>
         </div>
-        <MonthlyAnalysisModal
-          isOpen={showMonthlyModal}
-          onClose={() => setShowMonthlyModal(false)}
-          commodities={allCommodities}
-        />
-    </Suspense>
+
+        <Suspense fallback={null}>
+          <MonthlyAnalysisModal
+            isOpen={showMonthlyModal}
+            onClose={() => setShowMonthlyModal(false)}
+            commodities={allCommodities}
+          />
+        </Suspense>
+      </>
   );
 }

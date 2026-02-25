@@ -218,12 +218,9 @@ export default function useRateAnalysis({
 
   const getAvailableLocations = useCallback(() => {
     if (!selectedCompany) return [];
-    const companyData = companies.find(
-      (company) => company.name === selectedCompany
-    );
-    if (companyData && Array.isArray(companyData.location))
-      return companyData.location;
-    return Array.from(
+    
+    // Always derive available locations from actual rates data to ensure they match selected commodity
+    const locationsFromRates = Array.from(
       new Set(
         scopedRates
           .filter(
@@ -232,8 +229,21 @@ export default function useRateAnalysis({
               (!selectedCommodity || d.commodity === selectedCommodity)
           )
           .map((d) => d.location)
+          .filter(Boolean)
       )
+    ).sort();
+
+    if (locationsFromRates.length > 0) return locationsFromRates;
+
+    // Fallback to company data ONLY if no rates are found (unlikely in this view)
+    const companyData = companies.find(
+      (company) => company.name === selectedCompany
     );
+    if (companyData && Array.isArray(companyData.location)) {
+      return companyData.location.filter(Boolean).sort();
+    }
+
+    return [];
   }, [companies, selectedCompany, selectedCommodity, scopedRates]);
 
   const availableLocations = useMemo(
