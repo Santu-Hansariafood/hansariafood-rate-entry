@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useCallback, useMemo, useState } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
@@ -15,58 +15,94 @@ const Modal = dynamic(
   { suspense: true }
 );
 
-export default function SaudaTable({
-  company,
-  rateMap,
-  entries,
-  totalTons,
-  handleChange,
-  handleUnitSave,
-  addRow,
-  removeRow,
-  saveStatus,
-  sellers,
-  date,
-  mobile,
-}) {
-  let sl = 0;
+function useTopSellerNames(entries, sellers) {
+  return useMemo(() => {
+    const counts = new Map();
+    const lists =
+      entries && typeof entries === "object" ? Object.values(entries) : [];
+
+    for (const list of lists) {
+      if (!Array.isArray(list)) continue;
+      for (const item of list) {
+        const n = item?.sellerName;
+        if (!n) continue;
+        const key = String(n);
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+    }
+
+    const byUsage = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([name]) => name);
+
+    const fallback = Array.isArray(sellers)
+      ? sellers
+          .map((s) => s?.sellerName)
+          .filter(Boolean)
+          .map(String)
+      : [];
+
+    const merged = [];
+    for (const name of [...byUsage, ...fallback]) {
+      if (merged.includes(name)) continue;
+      merged.push(name);
+      if (merged.length >= 3) break;
+    }
+    return merged;
+  }, [entries, sellers]);
+}
+
+function useRemoveSaudaDialog({ entries, company, date, mobile, removeRow }) {
   const [removeDialog, setRemoveDialog] = useState({
     open: false,
     key: "",
     idx: null,
+    sellerName: "",
+    sellerCompany: "",
+    saudaNo: "",
     reason: "",
     error: "",
   });
 
-  const openRemoveDialog = (key, idx) => {
-    setRemoveDialog({
-      open: true,
-      key,
-      idx,
-      reason: "",
-      error: "",
-    });
-  };
+  const openRemoveDialog = useCallback(
+    (key, idx) => {
+      const entry = (entries?.[key] || [])?.[idx] || {};
+      setRemoveDialog({
+        open: true,
+        key,
+        idx,
+        sellerName: entry?.sellerName || "",
+        sellerCompany: entry?.sellerCompany || "",
+        saudaNo: entry?.saudaNo ? entry.saudaNo.toString().slice(-4) : "",
+        reason: "",
+        error: "",
+      });
+    },
+    [entries]
+  );
 
-  const closeRemoveDialog = () => {
+  const closeRemoveDialog = useCallback(() => {
     setRemoveDialog((prev) => ({
       ...prev,
       open: false,
+      sellerName: "",
+      sellerCompany: "",
+      saudaNo: "",
       reason: "",
       error: "",
     }));
-  };
+  }, []);
 
-  const handleReasonChange = (e) => {
+  const handleReasonChange = useCallback((e) => {
     const value = e.target.value;
     setRemoveDialog((prev) => ({
       ...prev,
       reason: value,
       error: "",
     }));
-  };
+  }, []);
 
-  const handleConfirmRemove = async () => {
+  const handleConfirmRemove = useCallback(async () => {
     const trimmed = removeDialog.reason.trim().replace(/\s+/g, " ");
     const words = trimmed ? trimmed.split(" ") : [];
     if (!trimmed) {
@@ -83,9 +119,10 @@ export default function SaudaTable({
       }));
       return;
     }
+
     if (removeDialog.key && removeDialog.idx != null) {
       try {
-        const list = entries[removeDialog.key] || [];
+        const list = entries?.[removeDialog.key] || [];
         const saudaEntry = list[removeDialog.idx];
 
         if (saudaEntry) {
@@ -96,9 +133,7 @@ export default function SaudaTable({
               saudaNo: saudaEntry.saudaNo,
               unit: saudaEntry.unit || removeDialog.key.split("-")[0] || "",
               commodity:
-                saudaEntry.commodity ||
-                removeDialog.key.split("-")[1] ||
-                "",
+                saudaEntry.commodity || removeDialog.key.split("-")[1] || "",
               tons: saudaEntry.tons,
               finalRate: saudaEntry.finalRate,
               sellerName: saudaEntry.sellerName,
@@ -118,14 +153,51 @@ export default function SaudaTable({
         toast.error("Failed to log deleted sauda");
       }
     }
+
     setRemoveDialog({
       open: false,
       key: "",
       idx: null,
+      sellerName: "",
+      sellerCompany: "",
+      saudaNo: "",
       reason: "",
       error: "",
     });
+  }, [removeDialog, entries, company.name, date, mobile, removeRow]);
+
+  return {
+    removeDialog,
+    openRemoveDialog,
+    closeRemoveDialog,
+    handleReasonChange,
+    handleConfirmRemove,
   };
+}
+
+export default function SaudaTable({
+  company,
+  rateMap,
+  entries,
+  totalTons,
+  handleChange,
+  handleUnitSave,
+  addRow,
+  removeRow,
+  saveStatus,
+  sellers,
+  date,
+  mobile,
+}) {
+  let sl = 0;
+  const topSellerNames = useTopSellerNames(entries, sellers);
+  const {
+    removeDialog,
+    openRemoveDialog,
+    closeRemoveDialog,
+    handleReasonChange,
+    handleConfirmRemove,
+  } = useRemoveSaudaDialog({ entries, company, date, mobile, removeRow });
 
   return (
     <Suspense fallback={<Loading />}>
@@ -243,6 +315,25 @@ export default function SaudaTable({
                               }
                             />
                             <div className="flex flex-col sm:flex-row gap-3 flex-grow">
+                              {topSellerNames.length > 0 && (
+                                <div className="w-full">
+                                  <div className="flex items-center gap-2 overflow-x-auto">
+                                    {topSellerNames.map((n) => (
+                                      <button
+                                        key={n}
+                                        type="button"
+                                        onClick={() => {
+                                          handleChange(key, idx, "sellerName", n);
+                                          handleChange(key, idx, "sellerCompany", "");
+                                        }}
+                                        className="shrink-0 whitespace-nowrap rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                      >
+                                        {n}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                               <Dropdown
                                 label="Seller"
                                 options={sellers.map((s) => ({
@@ -430,6 +521,9 @@ export default function SaudaTable({
         <Modal onClose={closeRemoveDialog}>
           <div className="p-6 dark:bg-gray-900 dark:text-gray-200">
             <h2 className="text-lg font-semibold mb-4">Are you sure to remove?</h2>
+            <div className="mb-3 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap overflow-hidden text-ellipsis">
+              {removeDialog.sellerName ? `Seller: ${removeDialog.sellerName}` : "Seller: -"}
+            </div>
             <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
               Please enter a reason (maximum 3 words) before removing.
             </p>
