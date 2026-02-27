@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
+import DeletedSauda from "@/models/DeletedSauda";
 
 await connectDB();
 
@@ -82,8 +83,35 @@ export async function POST(req) {
     }
 
     if (existingEntry) {
+      const deletedDocs = await DeletedSauda.find({
+        company: company.trim(),
+        date: date.trim(),
+      })
+        .select("saudaNo")
+        .lean();
+      const deletedSet = new Set(
+        (deletedDocs || []).map((d) => String(d.saudaNo || "").trim()).filter(Boolean)
+      );
+
       for (const [key, newList] of Object.entries(normalizedEntries)) {
-        existingEntry.saudaEntries.set(key, newList);
+        const currentList = Array.isArray(existingEntry.saudaEntries.get(key))
+          ? existingEntry.saudaEntries.get(key)
+          : [];
+
+        const currentMap = new Map(
+          currentList
+            .filter((item) => item && String(item.saudaNo || "").trim() && !deletedSet.has(String(item.saudaNo || "").trim()))
+            .map((item) => [String(item.saudaNo).trim(), item])
+        );
+
+        for (const item of newList) {
+          const no = String(item.saudaNo || "").trim();
+          if (!no) continue;
+          currentMap.set(no, item);
+        }
+
+        const mergedList = Array.from(currentMap.values());
+        existingEntry.saudaEntries.set(key, mergedList);
       }
 
       existingEntry.time = time || existingEntry.time;
