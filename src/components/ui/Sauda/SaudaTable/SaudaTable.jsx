@@ -112,6 +112,62 @@ function useTopSellerNames(entries, sellers) {
   }, [entries, sellers]);
 }
 
+function useTopCompanies(entries, sellers) {
+  const fallbackMap = useMemo(() => {
+    const m = new Map();
+    if (Array.isArray(sellers)) {
+      for (const s of sellers) {
+        const name = s?.sellerName;
+        if (!name) continue;
+        const comps = Array.isArray(s?.companies)
+          ? s.companies.filter(Boolean).map(String)
+          : [];
+        m.set(String(name), comps);
+      }
+    }
+    return m;
+  }, [sellers]);
+
+  const countsBySeller = useMemo(() => {
+    const m = new Map();
+    const lists =
+      entries && typeof entries === "object" ? Object.values(entries) : [];
+    for (const list of lists) {
+      if (!Array.isArray(list)) continue;
+      for (const item of list) {
+        const seller = item?.sellerName ? String(item.sellerName) : null;
+        const comp = item?.sellerCompany ? String(item.sellerCompany) : null;
+        if (!seller || !comp) continue;
+        if (!m.has(seller)) m.set(seller, new Map());
+        const inner = m.get(seller);
+        inner.set(comp, (inner.get(comp) || 0) + 1);
+      }
+    }
+    return m;
+  }, [entries]);
+
+  return useCallback(
+    (sellerName) => {
+      if (!sellerName) return [];
+      const inner = countsBySeller.get(String(sellerName));
+      const ranked = inner
+        ? Array.from(inner.entries())
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+            .map(([name]) => name)
+        : [];
+      const fallback = fallbackMap.get(String(sellerName)) || [];
+      const merged = [];
+      for (const name of [...ranked, ...fallback]) {
+        if (merged.includes(name)) continue;
+        merged.push(name);
+        if (merged.length >= 3) break;
+      }
+      return merged;
+    },
+    [countsBySeller, fallbackMap]
+  );
+}
+
 function useRemoveSaudaDialog({ entries, company, date, mobile, removeRow }) {
   const [removeDialog, setRemoveDialog] = useState({
     open: false,
@@ -241,6 +297,7 @@ const SaudaEntryCard = React.memo(function SaudaEntryCard({
   entry,
   sellerOptions,
   companiesBySeller,
+  topCompaniesForSeller,
   topSellerNames,
   saveStatus,
   handleChange,
@@ -278,6 +335,13 @@ const SaudaEntryCard = React.memo(function SaudaEntryCard({
 
   const onCompanySelect = useCallback(
     (val) => handleChange(rowKey, idx, "sellerCompany", val),
+    [handleChange, rowKey, idx]
+  );
+
+  const onQuickCompany = useCallback(
+    (name) => {
+      handleChange(rowKey, idx, "sellerCompany", name);
+    },
     [handleChange, rowKey, idx]
   );
 
@@ -342,6 +406,11 @@ const SaudaEntryCard = React.memo(function SaudaEntryCard({
       value: companyName,
     }));
   }, [companiesBySeller, entry?.sellerName]);
+
+  const topCompanyNames = useMemo(
+    () => topCompaniesForSeller(entry?.sellerName),
+    [topCompaniesForSeller, entry?.sellerName]
+  );
 
   return (
     <div
@@ -414,6 +483,22 @@ const SaudaEntryCard = React.memo(function SaudaEntryCard({
           onChange={onCompanySelect}
           placeholder="Select Company..."
         />
+        {topCompanyNames.length > 0 && (
+          <div className="w-full">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              {topCompanyNames.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => onQuickCompany(n)}
+                  className="shrink-0 whitespace-nowrap rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-800 px-3 py-1 text-[11px] font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       {entry?.showOthers || entry?.others !== "" ? (
         <input
@@ -528,6 +613,7 @@ const SaudaRow = React.memo(function SaudaRow({
             entry={entry}
             sellerOptions={sellerOptions}
             companiesBySeller={companiesBySeller}
+                topCompaniesForSeller={topCompaniesForSeller}
             topSellerNames={topSellerNames}
             saveStatus={saveStatus}
             handleChange={handleChange}
@@ -573,6 +659,7 @@ export default function SaudaTable({
   const saudaRows = useSaudaRows(company, rateMap);
   const { sellerOptions, companiesBySeller } = useSellerLookups(sellers);
   const topSellerNames = useTopSellerNames(entries, sellers);
+  const topCompaniesForSeller = useTopCompanies(entries, sellers);
   const {
     removeDialog,
     openRemoveDialog,
