@@ -9,6 +9,7 @@ export function useSaudaEntries(company, rateMap) {
   const today = useToday();
   const [entries, setEntries] = useState({});
   const [loading, setLoading] = useState(false);
+  const normalize = useCallback((s) => s?.trim().toLowerCase() || "", []);
 
   useEffect(() => {
     if (!company) return;
@@ -26,7 +27,6 @@ export function useSaudaEntries(company, rateMap) {
           toast.info("No previous sauda data, starting fresh.");
         }
 
-        const normalize = (s) => s?.trim().toLowerCase() || "";
         const init = {};
         company.location.forEach((loc) =>
           company.commodities.forEach((comm) => {
@@ -67,7 +67,7 @@ export function useSaudaEntries(company, rateMap) {
     return () => {
       mounted = false;
     };
-  }, [company, today, rateMap]);
+  }, [company, today, rateMap, normalize]);
 
   const handleChange = useCallback((key, idx, field, val) => {
     setEntries((prev) => {
@@ -109,7 +109,7 @@ export function useSaudaEntries(company, rateMap) {
         list.splice(idx, 1);
         return { ...prev, [key]: list };
       }
-      return prev; // Don't remove if it's the last row
+      return prev;
     });
   }, []);
 
@@ -118,5 +118,49 @@ export function useSaudaEntries(company, rateMap) {
     [entries]
   );
 
-  return { entries, handleChange, addRow, removeRow, totalTons, loading };
+  const applyServerEntries = useCallback(
+    (key, serverList) => {
+      setEntries((prev) => {
+        if (!prev[key]) return prev;
+        const [loc, comm] = key.split("-");
+        const keyNorm = `${normalize(loc)}-${normalize(comm)}`;
+        const newRate = rateMap?.[keyNorm]?.newRate ?? "";
+        const list = Array.isArray(serverList) ? serverList : [];
+        const mapped =
+          list.length > 0
+            ? list.map((entry) => ({
+                tons: entry.tons || "",
+                saudaNo: entry.saudaNo || "",
+                finalRate: entry.finalRate ?? newRate,
+                others: entry.others || "",
+                sellerName: entry.sellerName || "",
+                sellerCompany: entry.sellerCompany || "",
+                deliveryDate: entry.deliveryDate || "",
+              }))
+            : [
+                {
+                  tons: "",
+                  saudaNo: "",
+                  finalRate: newRate,
+                  others: "",
+                  sellerName: "",
+                  sellerCompany: "",
+                  deliveryDate: "",
+                },
+              ];
+        return { ...prev, [key]: mapped };
+      });
+    },
+    [normalize, rateMap]
+  );
+
+  return {
+    entries,
+    handleChange,
+    addRow,
+    removeRow,
+    totalTons,
+    applyServerEntries,
+    loading,
+  };
 }

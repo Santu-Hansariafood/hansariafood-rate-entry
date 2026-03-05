@@ -51,6 +51,7 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
     addRow,
     removeRow,
     totalTons,
+    applyServerEntries,
     loading: loadingSauda,
   } = useSaudaEntries(company, rateMap);
   const { sellers, loading: loadingSellers } = useSellers();
@@ -66,7 +67,8 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
     today,
     lastUpdated,
     setLastUpdated,
-    mobile
+    mobile,
+    applyServerEntries
   );
   const exportHook = useSaudaExport({ company, today, rates, entries });
 

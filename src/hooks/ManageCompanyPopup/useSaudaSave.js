@@ -10,7 +10,8 @@ export const useSaudaSave = (
   today,
   lastUpdated,
   setLastUpdated,
-  mobile // Add mobile parameter
+  mobile,
+  applyServerEntries
 ) => {
   const [saveStatus, setSaveStatus] = useState({});
 
@@ -83,6 +84,10 @@ export const useSaudaSave = (
     try {
       const { status, data } = await axiosInstance.post("/save-sauda", payload);
       if (status === 201 && data.entry) {
+        const savedList = data.entry?.saudaEntries?.[key];
+        if (applyServerEntries && savedList) {
+          applyServerEntries(key, savedList);
+        }
         toast.success(`Saved successfully for ${unit} - ${commodity}`);
         setLastUpdated(data.entry.lastUpdated);
         setSaveStatus((prev) => ({ ...prev, [entryId]: "success" }));
@@ -94,6 +99,7 @@ export const useSaudaSave = (
           detail: { company: company.name, date: today } 
         }));
       }
+      return true;
     } catch (err) {
       if (err?.response?.status === 409) {
         toast.error("Data has been updated by someone else. Please refresh.");
@@ -101,6 +107,7 @@ export const useSaudaSave = (
         toast.error("Error saving data");
       }
       setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
+      return false;
     }
   };
 
