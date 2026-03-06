@@ -207,6 +207,37 @@ export default function useLandingCost() {
   }, [selectedCompany, selectedCommodity, selectedLocation, companies]);
 
   useEffect(() => {
+    setSelectedCompany("");
+    setSelectedCommodity("");
+    setSelectedLocation("");
+
+    if (!selectedCategory) {
+      setCompanies([]);
+      return;
+    }
+
+    const fetchCompanies = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await axiosInstance.get(
+          `/managecompany?category=${encodeURIComponent(
+            selectedCategory
+          )}&limit=100`
+        );
+        setCompanies(res.data?.companies || []);
+      } catch (error) {
+        console.error("Error fetching companies:", error);
+        setError("Failed to fetch companies. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanies();
+  }, [selectedCategory]);
+
+  useEffect(() => {
     setSelectedCommodity("");
     setSelectedLocation("");
   }, [selectedCompany]);
@@ -215,7 +246,9 @@ export default function useLandingCost() {
     setSelectedLocation("");
   }, [selectedCommodity]);
 
-  const categoryOptions = [{ label: "Feed Mills", value: "Feed Mills" }];
+  const categoryOptions = useMemo(() => {
+    return categories.map((cat) => ({ label: cat.name, value: cat.name }));
+  }, [categories]);
 
   const companyOptions = useMemo(() => {
     return companies
