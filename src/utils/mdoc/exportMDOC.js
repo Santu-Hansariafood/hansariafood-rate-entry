@@ -71,7 +71,7 @@ function drawHeaderFooter(doc, pageWidth, pageHeight, date, time) {
   doc.setFont("times", "bold");
   doc.setFontSize(22);
   doc.setTextColor(0);
-  doc.text("M DOC RATE REPORT", pageWidth / 2, 85, { align: "center" });
+  doc.text("M DOC & Maize Ddgs Doc RATE REPORT", pageWidth / 2, 85, { align: "center" });
 
   doc.setFont("times", "normal");
   doc.setFontSize(11);

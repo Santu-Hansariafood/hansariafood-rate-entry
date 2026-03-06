@@ -16,7 +16,7 @@ export const RATE_DROPDOWN = [
   { label: "Rate", path: "/rate", allowed: [] },
   { label: "Landing Cost", path: "/landingcost", allowed: [] },
   { label: "Soya Rate", path: "/soyarate", allowed: [] },
-  { label: "M DOC Rate", path: "/mdocrate", allowed: [] },
+  { label: "M DOC", path: "/mdocrate", allowed: [] },
   { label: "DDGS Rate", path: "/ddgsrate", allowed: [] },
   { label: "Freight", path: "/freight", allowed: [] },
 ];

@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import * as XLSX from "xlsx";
 
-export const COMMODITIES = ["Maize DDGS", "M DOC", "Soya"];
+export const COMMODITIES = ["Maize DDGS", "M DOC", "Soya", "Maize Ddgs Doc"];
 
 export const useFreightManager = () => {
   const { data: session } = useSession();

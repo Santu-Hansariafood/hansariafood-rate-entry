@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
-const COMMODITIES = ["M DOC"];
+const COMMODITIES = ["M DOC", "Maize Ddgs Doc"];
 
 const Diff = ({ value }) => {
   if (value === 0 || value === null || value === undefined) return null;

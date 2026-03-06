@@ -58,7 +58,7 @@ export default function ManageMDOCVisibility({ onUpdated }) {
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
-      <Title text="Manage M DOC Company Visibility" />
+      <Title text="Manage M DOC & Maize Ddgs Doc Visibility" />
 
       {loading ? (
         <Loading />
@@ -87,8 +87,8 @@ export default function ManageMDOCVisibility({ onUpdated }) {
                   }`}
                 >
                   {company.isMDOCVisible
-                    ? "Visible in M DOC Rate"
-                    : "Hidden from M DOC Rate"}
+                    ? "Visible in MDOC / Maize Ddgs Doc"
+                    : "Hidden from MDOC / Maize Ddgs Doc"}
                 </p>
               </div>
 

@@ -14,7 +14,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search");
 
-    const targetCommodities = ["M DOC"];
+    const targetCommodities = ["M DOC", "Maize Ddgs Doc"];
 
     const query = {
       type: "seller",

@@ -83,7 +83,7 @@ export default function MDOCRate() {
   return (
     <Suspense fallback={<Loading />}>
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
-        <Title text="M DOC Commodity Company List" />
+        <Title text="M DOC & Maize Ddgs Doc Company List" />
 
         <div className="mb-6 flex gap-3 flex-wrap">
           <button

@@ -11,7 +11,7 @@ export async function GET(req) {
   try {
     await connectDB();
 
-    const targetCommodities = ["M DOC"];
+    const targetCommodities = ["M DOC", "Maize Ddgs Doc"];
 
     const companies = await ManageCompany.find({
       type: "seller",

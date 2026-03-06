@@ -40,7 +40,7 @@ export default function MobileNav({
     { label: "Rate", path: "/rate" },
     { label: "Landing Cost", path: "/landingcost" },
     { label: "Soya Rate", path: "/soyarate" },
-    { label: "M DOC Rate", path: "/mdocrate" },
+    { label: "M DOC", path: "/mdocrate" },
     { label: "DDGS Rate", path: "/ddgsrate" },
     { label: "Freight", path: "/freight" },
   ];

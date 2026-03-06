@@ -51,7 +51,7 @@ export default function MDOC() {
     <Suspense fallback={<Loading />}>
       <div className="p-4 md:p-6 space-y-5 bg-gray-50 min-h-screen">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <Title text="M DOC Rate" />
+          <Title text="M DOC & Maize Ddgs Doc Rate" />
 
           <div className="flex gap-2 justify-end">
             <button
