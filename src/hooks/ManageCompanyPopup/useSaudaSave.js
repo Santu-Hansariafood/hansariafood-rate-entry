@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
@@ -14,16 +14,21 @@ export const useSaudaSave = (
   applyServerEntries
 ) => {
   const [saveStatus, setSaveStatus] = useState({});
+  const savingRefs = useRef({});
 
   const handleUnitSave = async (key, idx) => {
     if (!company) return;
     const entryId = `${key}-${idx}`;
+    
+    // Immediate lock check using ref
+    if (savingRefs.current[entryId]) return;
     if (saveStatus[entryId] === "saving") return;
 
     const [unit, commodity] = key.split("-");
     const entryList = entries[key];
     if (!entryList || !entryList.length) return;
 
+    savingRefs.current[entryId] = true;
     setSaveStatus((prev) => ({ ...prev, [entryId]: "saving" }));
 
     const now = new Date();
@@ -110,6 +115,8 @@ export const useSaudaSave = (
       }
       setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
       return false;
+    } finally {
+      savingRefs.current[entryId] = false;
     }
   };
 

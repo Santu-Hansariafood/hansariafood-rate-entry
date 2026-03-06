@@ -36,7 +36,7 @@ const SaudaEntrySchema = new mongoose.Schema(
 
 SaudaEntrySchema.index({ date: 1 });
 SaudaEntrySchema.index({ company: 1 });
-SaudaEntrySchema.index({ date: 1, company: 1 });
+SaudaEntrySchema.index({ date: 1, company: 1 }, { unique: true });
 
 const CounterSchema = new mongoose.Schema({
   _id: { type: String, required: true },
@@ -73,30 +73,23 @@ SaudaEntrySchema.statics.getNextSaudaNumber = async function (dateStr) {
   const transitionStart = new Date(2026, 3, 1);
 
   if (baseDate < transitionStart) {
-    let counter = await Counter.findOne({ _id: "saudaNumber" });
-
-    if (!counter) {
-      counter = await Counter.create({
-        _id: "saudaNumber",
-        seq: 6000,
-      });
-    } else if (counter.seq < 6000) {
-      counter = await Counter.findByIdAndUpdate(
-        { _id: "saudaNumber" },
-        { $set: { seq: 6000 } },
-        { new: true }
-      );
-    }
-
-    const nextNumber = counter.seq;
-
-    await Counter.findByIdAndUpdate(
+    const counter = await Counter.findByIdAndUpdate(
       { _id: "saudaNumber" },
       { $inc: { seq: 1 } },
-      { new: true }
+      { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
-    return nextNumber.toString();
+    // If it was just created or seq was low, ensure it's at least 6000
+    if (counter.seq <= 6000) {
+      const fixedCounter = await Counter.findByIdAndUpdate(
+        { _id: "saudaNumber" },
+        { $set: { seq: 6001 } },
+        { new: true }
+      );
+      return "6000";
+    }
+
+    return (counter.seq - 1).toString();
   }
 
   const month = baseDate.getMonth() + 1;
@@ -105,31 +98,32 @@ SaudaEntrySchema.statics.getNextSaudaNumber = async function (dateStr) {
 
   const counterId = `saudaNumber-${seriesYear}`;
 
-  let counter = await Counter.findOne({ _id: counterId });
-
-  if (!counter) {
-    counter = await Counter.create({
-      _id: counterId,
-      seq: 1,
-    });
-  } else if (counter.seq < 1) {
-    counter = await Counter.findByIdAndUpdate(
-      { _id: counterId },
-      { $set: { seq: 1 } },
-      { new: true }
-    );
-  }
-
-  const nextNumber = counter.seq;
-
-  await Counter.findByIdAndUpdate(
+  const counter = await Counter.findByIdAndUpdate(
     { _id: counterId },
     { $inc: { seq: 1 } },
-    { new: true }
+    { new: true, upsert: true, setDefaultsOnInsert: true }
   );
 
-  const padded = String(nextNumber).padStart(4, "0");
+  // If it was just created or seq was 0, it should start from 1
+  // setDefaultsOnInsert sets seq to 6000 by default from CounterSchema, 
+  // but for yearly series we want it to start from 1.
+  // Let's adjust CounterSchema or handle it here.
+  // Actually, let's just handle it here for simplicity.
+  
+  let currentSeq = counter.seq;
+  if (counterId.includes("-") && currentSeq > 5000) {
+     // This was likely an upsert that used the 6000 default. Reset to 1.
+     const resetCounter = await Counter.findByIdAndUpdate(
+        { _id: counterId },
+        { $set: { seq: 2 } },
+        { new: true }
+     );
+     currentSeq = 1;
+  } else {
+     currentSeq = currentSeq - 1;
+  }
 
+  const padded = String(currentSeq).padStart(4, "0");
   return `${seriesYear}-${padded}`;
 };
 

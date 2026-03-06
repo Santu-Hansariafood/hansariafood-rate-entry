@@ -17,6 +17,7 @@ export async function POST(req) {
   }
 
   try {
+    const body = await req.json();
     const {
       company,
       date,
@@ -26,7 +27,7 @@ export async function POST(req) {
       seller,
       mobile,
       lastUpdated: clientLastUpdated,
-    } = await req.json();
+    } = body;
 
     if (
       !company ||
@@ -40,99 +41,138 @@ export async function POST(req) {
       );
     }
 
-    let existingEntry = await SaudaEntry.findOne({ company, date });
-    if (
-      existingEntry &&
-      clientLastUpdated &&
-      new Date(clientLastUpdated).getTime() !==
-        new Date(existingEntry.lastUpdated).getTime()
-    ) {
-      return NextResponse.json(
-        { conflict: true, message: "Data has changed. Please refresh." },
-        { status: 409 }
-      );
-    }
+    let existingEntry;
+    let retryCount = 0;
+    const maxRetries = 2;
 
-    const normalizedEntries = {};
-
-    for (const [key, list] of Object.entries(saudaEntries)) {
-      if (!Array.isArray(list)) continue;
-
-      const processedEntries = [];
-      for (const entry of list) {
-        let saudaNumber = String(entry.saudaNo || "").trim();
-
-        if (!saudaNumber) {
-          saudaNumber = await SaudaEntry.getNextSaudaNumber(date);
+    while (retryCount < maxRetries) {
+      try {
+        existingEntry = await SaudaEntry.findOne({ company, date });
+        
+        if (
+          existingEntry &&
+          clientLastUpdated &&
+          new Date(clientLastUpdated).getTime() !==
+            new Date(existingEntry.lastUpdated).getTime()
+        ) {
+          return NextResponse.json(
+            { conflict: true, message: "Data has changed. Please refresh." },
+            { status: 409 }
+          );
         }
 
-        processedEntries.push({
-          tons: Number(entry.tons) || 0,
-          others: (entry.others || "").trim(),
-          saudaNo: saudaNumber,
-          finalRate: Number(entry.finalRate) || 0,
-          unit: (entry.unit || "").trim(),
-          commodity: (entry.commodity || "").trim(),
-          sellerName: (entry.sellerName || "").trim(),
-          sellerCompany: (entry.sellerCompany || "").trim(),
-          deliveryDate: (entry.deliveryDate || "").trim(),
-        });
-      }
+        const normalizedEntries = {};
 
-      normalizedEntries[key] = processedEntries;
-    }
+        for (const [key, list] of Object.entries(saudaEntries)) {
+          if (!Array.isArray(list)) continue;
 
-    if (existingEntry) {
-      const deletedDocs = await DeletedSauda.find({
-        company: company.trim(),
-        date: date.trim(),
-      })
-        .select("saudaNo")
-        .lean();
-      const deletedSet = new Set(
-        (deletedDocs || []).map((d) => String(d.saudaNo || "").trim()).filter(Boolean)
-      );
+          const processedEntries = [];
+          for (const entry of list) {
+            // Skip entries with no tons or rate to avoid saving empty rows
+            if (!Number(entry.tons) || !Number(entry.finalRate)) continue;
 
-      for (const [key, newList] of Object.entries(normalizedEntries)) {
-        const currentList = Array.isArray(existingEntry.saudaEntries.get(key))
-          ? existingEntry.saudaEntries.get(key)
-          : [];
+            let saudaNumber = String(entry.saudaNo || "").trim();
 
-        const currentMap = new Map(
-          currentList
-            .filter((item) => item && String(item.saudaNo || "").trim() && !deletedSet.has(String(item.saudaNo || "").trim()))
-            .map((item) => [String(item.saudaNo).trim(), item])
-        );
+            if (!saudaNumber) {
+              saudaNumber = await SaudaEntry.getNextSaudaNumber(date);
+            }
 
-        for (const item of newList) {
-          const no = String(item.saudaNo || "").trim();
-          if (!no) continue;
-          currentMap.set(no, item);
+            processedEntries.push({
+              tons: Number(entry.tons) || 0,
+              others: (entry.others || "").trim(),
+              saudaNo: saudaNumber,
+              finalRate: Number(entry.finalRate) || 0,
+              unit: (entry.unit || "").trim(),
+              commodity: (entry.commodity || "").trim(),
+              sellerName: (entry.sellerName || "").trim(),
+              sellerCompany: (entry.sellerCompany || "").trim(),
+              deliveryDate: (entry.deliveryDate || "").trim(),
+            });
+          }
+
+          if (processedEntries.length > 0) {
+            normalizedEntries[key] = processedEntries;
+          }
         }
 
-        const mergedList = Array.from(currentMap.values());
-        existingEntry.saudaEntries.set(key, mergedList);
+        if (existingEntry) {
+          const deletedDocs = await DeletedSauda.find({
+            company: company.trim(),
+            date: date.trim(),
+          })
+            .select("saudaNo")
+            .lean();
+          const deletedSet = new Set(
+            (deletedDocs || []).map((d) => String(d.saudaNo || "").trim()).filter(Boolean)
+          );
+
+          let hasChanges = false;
+          for (const [key, newList] of Object.entries(normalizedEntries)) {
+            const currentList = Array.isArray(existingEntry.saudaEntries.get(key))
+              ? existingEntry.saudaEntries.get(key)
+              : [];
+
+            const currentMap = new Map(
+              currentList
+                .filter((item) => item && String(item.saudaNo || "").trim() && !deletedSet.has(String(item.saudaNo || "").trim()))
+                .map((item) => [String(item.saudaNo).trim(), item])
+            );
+
+            for (const item of newList) {
+              const no = String(item.saudaNo || "").trim();
+              if (!no) continue;
+              
+              const existingItem = currentMap.get(no);
+              if (!existingItem || 
+                  existingItem.tons !== item.tons || 
+                  existingItem.finalRate !== item.finalRate ||
+                  existingItem.sellerName !== item.sellerName ||
+                  existingItem.sellerCompany !== item.sellerCompany) {
+                currentMap.set(no, item);
+                hasChanges = true;
+              }
+            }
+
+            if (hasChanges) {
+              const mergedList = Array.from(currentMap.values());
+              existingEntry.saudaEntries.set(key, mergedList);
+            }
+          }
+
+          if (hasChanges || buyer || seller || mobile) {
+            existingEntry.time = time || existingEntry.time;
+            if (buyer) existingEntry.buyer = buyer.trim();
+            if (seller) existingEntry.seller = seller.trim();
+            if (mobile) existingEntry.mobile = mobile;
+            existingEntry.company = company.trim();
+            existingEntry.lastUpdated = new Date();
+
+            await existingEntry.save();
+          }
+        } else {
+          existingEntry = await SaudaEntry.create({
+            company: company.trim(),
+            date: date.trim(),
+            time: time || "",
+            buyer: buyer?.trim(),
+            seller: seller?.trim(),
+            mobile: mobile,
+            saudaEntries: normalizedEntries,
+            lastUpdated: new Date(),
+          });
+        }
+        
+        // If we reached here, save was successful
+        break;
+
+      } catch (error) {
+        // Handle duplicate key error (code 11000)
+        if (error.code === 11000 && retryCount < maxRetries - 1) {
+          retryCount++;
+          continue;
+        }
+        throw error; // Re-throw if not a duplicate key error or max retries reached
       }
-
-      existingEntry.time = time || existingEntry.time;
-      if (buyer) existingEntry.buyer = buyer.trim();
-      if (seller) existingEntry.seller = seller.trim();
-      if (mobile) existingEntry.mobile = mobile;
-      existingEntry.company = company.trim();
-      existingEntry.lastUpdated = new Date();
-
-      await existingEntry.save();
-    } else {
-      existingEntry = await SaudaEntry.create({
-        company: company.trim(),
-        date: date.trim(),
-        time: time || "",
-        buyer: buyer?.trim(),
-        seller: seller?.trim(),
-        mobile: mobile,
-        saudaEntries: normalizedEntries,
-        lastUpdated: new Date(),
-      });
     }
 
     try {
