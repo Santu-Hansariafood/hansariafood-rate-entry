@@ -17,11 +17,13 @@ export const useSaudaSave = (
 
   const handleUnitSave = async (key, idx) => {
     if (!company) return;
+    const entryId = `${key}-${idx}`;
+    if (saveStatus[entryId] === "saving") return;
+
     const [unit, commodity] = key.split("-");
     const entryList = entries[key];
     if (!entryList || !entryList.length) return;
 
-    const entryId = `${key}-${idx}`;
     setSaveStatus((prev) => ({ ...prev, [entryId]: "saving" }));
 
     const now = new Date();

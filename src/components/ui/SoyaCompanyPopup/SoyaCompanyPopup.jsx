@@ -184,7 +184,13 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                             ) : (
                               <button
                                 onClick={() => handleSave(loc, index)}
-                                className="text-xs bg-emerald-600 text-white px-3 py-1"
+                                disabled={loadingSave}
+                                className={`text-xs px-3 py-1 text-white rounded transition-colors
+                                  ${
+                                    loadingSave
+                                      ? "bg-gray-400 cursor-not-allowed"
+                                      : "bg-emerald-600 hover:bg-emerald-700"
+                                  }`}
                               >
                                 {loadingSave ? "Saving..." : "Save"}
                               </button>

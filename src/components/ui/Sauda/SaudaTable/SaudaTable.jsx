@@ -371,15 +371,29 @@ export default function SaudaTable({
                             <div className="flex gap-2">
                               <button
                                 type="button"
+                                disabled={saveStatus[entryId] === "saving"}
                                 onClick={() => handleUnitSave(key, idx)}
-                                className="rounded bg-green-600 dark:bg-green-500 px-3 py-1 text-xs font-semibold text-white hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                                className={`rounded px-3 py-1 text-xs font-semibold text-white transition-colors
+                                  ${
+                                    saveStatus[entryId] === "saving"
+                                      ? "bg-gray-400 cursor-not-allowed"
+                                      : "bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600"
+                                  }`}
                               >
-                                Save
+                                {saveStatus[entryId] === "saving"
+                                  ? "Saving..."
+                                  : "Save"}
                               </button>
                               <button
                                 type="button"
+                                disabled={saveStatus[entryId] === "saving"}
                                 onClick={() => openRemoveDialog(key, idx)}
-                                className="rounded bg-red-600 dark:bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
+                                className={`rounded px-3 py-1 text-xs font-semibold text-white transition-colors
+                                  ${
+                                    saveStatus[entryId] === "saving"
+                                      ? "bg-gray-400 cursor-not-allowed"
+                                      : "bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
+                                  }`}
                               >
                                 Remove
                               </button>
