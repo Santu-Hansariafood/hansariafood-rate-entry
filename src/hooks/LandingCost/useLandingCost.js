@@ -19,7 +19,8 @@ export default function useLandingCost() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [selectedCategory, setSelectedCategory] = useState("Feed Mills");
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedCommodity, setSelectedCommodity] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
@@ -33,22 +34,15 @@ export default function useLandingCost() {
   const [freightMap, setFreightMap] = useState({});
 
   useEffect(() => {
-    const fetchCompanies = async () => {
+    const fetchCategories = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const res = await axiosInstance.get(
-          "/managecompany?category=Feed Mills&limit=1000"
-        );
-        setCompanies(res.data?.companies || []);
+        const res = await axiosInstance.get("/categories?limit=1000");
+        setCategories(res.data?.categories || []);
       } catch (error) {
-        console.error("Error fetching companies:", error);
-        setError("Failed to fetch companies. Please try again later.");
-      } finally {
-        setLoading(false);
+        console.error("Error fetching categories:", error);
       }
     };
-    fetchCompanies();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
