@@ -29,32 +29,46 @@ export default function NotificationList({ notifications = [] }) {
   const [socketNotifications, setSocketNotifications] = useState([]);
 
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
-    const socket = new WebSocket(wsUrl);
+    let socket = null;
+    let reconnectTimer = null;
 
-    socket.onopen = () => {
-      console.log("NotificationList WebSocket Connected");
-      socket.send(JSON.stringify({ action: "subscribe", type: "all_notifications" }));
-    };
+    const connectWS = () => {
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
+      socket = new WebSocket(wsUrl);
 
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "notification") {
-          const newNotification = data.payload;
-          setSocketNotifications((prev) => [newNotification, ...prev].slice(0, 50));
+      socket.onopen = () => {
+        console.log("[NotificationList] WebSocket Connected");
+        socket.send(JSON.stringify({ action: "subscribe", type: "all_notifications" }));
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "notification") {
+            const newNotification = data.payload;
+            setSocketNotifications((prev) => [newNotification, ...prev].slice(0, 50));
+          }
+        } catch (err) {
+          console.error("[NotificationList] WebSocket message error:", err);
         }
-      } catch (err) {
-        console.error("NotificationList WebSocket error:", err);
-      }
+      };
+
+      socket.onclose = () => {
+        console.log("[NotificationList] WebSocket Disconnected. Reconnecting...");
+        reconnectTimer = setTimeout(connectWS, 5000);
+      };
+
+      socket.onerror = (err) => {
+        console.error("[NotificationList] WebSocket error:", err);
+        socket.close();
+      };
     };
 
-    socket.onclose = () => {
-      console.log("NotificationList WebSocket Disconnected");
-    };
+    connectWS();
 
     return () => {
-      socket.close();
+      if (socket) socket.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
     };
   }, []);
 

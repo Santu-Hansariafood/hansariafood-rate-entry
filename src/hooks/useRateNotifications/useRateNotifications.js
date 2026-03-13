@@ -25,31 +25,45 @@ export default function useRateNotifications(type) {
     fetchNotifications();
     
     // WebSocket Integration
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
-    const socket = new WebSocket(wsUrl);
+    let socket = null;
+    let reconnectTimer = null;
 
-    socket.onopen = () => {
-      console.log(`Rate WebSocket Connected for ${type}`);
-      socket.send(JSON.stringify({ action: "subscribe", type }));
-    };
+    const connectWS = () => {
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
+      socket = new WebSocket(wsUrl);
 
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "rate_updated" || data.type === "notification") {
-          fetchNotifications();
+      socket.onopen = () => {
+        console.log(`[Rate] WebSocket Connected for ${type}`);
+        socket.send(JSON.stringify({ action: "subscribe", type }));
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "rate_updated" || data.type === "notification") {
+            fetchNotifications();
+          }
+        } catch (err) {
+          console.error("[Rate] WebSocket message error:", err);
         }
-      } catch (err) {
-        console.error("Rate WebSocket error:", err);
-      }
+      };
+
+      socket.onclose = () => {
+        console.log(`[Rate] WebSocket Disconnected for ${type}. Reconnecting...`);
+        reconnectTimer = setTimeout(connectWS, 5000);
+      };
+
+      socket.onerror = (err) => {
+        console.error("[Rate] WebSocket error:", err);
+        socket.close();
+      };
     };
 
-    socket.onclose = () => {
-      console.log(`Rate WebSocket Disconnected for ${type}`);
-    };
+    connectWS();
 
     return () => {
-      socket.close();
+      if (socket) socket.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
     };
   }, [fetchNotifications, type]);
 

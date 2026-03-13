@@ -122,31 +122,45 @@ export default function useSaudaNotifications() {
     fetchNotifications();
 
     // WebSocket Integration
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
-    const socket = new WebSocket(wsUrl);
+    let socket = null;
+    let reconnectTimer = null;
 
-    socket.onopen = () => {
-      console.log("Sauda WebSocket Connected");
-      socket.send(JSON.stringify({ action: "subscribe", type: "sauda" }));
-    };
+    const connectWS = () => {
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
+      socket = new WebSocket(wsUrl);
 
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "sauda_notification" || data.type === "sauda_updated") {
-          fetchNotifications();
+      socket.onopen = () => {
+        console.log("[Sauda] WebSocket Connected");
+        socket.send(JSON.stringify({ action: "subscribe", type: "sauda" }));
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "sauda_notification" || data.type === "sauda_updated") {
+            fetchNotifications();
+          }
+        } catch (err) {
+          console.error("[Sauda] WebSocket message error:", err);
         }
-      } catch (err) {
-        console.error("Sauda WebSocket error:", err);
-      }
+      };
+
+      socket.onclose = () => {
+        console.log("[Sauda] WebSocket Disconnected. Reconnecting...");
+        reconnectTimer = setTimeout(connectWS, 5000);
+      };
+
+      socket.onerror = (err) => {
+        console.error("[Sauda] WebSocket error:", err);
+        socket.close();
+      };
     };
 
-    socket.onclose = () => {
-      console.log("Sauda WebSocket Disconnected");
-    };
+    connectWS();
 
     return () => {
-      socket.close();
+      if (socket) socket.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
     };
   }, [fetchNotifications, filterAndSortToday]);
 

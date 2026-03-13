@@ -51,31 +51,45 @@ export default function Header() {
     window.addEventListener("rates-updated", handleRatesUpdated);
 
     // WebSocket Integration
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
-    const socket = new WebSocket(wsUrl);
+    let socket = null;
+    let reconnectTimer = null;
 
-    socket.onopen = () => {
-      console.log("Header WebSocket Connected");
-      socket.send(JSON.stringify({ action: "subscribe", type: "all_rates" }));
-    };
+    const connectWS = () => {
+      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
+      socket = new WebSocket(wsUrl);
 
-    socket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "rate_updated" || data.type === "rates-updated") {
-          fetchNotifications();
+      socket.onopen = () => {
+        console.log("[Header] WebSocket Connected");
+        socket.send(JSON.stringify({ action: "subscribe", type: "all_rates" }));
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "rate_updated" || data.type === "rates-updated") {
+            fetchNotifications();
+          }
+        } catch (err) {
+          console.error("[Header] WebSocket message error:", err);
         }
-      } catch (err) {
-        console.error("Header WebSocket error:", err);
-      }
+      };
+
+      socket.onclose = () => {
+        console.log("[Header] WebSocket Disconnected. Reconnecting...");
+        reconnectTimer = setTimeout(connectWS, 5000);
+      };
+
+      socket.onerror = (err) => {
+        console.error("[Header] WebSocket error:", err);
+        socket.close();
+      };
     };
 
-    socket.onclose = () => {
-      console.log("Header WebSocket Disconnected");
-    };
+    connectWS();
 
     return () => {
-      socket.close();
+      if (socket) socket.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
       window.removeEventListener("rates-updated", handleRatesUpdated);
     };
   }, []);

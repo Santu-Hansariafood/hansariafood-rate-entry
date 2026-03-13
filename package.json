@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "concurrently \"next dev --turbopack\" \"npm run ws\"",
     "build": "next build --webpack",
-    "start": "next start",
+    "start": "concurrently \"next start\" \"npm run ws\"",
+    "ws": "node scripts/ws-server.js",
     "lint": "next lint"
   },
   "dependencies": {
@@ -37,11 +38,13 @@
     "react-dom": "^19.0.0",
     "react-select": "^5.10.1",
     "react-toastify": "^11.0.5",
+    "ws": "^8.19.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "15.2.2",
     "tailwindcss": "^4"

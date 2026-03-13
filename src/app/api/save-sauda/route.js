@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import mongoose from "mongoose";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { broadcast } from "@/utils/broadcast";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { sendEmail } from "@/lib/email/sendEmail";
@@ -148,6 +149,7 @@ export async function POST(req) {
             existingEntry.lastUpdated = new Date();
 
             await existingEntry.save();
+            await broadcast("sauda_notification", { company, date });
           }
         } else {
           existingEntry = await SaudaEntry.create({
@@ -160,6 +162,7 @@ export async function POST(req) {
             saudaEntries: normalizedEntries,
             lastUpdated: new Date(),
           });
+          await broadcast("sauda_notification", { company, date });
         }
         
         // If we reached here, save was successful

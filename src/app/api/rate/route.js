@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { broadcast } from "@/utils/broadcast";
 
 await connectDB();
 
@@ -54,6 +55,16 @@ export async function POST(req) {
 
       await rateEntry.save();
 
+      // Notify WebSocket server
+      await broadcast("rate_updated", {
+        company,
+        location,
+        commodity,
+        newRate,
+        newRateDate: today,
+        updateTime: rateEntry.updateTime,
+      });
+
       return NextResponse.json(
         { message: "Rate updated successfully!" },
         { status: 200 }
@@ -74,6 +85,16 @@ export async function POST(req) {
     });
 
     await rateEntry.save();
+
+    // Notify WebSocket server
+    await broadcast("notification", {
+      companyName: company,
+      location,
+      commodity,
+      rate: newRate,
+      date: today,
+      time: rateEntry.updateTime,
+    });
 
     return NextResponse.json(
       { message: "Rate saved successfully!" },
