@@ -3,7 +3,6 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-// Load environment variables from .env or .env.local
 try {
   const envPath = fs.existsSync(path.join(__dirname, "../.env.local"))
     ? path.join(__dirname, "../.env.local")
@@ -19,7 +18,6 @@ const PORT = process.env.WS_PORT || 9000;
 const WS_SECRET = process.env.WS_SECRET || "change-me-in-production";
 
 const server = http.createServer((req, res) => {
-  // Simple health check
   if (req.method === "GET" && req.url === "/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", clients: wss.clients.size }));

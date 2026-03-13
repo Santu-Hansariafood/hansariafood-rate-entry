@@ -131,7 +131,7 @@ export default function useSaudaNotifications() {
         if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
         const host = window.location.hostname;
-        return `${protocol}//${host}:9000`;
+        return `${protocol}//${host}:3000`;
       };
       const wsUrl = getWsUrl();
       try {

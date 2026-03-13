@@ -1,9 +1,6 @@
-/**
- * Internal helper to broadcast messages through the WebSocket server
- */
 export async function broadcast(type, payload) {
   try {
-    const wsUrl = process.env.WS_INTERNAL_URL || "http://localhost:9000/broadcast";
+    const wsUrl = process.env.WS_INTERNAL_URL || "https://hansariafood.site:3000/broadcast";
     const wsSecret = process.env.WS_SECRET || "change-me-in-production";
     
     await fetch(wsUrl, {
