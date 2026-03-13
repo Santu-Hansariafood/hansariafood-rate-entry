@@ -33,35 +33,47 @@ export default function NotificationList({ notifications = [] }) {
     let reconnectTimer = null;
 
     const connectWS = () => {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
-      socket = new WebSocket(wsUrl);
-
-      socket.onopen = () => {
-        console.log("[NotificationList] WebSocket Connected");
-        socket.send(JSON.stringify({ action: "subscribe", type: "all_notifications" }));
+      if (typeof window === "undefined" || !window.WebSocket) return;
+      const getWsUrl = () => {
+        if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const host = window.location.hostname;
+        return `${protocol}//${host}:9000`;
       };
+      const wsUrl = getWsUrl();
+      try {
+        socket = new window.WebSocket(wsUrl);
 
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "notification") {
-            const newNotification = data.payload;
-            setSocketNotifications((prev) => [newNotification, ...prev].slice(0, 50));
+        socket.onopen = () => {
+          console.log("[NotificationList] WebSocket Connected");
+          socket.send(JSON.stringify({ action: "subscribe", type: "all_notifications" }));
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "notification") {
+              const newNotification = data.payload;
+              setSocketNotifications((prev) => [newNotification, ...prev].slice(0, 50));
+            }
+          } catch (err) {
+            console.error("[NotificationList] WebSocket message error:", err);
           }
-        } catch (err) {
-          console.error("[NotificationList] WebSocket message error:", err);
-        }
-      };
+        };
 
-      socket.onclose = () => {
-        console.log("[NotificationList] WebSocket Disconnected. Reconnecting...");
+        socket.onclose = () => {
+          console.log("[NotificationList] WebSocket Disconnected. Reconnecting...");
+          reconnectTimer = setTimeout(connectWS, 5000);
+        };
+
+        socket.onerror = (err) => {
+          console.error("[NotificationList] WebSocket error:", err);
+          socket.close();
+        };
+      } catch (err) {
+        console.error("[NotificationList] WebSocket connection error:", err);
         reconnectTimer = setTimeout(connectWS, 5000);
-      };
-
-      socket.onerror = (err) => {
-        console.error("[NotificationList] WebSocket error:", err);
-        socket.close();
-      };
+      }
     };
 
     connectWS();
@@ -79,8 +91,9 @@ export default function NotificationList({ notifications = [] }) {
     const seen = new Set();
 
     combined.forEach((n) => {
+      if (!n) return;
       const companyName = n.company || n.companyName || "Unknown Company";
-      const uniqueId = `${companyName}-${n.location}-${n.lastUpdated || n.newRateDate || n.date}-${n.updateTime || n.time}-${n.newRate || n.rate}`;
+      const uniqueId = `${companyName}-${n.location || ""}-${n.lastUpdated || n.newRateDate || n.date || ""}-${n.updateTime || n.time || ""}-${n.newRate || n.rate || ""}`;
       if (!seen.has(uniqueId)) {
         seen.add(uniqueId);
         unique.push(n);

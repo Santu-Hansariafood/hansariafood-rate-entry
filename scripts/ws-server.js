@@ -1,11 +1,18 @@
 const WebSocket = require("ws");
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 
-// Load environment variables if available
+// Load environment variables from .env or .env.local
 try {
-  require("dotenv").config();
+  const envPath = fs.existsSync(path.join(__dirname, "../.env.local"))
+    ? path.join(__dirname, "../.env.local")
+    : path.join(__dirname, "../.env");
+  
+  require("dotenv").config({ path: envPath });
+  console.log(`Loaded environment from: ${envPath}`);
 } catch (e) {
-  // Silent fail if dotenv is not present
+  console.warn("Could not load .env file, using defaults");
 }
 
 const PORT = process.env.WS_PORT || 9000;

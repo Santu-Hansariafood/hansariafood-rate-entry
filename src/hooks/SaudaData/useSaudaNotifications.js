@@ -126,34 +126,46 @@ export default function useSaudaNotifications() {
     let reconnectTimer = null;
 
     const connectWS = () => {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
-      socket = new WebSocket(wsUrl);
-
-      socket.onopen = () => {
-        console.log("[Sauda] WebSocket Connected");
-        socket.send(JSON.stringify({ action: "subscribe", type: "sauda" }));
+      if (typeof window === "undefined" || !window.WebSocket) return;
+      const getWsUrl = () => {
+        if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const host = window.location.hostname;
+        return `${protocol}//${host}:9000`;
       };
+      const wsUrl = getWsUrl();
+      try {
+        socket = new window.WebSocket(wsUrl);
+        
+        socket.onopen = () => {
+          console.log("[Sauda] WebSocket Connected");
+          socket.send(JSON.stringify({ action: "subscribe", type: "sauda" }));
+        };
 
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "sauda_notification" || data.type === "sauda_updated") {
-            fetchNotifications();
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "sauda_notification" || data.type === "sauda_updated") {
+              fetchNotifications();
+            }
+          } catch (err) {
+            console.error("[Sauda] WebSocket message error:", err);
           }
-        } catch (err) {
-          console.error("[Sauda] WebSocket message error:", err);
-        }
-      };
+        };
 
-      socket.onclose = () => {
-        console.log("[Sauda] WebSocket Disconnected. Reconnecting...");
+        socket.onclose = () => {
+          console.log("[Sauda] WebSocket Disconnected. Reconnecting...");
+          reconnectTimer = setTimeout(connectWS, 5000);
+        };
+
+        socket.onerror = (err) => {
+          console.error("[Sauda] WebSocket error:", err);
+          socket.close();
+        };
+      } catch (err) {
+        console.error("[Sauda] WebSocket connection error:", err);
         reconnectTimer = setTimeout(connectWS, 5000);
-      };
-
-      socket.onerror = (err) => {
-        console.error("[Sauda] WebSocket error:", err);
-        socket.close();
-      };
+      }
     };
 
     connectWS();

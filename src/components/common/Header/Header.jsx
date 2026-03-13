@@ -55,34 +55,46 @@ export default function Header() {
     let reconnectTimer = null;
 
     const connectWS = () => {
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
-      socket = new WebSocket(wsUrl);
-
-      socket.onopen = () => {
-        console.log("[Header] WebSocket Connected");
-        socket.send(JSON.stringify({ action: "subscribe", type: "all_rates" }));
+      if (typeof window === "undefined" || !window.WebSocket) return;
+      const getWsUrl = () => {
+        if (process.env.NEXT_PUBLIC_WS_URL) return process.env.NEXT_PUBLIC_WS_URL;
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const host = window.location.hostname;
+        return `${protocol}//${host}:9000`;
       };
+      const wsUrl = getWsUrl();
+      try {
+        socket = new window.WebSocket(wsUrl);
 
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "rate_updated" || data.type === "rates-updated") {
-            fetchNotifications();
+        socket.onopen = () => {
+          console.log("[Header] WebSocket Connected");
+          socket.send(JSON.stringify({ action: "subscribe", type: "all_rates" }));
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "rate_updated" || data.type === "rates-updated") {
+              fetchNotifications();
+            }
+          } catch (err) {
+            console.error("[Header] WebSocket message error:", err);
           }
-        } catch (err) {
-          console.error("[Header] WebSocket message error:", err);
-        }
-      };
+        };
 
-      socket.onclose = () => {
-        console.log("[Header] WebSocket Disconnected. Reconnecting...");
+        socket.onclose = () => {
+          console.log("[Header] WebSocket Disconnected. Reconnecting...");
+          reconnectTimer = setTimeout(connectWS, 5000);
+        };
+
+        socket.onerror = (err) => {
+          console.error("[Header] WebSocket error:", err);
+          socket.close();
+        };
+      } catch (err) {
+        console.error("[Header] WebSocket connection error:", err);
         reconnectTimer = setTimeout(connectWS, 5000);
-      };
-
-      socket.onerror = (err) => {
-        console.error("[Header] WebSocket error:", err);
-        socket.close();
-      };
+      }
     };
 
     connectWS();
