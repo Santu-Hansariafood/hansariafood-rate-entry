@@ -121,8 +121,33 @@ export default function useSaudaNotifications() {
 
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 30 * 1000);
-    return () => clearInterval(interval);
+    // WebSocket Integration
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
+    const socket = new WebSocket(wsUrl);
+
+    socket.onopen = () => {
+      console.log("Sauda WebSocket Connected");
+      socket.send(JSON.stringify({ action: "subscribe", type: "sauda" }));
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "sauda_notification" || data.type === "sauda_updated") {
+          fetchNotifications();
+        }
+      } catch (err) {
+        console.error("Sauda WebSocket error:", err);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log("Sauda WebSocket Disconnected");
+    };
+
+    return () => {
+      socket.close();
+    };
   }, [fetchNotifications, filterAndSortToday]);
 
   useEffect(() => {

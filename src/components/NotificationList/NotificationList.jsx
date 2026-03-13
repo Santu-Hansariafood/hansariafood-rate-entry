@@ -26,13 +26,63 @@ export default function NotificationList({ notifications = [] }) {
     return (hours * 60 + minutes) * 60 * 1000;
   };
 
+  const [socketNotifications, setSocketNotifications] = useState([]);
+
+  useEffect(() => {
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
+    const socket = new WebSocket(wsUrl);
+
+    socket.onopen = () => {
+      console.log("NotificationList WebSocket Connected");
+      socket.send(JSON.stringify({ action: "subscribe", type: "all_notifications" }));
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "notification") {
+          const newNotification = data.payload;
+          setSocketNotifications((prev) => [newNotification, ...prev].slice(0, 50));
+        }
+      } catch (err) {
+        console.error("NotificationList WebSocket error:", err);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log("NotificationList WebSocket Disconnected");
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  const allNotifications = useMemo(() => {
+    // Combine props and socket notifications, removing duplicates by uniqueId
+    const combined = [...socketNotifications, ...notifications];
+    const unique = [];
+    const seen = new Set();
+
+    combined.forEach((n) => {
+      const companyName = n.company || n.companyName || "Unknown Company";
+      const uniqueId = `${companyName}-${n.location}-${n.lastUpdated || n.newRateDate || n.date}-${n.updateTime || n.time}-${n.newRate || n.rate}`;
+      if (!seen.has(uniqueId)) {
+        seen.add(uniqueId);
+        unique.push(n);
+      }
+    });
+
+    return unique;
+  }, [notifications, socketNotifications]);
+
   const {
     filter,
     setFilter,
     searchQuery,
     setSearchQuery,
     filteredNotifications,
-  } = useNotificationFilter(notifications, parseUpdateTime);
+  } = useNotificationFilter(allNotifications, parseUpdateTime);
 
   const { handleCopy, capitalizeFirst } = useCopyNotification();
 

@@ -24,10 +24,34 @@ export default function useRateNotifications(type) {
   useEffect(() => {
     fetchNotifications();
     
-    // Optional: Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+    // WebSocket Integration
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
+    const socket = new WebSocket(wsUrl);
+
+    socket.onopen = () => {
+      console.log(`Rate WebSocket Connected for ${type}`);
+      socket.send(JSON.stringify({ action: "subscribe", type }));
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "rate_updated" || data.type === "notification") {
+          fetchNotifications();
+        }
+      } catch (err) {
+        console.error("Rate WebSocket error:", err);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log(`Rate WebSocket Disconnected for ${type}`);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [fetchNotifications, type]);
 
   return { notifications, loading, refreshNotifications: fetchNotifications };
 }

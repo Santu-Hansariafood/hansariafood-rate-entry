@@ -57,10 +57,33 @@ export default function CompanyList({
     };
 
     window.addEventListener("rates-updated", handleRatesUpdated);
-    const interval = setInterval(fetchNotifications, 5000);
-    
+
+    // WebSocket Integration
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:9000";
+    const socket = new WebSocket(wsUrl);
+
+    socket.onopen = () => {
+      console.log("CompanyList WebSocket Connected");
+      socket.send(JSON.stringify({ action: "subscribe", type: "all_rates" }));
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "rate_updated" || data.type === "rates-updated") {
+          fetchNotifications();
+        }
+      } catch (err) {
+        console.error("CompanyList WebSocket error:", err);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log("CompanyList WebSocket Disconnected");
+    };
+
     return () => {
-      clearInterval(interval);
+      socket.close();
       window.removeEventListener("rates-updated", handleRatesUpdated);
     };
   }, [completedCompanies]);
