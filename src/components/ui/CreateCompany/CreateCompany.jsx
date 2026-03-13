@@ -16,7 +16,7 @@ const InputBox = dynamic(
   () => import("@/components/common/InputBox/InputBox"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   loading: () => <Loading />,
@@ -28,13 +28,13 @@ const Dropdown = dynamic(
   () => import("@/components/common/Dropdown/Dropdown"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 const SelectBox = dynamic(
   () => import("@/components/common/SelectBox/SelectBox"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 
 export default function CreateCompany() {
@@ -58,7 +58,7 @@ export default function CreateCompany() {
         label: cat.name,
         value: cat.name,
       })),
-    [categories]
+    [categories],
   );
 
   const companyTypeOptions = useMemo(
@@ -66,7 +66,7 @@ export default function CreateCompany() {
       { label: "Buyer", value: "buyer" },
       { label: "Seller", value: "seller" },
     ],
-    []
+    [],
   );
 
   return (
@@ -108,8 +108,12 @@ export default function CreateCompany() {
                 </label>
                 <InputBox
                   type="text"
+                  pattern="[A-Za-z\s]+"
                   value={company}
-                  onChange={(e) => setCompany(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                    setCompany(value);
+                  }}
                   placeholder="Enter company name"
                   className="w-full dark:bg-gray-900 dark:text-gray-200"
                 />

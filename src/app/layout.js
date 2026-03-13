@@ -46,7 +46,6 @@ export async function generateMetadata() {
   let commodityKeywords = "";
   
   try {
-    // Use a race to prevent database issues from hanging the whole page
     const fetchCommodities = async () => {
       await connectDB();
       return await Commodity.find({}).select("name").lean();
