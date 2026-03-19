@@ -34,8 +34,11 @@ export async function GET(request) {
           newRateDate: { $gte: date, $lt: nextMonth },
         });
 
+        // Use regex to match the month and year in the date string (format: DD-MM-YYYY)
+        const monthYearRegex = new RegExp(`^\\d{2}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}$`);
+        
         const saudaEntries = await SaudaEntry.find({
-          createdAt: { $gte: date, $lt: nextMonth },
+          date: { $regex: monthYearRegex },
         });
 
         let saudasDone = 0;
@@ -69,7 +72,7 @@ export async function GET(request) {
         const nextDay = new Date(date);
         nextDay.setDate(nextDay.getDate() + 1);
 
-        const dayStr = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+        const dayStr = `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`;
 
         const rateEntries = await Rate.countDocuments({
           newRateDate: { $gte: date, $lt: nextDay },
