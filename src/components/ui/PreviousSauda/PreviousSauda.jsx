@@ -33,7 +33,7 @@ const PreviousSauda = () => {
   } = usePreviousSauda();
 
   const formatSaudaNo = (value) =>
-    value ? value.toString().slice(-4) : "";
+    value ? value.toString().split("-").pop() : "";
 
   const handleMarkDone = useCallback(
     async (item) => {

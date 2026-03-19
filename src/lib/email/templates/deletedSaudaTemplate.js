@@ -9,7 +9,7 @@ export const generateDeletedSaudaEmailTemplate = ({
   userMobile,
 }) => {
   const formatSaudaNo = (value) =>
-    value ? value.toString().slice(-4) : "-";
+    value ? value.toString().split("-").pop() : "-";
 
   const {
     saudaNo,

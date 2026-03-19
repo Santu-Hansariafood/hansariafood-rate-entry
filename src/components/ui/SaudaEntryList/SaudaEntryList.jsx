@@ -20,7 +20,7 @@ const SaudaEntryList = () => {
   const today = useToday();
 
   const formatSaudaNo = (value) =>
-    value ? value.toString().slice(-4) : "";
+    value ? value.toString().split("-").pop() : "";
 
   const toggleExpand = (mobile) =>
     setExpandedMobile((prev) => (prev === mobile ? null : mobile));

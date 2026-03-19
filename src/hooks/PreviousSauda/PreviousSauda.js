@@ -60,11 +60,11 @@ const usePreviousSauda = () => {
       const withSerial = flatEntries
         .sort((a, b) => {
           const numA = parseInt(
-            (a.saudaNo ? a.saudaNo.toString().slice(-4) : "0"),
+            (a.saudaNo ? a.saudaNo.toString().split("-").pop() : "0"),
             10
           );
           const numB = parseInt(
-            (b.saudaNo ? b.saudaNo.toString().slice(-4) : "0"),
+            (b.saudaNo ? b.saudaNo.toString().split("-").pop() : "0"),
             10
           );
           return numA - numB;

@@ -59,7 +59,7 @@ export async function generateSaudaPDF({
   const body = [];
   let totalTons = 0;
   const formatSaudaNo = (value) =>
-    value ? value.toString().slice(-4) : "";
+    value ? value.toString().split("-").pop() : "";
 
   Object.entries(saudaEntries).forEach(([key, list]) => {
     const [unit, com] = key.split("-");
