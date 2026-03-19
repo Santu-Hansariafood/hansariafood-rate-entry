@@ -17,26 +17,47 @@ export async function POST(request) {
     const busiestDayRate = dailyData.reduce((prev, current) => (prev.rateEntries > current.rateEntries) ? prev : current);
     const busiestDayTons = dailyData.reduce((prev, current) => (prev.totalTons > current.totalTons) ? prev : current);
     
-    let trend = "stable";
+    let trend = "Stable";
     const startVal = dailyData[0].totalTons;
     const endVal = dailyData[dailyData.length - 1].totalTons;
-    if (endVal > startVal * 1.2) trend = "increasing significantly";
-    else if (endVal > startVal) trend = "showing slight growth";
-    else if (endVal < startVal * 0.8) trend = "decreasing";
+    if (endVal > startVal * 1.2) trend = "Significant Growth";
+    else if (endVal > startVal) trend = "Moderate Growth";
+    else if (endVal < startVal * 0.8) trend = "Downward Trend";
 
     const periodLabel = period === 'monthly' ? 'Last 6 Months' : `Last ${period.replace('days', '')} Days`;
 
+    // Generate Date-wise report for the AI section
+    const dateWiseReport = dailyData.map(d => 
+      `| ${d.displayDate} | ${d.rateEntries} | ${d.saudasDone} | ${d.totalTons} T |`
+    ).join('\n');
+
     const analysis = `
-### ${periodLabel} Performance Analysis
-In this period, we processed **${summary.totalTonsDone} tons** across **${summary.totalSaudasDone} saudas**, supported by **${summary.totalRateEntries} rate updates**.
+# PERFORMANCE ANALYTICS REPORT
+**Period:** ${periodLabel}
+**Generated on:** ${new Date().toLocaleDateString('en-IN')}
 
-#### Core Findings:
-- **Tonnage Leader:** The highest volume was recorded on **${busiestDayTons.displayDate}** with **${busiestDayTons.totalTons} tons**.
-- **Market Engagement:** The most active period for rate updates was **${busiestDayRate.displayDate}** (${busiestDayRate.rateEntries} entries).
-- **Trend Forecast:** Volume is currently **${trend}** compared to the start of this cycle.
-- **Efficiency Note:** ${summary.totalTonsDone / (summary.totalSaudasDone || 1) > 50 ? 'Large-scale trades are dominating the volume.' : 'High-frequency smaller trades are the primary driver.'}
+## EXECUTIVE SUMMARY
+Over this cycle, the business processed a total volume of **${summary.totalTonsDone} tons** across **${summary.totalSaudasDone} completed saudas**. Market engagement remained active with **${summary.totalRateEntries} rate submissions** recorded.
 
-*Insight generated based on transactional throughput and market participation.*
+### KEY PERFORMANCE INDICATORS (KPIs)
+- **Total Tonnage:** ${summary.totalTonsDone} Tons
+- **Total Transactions:** ${summary.totalSaudasDone} Saudas
+- **Market Price Updates:** ${summary.totalRateEntries} Entries
+- **Growth Status:** ${trend}
+
+### PERIODIC ACTIVITY BREAKDOWN
+| Date/Month | Rate Entries | Saudas Done | Total Volume |
+| :--- | :--- | :--- | :--- |
+${dateWiseReport}
+
+## CRITICAL INSIGHTS
+1. **Volume Peak:** The highest transaction volume occurred on **${busiestDayTons.displayDate}**, reaching **${busiestDayTons.totalTons} tons**.
+2. **Engagement Peak:** Price discovery was most intense on **${busiestDayRate.displayDate}** with ${busiestDayRate.rateEntries} updates.
+3. **Operational Efficiency:** ${summary.totalTonsDone / (summary.totalSaudasDone || 1) > 50 ? 'The focus has been on high-volume bulk transactions.' : 'Performance is driven by a high frequency of mid-sized trades.'}
+4. **Market Momentum:** The overall volume trend is currently **${trend.toLowerCase()}**, suggesting ${trend.includes('Growth') ? 'strong market demand' : 'a cautious trading environment'}.
+
+---
+*End of Analysis Report*
     `.trim();
 
     return NextResponse.json({ success: true, analysis });

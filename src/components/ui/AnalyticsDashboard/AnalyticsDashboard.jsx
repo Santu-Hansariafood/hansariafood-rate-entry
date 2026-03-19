@@ -16,6 +16,8 @@ import { motion } from 'framer-motion';
 import { TrendingUp, FileText, CheckCircle, BarChart3, BrainCircuit, ArrowLeft, History, MapPin } from 'lucide-react';
 import Loading from '@/components/common/Loading/Loading';
 import Link from 'next/link';
+import { generateAnalyticsPDF } from '@/utils/generateAnalyticsPDF';
+import { Download, FileDown, Printer } from 'lucide-react';
 
 ChartJS.register(
   CategoryScale,
@@ -32,6 +34,7 @@ const AnalyticsDashboard = () => {
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,6 +65,22 @@ const AnalyticsDashboard = () => {
 
     fetchData();
   }, [period]);
+
+  const handleDownloadPDF = async () => {
+    if (!data || !aiAnalysis) return;
+    setPdfLoading(true);
+    try {
+      await generateAnalyticsPDF({
+        data,
+        period,
+        aiAnalysis,
+      });
+    } catch (err) {
+      console.error("Error generating PDF:", err);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
 
   const chartData = {
     labels: data?.dailyData?.map(d => d.displayDate) || [],
@@ -130,7 +149,22 @@ const AnalyticsDashboard = () => {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleDownloadPDF}
+              disabled={pdfLoading || loading}
+              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold shadow-lg transition-all
+                ${pdfLoading || loading 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95'}`}
+            >
+              {pdfLoading ? (
+                <div className="h-4 w-4 border-2 border-white/30 border-t-white animate-spin rounded-full" />
+              ) : (
+                <FileDown size={18} />
+              )}
+              {pdfLoading ? "Generating..." : "Download Report"}
+            </button>
             <div className="flex bg-white dark:bg-gray-900 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
               {['7days', '14days', 'monthly'].map((p) => (
                 <button
@@ -195,15 +229,33 @@ const AnalyticsDashboard = () => {
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 dark:from-emerald-500/5 dark:to-blue-500/5 p-6 rounded-3xl shadow-xl border border-emerald-200/50 dark:border-emerald-800/30 backdrop-blur-sm"
+            className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 relative overflow-hidden"
           >
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-              <BrainCircuit className="text-emerald-500" />
-              AI Insights
-            </h3>
-            <div className="prose dark:prose-invert max-w-none">
-              <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                {aiAnalysis || "Analyzing current week data..."}
+            {/* Watermark/Decoration */}
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <BrainCircuit size={120} />
+            </div>
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                  <BrainCircuit className="text-emerald-500" size={28} />
+                  AI Intelligence Report
+                </h3>
+                <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-full uppercase tracking-widest">
+                  Live Analysis
+                </span>
+              </div>
+
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <div className="text-gray-800 dark:text-gray-200 leading-relaxed font-serif whitespace-pre-wrap tracking-wide border-l-4 border-emerald-500 pl-4 py-2 bg-emerald-50/30 dark:bg-emerald-900/10 rounded-r-xl">
+                  {aiAnalysis || "Aggregating periodic data for intelligence analysis..."}
+                </div>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-[10px] text-gray-400 font-mono uppercase tracking-tighter">
+                <span>Ref: HFPL-ANLYTCS-{period.toUpperCase()}</span>
+                <span>Security Level: Admin Confidential</span>
               </div>
             </div>
           </motion.div>
