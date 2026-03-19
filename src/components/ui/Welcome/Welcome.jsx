@@ -178,6 +178,14 @@ export default function Welcome() {
             </p>
 
             <Link
+              href="/analytics"
+              className="inline-flex mt-4 px-5 py-2 rounded-full text-sm font-semibold
+                         bg-gradient-to-r from-purple-500 to-pink-600 text-white
+                         shadow-lg hover:shadow-xl transition"
+            >
+              Analytics Dashboard
+            </Link>
+            <Link
               href="/resetpassword"
               className="inline-flex mt-4 px-5 py-2 rounded-full text-sm font-semibold
                          bg-gradient-to-r from-blue-500 to-indigo-600 text-white
