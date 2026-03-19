@@ -5,9 +5,8 @@ import { generateSaudaExcel } from "@/lib/excel/generateSaudaExcel";
 import { sendSaudaEmail } from "@/lib/email/sendSaudaEmail";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-await connectDB();
-
 export async function POST(req) {
+  await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
