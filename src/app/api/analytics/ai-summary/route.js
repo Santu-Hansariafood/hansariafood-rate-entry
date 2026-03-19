@@ -7,29 +7,36 @@ export async function POST(request) {
   }
 
   try {
-    const { weeklyData } = await request.json();
+    const { weeklyData, period } = await request.json();
     const { dailyData, summary } = weeklyData;
 
-    // Logic-based "AI" Analysis
+    if (!dailyData || dailyData.length === 0) {
+      return NextResponse.json({ success: true, analysis: "Not enough data for analysis yet." });
+    }
+
     const busiestDayRate = dailyData.reduce((prev, current) => (prev.rateEntries > current.rateEntries) ? prev : current);
-    const busiestDaySauda = dailyData.reduce((prev, current) => (prev.saudasDone > current.saudasDone) ? prev : current);
+    const busiestDayTons = dailyData.reduce((prev, current) => (prev.totalTons > current.totalTons) ? prev : current);
     
     let trend = "stable";
-    if (dailyData[6].rateEntries > dailyData[0].rateEntries) trend = "increasing";
-    else if (dailyData[6].rateEntries < dailyData[0].rateEntries) trend = "decreasing";
+    const startVal = dailyData[0].totalTons;
+    const endVal = dailyData[dailyData.length - 1].totalTons;
+    if (endVal > startVal * 1.2) trend = "increasing significantly";
+    else if (endVal > startVal) trend = "showing slight growth";
+    else if (endVal < startVal * 0.8) trend = "decreasing";
+
+    const periodLabel = period === 'monthly' ? 'Last 6 Months' : `Last ${period.replace('days', '')} Days`;
 
     const analysis = `
-### Weekly Performance Overview
-Over the last 7 days, we recorded a total of **${summary.totalRateEntries} rate entries** and **${summary.totalSaudasDone} completed saudas**. 
-The overall conversion rate stands at **${summary.conversionRate}%**.
+### ${periodLabel} Performance Analysis
+In this period, we processed **${summary.totalTonsDone} tons** across **${summary.totalSaudasDone} saudas**, supported by **${summary.totalRateEntries} rate updates**.
 
-#### Key Insights:
-- **Peak Activity (Rates):** The highest volume of rate updates occurred on **${busiestDayRate.displayDate}** with ${busiestDayRate.rateEntries} entries.
-- **Peak Performance (Saudas):** The most saudas were closed on **${busiestDaySauda.displayDate}** (${busiestDaySauda.saudasDone} saudas).
-- **Trend Analysis:** Market engagement is currently **${trend}** compared to the beginning of the week.
-- **Efficiency:** ${summary.conversionRate > 20 ? 'The team is showing strong conversion efficiency.' : 'There is potential to improve the rate-to-sauda conversion ratio.'}
+#### Core Findings:
+- **Tonnage Leader:** The highest volume was recorded on **${busiestDayTons.displayDate}** with **${busiestDayTons.totalTons} tons**.
+- **Market Engagement:** The most active period for rate updates was **${busiestDayRate.displayDate}** (${busiestDayRate.rateEntries} entries).
+- **Trend Forecast:** Volume is currently **${trend}** compared to the start of this cycle.
+- **Efficiency Note:** ${summary.totalTonsDone / (summary.totalSaudasDone || 1) > 50 ? 'Large-scale trades are dominating the volume.' : 'High-frequency smaller trades are the primary driver.'}
 
-*This analysis was generated automatically based on real-time transaction data.*
+*Insight generated based on transactional throughput and market participation.*
     `.trim();
 
     return NextResponse.json({ success: true, analysis });

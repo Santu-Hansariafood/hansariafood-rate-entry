@@ -5,56 +5,107 @@ import Rate from '@/models/Rate';
 import { verifyApiKey } from '@/middleware/apiKeyMiddleware/apiKeyMiddleware';
 
 export async function GET(request) {
+  await connectDB();
   if (!verifyApiKey(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    await connectDB();
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get("period") || "7days"; // 7days, 14days, monthly
 
     const dailyData = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-      
-      const nextDay = new Date(date);
-      nextDay.setDate(nextDay.getDate() + 1);
+    let loopCount = period === "14days" ? 14 : 7;
+    
+    if (period === "monthly") {
+      // Monthly logic for the last 6 months
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        date.setDate(1);
+        date.setHours(0, 0, 0, 0);
 
-      const dayStr = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+        const nextMonth = new Date(date);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-      // Rate count for this specific day
-      const rateEntries = await Rate.countDocuments({
-        newRateDate: { $gte: date, $lt: nextDay },
-      });
+        const monthName = date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 
-      // Sauda entries for this specific day
-      const saudaEntries = await SaudaEntry.find({
-        date: dayStr, // Matching the date format in SaudaEntry model
-      });
+        const rateEntries = await Rate.countDocuments({
+          newRateDate: { $gte: date, $lt: nextMonth },
+        });
 
-      let saudasDone = 0;
-      saudaEntries.forEach(entry => {
-        if (entry.saudaEntries) {
-          // saudaEntries is a Map
-          for (const saudaList of entry.saudaEntries.values()) {
-            saudasDone += saudaList.length;
+        const saudaEntries = await SaudaEntry.find({
+          createdAt: { $gte: date, $lt: nextMonth },
+        });
+
+        let saudasDone = 0;
+        let totalTons = 0;
+        saudaEntries.forEach(entry => {
+          if (entry.saudaEntries) {
+            for (const saudaList of entry.saudaEntries.values()) {
+              saudasDone += saudaList.length;
+              saudaList.forEach(s => {
+                totalTons += Number(s.tons) || 0;
+              });
+            }
           }
-        }
-      });
+        });
 
-      dailyData.push({
-        date: dayStr,
-        displayDate: date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }),
-        rateEntries,
-        saudasDone,
-      });
+        dailyData.push({
+          date: monthName,
+          displayDate: monthName,
+          rateEntries,
+          saudasDone,
+          totalTons: Math.round(totalTons)
+        });
+      }
+    } else {
+      // Daily logic (7 or 14 days)
+      for (let i = loopCount - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        
+        const nextDay = new Date(date);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        const dayStr = `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+
+        const rateEntries = await Rate.countDocuments({
+          newRateDate: { $gte: date, $lt: nextDay },
+        });
+
+        const saudaEntries = await SaudaEntry.find({
+          date: dayStr,
+        });
+
+        let saudasDone = 0;
+        let totalTons = 0;
+        saudaEntries.forEach(entry => {
+          if (entry.saudaEntries) {
+            for (const saudaList of entry.saudaEntries.values()) {
+              saudasDone += saudaList.length;
+              saudaList.forEach(s => {
+                totalTons += Number(s.tons) || 0;
+              });
+            }
+          }
+        });
+
+        dailyData.push({
+          date: dayStr,
+          displayDate: date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }),
+          rateEntries,
+          saudasDone,
+          totalTons: Math.round(totalTons)
+        });
+      }
     }
 
     const totalRateEntries = dailyData.reduce((acc, curr) => acc + curr.rateEntries, 0);
     const totalSaudasDone = dailyData.reduce((acc, curr) => acc + curr.saudasDone, 0);
+    const totalTonsDone = dailyData.reduce((acc, curr) => acc + curr.totalTons, 0);
 
-    // Recent Works Done (Latest 10 Sauda entries)
     const recentSaudas = await SaudaEntry.find()
       .sort({ createdAt: -1 })
       .limit(5)
@@ -91,6 +142,7 @@ export async function GET(request) {
         summary: {
           totalRateEntries,
           totalSaudasDone,
+          totalTonsDone,
           conversionRate: totalRateEntries > 0 ? ((totalSaudasDone / totalRateEntries) * 100).toFixed(2) : 0
         },
         worksDone: sortedWorks

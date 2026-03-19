@@ -28,19 +28,24 @@ ChartJS.register(
 
 const AnalyticsDashboard = () => {
   const [data, setData] = useState(null);
+  const [period, setPeriod] = useState('7days');
   const [aiAnalysis, setAiAnalysis] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const response = await axiosInstance.get('/analytics/weekly-summary');
+        const response = await axiosInstance.get(`/analytics/weekly-summary?period=${period}`);
         if (response.data.success) {
           const weeklyData = response.data.data;
           setData(weeklyData);
 
-          const aiResponse = await axiosInstance.post('/analytics/ai-summary', { weeklyData });
+          const aiResponse = await axiosInstance.post('/analytics/ai-summary', { 
+            weeklyData,
+            period 
+          });
           if (aiResponse.data.success) {
             setAiAnalysis(aiResponse.data.analysis);
           }
@@ -56,7 +61,7 @@ const AnalyticsDashboard = () => {
     };
 
     fetchData();
-  }, []);
+  }, [period]);
 
   const chartData = {
     labels: data?.dailyData?.map(d => d.displayDate) || [],
@@ -64,14 +69,14 @@ const AnalyticsDashboard = () => {
       {
         label: 'Rate Entries',
         data: data?.dailyData?.map(d => d.rateEntries) || [],
-        backgroundColor: 'rgba(52, 211, 153, 0.7)',
-        borderRadius: 6,
+        backgroundColor: '#10B981', // Solid Green
+        borderRadius: 4,
       },
       {
-        label: 'Saudas Done',
-        data: data?.dailyData?.map(d => d.saudasDone) || [],
-        backgroundColor: 'rgba(96, 165, 250, 0.7)',
-        borderRadius: 6,
+        label: 'Sauda Tons',
+        data: data?.dailyData?.map(d => d.totalTons) || [],
+        backgroundColor: '#F59E0B', // Solid Yellow
+        borderRadius: 4,
       },
     ],
   };
@@ -125,9 +130,26 @@ const AnalyticsDashboard = () => {
               </p>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 px-4 py-2 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
-            <span className="text-sm font-medium text-gray-500">Period: </span>
-            <span className="text-sm font-bold text-emerald-600">Last 7 Days</span>
+          <div className="flex flex-wrap gap-3">
+            <div className="flex bg-white dark:bg-gray-900 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800">
+              {['7days', '14days', 'monthly'].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    period === p
+                      ? 'bg-emerald-500 text-white shadow-md'
+                      : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  {p === '7days' ? 'Last 7 Days' : p === '14days' ? 'Last 14 Days' : 'Month Wise'}
+                </button>
+              ))}
+            </div>
+            <div className="bg-white dark:bg-gray-900 px-4 py-2 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex items-center">
+              <span className="text-sm font-medium text-gray-500 mr-2">Status: </span>
+              <span className="text-sm font-bold text-emerald-600 uppercase">{period.replace('days', ' Days')}</span>
+            </div>
           </div>
         </header>
 
@@ -140,14 +162,14 @@ const AnalyticsDashboard = () => {
             color="emerald"
           />
           <StatCard 
-            title="Total Saudas Done" 
-            value={data?.summary?.totalSaudasDone} 
-            icon={<CheckCircle className="text-blue-500" />} 
-            color="blue"
+            title="Total Sauda Tons" 
+            value={`${data?.summary?.totalTonsDone} T`} 
+            icon={<CheckCircle className="text-amber-500" />} 
+            color="amber"
           />
           <StatCard 
-            title="Conversion Rate" 
-            value={`${data?.summary?.conversionRate}%`} 
+            title="Avg. Daily Tons" 
+            value={data?.dailyData?.length > 0 ? (data?.summary?.totalTonsDone / data?.dailyData?.length).toFixed(1) : 0} 
             icon={<TrendingUp className="text-purple-500" />} 
             color="purple"
           />
