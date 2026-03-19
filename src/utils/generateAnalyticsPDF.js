@@ -159,7 +159,7 @@ export async function generateAnalyticsPDF({
   
   currentY = headerH + 40;
 
-  // AI Analysis Background
+  // AI Analysis Background Decoration
   doc.setFillColor(240, 253, 244).rect(marginX, currentY, pageW - (marginX * 2), 40, "F");
   doc.setDrawColor(...emerald).setLineWidth(1.5);
   doc.line(marginX, currentY, marginX, currentY + 40);
@@ -167,13 +167,18 @@ export async function generateAnalyticsPDF({
   doc.setFont("helvetica", "bold").setFontSize(14).setTextColor(...emerald);
   doc.text("Intelligence & Market Analysis", marginX + 15, currentY + 25);
   
-  currentY += 60;
+  currentY += 65;
 
-  // Process AI analysis into sections
-  const sections = aiAnalysis.split('\n\n');
-  
-  sections.forEach((section) => {
-    // Check for page overflow
+  // Split AI analysis into individual lines for precise control
+  const allLines = aiAnalysis.split('\n');
+  const lineHeight = 14;
+  const paragraphSpacing = 6;
+
+  allLines.forEach((line) => {
+    // 1. Skip markdown table separators like | :--- |
+    if (line.includes('| :---') || line.trim() === '|') return;
+
+    // 2. Page overflow check
     if (currentY > pageH - 80) {
       drawFooter(doc);
       doc.addPage();
@@ -181,24 +186,50 @@ export async function generateAnalyticsPDF({
       currentY = headerH + 40;
     }
 
-    const isHeader = section.startsWith('#') || section.includes(':');
-    
-    if (isHeader) {
-      doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(30);
-      const cleanHeader = section.replace(/#+\s/g, '').trim();
-      doc.text(cleanHeader, marginX, currentY);
-      currentY += 18;
+    const trimmedLine = line.trim();
+    if (!trimmedLine) {
+      currentY += paragraphSpacing;
+      return;
+    }
+
+    // 3. Style detection and rendering
+    if (trimmedLine.startsWith('#')) {
+      // Header styles
+      const level = (trimmedLine.match(/^#+/) || ['#'])[0].length;
+      const fontSize = level === 1 ? 13 : level === 2 ? 11 : 10;
+      const text = trimmedLine.replace(/^#+\s*/, '').toUpperCase();
+      
+      doc.setFont("helvetica", "bold").setFontSize(fontSize).setTextColor(30);
+      doc.text(text, marginX, currentY);
+      currentY += lineHeight + 4;
     } else {
-      doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(60);
-      const cleanText = section
-        .replace(/\*\*/g, '')
-        .replace(/\|/g, '')
-        .replace(/- /g, '• ')
-        .trim();
-        
+      // Body text / Bullet / Table row
+      doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(60);
+      
+      let cleanText = trimmedLine
+        .replace(/\*\*/g, '') // Remove bold markdown
+        .replace(/- /g, '• '); // Bullet points
+      
+      // Handle table rows (convert | to space for readability)
+      if (cleanText.includes('|')) {
+        cleanText = cleanText.split('|').filter(part => part.trim()).join('   ');
+      }
+
+      // Wrap long lines
       const splitText = doc.splitTextToSize(cleanText, pageW - (marginX * 2));
-      doc.text(splitText, marginX, currentY);
-      currentY += (splitText.length * 14) + 10;
+      
+      splitText.forEach((textLine) => {
+        // Nested overflow check for wrapped lines
+        if (currentY > pageH - 80) {
+          drawFooter(doc);
+          doc.addPage();
+          drawHeader(doc, doc.internal.getNumberOfPages());
+          currentY = headerH + 40;
+          doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(60);
+        }
+        doc.text(textLine, marginX, currentY);
+        currentY += lineHeight;
+      });
     }
   });
 
