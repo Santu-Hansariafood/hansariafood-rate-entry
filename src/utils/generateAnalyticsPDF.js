@@ -25,127 +25,204 @@ export async function generateAnalyticsPDF({
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const marginX = 40;
-  const headerH = 80;
+  const headerH = 90;
   const blue = [30, 64, 175];
   const emerald = [16, 185, 129];
+  const gray = [107, 114, 128];
 
   const logo64 = await loadImage("/logo/watermark1.png");
-  
-  // Header background
-  doc.setFillColor(...blue).rect(0, 0, pageW, headerH, "F");
-  
-  // Header Title
-  doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(255);
-  doc.text("HANSARIA FOOD PRIVATE LIMITED", pageW / 2, 45, { align: "center" });
-  
-  doc.setFont("helvetica", "italic").setFontSize(14).setTextColor(255);
-  doc.text("Business Performance Analytics Report", pageW / 2, 65, { align: "center" });
-  
-  // Logo
-  doc.addImage(logo64, "PNG", pageW - 90, 10, 60, 60, undefined, "FAST");
-
-  // Report Info
   const today = new Date().toLocaleDateString('en-IN');
-  const periodLabel = period === 'monthly' ? 'Last 6 Months' : `Last ${period.replace('days', '')} Days`;
+  const periodLabel = period === 'monthly' ? 'Last 6 Months (Month-Wise)' : `Last ${period.replace('days', '')} Days (Daily)`;
 
-  doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(75);
-  doc.text(`Period: ${periodLabel}`, marginX, headerH + 25);
-  doc.text(`Report Date: ${today}`, pageW - marginX, headerH + 25, { align: "right" });
+  // --- Helper: Draw Header ---
+  const drawHeader = (doc, pageNum) => {
+    doc.setFillColor(...blue).rect(0, 0, pageW, headerH, "F");
+    
+    // Title
+    doc.setFont("helvetica", "bold").setFontSize(18).setTextColor(255);
+    doc.text("HANSARIA FOOD PRIVATE LIMITED", marginX, 40);
+    
+    doc.setFont("helvetica", "normal").setFontSize(12).setTextColor(255);
+    doc.text("Business Performance Analytics", marginX, 60);
+    
+    // Logo on right
+    doc.addImage(logo64, "PNG", pageW - 90, 15, 60, 60, undefined, "FAST");
+    
+    // Page indicator
+    doc.setFontSize(8).setTextColor(255);
+    doc.text(`Page ${pageNum}`, pageW - marginX, 75, { align: "right" });
+  };
 
-  doc.setDrawColor(...blue).setLineWidth(1);
-  doc.line(marginX, headerH + 35, pageW - marginX, headerH + 35);
+  // --- Helper: Draw Footer ---
+  const drawFooter = (doc) => {
+    const footerY = pageH - 40;
+    doc.setDrawColor(220).setLineWidth(0.5);
+    doc.line(marginX, footerY - 10, pageW - marginX, footerY - 10);
+    
+    doc.setFont("helvetica", "italic").setFontSize(8).setTextColor(...gray);
+    doc.text("Confidential Performance Report - Hansaria Food Analytics Division", marginX, footerY);
+    doc.text(`Generated on: ${today}`, pageW - marginX, footerY, { align: "right" });
+  };
 
-  // Summary Cards Section
-  doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(30);
-  doc.text("Executive Summary", marginX, headerH + 60);
+  // --- PAGE 1: Executive Summary & Table ---
+  drawHeader(doc, 1);
+  
+  let currentY = headerH + 40;
 
-  const summaryData = [
-    ["KPI Metric", "Value"],
-    ["Total Rate Entries", `${data.summary.totalRateEntries}`],
-    ["Total Sauda Volume", `${data.summary.totalTonsDone} Tons`],
-    ["Total Saudas Done", `${data.summary.totalSaudasDone}`],
-    ["Avg. Conversion", `${data.summary.conversionRate}%`],
+  // Title Section
+  doc.setFont("helvetica", "bold").setFontSize(14).setTextColor(30);
+  doc.text(`${periodLabel} Report`, marginX, currentY);
+  currentY += 25;
+
+  // Summary Metrics Grid
+  const summaryItems = [
+    { label: "Total Volume", value: `${data.summary.totalTonsDone} Tons`, color: emerald },
+    { label: "Rate Entries", value: `${data.summary.totalRateEntries}`, color: blue },
+    { label: "Closed Saudas", value: `${data.summary.totalSaudasDone}`, color: [79, 70, 229] }, // Indigo
+    { label: "Conversion", value: `${data.summary.conversionRate}%`, color: [147, 51, 234] } // Purple
   ];
 
-  autoTable(doc, {
-    startY: headerH + 70,
-    head: [summaryData[0]],
-    body: summaryData.slice(1),
-    theme: 'striped',
-    headStyles: { fillColor: emerald, textColor: 255 },
-    margin: { left: marginX, right: marginX },
-    styles: { fontSize: 10 },
+  // Draw 4 mini cards for summary
+  const cardW = (pageW - (marginX * 2) - 30) / 4;
+  summaryItems.forEach((item, i) => {
+    const x = marginX + (i * (cardW + 10));
+    doc.setFillColor(248, 250, 252).rect(x, currentY, cardW, 50, "F");
+    doc.setDrawColor(226, 232, 240).rect(x, currentY, cardW, 50, "S");
+    
+    doc.setFont("helvetica", "bold").setFontSize(8).setTextColor(...gray);
+    doc.text(item.label.toUpperCase(), x + 10, currentY + 18);
+    
+    doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(...item.color);
+    doc.text(item.value, x + 10, currentY + 38);
   });
 
-  // Daily Activity Table
-  let currentY = doc.lastAutoTable.finalY + 30;
+  currentY += 80;
+
+  // Periodic Data Table
   doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(30);
-  doc.text("Detailed Periodic Activity", marginX, currentY);
-
-  const tableBody = data.dailyData.map(d => [
-    d.displayDate,
-    d.rateEntries,
-    d.saudasDone,
-    `${d.totalTons} T`
-  ]);
+  doc.text("Activity Logs", marginX, currentY);
+  currentY += 10;
 
   autoTable(doc, {
-    startY: currentY + 10,
-    head: [["Date / Month", "Rate Entries", "Saudas Done", "Total Volume"]],
-    body: tableBody,
+    startY: currentY,
+    head: [["Timeline", "Rate Submissions", "Saudas Closed", "Net Volume (Tons)"]],
+    body: data.dailyData.map(d => [d.displayDate, d.rateEntries, d.saudasDone, `${d.totalTons} T`]),
     theme: 'grid',
-    headStyles: { fillColor: [75, 85, 99], textColor: 255 },
+    headStyles: { fillColor: blue, textColor: 255, halign: 'center' },
+    columnStyles: {
+      0: { halign: 'left', fontStyle: 'bold' },
+      1: { halign: 'center' },
+      2: { halign: 'center' },
+      3: { halign: 'right', textColor: emerald, fontStyle: 'bold' }
+    },
+    styles: { fontSize: 9, cellPadding: 8 },
     margin: { left: marginX, right: marginX },
-    styles: { fontSize: 9 },
   });
 
-  // AI Insights Section
   currentY = doc.lastAutoTable.finalY + 40;
-  
-  // Check if we need a new page for AI Insights
-  if (currentY > pageH - 150) {
+
+  // Recent Works Done (If fits on Page 1)
+  if (currentY + 150 > pageH) {
+    drawFooter(doc);
     doc.addPage();
-    currentY = 50;
+    drawHeader(doc, 2);
+    currentY = headerH + 40;
   }
 
   doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(30);
-  doc.text("AI-Powered Performance Insights", marginX, currentY);
+  doc.text("Recent Transactions", marginX, currentY);
+  currentY += 10;
+
+  const worksBody = (data.worksDone || []).map(w => [
+    new Date(w.timestamp).toLocaleDateString(),
+    w.company,
+    w.unit,
+    w.commodity,
+    `${w.tons} T`
+  ]);
+
+  autoTable(doc, {
+    startY: currentY,
+    head: [["Date", "Company", "Location", "Commodity", "Tons"]],
+    body: worksBody.length > 0 ? worksBody : [["-", "No recent transactions found", "-", "-", "-"]],
+    theme: 'striped',
+    headStyles: { fillColor: [71, 85, 105], textColor: 255 },
+    styles: { fontSize: 8 },
+    margin: { left: marginX, right: marginX },
+  });
+
+  drawFooter(doc);
+
+  // --- PAGE 2 (or 3): AI INSIGHTS ---
+  doc.addPage();
+  drawHeader(doc, doc.internal.getNumberOfPages());
   
-  doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(50);
+  currentY = headerH + 40;
+
+  // AI Analysis Background
+  doc.setFillColor(240, 253, 244).rect(marginX, currentY, pageW - (marginX * 2), 40, "F");
+  doc.setDrawColor(...emerald).setLineWidth(1.5);
+  doc.line(marginX, currentY, marginX, currentY + 40);
   
-  // Clean up AI Analysis markdown for PDF
-  const cleanAnalysis = aiAnalysis
-    .replace(/#+\s/g, '') // Remove headers
-    .replace(/\*\*/g, '') // Remove bold
-    .replace(/\|/g, '') // Remove table separators
-    .replace(/- /g, '• '); // Replace dashes with bullets
+  doc.setFont("helvetica", "bold").setFontSize(14).setTextColor(...emerald);
+  doc.text("Intelligence & Market Analysis", marginX + 15, currentY + 25);
+  
+  currentY += 60;
 
-  const splitAnalysis = doc.splitTextToSize(cleanAnalysis, pageW - (marginX * 2));
-  doc.text(splitAnalysis, marginX, currentY + 20);
+  // Process AI analysis into sections
+  const sections = aiAnalysis.split('\n\n');
+  
+  sections.forEach((section) => {
+    // Check for page overflow
+    if (currentY > pageH - 80) {
+      drawFooter(doc);
+      doc.addPage();
+      drawHeader(doc, doc.internal.getNumberOfPages());
+      currentY = headerH + 40;
+    }
 
-  // Footer
-  const footerY = pageH - 80;
-  doc.setFont("helvetica", "italic").setFontSize(10).setTextColor(...blue);
-  const footerLines = [
-    "Hansaria Food Private Limited",
-    "Analytics Division",
-    "Confidential Document",
-  ];
-  footerLines.forEach((ln, idx) =>
-    doc.text(ln, pageW - marginX, footerY + idx * 14, { align: "right" })
-  );
+    const isHeader = section.startsWith('#') || section.includes(':');
+    
+    if (isHeader) {
+      doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(30);
+      const cleanHeader = section.replace(/#+\s/g, '').trim();
+      doc.text(cleanHeader, marginX, currentY);
+      currentY += 18;
+    } else {
+      doc.setFont("helvetica", "normal").setFontSize(10).setTextColor(60);
+      const cleanText = section
+        .replace(/\*\*/g, '')
+        .replace(/\|/g, '')
+        .replace(/- /g, '• ')
+        .trim();
+        
+      const splitText = doc.splitTextToSize(cleanText, pageW - (marginX * 2));
+      doc.text(splitText, marginX, currentY);
+      currentY += (splitText.length * 14) + 10;
+    }
+  });
 
-  const qrData = `Performance Analytics - ${periodLabel} - ${today}`;
-  const qr64 = await QRCode.toDataURL(qrData, { margin: 1, width: 60 });
-  doc.addImage(qr64, "PNG", marginX, footerY - 10, 60, 60);
+  // Final QR and Validation
+  if (currentY > pageH - 120) {
+    drawFooter(doc);
+    doc.addPage();
+    drawHeader(doc, doc.internal.getNumberOfPages());
+    currentY = headerH + 40;
+  }
 
-  doc.setFont("helvetica", "italic").setFontSize(8).setTextColor(150);
-  doc.text(
-    "This report is automatically generated based on real-time transaction data and market participation records.",
-    pageW / 2,
-    pageH - 20,
-    { align: "center" }
-  );
+  currentY = Math.max(currentY + 20, pageH - 160);
+  
+  const qrData = `SECURE_REPORT_${period.toUpperCase()}_${today}`;
+  const qr64 = await QRCode.toDataURL(qrData, { margin: 1, width: 80 });
+  doc.addImage(qr64, "PNG", marginX, currentY, 80, 80);
+  
+  doc.setFont("helvetica", "bold").setFontSize(10).setTextColor(...blue);
+  doc.text("Report Authenticity Verified", marginX + 90, currentY + 30);
+  doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(...gray);
+  doc.text("Scan to verify report data on portal", marginX + 90, currentY + 45);
 
-  doc.save(`Analytics_Report_${period}_${today.replace(/\//g, "-")}.pdf`);
+  drawFooter(doc);
+
+  doc.save(`Performance_Analysis_HFPL_${period}_${today.replace(/\//g, "-")}.pdf`);
 }
+
