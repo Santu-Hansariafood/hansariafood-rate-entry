@@ -13,16 +13,16 @@ const NotificationsPanel = ({ onClose }) => {
     useSaudaNotifications();
 
   const formatSaudaNo = (value) =>
-    value ? value.toString().slice(-4) : "";
+    value ? value.toString().split("-").pop() : "";
 
   const sortedNotifications = useMemo(() => {
     return [...filteredNotifications].sort((a, b) => {
       const saudaA = parseInt(
-        (a.saudaNo ? a.saudaNo.toString().slice(-4) : "0"),
+        (a.saudaNo ? a.saudaNo.toString().split("-").pop() : "0"),
         10
       );
       const saudaB = parseInt(
-        (b.saudaNo ? b.saudaNo.toString().slice(-4) : "0"),
+        (b.saudaNo ? b.saudaNo.toString().split("-").pop() : "0"),
         10
       );
       return saudaB - saudaA;

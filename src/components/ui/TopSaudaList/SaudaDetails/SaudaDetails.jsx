@@ -262,7 +262,7 @@ const SaudaDetails = ({
                                             <Hash size={14} /> Sauda No.{" "}
                                             <span className="italic font-medium">
                                               {" "}
-                                              — {s.saudaNo ? s.saudaNo.toString().slice(-4) : "—"}
+                                              — {s.saudaNo ? s.saudaNo.toString().split("-").pop() : "—"}
                                             </span>
                                           </span>
                                           <div className="flex flex-col items-end gap-1">

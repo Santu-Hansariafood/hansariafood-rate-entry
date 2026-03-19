@@ -78,7 +78,7 @@ const SaudaDetailsBox = () => {
         {saudaDetails && (
           <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
             <Typography variant="h6" gutterBottom>
-                  Sauda #{saudaDetails.saudaNo ? saudaDetails.saudaNo.toString().slice(-4) : ''} - {saudaDetails.type}
+                  Sauda #{saudaDetails.saudaNo ? saudaDetails.saudaNo.toString().split("-").pop() : ""} - {saudaDetails.type}
             </Typography>
             
             <Grid container spacing={2}>

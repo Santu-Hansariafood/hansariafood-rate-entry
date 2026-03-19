@@ -76,7 +76,7 @@ export async function GET(request) {
 
     let result = await SaudaEntry.aggregate(exactMatchPipeline);
 
-    if (!result.length && /^\d{1,4}$/.test(saudaNumber)) {
+    if (!result.length && /^\d{1,6}$/.test(saudaNumber)) {
       const suffix = saudaNumber.replace(/\D/g, "");
       const regex = new RegExp(`${suffix}$`);
 

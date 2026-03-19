@@ -15,7 +15,7 @@ export const generateSaudaEmailTemplate = ({
 
   const entriesList = [];
   const formatSaudaNo = (value) =>
-    value ? value.toString().slice(-4) : "-";
+    value ? value.toString().split("-").pop() : "-";
   
   if (saudaEntries instanceof Map) {
       for (const [key, list] of saudaEntries.entries()) {

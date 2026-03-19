@@ -69,7 +69,7 @@ const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
 
     const tableBody = [];
     const formatSaudaNo = (value) =>
-      value ? value.toString().slice(-4) : "-";
+      value ? value.toString().split("-").pop() : "-";
 
     saudaGroups.forEach(([mobile, data]) => {
       const userName = mobileToName[mobile] || mobile;
