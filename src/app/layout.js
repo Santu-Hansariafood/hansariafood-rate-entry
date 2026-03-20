@@ -103,7 +103,7 @@ export async function generateMetadata() {
     },
 
     verification: {
-      google: "dGCCMbj7pRFa0tx8SJvBBFKaPCyOClX6lBEHaFwGgK4",
+      google: "qNgZXgdAbtQGvjpywCOVEEPeJ39bHnbAS8fkwPfBuao",
     },
 
     openGraph: {
