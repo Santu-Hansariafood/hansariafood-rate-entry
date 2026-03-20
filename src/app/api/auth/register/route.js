@@ -140,7 +140,7 @@ export async function PATCH(req) {
     await user.save();
 
     const var1 = user.name.trim();
-    const var2 = `Your temporary login password is ${tempPassword}. Please login and change it immediately. https://hansariafood.site`;
+    const var2 = `Your temporary login password is ${tempPassword}. Please login and change it immediately. https://hansariafood.in`;
 
     const apiKey = process.env.WHATSAPP_API_KEY;
     const template = "details_confirmation";

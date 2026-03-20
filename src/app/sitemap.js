@@ -1,4 +1,4 @@
-const BASE_URL = "https://www.hansariafood.site";
+const BASE_URL = "https://www.hansariafood.in";
 
 export const revalidate = 3600;
 

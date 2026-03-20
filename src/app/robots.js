@@ -34,7 +34,7 @@ export default function robots() {
         ],
       },
     ],
-    sitemap: "https://www.hansariafood.site/sitemap.xml",
-    host: "https://www.hansariafood.site",
+    sitemap: "https://www.hansariafood.in/sitemap.xml",
+    host: "https://www.hansariafood.in",
   };
 }

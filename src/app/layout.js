@@ -72,7 +72,7 @@ export async function generateMetadata() {
     : baseKeywords;
 
   return {
-    metadataBase: new URL("https://www.hansariafood.site"),
+    metadataBase: new URL("https://www.hansariafood.in"),
 
     title: {
       default: "Hansaria Food Private Limited | Leading Maize Supplier in India",
@@ -87,7 +87,7 @@ export async function generateMetadata() {
     authors: [{ name: "Santu De" }],
 
     alternates: {
-      canonical: "https://www.hansariafood.site",
+      canonical: "https://www.hansariafood.in",
     },
 
     robots: {
@@ -111,7 +111,7 @@ export async function generateMetadata() {
         "Hansaria Food Pvt. Ltd. | Leading Maize Supplier in India & Brokerage Services",
       description:
         "Hansaria Food Pvt. Ltd., led by Gopal Agarwal, is India's leading maize supplier and brokerage firm for soya DOC, DDGS and poultry feed ingredients.",
-      url: "https://www.hansariafood.site",
+      url: "https://www.hansariafood.in",
       siteName: "Hansaria Food Private Limited",
       locale: "en_IN",
       images: [
@@ -162,8 +162,8 @@ export default function RootLayout({ children }) {
               "@context": "https://schema.org",
               "@type": "Corporation",
               name: "Hansaria Food Private Limited",
-              url: "https://www.hansariafood.site",
-              logo: "https://www.hansariafood.site/images/og-image1.png",
+              url: "https://www.hansariafood.in",
+              logo: "https://www.hansariafood.in/images/og-image1.png",
               description:
                 "Hansaria Food Private Limited, led by Gopal Agarwal, is a leading maize supplier in India and trusted brokerage firm for poultry feed raw materials like soya DOC and DDGS.",
 

@@ -365,7 +365,7 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
         align: "center",
       });
       doc.setFontSize(10);
-      doc.text("(available in https://hansariafood.site)", 105, 55, {
+      doc.text("(available in https://hansariafood.in)", 105, 55, {
         align: "center",
       });
 
@@ -426,7 +426,7 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
       doc.setFontSize(12);
       doc.text("Line Chart - Daily Trends", 105, 45, { align: "center" });
       doc.setFontSize(10);
-      doc.text("available in https://hansariafood.site", 105, 55, {
+      doc.text("available in https://hansariafood.in", 105, 55, {
         align: "center",
       });
       doc.setFillColor(248, 250, 252);

@@ -18,7 +18,7 @@ export const getOtpEmailTemplate = (name, otp) => {
 
           <tr>
             <td style="background:#0f766e; padding:25px; text-align:center;">
-              <img src="https://hansariafood.site/logo/logo1.png" alt="Hansaria Food Logo" style="height:60px; margin-bottom:10px;" />
+              <img src="https://hansariafood.in/logo/logo1.png" alt="Hansaria Food Logo" style="height:60px; margin-bottom:10px;" />
               <h2 style="margin:0; color:#ffffff; font-size:20px; font-weight:600;">
                 Hansaria Food Private Limited
               </h2>

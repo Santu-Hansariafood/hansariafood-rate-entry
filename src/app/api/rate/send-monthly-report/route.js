@@ -139,7 +139,7 @@ Thanks,
 Santu De
 Hansaria Food Private Limited
 
-*For Verification Goto https://hansariafood.site*
+*For Verification Goto https://hansariafood.in*
 
 (This is a system-generated email, please do not reply.)`,
       attachments: [
