@@ -36,7 +36,7 @@ export default function CompanyList({
     const fetchNotifications = async () => {
       try {
         const response = await axiosInstance.get("/rate", {
-          params: { sort: "updatedAt_desc", limit: 5000 },
+          params: { todayOnly: true, sort: "updatedAt_desc", limit: 100 },
         });
 
         // The API returns lastUpdated instead of updatedAt

@@ -106,6 +106,11 @@ export default function DDGSCompanyPopup({ isOpen, onClose, data, onRateUpdate }
         });
       }
 
+      // Trigger global notification update
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("rates-updated"));
+      }
+
       toggleEdit(loc, index);
       loadExistingHistory();
     } catch (err) {

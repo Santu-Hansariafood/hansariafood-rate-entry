@@ -24,8 +24,7 @@ export default function useRateNotifications(type) {
   useEffect(() => {
     fetchNotifications();
     
-    // Optional: Poll every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 

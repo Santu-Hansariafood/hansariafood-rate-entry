@@ -137,7 +137,7 @@ export default function Header() {
     };
 
     window.addEventListener("rates-updated", handleRatesUpdated);
-    const interval = setInterval(fetchNotifications, 15 * 1000);
+    const interval = setInterval(fetchNotifications, 5000); // Poll every 5 seconds for quicker updates
     
     return () => {
       clearInterval(interval);
