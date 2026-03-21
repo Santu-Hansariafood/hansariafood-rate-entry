@@ -35,7 +35,7 @@ export default function Header() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axiosInstance.get("/rate");
+        const response = await axiosInstance.get("/rate?todayOnly=true&minimal=true");
         setNotifications(response.data || []);
       } catch (error) {
         console.error("Failed to fetch notifications:", error);

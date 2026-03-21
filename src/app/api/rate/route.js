@@ -95,6 +95,7 @@ export async function GET(req) {
     const company = searchParams.get("company");
     const commodity = searchParams.get("commodity");
     const todayOnly = searchParams.get("todayOnly") === "true";
+    const minimal = searchParams.get("minimal") === "true";
 
     const query = {};
     if (company && company !== "all") query.company = company;
@@ -108,16 +109,30 @@ export async function GET(req) {
       ...(todayOnly ? { newRateDate: { $gte: today } } : {}),
     };
 
+    const selectFields = minimal 
+      ? "company location commodity newRate newRateDate updateTime"
+      : "company location commodity oldRates newRate newRateDate quantity payment others updateTime mobile";
+
     const rates = await Rate.find(dbQuery)
-      .select(
-        "company location commodity oldRates newRate newRateDate quantity payment others updateTime mobile"
-      )
+      .select(selectFields)
       .lean();
 
     const formattedRates = rates.map((rate) => {
       const lastUpdated = new Date(rate.newRateDate);
       lastUpdated.setHours(0, 0, 0, 0);
       const isToday = lastUpdated.getTime() === today.getTime();
+
+      if (minimal) {
+        return {
+          company: rate.company,
+          location: rate.location,
+          commodity: rate.commodity,
+          newRate: isToday ? rate.newRate : "",
+          lastUpdated: isToday ? rate.newRateDate : null,
+          updateTime: rate.updateTime || "",
+          hasNewRateToday: isToday,
+        };
+      }
 
       const oldRatesFormatted = rate.oldRates.map(
         (old) =>

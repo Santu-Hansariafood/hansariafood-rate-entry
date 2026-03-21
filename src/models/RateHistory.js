@@ -61,5 +61,8 @@ const RateHistorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+RateHistorySchema.index({ commodity: 1 });
+RateHistorySchema.index({ "history.date": 1 });
+
 export default mongoose.models.RateHistory ||
   mongoose.model("RateHistory", RateHistorySchema);

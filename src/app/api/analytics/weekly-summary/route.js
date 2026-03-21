@@ -12,13 +12,12 @@ export async function GET(request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get("period") || "7days"; // 7days, 14days, monthly
+    const period = searchParams.get("period") || "7days";
 
     const dailyData = [];
     let loopCount = period === "14days" ? 14 : 7;
     
     if (period === "monthly") {
-      // Monthly logic for the last 6 months
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
@@ -34,7 +33,6 @@ export async function GET(request) {
           newRateDate: { $gte: date, $lt: nextMonth },
         });
 
-        // Use regex to match the month and year in the date string (format: DD-MM-YYYY)
         const monthYearRegex = new RegExp(`^\\d{2}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}$`);
         
         const saudaEntries = await SaudaEntry.find({
@@ -63,7 +61,6 @@ export async function GET(request) {
         });
       }
     } else {
-      // Daily logic (7 or 14 days)
       for (let i = loopCount - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -133,7 +130,6 @@ export async function GET(request) {
       }
     });
 
-    // Sort by timestamp and take top 10
     const sortedWorks = worksDone
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 10);

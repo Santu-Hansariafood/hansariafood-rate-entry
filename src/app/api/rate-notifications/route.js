@@ -26,16 +26,21 @@ export async function GET(req) {
 
     if (commodityType) {
       if (commodityType === "MDOC") {
-        query.commodity = { $regex: "(M\\s?DOC|Maize Ddgs Doc)", $options: "i" };
+        query.commodity = { $regex: "^(M\\s?DOC|Maize Ddgs Doc)", $options: "i" };
       } else if (commodityType === "Soya") {
-        query.commodity = { $regex: "SBM", $options: "i" };
+        query.commodity = { $regex: "^SBM", $options: "i" };
       } else {
-        query.commodity = { $regex: commodityType, $options: "i" };
+        query.commodity = { $regex: "^" + commodityType, $options: "i" };
       }
     }
 
     const histories = await RateHistory.find(query)
-      .select("companyId location commodity history")
+      .select({
+        companyId: 1,
+        location: 1,
+        commodity: 1,
+        history: { $elemMatch: { date: today } }
+      })
       .populate("companyId", "name type")
       .lean();
 

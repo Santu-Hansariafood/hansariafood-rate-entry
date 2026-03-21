@@ -43,33 +43,12 @@ export const viewport = {
 };
 
 export async function generateMetadata() {
-  let commodityKeywords = "";
-  
-  try {
-    const fetchCommodities = async () => {
-      await connectDB();
-      return await Commodity.find({}).select("name").lean();
-    };
-
-    const commodities = await Promise.race([
-      fetchCommodities(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Metadata fetch timeout")), 2500)
-      ),
-    ]);
-
-    if (Array.isArray(commodities)) {
-      commodityKeywords = commodities.map((c) => c.name).join(", ");
-    }
-  } catch (error) {
-    console.error("Metadata fetch error:", error.message);
-  }
-
   const baseKeywords = "hansaria food, Gopal Agarwal, India Maize, leading maize supplier in India, brokerage services, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India";
   
-  const keywords = commodityKeywords 
-    ? `${baseKeywords}, ${commodityKeywords}`
-    : baseKeywords;
+  // SEO keywords don't need to be perfectly dynamic on every request.
+  // We can just use the base keywords and skip the DB fetch during layout generation
+  // to speed up the initial load significantly.
+  const keywords = baseKeywords;
 
   return {
     metadataBase: new URL("https://www.hansariafood.in"),
