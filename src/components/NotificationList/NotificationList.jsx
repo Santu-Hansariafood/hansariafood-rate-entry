@@ -6,19 +6,18 @@ import useNotificationFilter from "@/hooks/Notifications/useNotificationFilter";
 import useCopyNotification from "@/hooks/Notifications/useCopyNotification";
 
 export default function NotificationList({ notifications = [] }) {
-  const lastShownRef = useRef([]);
-  const audioRef = useRef(null);
   const [searchInput, setSearchInput] = useState("");
 
   const parseUpdateTime = (timeStr) => {
     if (!timeStr) return 0;
     const parts = timeStr.split(" ");
-    if (!parts[0] || !parts[1]) return 0;
+    const timePart = parts[0];
+    const modifier = parts[1] ? parts[1].toLowerCase() : null;
 
-    const [hoursStr, minutesStr] = parts[0].split(":");
-    let hours = Number(hoursStr);
-    let minutes = Number(minutesStr);
-    const modifier = parts[1].toLowerCase();
+    if (!timePart) return 0;
+
+    let [hours, minutes] = timePart.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return 0;
 
     if (modifier === "pm" && hours !== 12) hours += 12;
     if (modifier === "am" && hours === 12) hours = 0;
@@ -43,66 +42,6 @@ export default function NotificationList({ notifications = [] }) {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchInput, setSearchQuery]);
-
-  useEffect(() => {
-    try {
-      if (typeof window !== "undefined" && "Notification" in window) {
-        Notification.requestPermission().catch(() => {});
-      }
-    } catch (err) {
-      console.warn("Notification permission error:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      audioRef.current = new Audio("/notification/notification.wav");
-      audioRef.current.volume = 0.7;
-    } catch (err) {
-      console.warn("Audio init error:", err);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (
-      typeof window === "undefined" ||
-      !("Notification" in window) ||
-      Notification.permission !== "granted"
-    )
-      return;
-
-    filteredNotifications.forEach((n) => {
-      const companyName = n.company || n.companyName || "Unknown Company";
-      const uniqueId = `${companyName}-${n.location}-${n.lastUpdated || n.newRateDate || n.date}-${n.updateTime || n.time}-${n.newRate || n.rate}`;
-
-      if (!lastShownRef.current.includes(uniqueId)) {
-        lastShownRef.current.push(uniqueId);
-
-        const title = `${companyName} (${n.location})`;
-        const body = `New rate for ${n.commodity}: ₹${n.newRate || n.rate}`;
-        const icon = "/favicon.ico";
-
-        try {
-          new Notification(title, {
-            body,
-            icon,
-            vibrate: [100, 50, 100],
-          });
-        } catch (err) {
-          console.warn("Mobile notification blocked:", err);
-        }
-
-        try {
-          if (audioRef.current) {
-            const sound = audioRef.current.cloneNode();
-            sound.play().catch(() => {});
-          }
-        } catch (err) {
-          console.warn("Sound playback error:", err);
-        }
-      }
-    });
-  }, [filteredNotifications]);
 
   const FilterButton = ({ title, icon: Icon, type }) => (
     <button

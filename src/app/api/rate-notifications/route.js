@@ -26,11 +26,13 @@ export async function GET(req) {
 
     if (commodityType) {
       if (commodityType === "MDOC") {
-        query.commodity = { $regex: "^(M\\s?DOC|Maize Ddgs Doc)", $options: "i" };
+        query.commodity = { $regex: "(M\\s?DOC|Maize Ddgs Doc)", $options: "i" };
       } else if (commodityType === "Soya") {
-        query.commodity = { $regex: "^SBM", $options: "i" };
+        query.commodity = { $regex: "(SBM|Soya)", $options: "i" };
+      } else if (commodityType === "DDGS") {
+        query.commodity = { $regex: "DDGS", $options: "i" };
       } else {
-        query.commodity = { $regex: "^" + commodityType, $options: "i" };
+        query.commodity = { $regex: commodityType, $options: "i" };
       }
     }
 
@@ -44,7 +46,6 @@ export async function GET(req) {
       .populate("companyId", "name type")
       .lean();
 
-    // Fallback: Manually fetch companies if populate failed
     const missingIds = histories
       .filter((h) => !h.companyId?.name && h.companyId)
       .map((h) => h.companyId._id || h.companyId);
@@ -84,7 +85,7 @@ export async function GET(req) {
             location: doc.location,
             commodity: doc.commodity,
             rate: rateUpdate.rate,
-            time: rateUpdate.time,
+            updateTime: rateUpdate.time,
             date: todayEntry.date,
             timestamp: buildTimestamp(todayEntry.date, rateUpdate.time),
           });

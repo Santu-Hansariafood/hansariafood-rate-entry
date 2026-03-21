@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { useRef } from "react";
 
 const Logo = dynamic(() => import("./Logo/Logo"), { ssr: false });
 const DesktopNav = dynamic(() => import("./DesktopNav/DesktopNav"), {
@@ -28,15 +29,102 @@ export default function Header() {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState([]);
   const pathname = usePathname();
+  const lastShownRef = useRef([]);
+  const audioRef = useRef(null);
+
   useEffect(() => {
     if (pathname) setActiveLink(pathname);
   }, [pathname]);
 
+  // Request notification permission
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
+  // Initialize audio
+  useEffect(() => {
+    try {
+      audioRef.current = new Audio("/notification/notification.wav");
+      audioRef.current.volume = 0.7;
+    } catch (err) {
+      console.warn("Audio init error:", err);
+    }
+  }, []);
+
+  // Handle browser notifications
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("Notification" in window) ||
+      Notification.permission !== "granted" ||
+      notifications.length === 0
+    )
+      return;
+
+    notifications.forEach((n) => {
+      const companyName = n.company || n.companyName || "Unknown Company";
+      const uniqueId = `${companyName}-${n.location}-${n.lastUpdated || n.newRateDate || n.date}-${n.updateTime || n.time}-${n.newRate || n.rate}`;
+
+      if (!lastShownRef.current.includes(uniqueId)) {
+        lastShownRef.current.push(uniqueId);
+
+        // Limit ref size
+        if (lastShownRef.current.length > 50) {
+          lastShownRef.current.shift();
+        }
+
+        const title = `${companyName} (${n.location})`;
+        const body = `New rate for ${n.commodity}: ₹${n.newRate || n.rate}`;
+        const icon = "/favicon.ico";
+
+        try {
+          new Notification(title, { body, icon, vibrate: [100, 50, 100] });
+        } catch (err) {
+          console.warn("Notification error:", err);
+        }
+
+        try {
+          if (audioRef.current) {
+            const sound = audioRef.current.cloneNode();
+            sound.play().catch(() => {});
+          }
+        } catch (err) {
+          console.warn("Sound playback error:", err);
+        }
+      }
+    });
+  }, [notifications]);
+
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axiosInstance.get("/rate?todayOnly=true&minimal=true");
-        setNotifications(response.data || []);
+        // Fetch from both sources
+        const [rateRes, rateHistoryRes] = await Promise.all([
+          axiosInstance.get("/rate?todayOnly=true&minimal=true"),
+          axiosInstance.get("/rate-notifications"),
+        ]);
+
+        const rateNotifications = (rateRes.data || []).map((n) => ({
+          ...n,
+          companyName: n.company,
+          rate: n.newRate,
+          date: n.lastUpdated,
+          // type "rate" to distinguish from "history"
+          source: "rate",
+        }));
+
+        const historyNotifications = (rateHistoryRes.data?.notifications || []).map(
+          (n) => ({
+            ...n,
+            company: n.companyName,
+            newRate: n.rate,
+            source: "history",
+          })
+        );
+
+        setNotifications([...rateNotifications, ...historyNotifications]);
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
       }
@@ -49,7 +137,7 @@ export default function Header() {
     };
 
     window.addEventListener("rates-updated", handleRatesUpdated);
-    const interval = setInterval(fetchNotifications, 15 * 1000); // Poll every 15 seconds
+    const interval = setInterval(fetchNotifications, 15 * 1000);
     
     return () => {
       clearInterval(interval);

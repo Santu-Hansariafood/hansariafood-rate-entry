@@ -45,9 +45,6 @@ export const viewport = {
 export async function generateMetadata() {
   const baseKeywords = "hansaria food, Gopal Agarwal, India Maize, leading maize supplier in India, brokerage services, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India";
   
-  // SEO keywords don't need to be perfectly dynamic on every request.
-  // We can just use the base keywords and skip the DB fetch during layout generation
-  // to speed up the initial load significantly.
   const keywords = baseKeywords;
 
   return {
