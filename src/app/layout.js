@@ -11,8 +11,6 @@ import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
 import TaskChat from "@/components/common/Footer/TaskChat/TaskChat";
 import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
-import { connectDB } from "@/lib/mongodb";
-import Commodity from "@/models/Commodity";
 
 const geistSans = Geist({
   variable: "--font-body",
