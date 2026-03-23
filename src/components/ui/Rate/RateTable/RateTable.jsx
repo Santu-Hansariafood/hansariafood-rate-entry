@@ -25,32 +25,24 @@ const getLocationStateMap = async () => {
   if (locationStateMapCache) return locationStateMapCache;
   if (!locationStateMapPromise) {
     locationStateMapPromise = (async () => {
-      const all = [];
-      let page = 1;
-      let hasMore = true;
-
-      while (hasMore) {
-        const res = await axiosInstance.get(`/location?page=${page}`);
+      try {
+        const res = await axiosInstance.get("/location?limit=1000");
         const locData = Array.isArray(res.data)
           ? res.data
           : res.data.locations || [];
 
-        if (locData.length === 0) {
-          hasMore = false;
-        } else {
-          all.push(...locData);
-          page += 1;
-        }
+        const map = new Map();
+        locData.forEach((loc) => {
+          if (!loc || !loc.name) return;
+          map.set(loc.name.toString().trim(), loc.state || "Unknown");
+        });
+
+        locationStateMapCache = map;
+        return map;
+      } catch (error) {
+        console.error("Failed to fetch location state map:", error);
+        return new Map();
       }
-
-      const map = new Map();
-      all.forEach((loc) => {
-        if (!loc || !loc.name) return;
-        map.set(loc.name.toString().trim(), loc.state || "Unknown");
-      });
-
-      locationStateMapCache = map;
-      return map;
     })();
   }
 
@@ -84,29 +76,39 @@ export default function RateTable({
         companyName
       )}&commodity=all`;
 
-      const [companyRes, locationStateMap, rateRes] = await Promise.all([
-        axiosInstance.get("/managecompany", {
-          params: {
-            search: companyName,
-            type: "buyer",
-          },
-        }),
+      const promises = [
         getLocationStateMap(),
         axiosInstance.get(rateUrl),
-      ]);
+      ];
 
-      const list = Array.isArray(companyRes.data?.companies)
-        ? companyRes.data.companies
-        : [];
-      const normalizedName = selectedCompany.trim().toLowerCase();
+      // Only fetch managecompany if selectedCompanyObj is missing
+      if (!selectedCompanyObj) {
+        promises.push(
+          axiosInstance.get("/managecompany", {
+            params: {
+              search: companyName,
+              type: "buyer",
+            },
+          })
+        );
+      }
 
-      let companies = list.filter(
-        (c) =>
-          c.name && c.name.trim().toLowerCase() === normalizedName
-      );
+      const results = await Promise.all(promises);
+      const locationStateMap = results[0];
+      const rateRes = results[1];
+      const companyRes = !selectedCompanyObj ? results[2] : null;
 
-      if (!companies.length && selectedCompanyObj) {
+      let companies = [];
+      if (selectedCompanyObj) {
         companies = [selectedCompanyObj];
+      } else if (companyRes) {
+        const list = Array.isArray(companyRes.data?.companies)
+          ? companyRes.data.companies
+          : [];
+        const normalizedName = companyName.toLowerCase();
+        companies = list.filter(
+          (c) => c.name && c.name.trim().toLowerCase() === normalizedName
+        );
       }
 
       if (!companies.length) {
@@ -137,6 +139,14 @@ export default function RateTable({
           ? company.mobileNumbers
           : [];
 
+        const mobileMap = new Map();
+        companyMobiles.forEach((entry) => {
+          if (entry.location && entry.commodity) {
+            const key = `${entry.location.trim()}|||${entry.commodity}`;
+            mobileMap.set(key, entry);
+          }
+        });
+
         companyCommodities.forEach((cmd) => {
           commoditySet.add(cmd);
 
@@ -157,13 +167,7 @@ export default function RateTable({
 
             const key = `${cleanLoc}|||${cmd}`;
             const matched = rateMap.get(key);
-
-            const mobileMatch = companyMobiles.find(
-              (entry) =>
-                entry.location &&
-                entry.location.trim() === cleanLoc &&
-                entry.commodity === cmd
-            );
+            const mobileMatch = mobileMap.get(key);
 
             initialRates.push({
               location: cleanLoc,
