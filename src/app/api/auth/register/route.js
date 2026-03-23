@@ -46,7 +46,9 @@ export async function GET(req) {
 
   try {
     await connectDB();
-    const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 });
+    const users = await User.find({}, { password: 0 })
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({ success: true, users }, { status: 200 });
   } catch (err) {

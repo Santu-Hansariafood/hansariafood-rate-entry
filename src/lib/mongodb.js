@@ -18,8 +18,8 @@ export async function connectDB() {
   if (!cached.promise) {
     cached.promise = mongoose
       .connect(uri, {
-        maxPoolSize: 100,
-        minPoolSize: 10,
+        maxPoolSize: 10,
+        minPoolSize: 1,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
         bufferCommands: false,

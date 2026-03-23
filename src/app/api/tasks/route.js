@@ -23,7 +23,7 @@ export async function GET(req) {
         { sender: mobile },
         { "receivers.mobile": mobile }
       ]
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json(tasks);
   } catch (error) {

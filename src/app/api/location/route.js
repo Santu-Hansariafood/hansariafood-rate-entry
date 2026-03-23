@@ -65,7 +65,7 @@ export async function GET(req) {
     const query = search ? { name: { $regex: search, $options: "i" } } : {};
 
     const [locations, total] = await Promise.all([
-      Location.find(query).sort({ name: 1 }).skip(skip).limit(limit),
+      Location.find(query).sort({ name: 1 }).skip(skip).limit(limit).lean(),
       Location.countDocuments(query),
     ]);
 

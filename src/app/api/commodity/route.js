@@ -81,7 +81,7 @@ export async function GET(req) {
         : {};
 
     const [commodities, total] = await Promise.all([
-      Commodity.find(filter).sort({ name: 1 }).skip(skip).limit(limit),
+      Commodity.find(filter).sort({ name: 1 }).skip(skip).limit(limit).lean(),
       Commodity.countDocuments(filter),
     ]);
 

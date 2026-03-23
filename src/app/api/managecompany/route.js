@@ -162,7 +162,12 @@ export async function GET(req) {
     }
 
     const [companies, total] = await Promise.all([
-      ManageCompany.find(filter).sort({ name: 1 }).skip(skip).limit(limit),
+      ManageCompany.find(filter)
+        .sort({ name: 1 })
+        .skip(skip)
+        .limit(limit)
+        .select("name location state category type mobileNumbers commodities isSelfCompany")
+        .lean(),
       ManageCompany.countDocuments(filter),
     ]);
 

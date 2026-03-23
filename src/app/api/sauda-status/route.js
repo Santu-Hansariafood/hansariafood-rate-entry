@@ -55,7 +55,7 @@ export async function GET(req) {
   try {
     await connectDB();
 
-    const statuses = await SaudaStatus.find({}).sort({ createdAt: -1 });
+    const statuses = await SaudaStatus.find({}).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({ statuses }, { status: 200 });
   } catch (error) {

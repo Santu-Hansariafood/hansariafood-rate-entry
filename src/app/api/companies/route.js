@@ -24,7 +24,7 @@ export async function GET(req) {
     };
 
     const [companies, total] = await Promise.all([
-      Company.find(query).sort({ name: 1 }).skip(skip).limit(limit),
+      Company.find(query).sort({ name: 1 }).skip(skip).limit(limit).lean(),
       Company.countDocuments(query),
     ]);
 
