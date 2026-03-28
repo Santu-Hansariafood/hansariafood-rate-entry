@@ -50,18 +50,25 @@ const useSaudaData = () => {
     }
   }, []);
 
+  const hasRateSet = useMemo(() => {
+    const set = new Set();
+    rateData.forEach((rate) => {
+      if (
+        rate.hasNewRateToday &&
+        rate.newRate !== null &&
+        rate.newRate !== undefined &&
+        rate.newRate !== "" &&
+        !isNaN(rate.newRate)
+      ) {
+        set.add(rate.company);
+      }
+    });
+    return set;
+  }, [rateData]);
+
   const hasRate = useCallback(
-    (companyName) =>
-      rateData.some(
-        (rate) =>
-          rate.company === companyName &&
-          rate.hasNewRateToday &&
-          rate.newRate !== null &&
-          rate.newRate !== undefined &&
-          rate.newRate !== "" &&
-          !isNaN(rate.newRate)
-      ),
-    [rateData]
+    (companyName) => hasRateSet.has(companyName),
+    [hasRateSet]
   );
 
   const updateCompanyStatus = useCallback((companyName, status) => {
@@ -117,8 +124,22 @@ const useSaudaData = () => {
       setCachedData(CACHE_KEYS.companies, fetchedAllCompanies);
       setCachedData(CACHE_KEYS.rates, allRates);
 
-      const companyNames = fetchedAllCompanies.map((c) => c.name);
-      if (companyNames.length === 0) {
+      // Only fetch sauda status for companies that actually have a rate today
+      const companiesWithRates = fetchedAllCompanies
+        .filter((c) =>
+          allRates.some(
+            (r) =>
+              r.company === c.name &&
+              r.hasNewRateToday &&
+              r.newRate !== null &&
+              r.newRate !== undefined &&
+              r.newRate !== "" &&
+              !isNaN(r.newRate)
+          )
+        )
+        .map((c) => c.name);
+
+      if (companiesWithRates.length === 0) {
         setLoading(false);
         isFetchingRef.current = false;
         return;
@@ -126,7 +147,7 @@ const useSaudaData = () => {
 
       if (!cachedStatus) {
         setLoading(false);
-        const saudaChunks = chunkArray(companyNames, 300);
+        const saudaChunks = chunkArray(companiesWithRates, 300);
         const saudaRequests = saudaChunks.map((chunk) =>
           axiosInstance
             .get(`/save-sauda?companies=${chunk.join(",")}&date=${today}`)
@@ -138,7 +159,7 @@ const useSaudaData = () => {
         const allSaudaEntries = Object.assign({}, ...responses);
 
         const saudaStatuses = {};
-        for (const company of companyNames) {
+        for (const company of companiesWithRates) {
           let status = "green";
           const entry = allSaudaEntries[company];
 

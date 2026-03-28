@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 
@@ -20,16 +20,19 @@ export default function RateTableBody({
 }) {
   const [expandedStates, setExpandedStates] = useState({});
 
-  const indexedRates = rates.map((rate, i) => ({
-    ...rate,
-    actualIndex: actualStartIndex + i,
-  }));
+  const groupedRates = useMemo(() => {
+    const indexedRates = rates.map((rate, i) => ({
+      ...rate,
+      actualIndex: actualStartIndex + i,
+    }));
 
-  const groupedRates = indexedRates.reduce((acc, rate) => {
-    if (!acc[rate.state]) acc[rate.state] = [];
-    acc[rate.state].push(rate);
-    return acc;
-  }, {});
+    return indexedRates.reduce((acc, rate) => {
+      const state = rate.state || "Unknown";
+      if (!acc[state]) acc[state] = [];
+      acc[state].push(rate);
+      return acc;
+    }, {});
+  }, [rates, actualStartIndex]);
 
   const toggleState = (stateName) => {
     setExpandedStates((prev) => ({

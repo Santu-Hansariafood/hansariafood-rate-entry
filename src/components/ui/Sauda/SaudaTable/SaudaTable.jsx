@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useMemo } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
@@ -37,6 +37,23 @@ export default function SaudaTable({
     reason: "",
     error: "",
   });
+
+  const sellerOptions = useMemo(() => 
+    sellers.map((s) => ({
+      label: s.sellerName,
+      value: s.sellerName,
+    })), [sellers]);
+
+  const sellerCompaniesMap = useMemo(() => {
+    const map = new Map();
+    sellers.forEach((s) => {
+      map.set(s.sellerName, (s.companies || []).map(name => ({
+        label: name,
+        value: name
+      })));
+    });
+    return map;
+  }, [sellers]);
 
   const openRemoveDialog = (key, idx) => {
     setRemoveDialog({
@@ -245,10 +262,7 @@ export default function SaudaTable({
                             <div className="flex flex-col sm:flex-row gap-3 flex-grow">
                               <Dropdown
                                 label="Seller"
-                                options={sellers.map((s) => ({
-                                  label: s.sellerName,
-                                  value: s.sellerName,
-                                }))}
+                                options={sellerOptions}
                                 value={e.sellerName || ""}
                                 onChange={(val) => {
                                   handleChange(key, idx, "sellerName", val);
@@ -259,14 +273,7 @@ export default function SaudaTable({
 
                               <Dropdown
                                 label="Company"
-                                options={
-                                  sellers
-                                    .find((s) => s.sellerName === e.sellerName)
-                                    ?.companies?.map((companyName) => ({
-                                      label: companyName,
-                                      value: companyName,
-                                    })) || []
-                                }
+                                options={sellerCompaniesMap.get(e.sellerName) || []}
                                 value={e.sellerCompany || ""}
                                 onChange={(val) =>
                                   handleChange(key, idx, "sellerCompany", val)

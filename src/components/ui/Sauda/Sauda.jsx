@@ -35,7 +35,16 @@ const InputBox = dynamic(
 const Sauda = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const inactivityTimer = useRef(null);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   const {
     companies,
@@ -50,23 +59,27 @@ const Sauda = () => {
 
   const filteredCompanies = useMemo(() => {
     if (!companies.length) return [];
-    
-    const searchLower = searchTerm.toLowerCase();
+
+    const searchLower = debouncedSearchTerm.toLowerCase();
     const filterLower = filterType.toLowerCase();
-    
+
     return companies.filter((c) => {
       if (!hasRate(c.name)) return false;
-      
-      if (searchLower && !c.name.toLowerCase().includes(searchLower)) return false;
-      
+
+      if (
+        searchLower &&
+        !c.name.toLowerCase().includes(searchLower)
+      )
+        return false;
+
       if (filterLower !== "all") {
         const types = Array.isArray(c.type) ? c.type : [c.type];
         if (!types.some((t) => t?.toLowerCase() === filterLower)) return false;
       }
-      
+
       return true;
     });
-  }, [companies, searchTerm, filterType, hasRate]);
+  }, [companies, debouncedSearchTerm, filterType, hasRate]);
 
   const handlePopupClose = useCallback(
     (companyName, status = null) => {

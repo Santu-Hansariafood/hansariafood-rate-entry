@@ -121,7 +121,7 @@ export default function useSaudaNotifications() {
 
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 30 * 1000);
+    const interval = setInterval(fetchNotifications, 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchNotifications, filterAndSortToday]);
 
