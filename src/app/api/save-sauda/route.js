@@ -50,6 +50,7 @@ export async function POST(req) {
         
         if (
           existingEntry &&
+          existingEntry.lastUpdated &&
           clientLastUpdated &&
           new Date(clientLastUpdated).getTime() !==
             new Date(existingEntry.lastUpdated).getTime()
@@ -105,8 +106,9 @@ export async function POST(req) {
             (deletedDocs || []).map((d) => String(d.saudaNo || "").trim()).filter(Boolean)
           );
 
-          let hasChanges = false;
+          let overallHasChanges = false;
           for (const [key, newList] of Object.entries(normalizedEntries)) {
+            let keyHasChanges = false;
             const currentList = Array.isArray(existingEntry.saudaEntries.get(key))
               ? existingEntry.saudaEntries.get(key)
               : [];
@@ -123,22 +125,25 @@ export async function POST(req) {
               
               const existingItem = currentMap.get(no);
               if (!existingItem || 
-                  existingItem.tons !== item.tons || 
-                  existingItem.finalRate !== item.finalRate ||
-                  existingItem.sellerName !== item.sellerName ||
-                  existingItem.sellerCompany !== item.sellerCompany) {
+                  Number(existingItem.tons) !== Number(item.tons) || 
+                  Number(existingItem.finalRate) !== Number(item.finalRate) ||
+                  String(existingItem.sellerName || "").trim() !== String(item.sellerName || "").trim() ||
+                  String(existingItem.sellerCompany || "").trim() !== String(item.sellerCompany || "").trim() ||
+                  String(existingItem.others || "").trim() !== String(item.others || "").trim() ||
+                  String(existingItem.deliveryDate || "").trim() !== String(item.deliveryDate || "").trim()) {
                 currentMap.set(no, item);
-                hasChanges = true;
+                keyHasChanges = true;
+                overallHasChanges = true;
               }
             }
 
-            if (hasChanges) {
+            if (keyHasChanges) {
               const mergedList = Array.from(currentMap.values());
               existingEntry.saudaEntries.set(key, mergedList);
             }
           }
 
-          if (hasChanges || buyer || seller || mobile) {
+          if (overallHasChanges || buyer || seller || mobile) {
             existingEntry.time = time || existingEntry.time;
             if (buyer) existingEntry.buyer = buyer.trim();
             if (seller) existingEntry.seller = seller.trim();
