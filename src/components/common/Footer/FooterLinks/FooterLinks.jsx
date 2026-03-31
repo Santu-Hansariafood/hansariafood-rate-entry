@@ -12,7 +12,7 @@ const FooterLinks = () => {
       className="flex flex-col items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm"
     >
       <a
-        href="https://hansariafood.shop"
+        href="https://bid.hansariafood.in"
         target="_blank"
         rel="noopener noreferrer"
         className="

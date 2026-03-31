@@ -87,8 +87,8 @@ ${payment && payment !== "" ? `*Payment Terms: ${payment}*` : ""}${
 
 👉 *For rates and orders, please click the link below to participate in the bid.*
 
-📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.agriv2_  
-🌐 *Web App:* _https://vupix.in/hfood/auth/index.php_  
+📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_  
+🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_  
 
 *Thanks,*  
 *Purchase Team*  

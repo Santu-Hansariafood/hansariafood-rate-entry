@@ -77,7 +77,7 @@ const SaudaTonsChart = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <Title text={`Total Sauda in this month = ${total}`} />
+      <Title text={`Total Sauda in This Month = ${total} Tons`} />
       <ChartSection
         title="Sauda Tons Statistics"
         monthNames={monthNames}
