@@ -26,9 +26,9 @@ export async function POST(req) {
         if (existing.email === email) return error("Email already registered", 400);
     }
 
-    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = /^.{6,}$/;
     if (!passwordRegex.test(password)) {
-      return error("Password must be at least 8 chars, including letters, numbers, and special characters.", 400);
+      return error("Password must be at least 6 characters long.", 400);
     }
 
     const hash = await bcrypt.hash(password, 10);
@@ -73,9 +73,9 @@ export async function PUT(req) {
     let message = "User updated successfully";
 
     if (password) {
-      const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      const passwordRegex = /^.{6,}$/;
       if (!passwordRegex.test(password)) {
-        return error("Password must be at least 8 chars, including letters, numbers, and special characters.", 400);
+        return error("Password must be at least 6 characters long.", 400);
       }
 
       const isSamePassword = await bcrypt.compare(password, user.password);

@@ -95,7 +95,7 @@ const ResetPassword = () => {
             onChange={(e) => setPassword(e.target.value)}
           />
           <p className="text-[10px] text-gray-500 mt-1">
-            Password policy: minimum 8 characters with letters, numbers, and special characters.
+            Password policy: minimum 6 characters. Numbers and letters are allowed.
           </p>
           <p className="text-[10px] text-gray-500 mt-1">
             {expiryLoading

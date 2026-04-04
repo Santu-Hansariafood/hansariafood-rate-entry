@@ -41,10 +41,10 @@ export async function POST(req) {
       );
     }
 
-    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = /^.{6,}$/;
     if (!passwordRegex.test(newPassword)) {
       return NextResponse.json(
-        { message: "Password must be at least 8 characters long and include letters, numbers, and special characters." },
+        { message: "Password must be at least 6 characters long." },
         { status: 400 }
       );
     }
