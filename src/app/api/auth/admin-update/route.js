@@ -34,7 +34,9 @@ export async function PUT(req) {
 
     if (password && password.trim() !== "") {
       user.password = await bcrypt.hash(password, 10);
-      user.passwordLastReset = new Date();
+      const now = new Date();
+      user.passwordLastReset = now;
+      user.lastLogin = now;
     }
 
     await user.save();

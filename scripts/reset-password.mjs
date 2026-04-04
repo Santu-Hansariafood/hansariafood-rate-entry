@@ -65,9 +65,12 @@ if (!user) {
 console.log(`Found user: ${user.name}`);
 const hash = await bcrypt.hash(newPassword, 10);
 user.password = hash;
+const now = new Date();
+user.passwordLastReset = now;
+user.lastLogin = now;
 await user.save();
 
-console.log("Password updated successfully.");
+console.log("Password and login timestamps updated successfully.");
 console.log(`Try logging in with mobile: ${mobile} and the new password.`);
 
 process.exit(0);
