@@ -44,12 +44,17 @@ export async function POST(req) {
     });
 
     if (rateEntry) {
+      // Ensure oldRates is an array
+      if (!Array.isArray(rateEntry.oldRates)) {
+        rateEntry.oldRates = [];
+      }
+
       // If the last update was not today, move the current rate to oldRates
       const lastUpdated = rateEntry.newRateDate ? new Date(rateEntry.newRateDate) : null;
-      if (lastUpdated) {
+      if (lastUpdated && !isNaN(lastUpdated.getTime())) {
         lastUpdated.setHours(0, 0, 0, 0);
         
-        if (lastUpdated.getTime() !== today.getTime() && rateEntry.newRate) {
+        if (lastUpdated.getTime() !== today.getTime() && rateEntry.newRate !== undefined && rateEntry.newRate !== null) {
           rateEntry.oldRates.push({
             rate: rateEntry.newRate,
             date: rateEntry.newRateDate,
@@ -66,21 +71,25 @@ export async function POST(req) {
 
       await rateEntry.save();
 
-      emitNotification({
-        type: "rate",
-        data: {
-          company: rateEntry.company,
-          location: rateEntry.location,
-          commodity: rateEntry.commodity,
-          rate: rateEntry.newRate,
-          date: rateEntry.newRateDate,
-          updateTime: new Date().toLocaleTimeString("en-IN", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }),
-        },
-      });
+      try {
+        emitNotification({
+          type: "rate",
+          data: {
+            company: rateEntry.company,
+            location: rateEntry.location,
+            commodity: rateEntry.commodity,
+            rate: rateEntry.newRate,
+            date: rateEntry.newRateDate,
+            updateTime: new Date().toLocaleTimeString("en-IN", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            }),
+          },
+        });
+      } catch (err) {
+        console.warn("Failed to emit notification:", err);
+      }
 
       return NextResponse.json(
         { message: "Rate updated successfully!" },
@@ -257,12 +266,17 @@ export async function PUT(req) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // Ensure oldRates is an array
+    if (!Array.isArray(rateToUpdate.oldRates)) {
+      rateToUpdate.oldRates = [];
+    }
+
     // If the last update was not today, move the current rate to oldRates
     const lastUpdated = rateToUpdate.newRateDate ? new Date(rateToUpdate.newRateDate) : null;
-    if (lastUpdated) {
+    if (lastUpdated && !isNaN(lastUpdated.getTime())) {
       lastUpdated.setHours(0, 0, 0, 0);
       
-      if (lastUpdated.getTime() !== today.getTime() && rateToUpdate.newRate) {
+      if (lastUpdated.getTime() !== today.getTime() && rateToUpdate.newRate !== undefined && rateToUpdate.newRate !== null) {
         rateToUpdate.oldRates.push({
           rate: rateToUpdate.newRate,
           date: rateToUpdate.newRateDate,

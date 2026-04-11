@@ -26,28 +26,19 @@ RateSchema.index({ newRateDate: 1 });
 
 RateSchema.pre("save", function (next) {
   const now = new Date();
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-
-  const lastUpdated = new Date(this.newRateDate);
-  lastUpdated.setHours(0, 0, 0, 0);
-
+  
+  // Always update updateTime and updatedAt
   this.updateTime = now.toLocaleTimeString("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
   });
-
-  if (lastUpdated < today) {
-    this.oldRates.push({
-      rate: this.newRate,
-      date: this.newRateDate,
-    });
-
-    this.newRateDate = today;
-  }
-
   this.updatedAt = now;
+
+  // Only handle oldRates if we're not explicitly handling it elsewhere
+  // But wait, it's safer to just handle it in one place.
+  // I'll leave this hook for updateTime only to avoid double-pushes
+  
   next();
 });
 
