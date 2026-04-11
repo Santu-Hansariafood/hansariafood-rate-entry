@@ -1,20 +1,13 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { connectDB } from "@/lib/mongodb";
-import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
-import { rateLimit } from "@/middleware/rateLimit/rateLimit";
-import { singleDeviceGuard } from "@/middleware/singleDeviceGuard/singleDeviceGuard";
+import { connectDB } from "@/lib/mongodb";
+import User from "@/models/User";
 
+// 🚨 IMPORTANT for Next.js 16
 export const dynamic = "force-dynamic";
-
-const limiter = () => true;
-const deviceGuard = {
-  check: () => true,
-  register: () => {},
-  release: () => {},
-};
+export const runtime = "nodejs";
 
 export const authOptions = {
   providers: [
@@ -28,59 +21,54 @@ export const authOptions = {
 
       async authorize(credentials, req) {
         try {
-          const getHeader = (key) => {
-            if (!req?.headers) return null;
-            if (typeof req.headers.get === "function") {
-              return req.headers.get(key);
-            }
-            return req.headers[key];
-          };
-
-          const headerApiKey = getHeader("x-api-key");
-
-          if (!limiter(req)) {
-            throw new Error("Too many login attempts.");
+          if (!credentials?.mobile || !credentials?.password) {
+            throw new Error("Missing credentials");
           }
 
-          const apiKey = credentials?.apiKey || headerApiKey;
+          // ✅ API KEY CHECK
+          const apiKey =
+            credentials.apiKey ||
+            req?.headers?.get?.("x-api-key") ||
+            req?.headers?.["x-api-key"];
+
           if (apiKey !== process.env.API_KEY) {
             throw new Error("Unauthorized: Invalid API Key");
           }
 
+          // ✅ DB CONNECT
           await connectDB();
 
-          const user = await User.findOne({ mobile: credentials.mobile }).lean();
+          // ✅ FIND USER
+          const user = await User.findOne({
+            mobile: credentials.mobile,
+          }).lean();
+
           if (!user) throw new Error("User not found");
 
-          const ok = await bcrypt.compare(credentials.password, user.password);
-          if (!ok) throw new Error("Invalid credentials");
+          // ✅ PASSWORD CHECK
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
 
-          const now = new Date();
+          if (!isValid) throw new Error("Invalid credentials");
 
-          await User.findByIdAndUpdate(user._id, { lastLogin: now });
+          // ✅ UPDATE LOGIN TIME
+          await User.findByIdAndUpdate(user._id, {
+            lastLogin: new Date(),
+          });
 
-          const ip =
-            getHeader("x-forwarded-for")?.split(",")[0] ||
-            req.ip ||
-            "global";
-
-          const userId = user._id.toString();
-
-          if (!deviceGuard.check(userId, ip)) {
-            throw new Error("Already logged in from another device");
-          }
-
-          deviceGuard.register(userId, ip);
-
+          // ✅ RETURN USER
           return {
-            id: userId,
+            id: user._id.toString(),
             name: user.name,
             mobile: user.mobile.toString(),
             email: user.email,
             pages: user.pages || [],
           };
         } catch (error) {
-          throw error;
+          console.error("AUTH ERROR:", error.message);
+          throw new Error(error.message || "Authentication failed");
         }
       },
     }),
@@ -102,19 +90,18 @@ export const authOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
-      session.user.id = token.sub;
-      session.user.name = token.name;
-      session.user.mobile = token.mobile;
-      session.user.email = token.email;
-      session.user.pages = token.pages;
-      return session;
-    },
-  },
 
-  events: {
-    async signOut({ token }) {
-      if (token?.sub) deviceGuard.release(token.sub);
+    async session({ session, token }) {
+      if (token) {
+        session.user = {
+          id: token.sub,
+          name: token.name,
+          mobile: token.mobile,
+          email: token.email,
+          pages: token.pages,
+        };
+      }
+      return session;
     },
   },
 
@@ -126,7 +113,9 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-const handler = NextAuth(authOptions);
+// ✅ SAFE HANDLER WRAPPER (Fixes Next.js 16 issue)
+const handler = async (req, res) => {
+  return await NextAuth(authOptions)(req, res);
+};
 
-export const GET = handler;
-export const POST = handler;
+export { handler as GET, handler as POST };
