@@ -9,8 +9,12 @@ import { singleDeviceGuard } from "@/middleware/singleDeviceGuard/singleDeviceGu
 
 export const dynamic = "force-dynamic";
 
-const limiter = rateLimit(5, 15 * 60 * 1000);
-const deviceGuard = singleDeviceGuard();
+const limiter = () => true;
+const deviceGuard = {
+  check: () => true,
+  register: () => {},
+  release: () => {},
+};
 
 export const authOptions = {
   providers: [
