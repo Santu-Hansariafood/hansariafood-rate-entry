@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 import withPWA from "next-pwa";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const baseConfig = {
   experimental: {
@@ -16,7 +20,7 @@ const baseConfig = {
       },
     ],
   },
-  // turbopack: {},
+  turbopack: {},
   reactStrictMode: true,
 };
 
