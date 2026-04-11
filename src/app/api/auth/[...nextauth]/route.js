@@ -5,11 +5,7 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 
-// 🚨 IMPORTANT for Next.js 16
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
-
-export const authOptions = {
+export default NextAuth({
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -25,40 +21,31 @@ export const authOptions = {
             throw new Error("Missing credentials");
           }
 
-          // ✅ API KEY CHECK
-          const apiKey =
-            credentials.apiKey ||
-            req?.headers?.get?.("x-api-key") ||
-            req?.headers?.["x-api-key"];
+          const apiKey = credentials.apiKey || req.headers["x-api-key"];
 
           if (apiKey !== process.env.API_KEY) {
-            throw new Error("Unauthorized: Invalid API Key");
+            throw new Error("Invalid API Key");
           }
 
-          // ✅ DB CONNECT
           await connectDB();
 
-          // ✅ FIND USER
           const user = await User.findOne({
             mobile: credentials.mobile,
           }).lean();
 
           if (!user) throw new Error("User not found");
 
-          // ✅ PASSWORD CHECK
-          const isValid = await bcrypt.compare(
+          const valid = await bcrypt.compare(
             credentials.password,
-            user.password
+            user.password,
           );
 
-          if (!isValid) throw new Error("Invalid credentials");
+          if (!valid) throw new Error("Invalid credentials");
 
-          // ✅ UPDATE LOGIN TIME
           await User.findByIdAndUpdate(user._id, {
             lastLogin: new Date(),
           });
 
-          // ✅ RETURN USER
           return {
             id: user._id.toString(),
             name: user.name,
@@ -66,9 +53,9 @@ export const authOptions = {
             email: user.email,
             pages: user.pages || [],
           };
-        } catch (error) {
-          console.error("AUTH ERROR:", error.message);
-          throw new Error(error.message || "Authentication failed");
+        } catch (err) {
+          console.error("AUTH ERROR:", err.message);
+          throw new Error(err.message);
         }
       },
     }),
@@ -76,7 +63,6 @@ export const authOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60,
   },
 
   callbacks: {
@@ -92,15 +78,13 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
-      if (token) {
-        session.user = {
-          id: token.sub,
-          name: token.name,
-          mobile: token.mobile,
-          email: token.email,
-          pages: token.pages,
-        };
-      }
+      session.user = {
+        id: token.sub,
+        name: token.name,
+        mobile: token.mobile,
+        email: token.email,
+        pages: token.pages,
+      };
       return session;
     },
   },
@@ -111,11 +95,4 @@ export const authOptions = {
   },
 
   secret: process.env.NEXTAUTH_SECRET,
-};
-
-// ✅ SAFE HANDLER WRAPPER (Fixes Next.js 16 issue)
-const handler = async (req, res) => {
-  return await NextAuth(authOptions)(req, res);
-};
-
-export { handler as GET, handler as POST };
+});
