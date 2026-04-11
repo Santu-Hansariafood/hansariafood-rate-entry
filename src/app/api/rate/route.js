@@ -5,12 +5,13 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
 
 export async function POST(req) {
-  await connectDB();
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    await connectDB();
+    if (!verifyApiKey(req)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
     const {
       company,
       location,
@@ -20,92 +21,111 @@ export async function POST(req) {
       quantity,
       payment,
       others,
-    } = await req.json();
+    } = body;
 
-    if (!company || !location || !commodity || newRate === undefined) {
+    if (!company || !location || !commodity || newRate === undefined || newRate === null) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let rateEntry = await Rate.findOne({ company, location, commodity });
+    let rateEntry = await Rate.findOne({ 
+      company: company.trim(), 
+      location: location.trim(), 
+      commodity: commodity.trim() 
+    });
 
     if (rateEntry) {
-      const lastUpdated = new Date(rateEntry.newRateDate);
-      lastUpdated.setHours(0, 0, 0, 0);
-
-      if (lastUpdated.getTime() !== today.getTime() && rateEntry.newRate) {
-        rateEntry.oldRates.push({
-          rate: rateEntry.newRate,
-          date: rateEntry.newRateDate,
-        });
+      // If the last update was not today, move the current rate to oldRates
+      const lastUpdated = rateEntry.newRateDate ? new Date(rateEntry.newRateDate) : null;
+      if (lastUpdated) {
+        lastUpdated.setHours(0, 0, 0, 0);
+        
+        if (lastUpdated.getTime() !== today.getTime() && rateEntry.newRate) {
+          rateEntry.oldRates.push({
+            rate: rateEntry.newRate,
+            date: rateEntry.newRateDate,
+          });
+        }
       }
 
-      rateEntry.newRate = newRate;
+      rateEntry.newRate = Number(newRate);
       rateEntry.newRateDate = today;
-      rateEntry.mobile = mobile;
-      rateEntry.quantity = quantity;
-      rateEntry.payment = payment;
-      rateEntry.others = others;
+      rateEntry.mobile = mobile || rateEntry.mobile;
+      rateEntry.quantity = quantity !== undefined ? Number(quantity) : rateEntry.quantity;
+      rateEntry.payment = payment !== undefined ? String(payment) : rateEntry.payment;
+      rateEntry.others = others !== undefined ? String(others) : rateEntry.others;
 
       await rateEntry.save();
 
       emitNotification({
-        type: 'rate',
+        type: "rate",
         data: {
           company: rateEntry.company,
           location: rateEntry.location,
           commodity: rateEntry.commodity,
           rate: rateEntry.newRate,
           date: rateEntry.newRateDate,
-          updateTime: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        }
+          updateTime: new Date().toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }),
+        },
       });
 
       return NextResponse.json(
         { message: "Rate updated successfully!" },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
+    // Create new rate entry
     rateEntry = new Rate({
-      company,
-      location,
-      commodity,
-      newRate,
+      company: company.trim(),
+      location: location.trim(),
+      commodity: commodity.trim(),
+      newRate: Number(newRate),
       newRateDate: today,
       oldRates: [],
       mobile,
-      quantity,
-      payment,
-      others,
+      quantity: quantity !== undefined ? Number(quantity) : 0,
+      payment: payment !== undefined ? String(payment) : "",
+      others: others !== undefined ? String(others) : "",
     });
 
     await rateEntry.save();
 
     emitNotification({
-      type: 'rate',
+      type: "rate",
       data: {
         company: rateEntry.company,
         location: rateEntry.location,
         commodity: rateEntry.commodity,
         rate: rateEntry.newRate,
         date: rateEntry.newRateDate,
-        updateTime: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-      }
+        updateTime: new Date().toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }),
+      },
     });
 
     return NextResponse.json(
       { message: "Rate saved successfully!" },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
-    console.error("Error in POST /rate:", error);
-    return NextResponse.json({ error: "Error saving rate" }, { status: 500 });
+    console.error("Error in POST /api/rate:", error);
+    return NextResponse.json({ 
+      error: "Error saving rate", 
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -134,13 +154,11 @@ export async function GET(req) {
       ...(todayOnly ? { newRateDate: { $gte: today } } : {}),
     };
 
-    const selectFields = minimal 
+    const selectFields = minimal
       ? "company location commodity newRate newRateDate updateTime"
       : "company location commodity oldRates newRate newRateDate quantity payment others updateTime mobile";
 
-    const rates = await Rate.find(dbQuery)
-      .select(selectFields)
-      .lean();
+    const rates = await Rate.find(dbQuery).select(selectFields).lean();
 
     const formattedRates = rates.map((rate) => {
       const lastUpdated = new Date(rate.newRateDate);
@@ -159,9 +177,9 @@ export async function GET(req) {
         };
       }
 
-      const oldRatesFormatted = rate.oldRates.map(
+      const oldRatesFormatted = (rate.oldRates || []).map(
         (old) =>
-          `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`
+          `${old.rate} (${old.date ? new Date(old.date).toLocaleDateString("en-GB") : "Unknown"})`,
       );
 
       return {
@@ -170,9 +188,9 @@ export async function GET(req) {
         commodity: rate.commodity,
         oldRates: oldRatesFormatted,
         newRate: isToday ? rate.newRate : "",
-        quantity: isToday ? rate.quantity ?? "" : "",
-        payment: isToday ? rate.payment ?? "" : "",
-        others: isToday ? rate.others ?? "" : "",
+        quantity: isToday ? (rate.quantity ?? "") : "",
+        payment: isToday ? (rate.payment ?? "") : "",
+        others: isToday ? (rate.others ?? "") : "",
         hasNewRateToday: isToday,
         lastUpdated: isToday
           ? rate.newRateDate
@@ -187,18 +205,19 @@ export async function GET(req) {
     console.error("Error in GET /rate:", error);
     return NextResponse.json(
       { error: "Error fetching rates" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(req) {
-  await connectDB();
-  if (!verifyApiKey(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    await connectDB();
+    if (!verifyApiKey(req)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
     const {
       company,
       location,
@@ -208,36 +227,60 @@ export async function PUT(req) {
       quantity,
       payment,
       others,
-    } = await req.json();
+    } = body;
 
-    if (!company || !location || !commodity || newRate === undefined) {
+    if (!company || !location || !commodity || newRate === undefined || newRate === null) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const rateToUpdate = await Rate.findOne({ company, location, commodity });
+    const rateToUpdate = await Rate.findOne({ 
+      company: company.trim(), 
+      location: location.trim(), 
+      commodity: commodity.trim() 
+    });
+
     if (!rateToUpdate) {
       return NextResponse.json({ error: "Rate not found" }, { status: 404 });
     }
 
-    rateToUpdate.newRate = newRate;
-    rateToUpdate.newRateDate = new Date();
-    rateToUpdate.mobile = mobile;
-    rateToUpdate.quantity = quantity;
-    rateToUpdate.payment = payment;
-    rateToUpdate.others = others;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // If the last update was not today, move the current rate to oldRates
+    const lastUpdated = rateToUpdate.newRateDate ? new Date(rateToUpdate.newRateDate) : null;
+    if (lastUpdated) {
+      lastUpdated.setHours(0, 0, 0, 0);
+      
+      if (lastUpdated.getTime() !== today.getTime() && rateToUpdate.newRate) {
+        rateToUpdate.oldRates.push({
+          rate: rateToUpdate.newRate,
+          date: rateToUpdate.newRateDate,
+        });
+      }
+    }
+
+    rateToUpdate.newRate = Number(newRate);
+    rateToUpdate.newRateDate = today;
+    rateToUpdate.mobile = mobile || rateToUpdate.mobile;
+    rateToUpdate.quantity = quantity !== undefined ? Number(quantity) : rateToUpdate.quantity;
+    rateToUpdate.payment = payment !== undefined ? String(payment) : rateToUpdate.payment;
+    rateToUpdate.others = others !== undefined ? String(others) : rateToUpdate.others;
 
     await rateToUpdate.save();
 
     return NextResponse.json(
       { message: "Rate updated successfully!" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
-    console.error("Error in PUT /rate:", error);
-    return NextResponse.json({ error: "Error updating rate" }, { status: 500 });
+    console.error("Error in PUT /api/rate:", error);
+    return NextResponse.json({ 
+      error: "Error updating rate", 
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -251,13 +294,13 @@ export async function DELETE(req) {
     await Rate.deleteMany();
     return NextResponse.json(
       { message: "All rates deleted successfully!" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in DELETE /rate:", error);
     return NextResponse.json(
       { error: "Error deleting rates" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

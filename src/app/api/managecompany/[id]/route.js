@@ -16,7 +16,7 @@ export async function GET(req, { params }) {
     if (!id) {
       return NextResponse.json(
         { error: "Company ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -31,7 +31,7 @@ export async function GET(req, { params }) {
     console.error("GET /managecompany/[id] Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch company", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -49,7 +49,7 @@ export async function PUT(req, { params }) {
     if (!id) {
       return NextResponse.json(
         { error: "Company ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -67,14 +67,14 @@ export async function PUT(req, { params }) {
     if (!name) {
       return NextResponse.json(
         { error: "Company name is required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!Array.isArray(location) || location.length === 0) {
       return NextResponse.json(
         { error: "At least one location is required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -85,7 +85,7 @@ export async function PUT(req, { params }) {
     ) {
       return NextResponse.json(
         { error: "Type must include buyer/seller." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -105,7 +105,7 @@ export async function PUT(req, { params }) {
         mobileNumbers,
         ...(typeof isSelfCompany === "boolean" ? { isSelfCompany } : {}),
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updatedCompany) {
@@ -114,13 +114,13 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(
       { message: "Company updated successfully", company: updatedCompany },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("PUT /managecompany/[id] Error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to update company" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -138,7 +138,7 @@ export async function DELETE(req, { params }) {
     if (!id) {
       return NextResponse.json(
         { error: "Company ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -150,13 +150,13 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json(
       { message: "Company deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("DELETE /managecompany/[id] Error:", error);
     return NextResponse.json(
       { error: "Failed to delete company", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

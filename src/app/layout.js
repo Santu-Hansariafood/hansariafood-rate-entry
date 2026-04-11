@@ -43,15 +43,17 @@ export const viewport = {
 };
 
 export async function generateMetadata() {
-  const baseKeywords = "hansaria food, Gopal Agarwal, India Maize, leading maize supplier in India, brokerage services, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India, maize corn supplier West Bengal, maize exporters India, bulk maize suppliers, animal feed exports India";
-  
+  const baseKeywords =
+    "hansaria food, Gopal Agarwal, India Maize, leading maize supplier in India, brokerage services, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India, maize corn supplier West Bengal, maize exporters India, bulk maize suppliers, animal feed exports India";
+
   const keywords = baseKeywords;
 
   return {
     metadataBase: new URL("https://www.hansariafood.in"),
 
     title: {
-      default: "Hansaria Food Private Limited | Leading Maize Supplier in India",
+      default:
+        "Hansaria Food Private Limited | Leading Maize Supplier in India",
       template: "%s | Hansaria Food Pvt. Ltd.",
     },
 
@@ -128,9 +130,7 @@ export async function generateMetadata() {
         { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
         { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       ],
-      apple: [
-        { url: "/icons/apple-touch-icon.png" },
-      ],
+      apple: [{ url: "/icons/apple-touch-icon.png" }],
     },
   };
 }

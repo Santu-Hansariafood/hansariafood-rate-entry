@@ -13,16 +13,29 @@ export async function POST(req) {
     const { mobile, companies } = body;
 
     if (!mobile) {
-      return NextResponse.json({ error: "Mobile number is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Mobile number is required" },
+        { status: 400 },
+      );
     }
 
     if (!companies || !Array.isArray(companies) || companies.length === 0) {
-      return NextResponse.json({ error: "Companies array is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Companies array is required" },
+        { status: 400 },
+      );
     }
 
     for (const company of companies) {
-      if (!company.companyId || !Array.isArray(company.locations) || company.locations.length === 0) {
-        return NextResponse.json({ error: "Invalid company data structure" }, { status: 400 });
+      if (
+        !company.companyId ||
+        !Array.isArray(company.locations) ||
+        company.locations.length === 0
+      ) {
+        return NextResponse.json(
+          { error: "Invalid company data structure" },
+          { status: 400 },
+        );
       }
     }
 
@@ -34,40 +47,62 @@ export async function POST(req) {
       const results = [];
       for (const newCompany of companies) {
         const existingCompany = existingUserCompany.companies.find(
-          (c) => c.companyId.toString() === newCompany.companyId
+          (c) => c.companyId.toString() === newCompany.companyId,
         );
 
         if (existingCompany) {
           const newLocations = newCompany.locations.filter(
-            (loc) => !existingCompany.locations.includes(loc)
+            (loc) => !existingCompany.locations.includes(loc),
           );
-          
+
           if (newLocations.length > 0) {
             existingCompany.locations.push(...newLocations);
-            results.push({ companyId: newCompany.companyId, added: newLocations.length });
+            results.push({
+              companyId: newCompany.companyId,
+              added: newLocations.length,
+            });
           } else {
-            results.push({ companyId: newCompany.companyId, added: 0, message: "No new locations" });
+            results.push({
+              companyId: newCompany.companyId,
+              added: 0,
+              message: "No new locations",
+            });
           }
         } else {
           existingUserCompany.companies.push(newCompany);
-          results.push({ companyId: newCompany.companyId, added: newCompany.locations.length });
+          results.push({
+            companyId: newCompany.companyId,
+            added: newCompany.locations.length,
+          });
         }
       }
       await existingUserCompany.save();
-      return NextResponse.json({
-        message: "Companies and locations updated successfully",
-        results
-      }, { status: 200 });
+      return NextResponse.json(
+        {
+          message: "Companies and locations updated successfully",
+          results,
+        },
+        { status: 200 },
+      );
     } else {
       await UserCompany.create({ mobile, companies });
-      return NextResponse.json({
-        message: "Companies and locations assigned successfully",
-        results: companies.map(c => ({ companyId: c.companyId, added: c.locations.length }))
-      }, { status: 201 });
+      return NextResponse.json(
+        {
+          message: "Companies and locations assigned successfully",
+          results: companies.map((c) => ({
+            companyId: c.companyId,
+            added: c.locations.length,
+          })),
+        },
+        { status: 201 },
+      );
     }
   } catch (error) {
     console.error("Error in POST /api/user-companies:", error);
-    return NextResponse.json({ error: "Server error: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Server error: " + error.message },
+      { status: 500 },
+    );
   }
 }
 
@@ -81,7 +116,10 @@ export async function GET(req) {
     const mobile = searchParams.get("mobile");
 
     if (!mobile) {
-      return NextResponse.json({ error: "Mobile number is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Mobile number is required" },
+        { status: 400 },
+      );
     }
 
     await connectDB();
@@ -91,12 +129,18 @@ export async function GET(req) {
       .lean();
 
     if (!userCompany) {
-      return NextResponse.json({ error: "No companies assigned to this mobile number" }, { status: 404 });
+      return NextResponse.json(
+        { error: "No companies assigned to this mobile number" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json(userCompany);
   } catch (error) {
     console.error("Error in GET /api/user-companies:", error);
-    return NextResponse.json({ error: "Server error: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Server error: " + error.message },
+      { status: 500 },
+    );
   }
 }

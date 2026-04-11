@@ -42,8 +42,8 @@ export async function GET(req) {
       const latestPerSeller = await SaudaEntry.aggregate([
         {
           $match: {
-            createdAt: { $gte: getCutoffDate(12) }
-          }
+            createdAt: { $gte: getCutoffDate(12) },
+          },
         },
         {
           $project: {
@@ -58,37 +58,49 @@ export async function GET(req) {
         {
           $match: {
             "saudaEntries.v.sellerName": { $in: sellerNames },
-             $expr: {
-               $and: [
-                 { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.finalRate", 0] } }, 0] },
-                 { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } }, 0] }
-               ]
-             }
+            $expr: {
+              $and: [
+                {
+                  $gt: [
+                    {
+                      $toDouble: { $ifNull: ["$saudaEntries.v.finalRate", 0] },
+                    },
+                    0,
+                  ],
+                },
+                {
+                  $gt: [
+                    { $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } },
+                    0,
+                  ],
+                },
+              ],
+            },
           },
         },
         {
           $group: {
             _id: "$saudaEntries.v.sellerName",
             latestDate: { $max: "$date" },
-            totalTons: { 
-              $sum: { $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } } 
+            totalTons: {
+              $sum: { $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } },
             },
             saudaCount: { $sum: 1 },
-            commodities: { $addToSet: "$saudaEntries.v.commodity" }
+            commodities: { $addToSet: "$saudaEntries.v.commodity" },
           },
         },
       ]);
 
       const statsMap = new Map(
         latestPerSeller.map((d) => [
-          d._id, 
-          { 
-            latestDate: d.latestDate, 
-            totalTons: d.totalTons, 
+          d._id,
+          {
+            latestDate: d.latestDate,
+            totalTons: d.totalTons,
             saudaCount: d.saudaCount,
-            commodities: d.commodities 
-          }
-        ])
+            commodities: d.commodities,
+          },
+        ]),
       );
 
       return NextResponse.json(
@@ -100,12 +112,12 @@ export async function GET(req) {
               latestDate: stats.latestDate || null,
               totalTons: stats.totalTons || 0,
               saudaCount: stats.saudaCount || 0,
-              commodities: stats.commodities || []
+              commodities: stats.commodities || [],
             };
           }),
           totalSellers: allSellers.length,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -121,7 +133,9 @@ export async function GET(req) {
         $match: {
           ...(companyName ? { company: companyName } : {}),
           ...dateFilter,
-          ...(!selectedDate && !selectedMonth ? { createdAt: { $gte: getCutoffDate(12) } } : {})
+          ...(!selectedDate && !selectedMonth
+            ? { createdAt: { $gte: getCutoffDate(12) } }
+            : {}),
         },
       },
       {
@@ -150,30 +164,46 @@ export async function GET(req) {
             unit: "$saudaEntries.v.unit",
             commodity: "$saudaEntries.v.commodity",
           },
-          totalTons: { 
-            $sum: { 
+          totalTons: {
+            $sum: {
               $cond: [
-                { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } }, 0] },
+                {
+                  $gt: [
+                    { $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } },
+                    0,
+                  ],
+                },
                 { $toDouble: "$saudaEntries.v.tons" },
-                0
-              ]
-            }
+                0,
+              ],
+            },
           },
           saudas: {
             $push: {
               saudaNo: { $ifNull: ["$saudaEntries.v.saudaNo", ""] },
               tons: { $ifNull: ["$saudaEntries.v.tons", 0] },
               unit: { $ifNull: ["$saudaEntries.v.unit", ""] },
-              finalRate: { 
+              finalRate: {
                 $cond: [
-                  { $and: [
-                    { $ne: ["$saudaEntries.v.finalRate", null] },
-                    { $ne: ["$saudaEntries.v.finalRate", ""] },
-                    { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.finalRate", 0] } }, 0] }
-                  ]},
+                  {
+                    $and: [
+                      { $ne: ["$saudaEntries.v.finalRate", null] },
+                      { $ne: ["$saudaEntries.v.finalRate", ""] },
+                      {
+                        $gt: [
+                          {
+                            $toDouble: {
+                              $ifNull: ["$saudaEntries.v.finalRate", 0],
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                    ],
+                  },
                   { $toDouble: "$saudaEntries.v.finalRate" },
-                  0
-                ]
+                  0,
+                ],
               },
               sellerName: { $ifNull: ["$saudaEntries.v.sellerName", ""] },
               sellerCompany: { $ifNull: ["$saudaEntries.v.sellerCompany", ""] },
@@ -248,7 +278,9 @@ export async function GET(req) {
           $match: {
             company: companyName,
             ...dateFilter,
-            ...(!selectedDate && !selectedMonth ? { createdAt: { $gte: getCutoffDate(12) } } : {})
+            ...(!selectedDate && !selectedMonth
+              ? { createdAt: { $gte: getCutoffDate(12) } }
+              : {}),
           },
         },
         {
@@ -275,24 +307,40 @@ export async function GET(req) {
             },
             count: { $sum: 1 },
             totalTons: { $sum: "$saudaEntries.v.tons" },
-            totalValue: { 
-              $sum: { 
+            totalValue: {
+              $sum: {
                 $cond: [
-                  { 
+                  {
                     $and: [
-                      { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.finalRate", 0] } }, 0] },
-                      { $gt: [{ $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] } }, 0] }
-                    ]
+                      {
+                        $gt: [
+                          {
+                            $toDouble: {
+                              $ifNull: ["$saudaEntries.v.finalRate", 0],
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                      {
+                        $gt: [
+                          {
+                            $toDouble: { $ifNull: ["$saudaEntries.v.tons", 0] },
+                          },
+                          0,
+                        ],
+                      },
+                    ],
                   },
-                  { 
+                  {
                     $multiply: [
                       { $toDouble: "$saudaEntries.v.finalRate" },
-                      { $toDouble: "$saudaEntries.v.tons" }
-                    ] 
+                      { $toDouble: "$saudaEntries.v.tons" },
+                    ],
                   },
-                  0
-                ]
-              }
+                  0,
+                ],
+              },
             },
           },
         },
@@ -302,7 +350,7 @@ export async function GET(req) {
 
     const [facetResult, sellerAggregation] = await Promise.all([
       facetPromise,
-      sellerAggregationPromise
+      sellerAggregationPromise,
     ]);
 
     const results = facetResult?.[0]?.results || [];
@@ -311,7 +359,7 @@ export async function GET(req) {
     let sellerInfo = null;
     if (sellerAggregation.length > 0) {
       sellerInfo = {
-        sellers: sellerAggregation.map(seller => ({
+        sellers: sellerAggregation.map((seller) => ({
           sellerName: seller._id.sellerName,
           sellerCompany: seller._id.sellerCompany,
           transactionCount: seller.count,
@@ -321,19 +369,19 @@ export async function GET(req) {
         primarySeller: {
           sellerName: sellerAggregation[0]._id.sellerName,
           sellerCompany: sellerAggregation[0]._id.sellerCompany,
-        }
+        },
       };
     }
 
     return NextResponse.json(
       { page, pageSize, total: totalCount, data: results, sellerInfo },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("Error fetching sauda entries:", err);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

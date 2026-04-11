@@ -15,7 +15,7 @@ export async function POST(req) {
     if (!saudaNo) {
       return NextResponse.json(
         { error: "Sauda number is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -31,18 +31,18 @@ export async function POST(req) {
         sellerName,
         sellerCompany,
       },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
 
     return NextResponse.json(
       { message: "Status saved successfully", sauda: updated },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("POST /sauda-status error:", error);
     return NextResponse.json(
       { error: "Failed to save sauda status" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -62,7 +62,7 @@ export async function GET(req) {
     console.error("GET /sauda-status error:", error);
     return NextResponse.json(
       { error: "Failed to fetch sauda statuses" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

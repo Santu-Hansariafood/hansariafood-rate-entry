@@ -27,7 +27,7 @@ export async function GET(req, { params }) {
     if (!purchase) {
       return NextResponse.json(
         { error: "Purchase not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -36,7 +36,7 @@ export async function GET(req, { params }) {
     console.error("GET /purchases/[id] error:", err);
     return NextResponse.json(
       { error: "Failed to fetch purchase", detail: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -58,19 +58,19 @@ export async function PUT(req, { params }) {
     if (!updated) {
       return NextResponse.json(
         { error: "Purchase not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { message: "Purchase updated successfully", purchase: updated },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("PUT /purchases/[id] error:", err);
     return NextResponse.json(
       { error: "Failed to update purchase", detail: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -87,19 +87,19 @@ export async function DELETE(req, { params }) {
     if (!deleted) {
       return NextResponse.json(
         { error: "Purchase not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { message: "Purchase deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("DELETE /purchases/[id] error:", err);
     return NextResponse.json(
       { error: "Failed to delete purchase", detail: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

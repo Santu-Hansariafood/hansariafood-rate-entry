@@ -21,8 +21,8 @@ export async function GET(req) {
     const totals = await SaudaEntry.aggregate([
       {
         $match: {
-          createdAt: { $gte: getCutoffDate(12) }
-        }
+          createdAt: { $gte: getCutoffDate(12) },
+        },
       },
       {
         $project: {
@@ -54,7 +54,7 @@ export async function GET(req) {
     console.error("Error in GET /sauda-total-by-date:", error);
     return NextResponse.json(
       { error: "Error calculating totals by date" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

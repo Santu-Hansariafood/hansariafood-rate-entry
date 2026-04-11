@@ -42,12 +42,12 @@ export async function GET(req) {
 
     return NextResponse.json(
       { sellers, total, currentPage: page, totalPages, pageSize: limit },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch sellers", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -65,7 +65,7 @@ export async function POST(req) {
     if (!sellerNameTrimmed) {
       return NextResponse.json(
         { error: "Seller name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -76,7 +76,7 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "All company names are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -86,7 +86,7 @@ export async function POST(req) {
     if (existingSeller) {
       return NextResponse.json(
         { error: "Seller name already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -97,18 +97,18 @@ export async function POST(req) {
 
     return NextResponse.json(
       { message: "Seller created", createdSeller: newSeller },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     if (error.code === 11000) {
       return NextResponse.json(
         { error: "Seller name must be unique" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     return NextResponse.json(
       { error: "Failed to create seller", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

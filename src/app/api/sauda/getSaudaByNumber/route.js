@@ -17,7 +17,7 @@ export async function GET(request) {
     if (!saudaNumber) {
       return NextResponse.json(
         { error: "Sauda number is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -98,7 +98,7 @@ export async function GET(request) {
     console.error("Error fetching sauda details:", error);
     return NextResponse.json(
       { error: "Failed to fetch sauda details" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

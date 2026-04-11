@@ -16,7 +16,7 @@ export async function POST(req) {
     if ((!email && !mobile) || !otp || !newPassword) {
       return NextResponse.json(
         { message: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,10 +24,7 @@ export async function POST(req) {
     const user = await User.findOne(query);
 
     if (!user) {
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     if (
@@ -37,7 +34,7 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { message: "Invalid or expired OTP" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,7 +42,7 @@ export async function POST(req) {
     if (!passwordRegex.test(newPassword)) {
       return NextResponse.json(
         { message: "Password must be at least 6 characters long." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,7 +50,7 @@ export async function POST(req) {
     if (isSamePassword) {
       return NextResponse.json(
         { message: "New password cannot be the same as the current password." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -67,13 +64,13 @@ export async function POST(req) {
 
     return NextResponse.json(
       { message: "Password reset successfully. Please login." },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Reset Password Error:", error);
     return NextResponse.json(
       { message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

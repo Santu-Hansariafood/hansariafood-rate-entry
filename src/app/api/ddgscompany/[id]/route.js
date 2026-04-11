@@ -11,7 +11,7 @@ export async function GET(req, { params }) {
     if (!awaitedParams?.id) {
       return NextResponse.json(
         { error: "Company ID is missing" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,12 +27,12 @@ export async function GET(req, { params }) {
     if (!company) {
       return NextResponse.json(
         { error: "Company not found or not a seller" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     company.commodities = company.commodities.filter((c) =>
-      targetCommodities.includes(c)
+      targetCommodities.includes(c),
     );
 
     return NextResponse.json(company);
@@ -40,7 +40,7 @@ export async function GET(req, { params }) {
     console.error("Error fetching company:", error);
     return NextResponse.json(
       { error: "Server error", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

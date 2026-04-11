@@ -23,7 +23,7 @@ export async function GET(req, { params }) {
     console.error("GET /company/:id error:", error);
     return NextResponse.json(
       { error: "Failed to fetch company" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -55,7 +55,7 @@ export async function PUT(req, { params }) {
           error:
             "Name, category, and at least one valid type (buyer/seller) are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -67,7 +67,7 @@ export async function PUT(req, { params }) {
     if (duplicate) {
       return NextResponse.json(
         { error: "Another company with this name already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,7 +79,7 @@ export async function PUT(req, { params }) {
         type: selectedTypes,
         ...(isSelfCompany !== undefined && { isSelfCompany }),
       },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedCompany) {
@@ -88,13 +88,13 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(
       { message: "Company updated successfully", company: updatedCompany },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("PUT /company/:id error:", error);
     return NextResponse.json(
       { error: "Failed to update company" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -117,13 +117,13 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json(
       { message: "Company deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("DELETE /company/:id error:", error);
     return NextResponse.json(
       { error: "Failed to delete company" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -16,29 +16,34 @@ export async function GET(req) {
     const endDateStr = searchParams.get("endDate");
 
     if (!commodity) {
-      return NextResponse.json({ error: "Commodity is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Commodity is required" },
+        { status: 400 },
+      );
     }
 
-    const startDate = startDateStr ? new Date(startDateStr) : new Date(new Date().getFullYear(), 0, 1);
+    const startDate = startDateStr
+      ? new Date(startDateStr)
+      : new Date(new Date().getFullYear(), 0, 1);
     const endDate = endDateStr ? new Date(endDateStr) : new Date();
 
     const rates = await Rate.find({
-      commodity: { $regex: new RegExp(`^${commodity}$`, "i") }
+      commodity: { $regex: new RegExp(`^${commodity}$`, "i") },
     }).lean();
 
     const allDataPoints = [];
 
-    rates.forEach(r => {
+    rates.forEach((r) => {
       // Process old rates
       if (Array.isArray(r.oldRates)) {
-        r.oldRates.forEach(old => {
+        r.oldRates.forEach((old) => {
           const d = new Date(old.date);
           if (d >= startDate && d <= endDate) {
             allDataPoints.push({
               rate: old.rate,
               date: d,
               company: r.company,
-              location: r.location
+              location: r.location,
             });
           }
         });
@@ -51,7 +56,7 @@ export async function GET(req) {
           rate: r.newRate,
           date: currentD,
           company: r.company,
-          location: r.location
+          location: r.location,
         });
       }
     });
@@ -60,7 +65,7 @@ export async function GET(req) {
       return NextResponse.json({
         summary: { avgRate: 0, maxRate: 0, minRate: 0, totalUpdates: 0 },
         monthlyData: [],
-        companyWise: []
+        companyWise: [],
       });
     }
 
@@ -75,8 +80,11 @@ export async function GET(req) {
     let maxRate = -Infinity;
     let minRate = Infinity;
 
-    allDataPoints.forEach(p => {
-      const monthKey = p.date.toLocaleString("default", { month: "short", year: "numeric" });
+    allDataPoints.forEach((p) => {
+      const monthKey = p.date.toLocaleString("default", {
+        month: "short",
+        year: "numeric",
+      });
       const companyKey = p.company;
 
       totalSum += p.rate;
@@ -85,7 +93,12 @@ export async function GET(req) {
 
       // Monthly
       if (!monthlyMap[monthKey]) {
-        monthlyMap[monthKey] = { sum: 0, count: 0, max: -Infinity, min: Infinity };
+        monthlyMap[monthKey] = {
+          sum: 0,
+          count: 0,
+          max: -Infinity,
+          min: Infinity,
+        };
       }
       monthlyMap[monthKey].sum += p.rate;
       monthlyMap[monthKey].count += 1;
@@ -94,12 +107,19 @@ export async function GET(req) {
 
       // Company
       if (!companyMap[companyKey]) {
-        companyMap[companyKey] = { sum: 0, count: 0, max: -Infinity, min: Infinity };
+        companyMap[companyKey] = {
+          sum: 0,
+          count: 0,
+          max: -Infinity,
+          min: Infinity,
+        };
       }
       companyMap[companyKey].sum += p.rate;
       companyMap[companyKey].count += 1;
-      if (p.rate > companyMap[companyKey].max) companyMap[companyKey].max = p.rate;
-      if (p.rate < companyMap[companyKey].min) companyMap[companyKey].min = p.rate;
+      if (p.rate > companyMap[companyKey].max)
+        companyMap[companyKey].max = p.rate;
+      if (p.rate < companyMap[companyKey].min)
+        companyMap[companyKey].min = p.rate;
     });
 
     const monthlyData = Object.entries(monthlyMap).map(([month, data]) => ({
@@ -107,31 +127,35 @@ export async function GET(req) {
       avg: Math.round(data.sum / data.count),
       max: data.max,
       min: data.min,
-      count: data.count
+      count: data.count,
     }));
 
-    const companyWise = Object.entries(companyMap).map(([company, data]) => ({
-      company,
-      avg: Math.round(data.sum / data.count),
-      max: data.max,
-      min: data.min,
-      count: data.count
-    })).sort((a, b) => b.avg - a.avg);
+    const companyWise = Object.entries(companyMap)
+      .map(([company, data]) => ({
+        company,
+        avg: Math.round(data.sum / data.count),
+        max: data.max,
+        min: data.min,
+        count: data.count,
+      }))
+      .sort((a, b) => b.avg - a.avg);
 
     return NextResponse.json({
       summary: {
         avgRate: Math.round(totalSum / allDataPoints.length),
         maxRate,
         minRate,
-        totalUpdates: allDataPoints.length
+        totalUpdates: allDataPoints.length,
       },
       monthlyData,
       companyWise,
-      allDataPoints: allDataPoints.slice(-50) // Return last 50 for detail view
+      allDataPoints: allDataPoints.slice(-50), // Return last 50 for detail view
     });
-
   } catch (error) {
     console.error("Error in GET /rate-analysis/monthly:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

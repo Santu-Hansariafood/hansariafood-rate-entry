@@ -22,7 +22,7 @@ export async function GET(req, { params }) {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch seller", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -42,7 +42,7 @@ export async function PUT(req, { params }) {
     if (!sellerNameTrimmed) {
       return NextResponse.json(
         { error: "Seller name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -54,7 +54,7 @@ export async function PUT(req, { params }) {
     ) {
       return NextResponse.json(
         { error: "At least one valid company name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -66,7 +66,7 @@ export async function PUT(req, { params }) {
     if (existingSeller) {
       return NextResponse.json(
         { error: "Seller name already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -76,7 +76,7 @@ export async function PUT(req, { params }) {
         sellerName: sellerNameTrimmed,
         companies: companies.map((c) => c.trim()),
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updatedSeller) {
@@ -85,18 +85,18 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(
       { message: "Seller updated", updatedSeller },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     if (error.code === 11000) {
       return NextResponse.json(
         { error: "Seller name must be unique" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     return NextResponse.json(
       { error: "Failed to update seller", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -118,12 +118,12 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json(
       { message: "Seller deleted", deletedSeller },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to delete seller", details: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

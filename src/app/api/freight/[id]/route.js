@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Freight from "@/models/Freight";
@@ -19,23 +18,26 @@ export async function PUT(req, { params }) {
     if (!existingFreight) {
       return NextResponse.json(
         { success: false, error: "Freight not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     let updates = { ...otherUpdates };
-    
-    if (freightRate !== undefined && freightRate !== existingFreight.freightRate) {
+
+    if (
+      freightRate !== undefined &&
+      freightRate !== existingFreight.freightRate
+    ) {
       updates.freightRate = freightRate;
       updates.previousRate = existingFreight.freightRate;
     } else if (freightRate !== undefined) {
-        updates.freightRate = freightRate;
+      updates.freightRate = freightRate;
     }
 
     const updatedFreight = await Freight.findByIdAndUpdate(
       id,
       { $set: updates },
-      { new: true }
+      { new: true },
     )
       .populate("company", "name")
       .populate("deliveryCompany", "name");
@@ -48,7 +50,7 @@ export async function PUT(req, { params }) {
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -67,7 +69,7 @@ export async function DELETE(req, { params }) {
     if (!deletedFreight) {
       return NextResponse.json(
         { success: false, error: "Freight not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -78,7 +80,7 @@ export async function DELETE(req, { params }) {
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

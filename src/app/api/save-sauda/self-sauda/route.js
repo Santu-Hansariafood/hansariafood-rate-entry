@@ -28,7 +28,7 @@ export async function GET(req) {
     console.error("Error in GET /save-sauda:", error);
     return NextResponse.json(
       { error: "Error fetching sauda entries" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

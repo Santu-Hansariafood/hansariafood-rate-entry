@@ -5,7 +5,6 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import ExcelJS from "exceljs";
 import nodemailer from "nodemailer";
 
-
 export async function GET(req) {
   await connectDB();
   if (!verifyApiKey(req)) {
@@ -70,7 +69,7 @@ export async function GET(req) {
       "default",
       {
         month: "short",
-      }
+      },
     )}_${today.getFullYear()}`;
 
     const filename = `sauda_entries_${formattedDate}.xlsx`;
@@ -94,13 +93,13 @@ export async function GET(req) {
 
     return NextResponse.json(
       { message: "Email sent with Excel attachment successfully!" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error exporting & emailing Excel:", error);
     return NextResponse.json(
       { error: "Failed to export and send Excel" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -22,8 +22,10 @@ export async function POST(req) {
 
     const existing = await User.findOne({ $or: [{ mobile }, { email }] });
     if (existing) {
-        if (existing.mobile === mobile) return error("Mobile number already registered", 400);
-        if (existing.email === email) return error("Email already registered", 400);
+      if (existing.mobile === mobile)
+        return error("Mobile number already registered", 400);
+      if (existing.email === email)
+        return error("Email already registered", 400);
     }
 
     const passwordRegex = /^.{6,}$/;
@@ -64,8 +66,7 @@ export async function PUT(req) {
     await connectDB();
     const { mobile, password, pages } = await req.json();
 
-    if (!mobile)
-      return error("Mobile number is required", 400);
+    if (!mobile) return error("Mobile number is required", 400);
 
     const user = await User.findOne({ mobile });
     if (!user) return error("User not found", 404);
@@ -80,7 +81,10 @@ export async function PUT(req) {
 
       const isSamePassword = await bcrypt.compare(password, user.password);
       if (isSamePassword) {
-        return error("New password cannot be the same as the current password.", 400);
+        return error(
+          "New password cannot be the same as the current password.",
+          400,
+        );
       }
 
       user.password = await bcrypt.hash(password, 10);
@@ -148,7 +152,7 @@ export async function PATCH(req) {
     const template = "details_confirmation";
 
     const whatsappUrl = `http://official.nkinfo.in/wapp/api/v2/send/bytemplate/json?apikey=${apiKey}&templatename=${template}&mobile=${mobile}&var1=${encodeURIComponent(
-      var1
+      var1,
     )}&var2=${encodeURIComponent(var2)}`;
 
     console.log("📨 Sending WhatsApp Request:", whatsappUrl);

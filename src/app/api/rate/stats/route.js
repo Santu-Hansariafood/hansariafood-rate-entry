@@ -61,7 +61,7 @@ export async function GET(req) {
     console.error("Error in GET /rate/stats:", error);
     return NextResponse.json(
       { error: "Error calculating rate stats" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

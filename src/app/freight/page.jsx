@@ -14,13 +14,13 @@ const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 const FreightManager = dynamic(
   () => import("@/components/ui/FreightManager/FreightManager"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 
 const Page = () => {

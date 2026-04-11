@@ -17,7 +17,7 @@ export async function POST(req) {
     if (!email && !mobile) {
       return NextResponse.json(
         { message: "Please provide email or mobile number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,16 +25,16 @@ export async function POST(req) {
     const user = await User.findOne(query);
 
     if (!user) {
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
-    
+
     if (!user.email) {
-       return NextResponse.json(
-        { message: "No email address linked to this account. Please contact support." },
-        { status: 400 }
+      return NextResponse.json(
+        {
+          message:
+            "No email address linked to this account. Please contact support.",
+        },
+        { status: 400 },
       );
     }
 
@@ -54,13 +54,13 @@ export async function POST(req) {
 
     return NextResponse.json(
       { message: "OTP sent to your registered email.", email: user.email },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Forgot Password Error:", error);
     return NextResponse.json(
       { message: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

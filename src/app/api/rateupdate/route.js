@@ -22,15 +22,15 @@ export async function POST(req) {
     const updated = await RateUpdate.findOneAndUpdate(
       { date: today },
       { companies },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     emitNotification({
-      type: 'rate_update_list',
+      type: "rate_update_list",
       data: {
         date: today,
-        companies: updated.companies
-      }
+        companies: updated.companies,
+      },
     });
 
     return NextResponse.json({ success: true, data: updated });

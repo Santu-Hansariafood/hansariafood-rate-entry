@@ -43,7 +43,7 @@ export async function GET(req) {
     console.error("Error fetching top descriptions:", error);
     return NextResponse.json(
       { error: "Failed to fetch top descriptions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

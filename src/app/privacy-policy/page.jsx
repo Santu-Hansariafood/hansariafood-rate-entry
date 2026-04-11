@@ -1,5 +1,8 @@
 import policy from "@/data/cookiePolicy.json";
-import PrivacyPolicy from "@/components/common/PrivacyPolicy/PrivacyPolicy";
+import dynamic from "next/dynamic";
+const PrivacyPolicy = dynamic(
+  () => import("@/components/common/PrivacyPolicy/PrivacyPolicy"),
+);
 
 export const metadata = {
   title: "Privacy, Cookie and Site Policy",

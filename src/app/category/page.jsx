@@ -7,21 +7,21 @@ const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 
 const CreateCategory = dynamic(
   () => import("@/components/ui/Category/Category"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 
 const CategoryList = dynamic(
   () => import("@/components/ui/CategoryList/CategoryList"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 
 const Page = () => {

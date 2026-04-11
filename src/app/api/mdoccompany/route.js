@@ -35,19 +35,19 @@ export async function GET(req) {
       name: c.name,
       type: c.type,
       commodities: c.commodities.filter((item) =>
-        targetCommodities.includes(item)
+        targetCommodities.includes(item),
       ),
     }));
 
     return NextResponse.json(
       { companies: result, total: result.length },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /mdoccompany:", error);
     return NextResponse.json(
       { error: "Failed to fetch MDOC companies" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

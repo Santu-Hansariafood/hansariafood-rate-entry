@@ -1,4 +1,8 @@
-import AnalyticsDashboard from '@/components/ui/AnalyticsDashboard/AnalyticsDashboard';
+import dynamic from "next/dynamic";
+
+const AnalyticsDashboard = dynamic(
+  () => import("@/components/ui/AnalyticsDashboard/AnalyticsDashboard"),
+);
 
 const AnalyticsPage = () => {
   return <AnalyticsDashboard />;

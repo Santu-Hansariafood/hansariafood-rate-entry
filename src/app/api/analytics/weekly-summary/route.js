@@ -1,13 +1,13 @@
-import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import SaudaEntry from '@/models/SaudaEntry';
-import Rate from '@/models/Rate';
-import { verifyApiKey } from '@/middleware/apiKeyMiddleware/apiKeyMiddleware';
+import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/mongodb";
+import SaudaEntry from "@/models/SaudaEntry";
+import Rate from "@/models/Rate";
+import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
 export async function GET(request) {
   await connectDB();
   if (!verifyApiKey(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -16,7 +16,7 @@ export async function GET(request) {
 
     const dailyData = [];
     let loopCount = period === "14days" ? 14 : 7;
-    
+
     if (period === "monthly") {
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
@@ -27,25 +27,30 @@ export async function GET(request) {
         const nextMonth = new Date(date);
         nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-        const monthName = date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+        const monthName = date.toLocaleDateString("en-IN", {
+          month: "short",
+          year: "numeric",
+        });
 
         const rateEntries = await Rate.countDocuments({
           newRateDate: { $gte: date, $lt: nextMonth },
         });
 
-        const monthYearRegex = new RegExp(`^\\d{2}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}$`);
-        
+        const monthYearRegex = new RegExp(
+          `^\\d{2}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}$`,
+        );
+
         const saudaEntries = await SaudaEntry.find({
           date: { $regex: monthYearRegex },
         });
 
         let saudasDone = 0;
         let totalTons = 0;
-        saudaEntries.forEach(entry => {
+        saudaEntries.forEach((entry) => {
           if (entry.saudaEntries) {
             for (const saudaList of entry.saudaEntries.values()) {
               saudasDone += saudaList.length;
-              saudaList.forEach(s => {
+              saudaList.forEach((s) => {
                 totalTons += Number(s.tons) || 0;
               });
             }
@@ -57,7 +62,7 @@ export async function GET(request) {
           displayDate: monthName,
           rateEntries,
           saudasDone,
-          totalTons: Math.round(totalTons)
+          totalTons: Math.round(totalTons),
         });
       }
     } else {
@@ -65,7 +70,7 @@ export async function GET(request) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         date.setHours(0, 0, 0, 0);
-        
+
         const nextDay = new Date(date);
         nextDay.setDate(nextDay.getDate() + 1);
 
@@ -81,11 +86,11 @@ export async function GET(request) {
 
         let saudasDone = 0;
         let totalTons = 0;
-        saudaEntries.forEach(entry => {
+        saudaEntries.forEach((entry) => {
           if (entry.saudaEntries) {
             for (const saudaList of entry.saudaEntries.values()) {
               saudasDone += saudaList.length;
-              saudaList.forEach(s => {
+              saudaList.forEach((s) => {
                 totalTons += Number(s.tons) || 0;
               });
             }
@@ -94,17 +99,30 @@ export async function GET(request) {
 
         dailyData.push({
           date: dayStr,
-          displayDate: date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }),
+          displayDate: date.toLocaleDateString("en-IN", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+          }),
           rateEntries,
           saudasDone,
-          totalTons: Math.round(totalTons)
+          totalTons: Math.round(totalTons),
         });
       }
     }
 
-    const totalRateEntries = dailyData.reduce((acc, curr) => acc + curr.rateEntries, 0);
-    const totalSaudasDone = dailyData.reduce((acc, curr) => acc + curr.saudasDone, 0);
-    const totalTonsDone = dailyData.reduce((acc, curr) => acc + curr.totalTons, 0);
+    const totalRateEntries = dailyData.reduce(
+      (acc, curr) => acc + curr.rateEntries,
+      0,
+    );
+    const totalSaudasDone = dailyData.reduce(
+      (acc, curr) => acc + curr.saudasDone,
+      0,
+    );
+    const totalTonsDone = dailyData.reduce(
+      (acc, curr) => acc + curr.totalTons,
+      0,
+    );
 
     const recentSaudas = await SaudaEntry.find()
       .sort({ createdAt: -1 })
@@ -112,18 +130,18 @@ export async function GET(request) {
       .lean();
 
     const worksDone = [];
-    recentSaudas.forEach(doc => {
+    recentSaudas.forEach((doc) => {
       if (doc.saudaEntries) {
         Object.entries(doc.saudaEntries).forEach(([unit, list]) => {
-          list.forEach(item => {
+          list.forEach((item) => {
             worksDone.push({
               company: doc.company,
               unit: item.unit || unit,
               commodity: item.commodity,
               tons: item.tons,
               date: doc.date,
-              type: 'Sauda',
-              timestamp: doc.createdAt
+              type: "Sauda",
+              timestamp: doc.createdAt,
             });
           });
         });
@@ -134,24 +152,27 @@ export async function GET(request) {
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 10);
 
-    return NextResponse.json({ 
-      success: true, 
-      data: { 
+    return NextResponse.json({
+      success: true,
+      data: {
         dailyData,
         summary: {
           totalRateEntries,
           totalSaudasDone,
           totalTonsDone,
-          conversionRate: totalRateEntries > 0 ? ((totalSaudasDone / totalRateEntries) * 100).toFixed(2) : 0
+          conversionRate:
+            totalRateEntries > 0
+              ? ((totalSaudasDone / totalRateEntries) * 100).toFixed(2)
+              : 0,
         },
-        worksDone: sortedWorks
-      } 
+        worksDone: sortedWorks,
+      },
     });
   } catch (error) {
-    console.error('Error fetching weekly summary:', error);
+    console.error("Error fetching weekly summary:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch weekly summary' },
-      { status: 500 }
+      { error: "Failed to fetch weekly summary" },
+      { status: 500 },
     );
   }
 }

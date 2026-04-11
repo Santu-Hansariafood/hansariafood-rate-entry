@@ -18,7 +18,7 @@ export async function GET(req, { params }) {
     if (!category) {
       return NextResponse.json(
         { error: "Category not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function GET(req, { params }) {
     console.error("GET /category/:id error:", error);
     return NextResponse.json(
       { error: "Failed to fetch category" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -44,7 +44,7 @@ export async function PUT(req, { params }) {
     if (!name?.trim()) {
       return NextResponse.json(
         { error: "Category name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,20 +60,20 @@ export async function PUT(req, { params }) {
     if (duplicate) {
       return NextResponse.json(
         { error: "Another category with this name already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     const updatedCategory = await Category.findByIdAndUpdate(
       id,
       { name: trimmedName },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedCategory) {
       return NextResponse.json(
         { error: "Category not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -82,13 +82,13 @@ export async function PUT(req, { params }) {
         message: "Category updated successfully",
         category: updatedCategory,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("PUT /category/:id error:", error);
     return NextResponse.json(
       { error: "Failed to update category" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -108,19 +108,19 @@ export async function DELETE(req, { params }) {
     if (!deletedCategory) {
       return NextResponse.json(
         { error: "Category not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { message: "Category deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("DELETE /category/:id error:", error);
     return NextResponse.json(
       { error: "Failed to delete category" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

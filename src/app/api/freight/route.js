@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Freight from "@/models/Freight";
@@ -36,7 +35,6 @@ export async function GET(req) {
     }
 
     if (search) {
-      
       const companyIds = await ManageCompany.find({
         name: { $regex: search, $options: "i" },
       }).distinct("_id");
@@ -74,7 +72,7 @@ export async function GET(req) {
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -107,7 +105,7 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -134,7 +132,7 @@ export async function POST(req) {
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

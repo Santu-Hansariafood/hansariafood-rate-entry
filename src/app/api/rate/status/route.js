@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(req) {
   await connectDB();
@@ -17,14 +17,16 @@ export async function GET(req) {
 
     const ratesToday = await Rate.find({
       newRateDate: { $gte: today },
-    }).select("company commodity -_id").lean();
+    })
+      .select("company commodity -_id")
+      .lean();
 
     return NextResponse.json(ratesToday, { status: 200 });
   } catch (error) {
     console.error("Error in GET /rate/status:", error);
     return NextResponse.json(
       { error: "Error fetching rate status" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

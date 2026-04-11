@@ -21,7 +21,7 @@ export async function GET(req) {
     if (!commodityQuery) {
       return NextResponse.json(
         { error: "commodity query param is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,9 +63,7 @@ export async function GET(req) {
       return NextResponse.json([], { status: 200 });
     }
 
-    const companyIds = [
-      ...new Set(safeDocs.map((d) => String(d.companyId))),
-    ];
+    const companyIds = [...new Set(safeDocs.map((d) => String(d.companyId)))];
 
     const companyFilter = { _id: { $in: companyIds }, type: "seller" };
 
@@ -75,21 +73,15 @@ export async function GET(req) {
         .select("_id name")
         .lean();
     } catch (err) {
-      console.error(
-        "GET ratehistory/by-commodity company lookup error:",
-        err
-      );
+      console.error("GET ratehistory/by-commodity company lookup error:", err);
       companies = [];
     }
 
-    const companyMap = new Map(
-      companies.map((c) => [String(c._id), c.name])
-    );
+    const companyMap = new Map(companies.map((c) => [String(c._id), c.name]));
 
     const toTime = (value) => {
       if (!value) return 0;
-      const date =
-        value instanceof Date ? value : new Date(value);
+      const date = value instanceof Date ? value : new Date(value);
       const time = date.getTime();
       return Number.isNaN(time) ? 0 : time;
     };
@@ -99,7 +91,7 @@ export async function GET(req) {
       .map((doc) => {
         const histArr = Array.isArray(doc.history) ? doc.history : [];
         const history = [...histArr].sort(
-          (a, b) => toTime(b?.date) - toTime(a?.date)
+          (a, b) => toTime(b?.date) - toTime(a?.date),
         );
         const today = history.find((h) => h.date === selectedDate);
 
@@ -116,7 +108,9 @@ export async function GET(req) {
           todayDestination &&
           todayDestination.toLowerCase().trim() ===
             destination.toLowerCase().trim();
-        const landedRate = shouldAddFreight ? baseRate + todayFreight : baseRate;
+        const landedRate = shouldAddFreight
+          ? baseRate + todayFreight
+          : baseRate;
 
         return {
           companyId: doc.companyId,
@@ -140,7 +134,7 @@ export async function GET(req) {
     console.error("GET ratehistory/by-commodity error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

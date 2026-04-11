@@ -27,7 +27,7 @@ export async function POST(req) {
     if (!date || !unit || !commodities?.length) {
       return NextResponse.json(
         { error: "Date, unit, and commodities are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,13 +45,13 @@ export async function POST(req) {
         message: "Purchase created successfully",
         purchase: newPurchase,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err) {
     console.error("POST /purchases Error:", err);
     return NextResponse.json(
       { error: "Failed to create purchase", detail: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -77,10 +77,7 @@ export async function GET(req) {
     if (unit) query.unit = { $regex: unit, $options: "i" };
 
     const [purchases, total] = await Promise.all([
-      Purchase.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
+      Purchase.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
       Purchase.countDocuments(query),
     ]);
 
@@ -92,13 +89,13 @@ export async function GET(req) {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("GET /purchases Error:", err);
     return NextResponse.json(
       { error: "Failed to fetch purchases", detail: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

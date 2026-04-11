@@ -1,4 +1,6 @@
-import CookiePolicy from "@/components/common/CookiePolicy/CookiePolicy";
+import dynamic from "next/dynamic";
+
+const CookiePolicy = dynamic(() =>("@/components/common/CookiePolicy/CookiePolicy"));
 
 export const metadata = {
   title: "Cookie Policy",

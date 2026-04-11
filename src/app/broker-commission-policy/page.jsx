@@ -1,4 +1,9 @@
-import BrokerCommissionPolicy from "@/components/common/BrokerCommissionPolicy/BrokerCommissionPolicy";
+import dynamic from "next/dynamic";
+
+const BrokerCommissionPolicy = dynamic(
+  () =>
+    import("@/components/common/BrokerCommissionPolicy/BrokerCommissionPolicy"),
+);
 
 export const metadata = {
   title: "Broker Commission Policy",
@@ -21,4 +26,3 @@ export default function BrokerCommissionPolicyPage() {
     </main>
   );
 }
-

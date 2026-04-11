@@ -26,7 +26,7 @@ async function sendMonthlyReport() {
 
     rates.forEach((rate) => {
       rate.oldRates.forEach((r) =>
-        allDatesSet.add(new Date(r.date).toLocaleDateString("en-GB"))
+        allDatesSet.add(new Date(r.date).toLocaleDateString("en-GB")),
       );
       if (rate.newRateDate) {
         allDatesSet.add(new Date(rate.newRateDate).toLocaleDateString("en-GB"));
@@ -107,7 +107,7 @@ async function sendMonthlyReport() {
 
     const filePath = path.join(
       "/tmp",
-      `rates-report-${today.getFullYear()}-${today.getMonth() + 1}.xlsx`
+      `rates-report-${today.getFullYear()}-${today.getMonth() + 1}.xlsx`,
     );
     await workbook.xlsx.writeFile(filePath);
 

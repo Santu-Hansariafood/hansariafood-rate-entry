@@ -17,7 +17,7 @@ export async function PUT(req, { params }) {
     if (!name?.trim()) {
       return NextResponse.json(
         { error: "Commodity name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -31,7 +31,7 @@ export async function PUT(req, { params }) {
     if (duplicate) {
       return NextResponse.json(
         { error: "Another commodity with this name already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function PUT(req, { params }) {
     if (!commodity) {
       return NextResponse.json(
         { error: "Commodity not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -58,13 +58,13 @@ export async function PUT(req, { params }) {
         message: "Commodity updated successfully",
         commodity,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("PUT /commodity/:id error:", err);
     return NextResponse.json(
       { error: "Failed to update commodity" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -84,19 +84,19 @@ export async function DELETE(req, { params }) {
     if (!deletedCommodity) {
       return NextResponse.json(
         { error: "Commodity not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { message: "Commodity deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("DELETE /commodity/:id error:", err);
     return NextResponse.json(
       { error: "Failed to delete commodity" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

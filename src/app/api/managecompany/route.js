@@ -33,7 +33,7 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Name, location & valid type (buyer/seller) are required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,18 +43,18 @@ export async function POST(req) {
 
     if (existingCompany) {
       existingCompany.location = Array.from(
-        new Set([...existingCompany.location, ...location])
+        new Set([...existingCompany.location, ...location]),
       );
 
       existingCompany.commodities = Array.from(
-        new Set([...existingCompany.commodities, ...commodities])
+        new Set([...existingCompany.commodities, ...commodities]),
       );
 
       const mergedMobile = [...existingCompany.mobileNumbers];
 
       mobileNumbers.forEach((m) => {
         const exists = mergedMobile.some(
-          (old) => old.location === m.location && old.commodity === m.commodity
+          (old) => old.location === m.location && old.commodity === m.commodity,
         );
         if (!exists) mergedMobile.push(m);
       });
@@ -68,7 +68,7 @@ export async function POST(req) {
 
       return NextResponse.json(
         { message: "Company updated successfully", company: existingCompany },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -87,7 +87,7 @@ export async function POST(req) {
 
     return NextResponse.json(
       { message: "Company created successfully", company: newCompany },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("POST /managecompany Error:", error);
@@ -95,13 +95,13 @@ export async function POST(req) {
     if (error.code === 11000) {
       return NextResponse.json(
         { error: "Company with same name & type already exists." },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     return NextResponse.json(
       { error: error.message || "Failed to create/update company." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -125,10 +125,10 @@ export async function GET(req) {
     const subCommodities = searchParams.getAll("subCommodities");
     const typeFilter = searchParams.get("type");
     const selfFilter = ["1", "true", "yes"].includes(
-      (searchParams.get("self") || "").toLowerCase()
+      (searchParams.get("self") || "").toLowerCase(),
     );
     const excludeTodayNoBuying = ["1", "true", "yes"].includes(
-      (searchParams.get("excludeTodayNoBuying") || "").toLowerCase()
+      (searchParams.get("excludeTodayNoBuying") || "").toLowerCase(),
     );
 
     const filter = {};
@@ -166,7 +166,9 @@ export async function GET(req) {
         .sort({ name: 1 })
         .skip(skip)
         .limit(limit)
-        .select("name location state category type mobileNumbers commodities isSelfCompany")
+        .select(
+          "name location state category type mobileNumbers commodities isSelfCompany",
+        )
         .lean(),
       ManageCompany.countDocuments(filter),
     ]);
@@ -176,7 +178,7 @@ export async function GET(req) {
     console.error("GET /managecompany Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch companies." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -225,7 +227,7 @@ export async function GET_SELF(req) {
     console.error("GET_SELF /managecompany Error:", error);
     return NextResponse.json(
       { error: "Failed to fetch self companies." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

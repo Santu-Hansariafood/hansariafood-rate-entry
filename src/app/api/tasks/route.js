@@ -15,20 +15,25 @@ export async function GET(req) {
     const mobile = searchParams.get("mobile");
 
     if (!mobile) {
-      return NextResponse.json({ error: "Mobile is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Mobile is required" },
+        { status: 400 },
+      );
     }
 
     const tasks = await Task.find({
-      $or: [
-        { sender: mobile },
-        { "receivers.mobile": mobile }
-      ]
-    }).sort({ createdAt: -1 }).lean();
+      $or: [{ sender: mobile }, { "receivers.mobile": mobile }],
+    })
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json(tasks);
   } catch (error) {
     console.error("GET /api/tasks error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -43,7 +48,10 @@ export async function POST(req) {
     const { sender, senderName, content, receivers, isImportant } = body;
 
     if (!sender || !content) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const newTask = await Task.create({
@@ -52,13 +60,16 @@ export async function POST(req) {
       receivers,
       content,
       isImportant: isImportant || content.toLowerCase().includes("important"),
-      status: "pending"
+      status: "pending",
     });
 
     return NextResponse.json(newTask, { status: 201 });
   } catch (error) {
     console.error("POST /api/tasks error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -82,15 +93,16 @@ export async function PUT(req) {
       updateData.completedBy = completedBy;
     }
 
-    const updatedTask = await Task.findByIdAndUpdate(
-      taskId,
-      updateData,
-      { new: true }
-    );
+    const updatedTask = await Task.findByIdAndUpdate(taskId, updateData, {
+      new: true,
+    });
 
     return NextResponse.json(updatedTask);
   } catch (error) {
     console.error("PUT /api/tasks error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

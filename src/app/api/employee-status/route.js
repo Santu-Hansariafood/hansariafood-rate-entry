@@ -108,7 +108,7 @@ export async function GET(req) {
     console.error("GET /employee-status error:", error);
     return NextResponse.json(
       { error: "Failed to fetch employee status" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -125,7 +125,7 @@ export async function POST(req) {
     if (!mobile || !ALLOWED_STATUS.includes(status)) {
       return NextResponse.json(
         { error: "Mobile and valid status are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -143,11 +143,11 @@ export async function POST(req) {
       update.loginAt = null;
     }
 
-    const updated = await EmployeeStatus.findOneAndUpdate(
-      { mobile },
-      update,
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    )
+    const updated = await EmployeeStatus.findOneAndUpdate({ mobile }, update, {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    })
       .select("mobile name status updatedAt loginAt")
       .lean();
 
@@ -156,7 +156,7 @@ export async function POST(req) {
     console.error("POST /employee-status error:", error);
     return NextResponse.json(
       { error: "Failed to update employee status" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

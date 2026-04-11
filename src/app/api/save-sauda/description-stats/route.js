@@ -4,7 +4,6 @@ import DescriptionStats from "@/models/DescriptionStats";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import dayjs from "dayjs";
 
-
 export async function GET(req) {
   await connectDB();
   if (!verifyApiKey(req)) {
@@ -13,26 +12,28 @@ export async function GET(req) {
 
   try {
     await connectDB();
-    
+
     const { searchParams } = new URL(req.url);
     const days = parseInt(searchParams.get("days") || "15");
     const cutoffDate = dayjs().subtract(days, "day").toDate();
 
-    const recentDocs = await DescriptionStats.find(
-      { lastUsedDate: { $gte: cutoffDate } }
-    ).select("description").lean();
-    
-    const recentNames = recentDocs.map(d => d.description);
+    const recentDocs = await DescriptionStats.find({
+      lastUsedDate: { $gte: cutoffDate },
+    })
+      .select("description")
+      .lean();
+
+    const recentNames = recentDocs.map((d) => d.description);
 
     const inactiveDescriptions = await DescriptionStats.find({
-      description: { $nin: recentNames }
+      description: { $nin: recentNames },
     }).lean();
 
     const formatted = inactiveDescriptions.map((item) => ({
-        description: item.description,
-        count: item.count,
-        lastUsedDate: item.lastUsedDate,
-        totalQuantity: item.totalQuantity,
+      description: item.description,
+      count: item.count,
+      lastUsedDate: item.lastUsedDate,
+      totalQuantity: item.totalQuantity,
     }));
 
     return NextResponse.json(formatted);
@@ -40,7 +41,7 @@ export async function GET(req) {
     console.error("GET /description-stats error:", error);
     return NextResponse.json(
       { error: "Failed to fetch inactive descriptions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -59,7 +60,7 @@ export async function POST(req) {
     if (!description || quantity == null) {
       return NextResponse.json(
         { error: "Missing description or quantity" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,7 +80,7 @@ export async function POST(req) {
       {
         new: true,
         upsert: true,
-      }
+      },
     );
 
     return NextResponse.json({ message: "Stats updated" }, { status: 201 });
@@ -87,7 +88,7 @@ export async function POST(req) {
     console.error("POST /description-stats error:", error.message, error.stack);
     return NextResponse.json(
       { error: "Failed to update stats" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

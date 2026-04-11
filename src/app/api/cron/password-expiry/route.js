@@ -14,20 +14,22 @@ export async function GET(req) {
 
   try {
     await connectDB();
-    
+
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-    const twentyFiveDaysAgo = new Date(now.getTime() - (25 * 24 * 60 * 60 * 1000));
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const twentyFiveDaysAgo = new Date(
+      now.getTime() - 25 * 24 * 60 * 60 * 1000,
+    );
 
     const startOfToday = new Date(now.setHours(0, 0, 0, 0));
-    
+
     const usersToRemind = await User.find({
       email: { $exists: true, $ne: "" },
       passwordLastReset: { $lte: twentyFiveDaysAgo },
       $or: [
         { lastReminderSent: { $lt: startOfToday } },
-        { lastReminderSent: { $exists: false } }
-      ]
+        { lastReminderSent: { $exists: false } },
+      ],
     });
 
     let emailsSent = 0;
@@ -37,37 +39,46 @@ export async function GET(req) {
       const lastReset = new Date(user.passwordLastReset);
       const diffTime = Math.abs(now - lastReset);
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays >= 25) {
         const daysRemaining = Math.max(0, 30 - diffDays);
-        
+
         try {
           await sendEmail({
             to: user.email,
             subject: `Action Required: Password Expiry in ${daysRemaining} Days`,
-            html: generatePasswordExpiryEmailTemplate(user.name, daysRemaining)
+            html: generatePasswordExpiryEmailTemplate(user.name, daysRemaining),
           });
-          
+
           user.lastReminderSent = new Date();
           await user.save();
-          
+
           emailsSent++;
           results.push({ mobile: user.mobile, status: "sent", daysRemaining });
         } catch (emailError) {
-          console.error(`Failed to send reminder to ${user.email}:`, emailError);
-          results.push({ mobile: user.mobile, status: "failed", error: emailError.message });
+          console.error(
+            `Failed to send reminder to ${user.email}:`,
+            emailError,
+          );
+          results.push({
+            mobile: user.mobile,
+            status: "failed",
+            error: emailError.message,
+          });
         }
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       message: `Processed ${usersToRemind.length} users, sent ${emailsSent} emails.`,
-      results 
+      results,
     });
-
   } catch (error) {
     console.error("Password Expiry Cron Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

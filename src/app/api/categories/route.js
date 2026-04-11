@@ -14,7 +14,7 @@ export async function POST(req) {
     if (!name?.trim()) {
       return NextResponse.json(
         { error: "Category name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,7 +29,7 @@ export async function POST(req) {
     if (existing) {
       return NextResponse.json(
         { error: "Category already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -41,13 +41,13 @@ export async function POST(req) {
         message: "Category created successfully",
         category: newCategory,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("POST /category error:", error);
     return NextResponse.json(
       { error: "Failed to create category" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -86,13 +86,13 @@ export async function GET(req) {
         page,
         totalPages: Math.ceil(total / limit),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("GET /category error:", error);
     return NextResponse.json(
       { error: "Failed to fetch categories" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

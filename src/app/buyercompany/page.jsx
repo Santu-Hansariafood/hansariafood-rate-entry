@@ -5,7 +5,7 @@ const BuyerCompany = dynamic(
   () => import("@/components/ui/BuyerCompany/BuyerCompany"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 
 const page = () => {

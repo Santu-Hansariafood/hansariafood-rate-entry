@@ -6,7 +6,7 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 function getTodayString() {
   const today = new Date();
   return `${String(today.getDate()).padStart(2, "0")}-${String(
-    today.getMonth() + 1
+    today.getMonth() + 1,
   ).padStart(2, "0")}-${today.getFullYear()}`;
 }
 
@@ -61,7 +61,7 @@ export async function GET(req) {
     }
 
     notifications.sort((a, b) =>
-      a.time < b.time ? 1 : a.time > b.time ? -1 : 0
+      a.time < b.time ? 1 : a.time > b.time ? -1 : 0,
     );
 
     return NextResponse.json({ notifications });
@@ -69,7 +69,7 @@ export async function GET(req) {
     console.error("Error in GET /api/sauda/notifications:", error);
     return NextResponse.json(
       { error: "Error fetching notifications" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

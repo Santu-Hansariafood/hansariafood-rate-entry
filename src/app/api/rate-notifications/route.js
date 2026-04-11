@@ -26,7 +26,10 @@ export async function GET(req) {
 
     if (commodityType) {
       if (commodityType === "MDOC") {
-        query.commodity = { $regex: "(M\\s?DOC|Maize Ddgs Doc)", $options: "i" };
+        query.commodity = {
+          $regex: "(M\\s?DOC|Maize Ddgs Doc)",
+          $options: "i",
+        };
       } else if (commodityType === "Soya") {
         query.commodity = { $regex: "(SBM|Soya)", $options: "i" };
       } else if (commodityType === "DDGS") {
@@ -41,7 +44,7 @@ export async function GET(req) {
         companyId: 1,
         location: 1,
         commodity: 1,
-        history: { $elemMatch: { date: today } }
+        history: { $elemMatch: { date: today } },
       })
       .populate("companyId", "name type")
       .lean();
@@ -56,7 +59,7 @@ export async function GET(req) {
         .select("name type")
         .lean();
       found.forEach(
-        (c) => (manualMap[c._id.toString()] = { name: c.name, type: c.type })
+        (c) => (manualMap[c._id.toString()] = { name: c.name, type: c.type }),
       );
     }
 
@@ -103,7 +106,7 @@ export async function GET(req) {
     console.error("Error fetching rate notifications:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -37,7 +37,7 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Missing or invalid required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(req) {
     while (retryCount < maxRetries) {
       try {
         existingEntry = await SaudaEntry.findOne({ company, date });
-        
+
         if (
           existingEntry &&
           existingEntry.lastUpdated &&
@@ -58,7 +58,7 @@ export async function POST(req) {
         ) {
           return NextResponse.json(
             { conflict: true, message: "Data has changed. Please refresh." },
-            { status: 409 }
+            { status: 409 },
           );
         }
 
@@ -104,34 +104,49 @@ export async function POST(req) {
             .select("saudaNo")
             .lean();
           const deletedSet = new Set(
-            (deletedDocs || []).map((d) => String(d.saudaNo || "").trim()).filter(Boolean)
+            (deletedDocs || [])
+              .map((d) => String(d.saudaNo || "").trim())
+              .filter(Boolean),
           );
 
           let overallHasChanges = false;
           for (const [key, newList] of Object.entries(normalizedEntries)) {
             let keyHasChanges = false;
-            const currentList = Array.isArray(existingEntry.saudaEntries.get(key))
+            const currentList = Array.isArray(
+              existingEntry.saudaEntries.get(key),
+            )
               ? existingEntry.saudaEntries.get(key)
               : [];
 
             const currentMap = new Map(
               currentList
-                .filter((item) => item && String(item.saudaNo || "").trim() && !deletedSet.has(String(item.saudaNo || "").trim()))
-                .map((item) => [String(item.saudaNo).trim(), item])
+                .filter(
+                  (item) =>
+                    item &&
+                    String(item.saudaNo || "").trim() &&
+                    !deletedSet.has(String(item.saudaNo || "").trim()),
+                )
+                .map((item) => [String(item.saudaNo).trim(), item]),
             );
 
             for (const item of newList) {
               const no = String(item.saudaNo || "").trim();
               if (!no) continue;
-              
+
               const existingItem = currentMap.get(no);
-              if (!existingItem || 
-                  Number(existingItem.tons) !== Number(item.tons) || 
-                  Number(existingItem.finalRate) !== Number(item.finalRate) ||
-                  String(existingItem.sellerName || "").trim() !== String(item.sellerName || "").trim() ||
-                  String(existingItem.sellerCompany || "").trim() !== String(item.sellerCompany || "").trim() ||
-                  String(existingItem.others || "").trim() !== String(item.others || "").trim() ||
-                  String(existingItem.deliveryDate || "").trim() !== String(item.deliveryDate || "").trim()) {
+              if (
+                !existingItem ||
+                Number(existingItem.tons) !== Number(item.tons) ||
+                Number(existingItem.finalRate) !== Number(item.finalRate) ||
+                String(existingItem.sellerName || "").trim() !==
+                  String(item.sellerName || "").trim() ||
+                String(existingItem.sellerCompany || "").trim() !==
+                  String(item.sellerCompany || "").trim() ||
+                String(existingItem.others || "").trim() !==
+                  String(item.others || "").trim() ||
+                String(existingItem.deliveryDate || "").trim() !==
+                  String(item.deliveryDate || "").trim()
+              ) {
                 currentMap.set(no, item);
                 keyHasChanges = true;
                 overallHasChanges = true;
@@ -166,21 +181,24 @@ export async function POST(req) {
             lastUpdated: new Date(),
           });
         }
-        
+
         // If we reached here, save was successful
         // Emit socket notification
         emitNotification({
-          type: 'sauda',
+          type: "sauda",
           data: {
             company: existingEntry.company,
             date: existingEntry.date,
             time: existingEntry.time,
             saudaEntries: existingEntry.saudaEntries,
-            updateTime: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-          }
+            updateTime: new Date().toLocaleTimeString("en-US", {
+              hour12: false,
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          },
         });
         break;
-
       } catch (error) {
         // Handle duplicate key error (code 11000)
         if (error.code === 11000 && retryCount < maxRetries - 1) {
@@ -238,7 +256,7 @@ export async function POST(req) {
 
     return NextResponse.json(
       { message: "Sauda entry saved successfully", entry: existingEntry },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error in POST /save-sauda:", error.message);
@@ -259,25 +277,25 @@ export async function GET(req) {
     const date = searchParams.get("date");
     const resetCounter = searchParams.get("resetCounter");
     const newCounterValue = searchParams.get("newCounterValue");
-    
+
     if (resetCounter === "true" && newCounterValue) {
       const Counter = mongoose.models.Counter;
       if (!Counter) {
         return NextResponse.json(
           { error: "Counter model not found" },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
       await Counter.findByIdAndUpdate(
         { _id: "saudaNumber" },
         { seq: parseInt(newCounterValue) },
-        { upsert: true }
+        { upsert: true },
       );
 
       return NextResponse.json(
         { message: `Sauda counter reset to ${newCounterValue}` },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -292,12 +310,12 @@ export async function GET(req) {
       })
         .select("company saudaEntries")
         .lean();
-      
+
       const entriesMap = {};
-      entries.forEach(entry => {
+      entries.forEach((entry) => {
         entriesMap[entry.company] = entry;
       });
-      
+
       return NextResponse.json({ entries: entriesMap }, { status: 200 });
     }
 
@@ -311,7 +329,7 @@ export async function GET(req) {
     console.error("Error in GET /save-sauda:", error);
     return NextResponse.json(
       { error: "Error fetching sauda entry" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

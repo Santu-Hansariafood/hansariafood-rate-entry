@@ -4,7 +4,7 @@ import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 const PreviousSauda = dynamic(
   () => import("@/components/ui/PreviousSauda/PreviousSauda"),
-  { loading: () => <Loading /> }
+  { loading: () => <Loading /> },
 );
 
 const page = () => {

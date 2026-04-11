@@ -24,7 +24,7 @@ export async function GET(req) {
     const toDate = searchParams.get("toDate");
     const company = searchParams.get("company");
 
-    const query = { };
+    const query = {};
     if (company) {
       const mappedCompanies = companyMappings[company] || [company];
       query.company = { $in: mappedCompanies };
@@ -43,7 +43,7 @@ export async function GET(req) {
             (item) =>
               (item.sellerName &&
                 item.sellerName.toUpperCase() === "AGARWAL") ||
-              (doc.seller && doc.seller.toUpperCase() === "AGARWAL")
+              (doc.seller && doc.seller.toUpperCase() === "AGARWAL"),
           )
           .map((item) => ({
             date: doc.date,
@@ -53,8 +53,8 @@ export async function GET(req) {
             seller: doc.seller || "",
             unit,
             ...item,
-          }))
-      )
+          })),
+      ),
     );
 
     return NextResponse.json({ entries: formatted }, { status: 200 });
@@ -62,7 +62,7 @@ export async function GET(req) {
     console.error("Error in GET /sell-agarwal:", error);
     return NextResponse.json(
       { error: error.message || "Error fetching sell entries for AGARWAL" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

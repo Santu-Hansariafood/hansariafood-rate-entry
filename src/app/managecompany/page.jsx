@@ -7,7 +7,7 @@ const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 const CreateCompany = dynamic(() => import("@/components/ui/Company/Company"), {
   loading: () => <Loading />,
@@ -16,7 +16,7 @@ const ManageCompanyList = dynamic(
   () => import("@/components/ui/ManageCompanyList/ManageCompanyList"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 
 const Page = () => {

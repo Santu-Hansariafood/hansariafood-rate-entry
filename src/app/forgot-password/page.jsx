@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import React from "react";
-const ForgotPassword = dynamic(() =>
-  import("@/components/ui/Forgot-Password/Forgot-Password")
+const ForgotPassword = dynamic(
+  () => import("@/components/ui/Forgot-Password/Forgot-Password"),
 );
 
 const page = () => {

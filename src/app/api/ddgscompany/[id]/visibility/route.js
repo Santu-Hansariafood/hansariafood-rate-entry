@@ -17,14 +17,14 @@ export async function PUT(req, { params }) {
     if (typeof isDDGSVisible !== "boolean") {
       return NextResponse.json(
         { error: "Invalid visibility value" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const company = await ManageCompany.findByIdAndUpdate(
       id,
       { isDDGSVisible },
-      { new: true }
+      { new: true },
     ).select("_id name isDDGSVisible");
 
     if (!company) {
@@ -39,7 +39,7 @@ export async function PUT(req, { params }) {
     console.error("Visibility update error:", error);
     return NextResponse.json(
       { error: "Failed to update visibility" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

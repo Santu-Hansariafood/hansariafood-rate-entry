@@ -14,7 +14,7 @@ export async function POST(req) {
     if (!name?.trim()) {
       return NextResponse.json(
         { error: "Commodity name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function POST(req) {
     if (existing) {
       return NextResponse.json(
         { error: "Commodity already exists" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -47,13 +47,13 @@ export async function POST(req) {
         message: "Commodity created successfully",
         commodity: newCommodity,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err) {
     console.error("POST /commodity error:", err);
     return NextResponse.json(
       { error: "Failed to create commodity" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -92,13 +92,13 @@ export async function GET(req) {
         page,
         totalPages: Math.ceil(total / limit),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("GET /commodity error:", err);
     return NextResponse.json(
       { error: "Failed to fetch commodities" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

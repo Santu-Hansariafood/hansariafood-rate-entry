@@ -21,7 +21,7 @@ export async function GET(req) {
     if (!commodityQuery) {
       return NextResponse.json(
         { error: "commodity query param is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -77,14 +77,11 @@ export async function GET(req) {
       companies = [];
     }
 
-    const companyMap = new Map(
-      companies.map((c) => [String(c._id), c.name])
-    );
+    const companyMap = new Map(companies.map((c) => [String(c._id), c.name]));
 
     const toTime = (value) => {
       if (!value) return 0;
-      const date =
-        value instanceof Date ? value : new Date(value);
+      const date = value instanceof Date ? value : new Date(value);
       const time = date.getTime();
       return Number.isNaN(time) ? 0 : time;
     };
@@ -93,7 +90,7 @@ export async function GET(req) {
       ...new Set(
         safeDocs
           .map((d) => d.location)
-          .filter((loc) => typeof loc === "string" && loc.trim().length > 0)
+          .filter((loc) => typeof loc === "string" && loc.trim().length > 0),
       ),
     ];
 
@@ -113,12 +110,15 @@ export async function GET(req) {
 
         freightDocs.forEach((f) => {
           const key = `${String(f.location).toLowerCase().trim()}|${String(
-            f.deliveryLocation
+            f.deliveryLocation,
           )
             .toLowerCase()
             .trim()}`;
           const existing = freightMap.get(key);
-          if (!existing || new Date(f.createdAt) > new Date(existing.createdAt)) {
+          if (
+            !existing ||
+            new Date(f.createdAt) > new Date(existing.createdAt)
+          ) {
             freightMap.set(key, f);
           }
         });
@@ -132,7 +132,7 @@ export async function GET(req) {
       .map((doc) => {
         const histArr = Array.isArray(doc.history) ? doc.history : [];
         const history = [...histArr].sort(
-          (a, b) => toTime(b?.date) - toTime(a?.date)
+          (a, b) => toTime(b?.date) - toTime(a?.date),
         );
         const today = history.find((h) => h.date === selectedDate);
         const previous = history.find((h) => h.date < selectedDate);
@@ -174,8 +174,7 @@ export async function GET(req) {
     console.error("GET /landingcost error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

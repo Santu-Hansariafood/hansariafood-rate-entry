@@ -48,7 +48,7 @@ export async function GET(req) {
 
       const oldRatesFormatted = rate.oldRates.map(
         (old) =>
-          `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`
+          `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`,
       );
 
       return {
@@ -57,9 +57,9 @@ export async function GET(req) {
         commodity: rate.commodity,
         oldRates: oldRatesFormatted,
         newRate: isToday ? rate.newRate : "",
-        quantity: isToday ? rate.quantity ?? "" : "",
-        payment: isToday ? rate.payment ?? "" : "",
-        others: isToday ? rate.others ?? "" : "",
+        quantity: isToday ? (rate.quantity ?? "") : "",
+        payment: isToday ? (rate.payment ?? "") : "",
+        others: isToday ? (rate.others ?? "") : "",
         hasNewRateToday: isToday,
         lastUpdated: isToday
           ? rate.newRateDate
@@ -71,14 +71,13 @@ export async function GET(req) {
 
     return NextResponse.json(
       { companies, rates: formattedRates },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in GET /rate-analysis:", error);
     return NextResponse.json(
       { error: "Failed to fetch rate analysis data" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

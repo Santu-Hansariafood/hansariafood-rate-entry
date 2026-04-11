@@ -52,7 +52,7 @@ export async function GET(req) {
 
             tagObj.taggedQuantity = linkedSaudas.reduce(
               (sum, s) => sum + (s.tons || 0),
-              0
+              0,
             );
           } catch (err) {
             console.error("Error fetching linked sell saudas:", err);
@@ -77,7 +77,7 @@ export async function GET(req) {
 
             tagObj.taggedQuantity = linkedSaudas.reduce(
               (sum, s) => sum + (s.tons || 0),
-              0
+              0,
             );
           } catch (err) {
             console.error("Error fetching linked purchase saudas:", err);
@@ -85,7 +85,7 @@ export async function GET(req) {
         }
 
         return tagObj;
-      })
+      }),
     );
 
     return NextResponse.json(tagsWithQuantities, { status: 200 });
@@ -130,7 +130,7 @@ export async function POST(req) {
     if (!saudaNo) {
       return NextResponse.json(
         { error: "Sauda number is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -175,12 +175,12 @@ export async function POST(req) {
         saudaNo,
         type,
         processedPurchaseLinkedSauda,
-        processedSellLinkedSauda
+        processedSellLinkedSauda,
       );
 
       return NextResponse.json(
         { message: "Tag sauda updated successfully", entry: existing },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -209,12 +209,12 @@ export async function POST(req) {
       saudaNo,
       type,
       processedPurchaseLinkedSauda,
-      processedSellLinkedSauda
+      processedSellLinkedSauda,
     );
 
     return NextResponse.json(
       { message: "Tag sauda created successfully", entry: created },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error in POST /tag-sauda:", error);
@@ -241,7 +241,7 @@ export async function PUT(req) {
     if (!saudaNo) {
       return NextResponse.json(
         { error: "Sauda number is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -266,40 +266,40 @@ export async function PUT(req) {
       saudaNo,
       type,
       purchaseLinkedSauda,
-      sellLinkedSauda
+      sellLinkedSauda,
     );
 
     if (type === "purchase") {
       const removedSellLinks = previousSellLinks.filter(
-        (link) => !sellLinkedSauda.includes(link)
+        (link) => !sellLinkedSauda.includes(link),
       );
 
       await Promise.all(
         removedSellLinks.map(async (sellNo) => {
           await TagSauda.findOneAndUpdate(
             { saudaNo: sellNo },
-            { $pull: { purchaseLinkedSauda: saudaNo } }
+            { $pull: { purchaseLinkedSauda: saudaNo } },
           );
-        })
+        }),
       );
     } else if (type === "sell") {
       const removedPurchaseLinks = previousPurchaseLinks.filter(
-        (link) => !purchaseLinkedSauda.includes(link)
+        (link) => !purchaseLinkedSauda.includes(link),
       );
 
       await Promise.all(
         removedPurchaseLinks.map(async (purchaseNo) => {
           await TagSauda.findOneAndUpdate(
             { saudaNo: purchaseNo },
-            { $pull: { sellLinkedSauda: saudaNo } }
+            { $pull: { sellLinkedSauda: saudaNo } },
           );
-        })
+        }),
       );
     }
 
     return NextResponse.json(
       { message: "Tag sauda updated successfully", entry: existing },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in PUT /tag-sauda:", error);
@@ -311,7 +311,7 @@ async function updateOppositeReferences(
   saudaNo,
   type,
   purchaseLinkedSauda,
-  sellLinkedSauda
+  sellLinkedSauda,
 ) {
   try {
     const purchaseLinks = Array.isArray(purchaseLinkedSauda)
@@ -336,9 +336,9 @@ async function updateOppositeReferences(
               $setOnInsert: { type: "sell", taggedBy: "system" },
               $addToSet: { purchaseLinkedSauda: saudaNo },
             },
-            { new: true, upsert: true }
+            { new: true, upsert: true },
           );
-        })
+        }),
       );
     }
 
@@ -354,9 +354,9 @@ async function updateOppositeReferences(
               $setOnInsert: { type: "purchase", taggedBy: "system" },
               $addToSet: { sellLinkedSauda: saudaNo },
             },
-            { new: true, upsert: true }
+            { new: true, upsert: true },
           );
-        })
+        }),
       );
     }
   } catch (error) {

@@ -14,10 +14,7 @@ export async function GET(req) {
     const date = searchParams.get("date");
 
     if (!date) {
-      return NextResponse.json(
-        { error: "Date is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Date is required" }, { status: 400 });
     }
 
     const entries = await SaudaEntry.find({ date });
@@ -27,7 +24,7 @@ export async function GET(req) {
     console.error("Error in GET /sauda/get-by-date:", error);
     return NextResponse.json(
       { error: "Error fetching sauda entries" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

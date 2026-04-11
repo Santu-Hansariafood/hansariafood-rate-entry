@@ -16,7 +16,7 @@ export async function POST(req) {
     if (!to) {
       return NextResponse.json(
         { error: "Missing 'to' email address" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,7 +25,7 @@ export async function POST(req) {
     if (saudaEntries.length === 0) {
       return NextResponse.json(
         { error: "No sauda entries found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(req) {
 
     return NextResponse.json(
       { message: "Email sent successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in POST /send-sauda-email:", error);

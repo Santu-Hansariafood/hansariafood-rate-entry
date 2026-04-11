@@ -3,7 +3,8 @@ import Loading from "@/components/common/Loading/Loading";
 
 export const metadata = {
   title: "Dashboard",
-  description: "Welcome to Hansaria Food dashboard. Monitor market trends and manage your commodity trade operations.",
+  description:
+    "Welcome to Hansaria Food dashboard. Monitor market trends and manage your commodity trade operations.",
 };
 
 const Welcome = dynamic(() => import("@/components/ui/Welcome/Welcome"), {
@@ -14,7 +15,7 @@ const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
   {
     loading: () => <Loading />,
-  }
+  },
 );
 
 const Page = () => {

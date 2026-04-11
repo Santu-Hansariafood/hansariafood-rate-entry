@@ -18,8 +18,7 @@ export async function GET(req) {
 
     const skip = (page - 1) * limit;
 
-    const escapeRegex = (s) =>
-      s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     let pattern = escapeRegex(query);
     pattern = pattern.replace(/\s+/g, "\\s*");
@@ -47,13 +46,13 @@ export async function GET(req) {
         page,
         totalPages: Math.ceil(total / limit),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("GET /commodity/search error:", err);
     return NextResponse.json(
       { error: "Failed to search commodities" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

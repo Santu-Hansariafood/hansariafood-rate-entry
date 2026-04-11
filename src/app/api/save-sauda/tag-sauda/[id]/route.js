@@ -17,7 +17,7 @@ export async function GET(req, { params }) {
     if (!entry)
       return NextResponse.json(
         { error: "Tag sauda not found" },
-        { status: 404 }
+        { status: 404 },
       );
 
     return NextResponse.json(entry, { status: 200 });
@@ -68,9 +68,9 @@ export async function PUT(req, { params }) {
               $setOnInsert: { type: "sell", taggedBy },
               $addToSet: { purchaseLinkedSauda: id },
             },
-            { new: true, upsert: true }
+            { new: true, upsert: true },
           );
-        })
+        }),
       );
     }
 
@@ -85,9 +85,9 @@ export async function PUT(req, { params }) {
               $setOnInsert: { type: "purchase", taggedBy },
               $addToSet: { sellLinkedSauda: id },
             },
-            { new: true, upsert: true }
+            { new: true, upsert: true },
           );
-        })
+        }),
       );
     }
 
@@ -95,7 +95,7 @@ export async function PUT(req, { params }) {
 
     return NextResponse.json(
       { message: "Sauda tags updated successfully", entry: mainEntry },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in PUT /tag-sauda/[id]:", error);
@@ -117,18 +117,18 @@ export async function DELETE(req, { params }) {
     if (!entry)
       return NextResponse.json(
         { error: "Tag sauda not found" },
-        { status: 404 }
+        { status: 404 },
       );
 
     if (entry.type === "purchase" && entry.sellLinkedSauda?.length) {
       await TagSauda.updateMany(
         { saudaNo: { $in: entry.sellLinkedSauda } },
-        { $pull: { purchaseLinkedSauda: id } }
+        { $pull: { purchaseLinkedSauda: id } },
       );
     } else if (entry.type === "sell" && entry.purchaseLinkedSauda?.length) {
       await TagSauda.updateMany(
         { saudaNo: { $in: entry.purchaseLinkedSauda } },
-        { $pull: { sellLinkedSauda: id } }
+        { $pull: { sellLinkedSauda: id } },
       );
     }
 
@@ -136,7 +136,7 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json(
       { message: "Tag sauda deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in DELETE /tag-sauda/[id]:", error);

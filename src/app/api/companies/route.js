@@ -35,13 +35,13 @@ export async function GET(req) {
         page,
         totalPages: Math.ceil(total / limit),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("GET /company error:", error);
     return NextResponse.json(
       { error: "Failed to fetch companies" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -72,7 +72,7 @@ export async function POST(req) {
           error:
             "Name, category, and at least one valid type (buyer/seller) are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -80,13 +80,13 @@ export async function POST(req) {
 
     if (existingCompany) {
       const newTypes = selectedTypes.filter(
-        (t) => !existingCompany.type.includes(t)
+        (t) => !existingCompany.type.includes(t),
       );
 
       if (newTypes.length === 0) {
         return NextResponse.json(
           { error: "All provided types already exist for this company" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -98,7 +98,7 @@ export async function POST(req) {
           message: "Company type(s) updated",
           updatedCompany: existingCompany,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -114,13 +114,13 @@ export async function POST(req) {
         message: "Company created successfully",
         createdCompany: newCompany,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("POST /company error:", error);
     return NextResponse.json(
       { error: "Failed to create or update company" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
