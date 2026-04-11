@@ -11,7 +11,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const {
       company,
       location,
@@ -23,7 +23,11 @@ export async function POST(req) {
       others,
     } = body;
 
-    if (!company || !location || !commodity || newRate === undefined || newRate === null) {
+    const cleanCompany = String(company || "").trim();
+    const cleanLocation = String(location || "").trim();
+    const cleanCommodity = String(commodity || "").trim();
+
+    if (!cleanCompany || !cleanLocation || !cleanCommodity || newRate === undefined || newRate === null) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
@@ -34,9 +38,9 @@ export async function POST(req) {
     today.setHours(0, 0, 0, 0);
 
     let rateEntry = await Rate.findOne({ 
-      company: company.trim(), 
-      location: location.trim(), 
-      commodity: commodity.trim() 
+      company: cleanCompany, 
+      location: cleanLocation, 
+      commodity: cleanCommodity 
     });
 
     if (rateEntry) {
@@ -86,9 +90,9 @@ export async function POST(req) {
 
     // Create new rate entry
     rateEntry = new Rate({
-      company: company.trim(),
-      location: location.trim(),
-      commodity: commodity.trim(),
+      company: cleanCompany,
+      location: cleanLocation,
+      commodity: cleanCommodity,
       newRate: Number(newRate),
       newRateDate: today,
       oldRates: [],
@@ -177,7 +181,7 @@ export async function GET(req) {
         };
       }
 
-      const oldRatesFormatted = (rate.oldRates || []).map(
+      const oldRatesFormatted = (Array.isArray(rate.oldRates) ? rate.oldRates : []).map(
         (old) =>
           `${old.rate} (${old.date ? new Date(old.date).toLocaleDateString("en-GB") : "Unknown"})`,
       );
@@ -217,7 +221,7 @@ export async function PUT(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const {
       company,
       location,
@@ -229,7 +233,11 @@ export async function PUT(req) {
       others,
     } = body;
 
-    if (!company || !location || !commodity || newRate === undefined || newRate === null) {
+    const cleanCompany = String(company || "").trim();
+    const cleanLocation = String(location || "").trim();
+    const cleanCommodity = String(commodity || "").trim();
+
+    if (!cleanCompany || !cleanLocation || !cleanCommodity || newRate === undefined || newRate === null) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
@@ -237,9 +245,9 @@ export async function PUT(req) {
     }
 
     const rateToUpdate = await Rate.findOne({ 
-      company: company.trim(), 
-      location: location.trim(), 
-      commodity: commodity.trim() 
+      company: cleanCompany, 
+      location: cleanLocation, 
+      commodity: cleanCommodity 
     });
 
     if (!rateToUpdate) {
