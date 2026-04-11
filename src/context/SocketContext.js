@@ -4,11 +4,11 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { useSession } from "next-auth/react";
 
-const SocketContext = createContext(null);
+const SocketContext = createContext(undefined);
 
 export const useSocket = () => {
   const context = useContext(SocketContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useSocket must be used within a SocketProvider");
   }
   return context;
