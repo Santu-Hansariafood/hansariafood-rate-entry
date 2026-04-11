@@ -16,9 +16,23 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## WebSockets Integration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project now uses Socket.io for real-time notifications.
+The server runs on the same port as the Next.js application using a custom `server.mjs`.
+
+To start the project with WebSocket support:
+
+```bash
+npm run dev
+```
+
+For production (on Windows):
+
+```bash
+npm run build
+npm start
+```
 
 ## Learn More
 

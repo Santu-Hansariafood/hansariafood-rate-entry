@@ -1,7 +1,10 @@
-"use client";
-
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+
+export const metadata = {
+  title: "Dashboard",
+  description: "Welcome to Hansaria Food dashboard. Monitor market trends and manage your commodity trade operations.",
+};
 
 const Welcome = dynamic(() => import("@/components/ui/Welcome/Welcome"), {
   loading: () => <Loading />,

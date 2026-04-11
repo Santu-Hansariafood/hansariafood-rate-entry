@@ -5,11 +5,36 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#0F766E",
   "lang": "en-IN",
-  "categories": ["business", "productivity", "utilities"],
+  "dir": "ltr",
+  "categories": ["business", "productivity", "utilities", "food"],
+  "shortcuts": [
+    {
+      "name": "Soya Rate",
+      "short_name": "Soya",
+      "description": "View today's Soya DOC rates",
+      "url": "/soyarate",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "M DOC Rate",
+      "short_name": "M DOC",
+      "description": "View today's M DOC rates",
+      "url": "/mdocrate",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "DDGS Rate",
+      "short_name": "DDGS",
+      "description": "View today's DDGS rates",
+      "url": "/ddgsrate",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-72x72.png",

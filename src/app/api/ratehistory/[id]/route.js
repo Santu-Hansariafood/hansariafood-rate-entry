@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import RateHistory from "@/models/RateHistory";
 import { connectDB } from "@/lib/mongodb";
+import { emitNotification } from "@/lib/socket";
 
 export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
@@ -13,7 +14,8 @@ export async function GET(req, { params }) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const selectedDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
+    const selectedDate =
+      searchParams.get("date") || new Date().toISOString().split("T")[0];
     const fullHistory = searchParams.get("fullHistory") === "true";
 
     const docs = await RateHistory.find({ companyId: id }).lean();
@@ -24,8 +26,7 @@ export async function GET(req, { params }) {
 
     const toTime = (value) => {
       if (!value) return 0;
-      const date =
-        value instanceof Date ? value : new Date(value);
+      const date = value instanceof Date ? value : new Date(value);
       const time = date.getTime();
       return Number.isNaN(time) ? 0 : time;
     };
@@ -33,7 +34,7 @@ export async function GET(req, { params }) {
     const result = docs.map((doc) => {
       const histArr = Array.isArray(doc.history) ? doc.history : [];
       const history = [...histArr].sort(
-        (a, b) => toTime(b?.date) - toTime(a?.date)
+        (a, b) => toTime(b?.date) - toTime(a?.date),
       );
 
       const today = history.find((h) => h.date === selectedDate);
@@ -57,7 +58,7 @@ export async function GET(req, { params }) {
     console.error("GET ratehistory error:", error);
     return NextResponse.json(
       { error: "Internal server error", detail: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -86,7 +87,7 @@ export async function POST(req, { params }) {
     if (!locationName || !commodityName) {
       return NextResponse.json(
         { error: "Location & commodity required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -141,7 +142,10 @@ export async function POST(req, { params }) {
           "history.$.destinationLocation": destinationLocation || "",
           "history.$.freightRate": Number(freightRate) || 0,
         };
-      } else if (destinationLocation !== undefined || freightRate !== undefined) {
+      } else if (
+        destinationLocation !== undefined ||
+        freightRate !== undefined
+      ) {
         update.$set = {
           ...(update.$set || {}),
           "history.$.destinationLocation": destinationLocation || "",
@@ -156,7 +160,7 @@ export async function POST(req, { params }) {
           commodity: commodityName,
           "history.date": today,
         },
-        update
+        update,
       );
     } else {
       await RateHistory.findOneAndUpdate(
@@ -184,27 +188,39 @@ export async function POST(req, { params }) {
                 finalRate !== undefined
                   ? Number(finalRate)
                   : tempRate !== undefined
-                  ? Number(tempRate)
-                  : null,
+                    ? Number(tempRate)
+                    : null,
               others: others || "",
               destinationLocation: destinationLocation || "",
               freightRate: Number(freightRate) || 0,
             },
           },
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
     }
 
+    // Emit socket notification
+    emitNotification({
+      type: "rate",
+      data: {
+        companyId: id,
+        location: locationName,
+        commodity: commodityName,
+        rate: finalRate ?? tempRate,
+        updateTime: time,
+      },
+    });
+
     return NextResponse.json(
       { success: true, message: "Rate updated successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("POST ratehistory error:", error);
     return NextResponse.json(
       { error: "Internal server error", detail: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

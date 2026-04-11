@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { emitNotification } from "@/lib/socket";
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -18,7 +19,7 @@ export async function POST(req) {
     if (!state || !name) {
       return NextResponse.json(
         { error: "State and location name are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,22 +28,30 @@ export async function POST(req) {
     if (existingLocation) {
       return NextResponse.json(
         { error: "Location already exists in this state" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
     const newLocation = new Location({ state, name });
     await newLocation.save();
 
+    emitNotification({
+      type: "location",
+      data: {
+        state: newLocation.state,
+        name: newLocation.name,
+      },
+    });
+
     return NextResponse.json(
       { message: "Location created successfully", location: newLocation },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("POST /location error:", error);
     return NextResponse.json(
       { error: "Failed to create location" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -76,13 +85,13 @@ export async function GET(req) {
         page,
         totalPages: Math.ceil(total / limit),
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("GET /location error:", error);
     return NextResponse.json(
       { error: "Failed to fetch locations" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

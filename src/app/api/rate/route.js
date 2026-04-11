@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { emitNotification } from "@/lib/socket";
 
 export async function POST(req) {
   await connectDB();
@@ -53,6 +54,18 @@ export async function POST(req) {
 
       await rateEntry.save();
 
+      emitNotification({
+        type: 'rate',
+        data: {
+          company: rateEntry.company,
+          location: rateEntry.location,
+          commodity: rateEntry.commodity,
+          rate: rateEntry.newRate,
+          date: rateEntry.newRateDate,
+          updateTime: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        }
+      });
+
       return NextResponse.json(
         { message: "Rate updated successfully!" },
         { status: 200 }
@@ -73,6 +86,18 @@ export async function POST(req) {
     });
 
     await rateEntry.save();
+
+    emitNotification({
+      type: 'rate',
+      data: {
+        company: rateEntry.company,
+        location: rateEntry.location,
+        commodity: rateEntry.commodity,
+        rate: rateEntry.newRate,
+        date: rateEntry.newRateDate,
+        updateTime: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+      }
+    });
 
     return NextResponse.json(
       { message: "Rate saved successfully!" },

@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { generateDeletedSaudaEmailTemplate } from "@/lib/email/templates/deletedSaudaTemplate";
+import { emitNotification } from "@/lib/socket";
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -25,13 +26,13 @@ export async function POST(req) {
     if (!company || !date || !saudaEntry) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, "0")}:${String(
-      now.getMinutes()
+      now.getMinutes(),
     ).padStart(2, "0")}`;
 
     const session = await getServerSession(authOptions);
@@ -92,20 +93,28 @@ export async function POST(req) {
           html,
         });
       }
+
+      emitNotification({
+        type: "sauda",
+        data: {
+          company: doc.company,
+          date: doc.date,
+          action: "delete",
+        },
+      });
     } catch (emailError) {
       console.error("Error sending deleted sauda email:", emailError);
     }
 
     return NextResponse.json(
       { message: "Deleted sauda logged successfully" },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Error in POST /save-sauda/delete-entry:", error);
     return NextResponse.json(
       { error: "Failed to log deleted sauda" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

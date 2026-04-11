@@ -8,6 +8,9 @@ import { useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
+import { io } from "socket.io-client";
+
+const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
 
 const Logo = dynamic(() => import("./Logo/Logo"), { ssr: false });
 const DesktopNav = dynamic(() => import("./DesktopNav/DesktopNav"), {
@@ -36,14 +39,12 @@ export default function Header() {
     if (pathname) setActiveLink(pathname);
   }, [pathname]);
 
-  // Request notification permission
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       Notification.requestPermission().catch(() => {});
     }
   }, []);
 
-  // Initialize audio
   useEffect(() => {
     try {
       audioRef.current = new Audio("/notification/notification.wav");
@@ -53,7 +54,6 @@ export default function Header() {
     }
   }, []);
 
-  // Handle browser notifications
   useEffect(() => {
     if (
       typeof window === "undefined" ||
@@ -70,7 +70,6 @@ export default function Header() {
       if (!lastShownRef.current.includes(uniqueId)) {
         lastShownRef.current.push(uniqueId);
 
-        // Limit ref size
         if (lastShownRef.current.length > 50) {
           lastShownRef.current.shift();
         }
@@ -100,7 +99,6 @@ export default function Header() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        // Fetch from both sources
         const [rateRes, rateHistoryRes] = await Promise.all([
           axiosInstance.get("/rate?todayOnly=true&minimal=true"),
           axiosInstance.get("/rate-notifications"),
@@ -132,15 +130,22 @@ export default function Header() {
 
     fetchNotifications();
     
+    const socket = io(socketUrl);
+
+    socket.on('notification', (payload) => {
+      if (payload.type === 'rate' || payload.type === 'sauda') {
+        fetchNotifications();
+      }
+    });
+
     const handleRatesUpdated = () => {
       fetchNotifications();
     };
 
     window.addEventListener("rates-updated", handleRatesUpdated);
-    const interval = setInterval(fetchNotifications, 5000); // Poll every 5 seconds for quicker updates
     
     return () => {
-      clearInterval(interval);
+      socket.disconnect();
       window.removeEventListener("rates-updated", handleRatesUpdated);
     };
   }, []);

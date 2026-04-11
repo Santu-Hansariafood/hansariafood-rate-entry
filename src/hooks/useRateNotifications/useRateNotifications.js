@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '@/lib/axiosInstance/axiosInstance';
+import { io } from 'socket.io-client';
+
+const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
 
 export default function useRateNotifications(type) {
   const [notifications, setNotifications] = useState([]);
@@ -24,8 +27,19 @@ export default function useRateNotifications(type) {
   useEffect(() => {
     fetchNotifications();
     
-    const interval = setInterval(fetchNotifications, 5000);
-    return () => clearInterval(interval);
+    const socket = io(socketUrl);
+
+    socket.on('notification', (payload) => {
+      if (payload.type === 'rate') {
+        // If it's a rate notification, we might want to refresh or just add it
+        // To ensure consistency with the backend logic, refreshing is safer
+        fetchNotifications();
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [fetchNotifications]);
 
   return { notifications, loading, refreshNotifications: fetchNotifications };

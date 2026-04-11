@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
+import { io } from "socket.io-client";
 
+const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
 const LOCAL_STORAGE_KEY = "sauda_notifications_cache";
 
 export default function useSaudaNotifications() {
@@ -121,17 +123,18 @@ export default function useSaudaNotifications() {
 
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications, filterAndSortToday]);
+    const socket = io(socketUrl);
 
-  useEffect(() => {
-    const handler = () => {
-      setTimeout(() => fetchNotifications(), 500);
+    socket.on("notification", (payload) => {
+      if (payload.type === "sauda") {
+        fetchNotifications();
+      }
+    });
+
+    return () => {
+      socket.disconnect();
     };
-    window.addEventListener("sauda_updated", handler);
-    return () => window.removeEventListener("sauda_updated", handler);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, filterAndSortToday]);
 
   useEffect(() => {
     const handleFocus = () => {

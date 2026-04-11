@@ -8,6 +8,7 @@ import { authOptions } from "../auth/[...nextauth]/route";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
 import DeletedSauda from "@/models/DeletedSauda";
+import { emitNotification } from "@/lib/socket";
 
 export async function POST(req) {
   await connectDB();
@@ -167,6 +168,17 @@ export async function POST(req) {
         }
         
         // If we reached here, save was successful
+        // Emit socket notification
+        emitNotification({
+          type: 'sauda',
+          data: {
+            company: existingEntry.company,
+            date: existingEntry.date,
+            time: existingEntry.time,
+            saudaEntries: existingEntry.saudaEntries,
+            updateTime: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+          }
+        });
         break;
 
       } catch (error) {

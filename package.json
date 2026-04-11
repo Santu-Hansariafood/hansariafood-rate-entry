@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --webpack",
-    "start": "next start",
+    "dev": "set NODE_ENV=development && node server.mjs",
+    "build": "next build",
+    "start": "set NODE_ENV=production && node server.mjs",
     "lint": "next lint"
   },
   "dependencies": {
@@ -37,6 +37,8 @@
     "react-dom": "^19.0.0",
     "react-select": "^5.10.1",
     "react-toastify": "^11.0.5",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

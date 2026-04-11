@@ -7,6 +7,9 @@ import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import useDebouncedSearch from "@/hooks/useDebouncedSearch/useDebouncedSearch";
+import { io } from "socket.io-client";
+
+const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
 
 const NotificationList = dynamic(() =>
   import("@/components/NotificationList/NotificationList")
@@ -51,16 +54,23 @@ export default function CompanyList({
     };
 
     fetchNotifications();
+    
+    const socket = io(socketUrl);
+
+    socket.on('notification', (payload) => {
+      if (payload.type === 'rate') {
+        fetchNotifications();
+      }
+    });
 
     const handleRatesUpdated = () => {
       fetchNotifications();
     };
 
     window.addEventListener("rates-updated", handleRatesUpdated);
-    const interval = setInterval(fetchNotifications, 5000);
     
     return () => {
-      clearInterval(interval);
+      socket.disconnect();
       window.removeEventListener("rates-updated", handleRatesUpdated);
     };
   }, [completedCompanies]);
@@ -83,6 +93,21 @@ export default function CompanyList({
     };
 
     fetchDisabledCompanies();
+
+    const socket = io(socketUrl);
+
+    socket.on('notification', (payload) => {
+      if (payload.type === 'rate_update_list') {
+        const today = new Date().toISOString().split("T")[0];
+        if (payload.data.date === today) {
+          setDisabledCompanies(payload.data.companies || []);
+        }
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const displayCompanies =
