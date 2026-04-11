@@ -7,6 +7,8 @@ import bcrypt from "bcryptjs";
 import { rateLimit } from "@/middleware/rateLimit/rateLimit";
 import { singleDeviceGuard } from "@/middleware/singleDeviceGuard/singleDeviceGuard";
 
+export const dynamic = "force-dynamic";
+
 const limiter = rateLimit(5, 15 * 60 * 1000);
 const deviceGuard = singleDeviceGuard();
 
@@ -31,77 +33,40 @@ export const authOptions = {
           };
 
           const headerApiKey = getHeader("x-api-key");
-          
-          console.log("Auth Attempt:", { 
-            mobile: credentials?.mobile, 
-            hasPassword: !!credentials?.password,
-            hasApiKey: !!(credentials?.apiKey || headerApiKey)
-          });
 
           if (!limiter(req)) {
-            console.error("Auth Failed: Rate limited");
             throw new Error("Too many login attempts.");
           }
 
           const apiKey = credentials?.apiKey || headerApiKey;
-          const expectedApiKey = process.env.API_KEY;
-
-          if (!apiKey || apiKey !== expectedApiKey) {
-            console.error("Auth Failed: Invalid API Key. Received:", apiKey ? "PROVIDED" : "MISSING", "Expected:", expectedApiKey ? "EXISTS" : "MISSING");
+          if (apiKey !== process.env.API_KEY) {
             throw new Error("Unauthorized: Invalid API Key");
           }
 
           await connectDB();
 
           const user = await User.findOne({ mobile: credentials.mobile }).lean();
-          if (!user) {
-            console.error("Auth Failed: User not found for mobile:", credentials.mobile);
-            throw new Error("User not found");
-          }
+          if (!user) throw new Error("User not found");
 
           const ok = await bcrypt.compare(credentials.password, user.password);
-          if (!ok) {
-            console.error("Auth Failed: Password mismatch for user:", user.name);
-            throw new Error("Invalid credentials");
-          }
+          if (!ok) throw new Error("Invalid credentials");
 
           const now = new Date();
 
-          const lastLogin = user.lastLogin ? new Date(user.lastLogin) : null;
-          if (lastLogin) {
-            const diffTimeInactivity = Math.abs(now - lastLogin);
-            const diffDaysInactivity = Math.floor(diffTimeInactivity / (1000 * 60 * 60 * 24));
-            
-            if (diffDaysInactivity >= 15) {
-              console.error("Auth Failed: Account inactive for 15+ days for user:", user.name);
-              throw new Error("Your account has been inactive for more than 15 days. For security reasons, you must reset your password to log in again.");
-            }
-          }
-
-          const lastReset = user.passwordLastReset ? new Date(user.passwordLastReset) : null;
-          if (lastReset) {
-            const diffTimeReset = Math.abs(now - lastReset);
-            const diffDaysReset = Math.floor(diffTimeReset / (1000 * 60 * 60 * 24));
-            
-            if (diffDaysReset >= 30) {
-              console.error("Auth Failed: Password expired for user:", user.name);
-              throw new Error("Your password has expired. Please reset it to continue.");
-            }
-          }
-
           await User.findByIdAndUpdate(user._id, { lastLogin: now });
 
-          const forwardedFor = getHeader("x-forwarded-for");
-          const ip = forwardedFor?.split(",")[0] || req.ip || "global";
+          const ip =
+            getHeader("x-forwarded-for")?.split(",")[0] ||
+            req.ip ||
+            "global";
+
           const userId = user._id.toString();
 
           if (!deviceGuard.check(userId, ip)) {
-            console.error("Auth Failed: Single device violation for:", user.name, "IP:", ip);
-            throw new Error("This account is already logged in from another device.");
+            throw new Error("Already logged in from another device");
           }
-          deviceGuard.register(userId, ip);
 
-          console.log("Auth Success:", user.name);
+          deviceGuard.register(userId, ip);
 
           return {
             id: userId,
@@ -111,7 +76,6 @@ export const authOptions = {
             pages: user.pages || [],
           };
         } catch (error) {
-          console.error("Authorize Error Catch:", error.message);
           throw error;
         }
       },
@@ -159,4 +123,6 @@ export const authOptions = {
 };
 
 const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+
+export const GET = handler;
+export const POST = handler;
