@@ -16,7 +16,7 @@ const baseConfig = {
       },
     ],
   },
-  turbopack: {},
+  // turbopack: {},
   reactStrictMode: true,
 };
 
