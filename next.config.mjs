@@ -9,8 +9,14 @@ const baseConfig = {
   },
   images: {
     dangerouslyAllowSVG: true,
-    domains: ["res.cloudinary.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
   },
+  turbopack: {},
   reactStrictMode: true,
 };
 
