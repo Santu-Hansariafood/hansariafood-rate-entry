@@ -3,14 +3,11 @@
 import { Suspense, useState, useEffect, useMemo } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSocket } from "@/context/SocketContext";
 import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import useDebouncedSearch from "@/hooks/useDebouncedSearch/useDebouncedSearch";
-import { io } from "socket.io-client";
-
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
-
 const NotificationList = dynamic(() =>
   import("@/components/NotificationList/NotificationList")
 );
@@ -22,6 +19,7 @@ export default function CompanyList({
   onCompanySelect,
   notifications: initialNotifications = [],
 }) {
+  const socket = useSocket();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [searchQuery, setSearchQuery] = useState("");
   const [disabledCompanies, setDisabledCompanies] = useState([]);
@@ -55,14 +53,6 @@ export default function CompanyList({
 
     fetchNotifications();
     
-    const socket = io(socketUrl);
-
-    socket.on('notification', (payload) => {
-      if (payload.type === 'rate') {
-        fetchNotifications();
-      }
-    });
-
     const handleRatesUpdated = () => {
       fetchNotifications();
     };
@@ -70,7 +60,6 @@ export default function CompanyList({
     window.addEventListener("rates-updated", handleRatesUpdated);
     
     return () => {
-      socket.disconnect();
       window.removeEventListener("rates-updated", handleRatesUpdated);
     };
   }, [completedCompanies]);
@@ -94,21 +83,25 @@ export default function CompanyList({
 
     fetchDisabledCompanies();
 
-    const socket = io(socketUrl);
+    if (!socket) return;
 
-    socket.on('notification', (payload) => {
+    const handleNotification = (payload) => {
       if (payload.type === 'rate_update_list') {
         const today = new Date().toISOString().split("T")[0];
         if (payload.data.date === today) {
           setDisabledCompanies(payload.data.companies || []);
         }
+      } else if (payload.type === 'rate') {
+        window.dispatchEvent(new CustomEvent("rates-updated"));
       }
-    });
+    };
+
+    socket.on('notification', handleNotification);
 
     return () => {
-      socket.disconnect();
+      socket.off('notification', handleNotification);
     };
-  }, []);
+  }, [socket]);
 
   const displayCompanies =
     searchQuery.trim() === ""

@@ -4,13 +4,11 @@ import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { useSocket } from "@/context/SocketContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
-import { io } from "socket.io-client";
-
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
 
 const Logo = dynamic(() => import("./Logo/Logo"), { ssr: false });
 const DesktopNav = dynamic(() => import("./DesktopNav/DesktopNav"), {
@@ -25,6 +23,7 @@ const CookieBanner = dynamic(
 );
 
 export default function Header() {
+  const socket = useSocket();
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeLink, setActiveLink] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -130,13 +129,15 @@ export default function Header() {
 
     fetchNotifications();
     
-    const socket = io(socketUrl);
+    if (!socket) return;
 
-    socket.on('notification', (payload) => {
+    const handleNotification = (payload) => {
       if (payload.type === 'rate' || payload.type === 'sauda') {
         fetchNotifications();
       }
-    });
+    };
+
+    socket.on('notification', handleNotification);
 
     const handleRatesUpdated = () => {
       fetchNotifications();
@@ -145,10 +146,10 @@ export default function Header() {
     window.addEventListener("rates-updated", handleRatesUpdated);
     
     return () => {
-      socket.disconnect();
+      socket.off('notification', handleNotification);
       window.removeEventListener("rates-updated", handleRatesUpdated);
     };
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     setIsMounted(true);

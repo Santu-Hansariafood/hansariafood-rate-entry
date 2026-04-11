@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '@/lib/axiosInstance/axiosInstance';
-import { io } from 'socket.io-client';
-
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
+import { useSocket } from '@/context/SocketContext';
 
 export default function useRateNotifications(type) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const socket = useSocket();
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -27,20 +26,20 @@ export default function useRateNotifications(type) {
   useEffect(() => {
     fetchNotifications();
     
-    const socket = io(socketUrl);
+    if (!socket) return;
 
-    socket.on('notification', (payload) => {
+    const handleNotification = (payload) => {
       if (payload.type === 'rate') {
-        // If it's a rate notification, we might want to refresh or just add it
-        // To ensure consistency with the backend logic, refreshing is safer
         fetchNotifications();
       }
-    });
+    };
+
+    socket.on('notification', handleNotification);
 
     return () => {
-      socket.disconnect();
+      socket.off('notification', handleNotification);
     };
-  }, [fetchNotifications]);
+  }, [fetchNotifications, socket]);
 
   return { notifications, loading, refreshNotifications: fetchNotifications };
 }

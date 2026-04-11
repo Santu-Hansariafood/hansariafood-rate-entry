@@ -6,6 +6,7 @@ import AuthProvider from "@/components/AuthProvider/AuthProvider";
 import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
 import { UserProvider } from "@/context/UserContext";
+import { SocketProvider } from "@/context/SocketContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
@@ -210,25 +211,27 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <AuthWrapper>
             <UserProvider>
-              <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
+              <SocketProvider>
+                <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
 
-              <main className="flex-1 pt-16">
-                {children}
-                <ToastContainer
-                  position="top-right"
-                  autoClose={2000}
-                  hideProgressBar={false}
-                  newestOnTop
-                  closeOnClick
-                  pauseOnHover
-                  draggable
-                  theme="light"
-                />
-              </main>
+                <main className="flex-1 pt-16">
+                  {children}
+                  <ToastContainer
+                    position="top-right"
+                    autoClose={2000}
+                    hideProgressBar={false}
+                    newestOnTop
+                    closeOnClick
+                    pauseOnHover
+                    draggable
+                    theme="light"
+                  />
+                </main>
 
-              <Footer className="mt-auto" />
-              <TaskChat />
-              <ScrollToTop />
+                <Footer className="mt-auto" />
+                <TaskChat />
+                <ScrollToTop />
+              </SocketProvider>
             </UserProvider>
           </AuthWrapper>
         </AuthProvider>

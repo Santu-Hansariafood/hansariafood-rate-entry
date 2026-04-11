@@ -44,23 +44,39 @@ async function startServer() {
 
     const io = new Server(httpServer, {
       cors: {
-        origin: "*",
+        origin: process.env.NEXT_PUBLIC_SITE_URL || "*",
         methods: ["GET", "POST"],
+        credentials: true,
       },
+      pingTimeout: 60000,
+      pingInterval: 25000,
     });
 
     setIO(io);
 
     io.on("connection", (socket) => {
-      console.log("Client connected:", socket.id);
+      const { token } = socket.handshake.auth;
+      console.log(`Client connected: ${socket.id}${token ? ` (User: ${token})` : ""}`);
 
-      socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
+      socket.on("disconnect", (reason) => {
+        console.log(`Client disconnected: ${socket.id} (Reason: ${reason})`);
       });
     });
 
+    const shutdown = () => {
+      console.log("Shutting down server...");
+      io.close();
+      httpServer.close(() => {
+        console.log("HTTP server closed.");
+        process.exit(0);
+      });
+    };
+
+    process.on("SIGTERM", shutdown);
+    process.on("SIGINT", shutdown);
+
     httpServer.listen(port, "0.0.0.0", () => {
-      console.log(`🚀 Server running on port ${port}`);
+      console.log(`🚀 Server running on port ${port} in ${dev ? 'development' : 'production'} mode`);
     });
 
     process.on("uncaughtException", (err) => {

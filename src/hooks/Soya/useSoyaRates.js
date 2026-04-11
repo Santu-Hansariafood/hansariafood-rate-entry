@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
-import { io } from "socket.io-client";
-
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
+import { useSocket } from "@/context/SocketContext";
 
 const COMMODITIES = [
   "SBM 46%",
@@ -101,6 +99,7 @@ export default function useSoyaRates(date, search) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const lastFetchedDateRef = useRef(null);
+  const socket = useSocket();
 
   const fetchData = useCallback(async () => {
     try {
@@ -173,18 +172,20 @@ export default function useSoyaRates(date, search) {
   useEffect(() => {
     fetchData();
 
-    const socket = io(socketUrl);
+    if (!socket) return;
 
-    socket.on('notification', (payload) => {
+    const handleNotification = (payload) => {
       if (payload.type === 'rate') {
         fetchData();
       }
-    });
+    };
+
+    socket.on('notification', handleNotification);
 
     return () => {
-      socket.disconnect();
+      socket.off('notification', handleNotification);
     };
-  }, [fetchData]);
+  }, [fetchData, socket]);
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;

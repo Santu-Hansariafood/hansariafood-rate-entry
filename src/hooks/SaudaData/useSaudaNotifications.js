@@ -3,9 +3,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
-import { io } from "socket.io-client";
+import { useSocket } from "@/context/SocketContext";
 
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://hansariafood.in/');
 const LOCAL_STORAGE_KEY = "sauda_notifications_cache";
 
 export default function useSaudaNotifications() {
@@ -13,6 +12,7 @@ export default function useSaudaNotifications() {
   const [notifications, setNotifications] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const rateCacheRef = useRef({ data: [], lastFetched: 0 });
+  const socket = useSocket();
 
   const getTodayString = useCallback(() => {
     const today = new Date();
@@ -123,18 +123,20 @@ export default function useSaudaNotifications() {
 
     fetchNotifications();
 
-    const socket = io(socketUrl);
+    if (!socket) return;
 
-    socket.on("notification", (payload) => {
+    const handleNotification = (payload) => {
       if (payload.type === "sauda") {
         fetchNotifications();
       }
-    });
+    };
+
+    socket.on("notification", handleNotification);
 
     return () => {
-      socket.disconnect();
+      socket.off("notification", handleNotification);
     };
-  }, [fetchNotifications, filterAndSortToday]);
+  }, [fetchNotifications, filterAndSortToday, socket]);
 
   useEffect(() => {
     const handleFocus = () => {
