@@ -266,17 +266,12 @@ export async function PUT(req) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Ensure oldRates is an array
-    if (!Array.isArray(rateToUpdate.oldRates)) {
-      rateToUpdate.oldRates = [];
-    }
-
     // If the last update was not today, move the current rate to oldRates
     const lastUpdated = rateToUpdate.newRateDate ? new Date(rateToUpdate.newRateDate) : null;
-    if (lastUpdated && !isNaN(lastUpdated.getTime())) {
+    if (lastUpdated) {
       lastUpdated.setHours(0, 0, 0, 0);
       
-      if (lastUpdated.getTime() !== today.getTime() && rateToUpdate.newRate !== undefined && rateToUpdate.newRate !== null) {
+      if (lastUpdated.getTime() !== today.getTime() && rateToUpdate.newRate) {
         rateToUpdate.oldRates.push({
           rate: rateToUpdate.newRate,
           date: rateToUpdate.newRateDate,
