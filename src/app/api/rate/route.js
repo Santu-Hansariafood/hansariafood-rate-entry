@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
+import RateHistory from "@/models/RateHistory";
+import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
 
@@ -36,7 +38,14 @@ export async function POST(req) {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
+    const currentTime = new Date().toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
 
+    // --- Update Rate Model ---
     let rateEntry = await Rate.findOne({ 
       company: cleanCompany, 
       location: cleanLocation, 
@@ -44,12 +53,10 @@ export async function POST(req) {
     });
 
     if (rateEntry) {
-      // Ensure oldRates is an array
       if (!Array.isArray(rateEntry.oldRates)) {
         rateEntry.oldRates = [];
       }
 
-      // If the last update was not today, move the current rate to oldRates
       const lastUpdated = rateEntry.newRateDate ? new Date(rateEntry.newRateDate) : null;
       if (lastUpdated && !isNaN(lastUpdated.getTime())) {
         lastUpdated.setHours(0, 0, 0, 0);
@@ -70,68 +77,124 @@ export async function POST(req) {
       rateEntry.others = others !== undefined ? String(others) : rateEntry.others;
 
       await rateEntry.save();
-
-      try {
-        emitNotification({
-          type: "rate",
-          data: {
-            company: rateEntry.company,
-            location: rateEntry.location,
-            commodity: rateEntry.commodity,
-            rate: rateEntry.newRate,
-            date: rateEntry.newRateDate,
-            updateTime: new Date().toLocaleTimeString("en-IN", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            }),
-          },
-        });
-      } catch (err) {
-        console.warn("Failed to emit notification:", err);
-      }
-
-      return NextResponse.json(
-        { message: "Rate updated successfully!" },
-        { status: 200 },
-      );
+    } else {
+      rateEntry = new Rate({
+        company: cleanCompany,
+        location: cleanLocation,
+        commodity: cleanCommodity,
+        newRate: Number(newRate),
+        newRateDate: today,
+        oldRates: [],
+        mobile,
+        quantity: quantity !== undefined ? Number(quantity) : 0,
+        payment: payment !== undefined ? String(payment) : "",
+        others: others !== undefined ? String(others) : "",
+      });
+      await rateEntry.save();
     }
 
-    // Create new rate entry
-    rateEntry = new Rate({
-      company: cleanCompany,
-      location: cleanLocation,
-      commodity: cleanCommodity,
-      newRate: Number(newRate),
-      newRateDate: today,
-      oldRates: [],
-      mobile,
-      quantity: quantity !== undefined ? Number(quantity) : 0,
-      payment: payment !== undefined ? String(payment) : "",
-      others: others !== undefined ? String(others) : "",
-    });
+    // --- Update RateHistory Model (for notifications and history) ---
+    try {
+      const companyDoc = await ManageCompany.findOne({ 
+        name: { $regex: new RegExp(`^${cleanCompany}$`, 'i') } 
+      });
 
-    await rateEntry.save();
+      if (companyDoc) {
+        const historyDoc = await RateHistory.findOne({
+          companyId: companyDoc._id,
+          location: cleanLocation,
+          commodity: cleanCommodity,
+        });
 
-    emitNotification({
-      type: "rate",
-      data: {
-        company: rateEntry.company,
-        location: rateEntry.location,
-        commodity: rateEntry.commodity,
-        rate: rateEntry.newRate,
-        date: rateEntry.newRateDate,
-        updateTime: new Date().toLocaleTimeString("en-IN", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
-      },
-    });
+        let previousRate = 0;
+        if (historyDoc && historyDoc.history.length > 0) {
+          const prev = [...historyDoc.history]
+            .filter((h) => h.date < todayStr)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+          previousRate = prev?.finalRate || 0;
+        }
+
+        const todayExists = await RateHistory.findOne({
+          companyId: companyDoc._id,
+          location: cleanLocation,
+          commodity: cleanCommodity,
+          "history.date": todayStr,
+        });
+
+        if (todayExists) {
+          await RateHistory.updateOne(
+            {
+              companyId: companyDoc._id,
+              location: cleanLocation,
+              commodity: cleanCommodity,
+              "history.date": todayStr,
+            },
+            {
+              $push: {
+                "history.$.tempRates": {
+                  rate: Number(newRate),
+                  time: currentTime,
+                  note: others || "",
+                },
+              },
+              $set: {
+                "history.$.finalRate": Number(newRate),
+                "history.$.others": others || "",
+              },
+            }
+          );
+        } else {
+          await RateHistory.findOneAndUpdate(
+            {
+              companyId: companyDoc._id,
+              location: cleanLocation,
+              commodity: cleanCommodity,
+            },
+            {
+              $push: {
+                history: {
+                  date: todayStr,
+                  oldRate: previousRate,
+                  tempRates: [
+                    {
+                      rate: Number(newRate),
+                      time: currentTime,
+                      note: others || "",
+                    },
+                  ],
+                  finalRate: Number(newRate),
+                  others: others || "",
+                },
+              },
+            },
+            { upsert: true, new: true }
+          );
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to update RateHistory:", err);
+    }
+
+    // --- Emit Socket Notification ---
+    try {
+      emitNotification({
+        type: "rate",
+        data: {
+          company: cleanCompany,
+          location: cleanLocation,
+          commodity: cleanCommodity,
+          rate: Number(newRate),
+          date: todayStr,
+          updateTime: currentTime,
+        },
+      });
+    } catch (err) {
+      console.warn("Failed to emit notification:", err);
+    }
 
     return NextResponse.json(
-      { message: "Rate saved successfully!" },
-      { status: 201 },
+      { message: "Rate saved and history updated!" },
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error in POST /api/rate:", error);
@@ -178,48 +241,56 @@ export async function GET(req) {
       lastUpdated.setHours(0, 0, 0, 0);
       const isToday = lastUpdated.getTime() === today.getTime();
 
+      const oldRatesArray = Array.isArray(rate.oldRates) ? [...rate.oldRates] : [];
+      
+      // If the stored newRate is from a previous day, treat it as an old rate for the UI
+      if (!isToday && rate.newRate !== undefined && rate.newRate !== null) {
+        oldRatesArray.push({
+          rate: rate.newRate,
+          date: rate.newRateDate
+        });
+      }
+
+      const oldRatesFormatted = oldRatesArray.map(
+        (old) =>
+          `${old.rate} (${old.date ? new Date(old.date).toLocaleDateString("en-GB") : "Unknown"})`,
+      );
+
+      // If it's not today, the rate should be empty (treated as new rate after midnight)
+      const currentRate = isToday ? rate.newRate : "";
+      const currentLastUpdated = isToday ? rate.newRateDate : null;
+
       if (minimal) {
         return {
           company: rate.company,
           location: rate.location,
           commodity: rate.commodity,
-          newRate: isToday ? rate.newRate : "",
-          lastUpdated: isToday ? rate.newRateDate : null,
-          updateTime: rate.updateTime || "",
+          newRate: currentRate,
+          lastUpdated: currentLastUpdated,
+          updateTime: isToday ? rate.updateTime : "",
           hasNewRateToday: isToday,
         };
       }
-
-      const oldRatesFormatted = (Array.isArray(rate.oldRates) ? rate.oldRates : []).map(
-        (old) =>
-          `${old.rate} (${old.date ? new Date(old.date).toLocaleDateString("en-GB") : "Unknown"})`,
-      );
 
       return {
         company: rate.company,
         location: rate.location,
         commodity: rate.commodity,
         oldRates: oldRatesFormatted,
-        newRate: isToday ? rate.newRate : "",
-        quantity: isToday ? (rate.quantity ?? "") : "",
-        payment: isToday ? (rate.payment ?? "") : "",
-        others: isToday ? (rate.others ?? "") : "",
-        hasNewRateToday: isToday,
-        lastUpdated: isToday
-          ? rate.newRateDate
-          : rate.oldRates.at(-1)?.date || null,
-        updateTime: rate.updateTime || "",
-        mobile: rate.mobile || "",
+        newRate: currentRate,
+        newRateDate: currentLastUpdated,
+        quantity: isToday ? rate.quantity : "",
+        payment: isToday ? rate.payment : "",
+        others: isToday ? rate.others : "",
+        updateTime: isToday ? rate.updateTime : "",
+        mobile: rate.mobile,
       };
     });
 
     return NextResponse.json(formattedRates, { status: 200 });
   } catch (error) {
-    console.error("Error in GET /rate:", error);
-    return NextResponse.json(
-      { error: "Error fetching rates" },
-      { status: 500 },
-    );
+    console.error("Error in GET /api/rate:", error);
+    return NextResponse.json({ error: "Error fetching rates" }, { status: 500 });
   }
 }
 

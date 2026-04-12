@@ -26,25 +26,14 @@ RateSchema.index({ newRateDate: 1 });
 
 RateSchema.pre("save", function (next) {
   const now = new Date();
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-
-  const lastUpdated = new Date(this.newRateDate);
-  lastUpdated.setHours(0, 0, 0, 0);
-
-  this.updateTime = now.toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  if (lastUpdated < today) {
-    this.oldRates.push({
-      rate: this.newRate,
-      date: this.newRateDate,
+  
+  // Set updateTime only if it's not already set or if newRate is being modified
+  if (!this.updateTime || this.isModified("newRate")) {
+    this.updateTime = now.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
-
-    this.newRateDate = today;
   }
 
   this.updatedAt = now;

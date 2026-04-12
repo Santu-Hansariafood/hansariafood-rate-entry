@@ -80,46 +80,52 @@ export default function RateTableModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-2xl shadow-xl w-full max-w-6xl overflow-hidden"
+        className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden"
       >
-        <div className="p-6 border-b">
+        <div className="p-4 sm:p-6 border-b shrink-0">
           <div className="flex justify-between items-start gap-4 flex-wrap">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-800">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 truncate">
                 Rates for {selectedCompany}
               </h3>
               {renderFilter()}
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition"
+              className="p-2 hover:bg-gray-100 rounded-full transition shrink-0"
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>
           </div>
         </div>
 
-        <Suspense fallback={<Loading />}>
-          <RateTableBody
-            rates={rates}
-            allRatesFilled={allRatesFilled}
-            editIndex={editIndex}
-            handleEdit={handleEdit}
-            handleSave={handleSave}
-            setRates={setRates}
-            actualStartIndex={actualStartIndex}
-            commodity={commodity}
-          />
-        </Suspense>
+        <div className="flex-1 overflow-auto min-h-0 bg-gray-50/50">
+          <Suspense fallback={<Loading />}>
+            <RateTableBody
+              rates={rates}
+              allRatesFilled={allRatesFilled}
+              editIndex={editIndex}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              setRates={setRates}
+              actualStartIndex={actualStartIndex}
+              commodity={commodity}
+            />
+          </Suspense>
+        </div>
 
-        <div className="p-4 border-t bg-white">{children}</div>
+        {children && (
+          <div className="p-4 border-t bg-white shrink-0">
+            {children}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

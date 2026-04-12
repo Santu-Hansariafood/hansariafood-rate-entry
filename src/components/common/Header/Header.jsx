@@ -177,49 +177,55 @@ export default function Header() {
         className={`fixed top-0 w-full z-50 transition-all duration-300
           ${
             isScrolled
-              ? "bg-black/80 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
-              : "bg-black"
+              ? "bg-black/90 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-b border-white/5"
+              : "bg-black border-b border-transparent"
           }
         `}
       >
-        <div className="container mx-auto flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 md:px-8">
-          <Logo />
+        <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-3 md:px-8">
+          <div className="flex items-center gap-2">
+            <Logo />
+          </div>
 
-          {session && (
-            <button
-              className="md:hidden p-1.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Toggle Menu"
-            >
-              {menuOpen ? (
-                <X size={24} className="text-white" />
-              ) : (
-                <Menu size={24} className="text-white" />
-              )}
-            </button>
-          )}
-
-          {session ? (
-            <DesktopNav
-              activeLink={activeLink}
-              setActiveLink={setActiveLink}
-              notifications={notifications}
-              currentUserMobile={session?.user?.mobile}
-              currentUserName={session?.user?.name}
-              currentUserPages={session?.user?.pages}
-            />
-          ) : (
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <a
-                href="/"
-                className="flex items-center justify-center gap-2 bg-emerald-500/90 text-white text-xs sm:text-sm px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl
-                           hover:bg-emerald-600 transition-all duration-300
-                           shadow-lg hover:shadow-emerald-500/30 whitespace-nowrap"
-              >
-                Login
-              </a>
-            </motion.div>
-          )}
+          <div className="flex items-center gap-3 sm:gap-6">
+            {session ? (
+              <>
+                <DesktopNav
+                  activeLink={activeLink}
+                  setActiveLink={setActiveLink}
+                  notifications={notifications}
+                  currentUserMobile={session?.user?.mobile}
+                  currentUserName={session?.user?.name}
+                  currentUserPages={session?.user?.pages}
+                />
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-95"
+                    onClick={() => setMenuOpen((v) => !v)}
+                    aria-label="Toggle Menu"
+                  >
+                    {menuOpen ? (
+                      <X size={22} className="text-white" />
+                    ) : (
+                      <Menu size={22} className="text-white" />
+                    )}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <a
+                  href="/"
+                  className="flex items-center justify-center gap-2 bg-emerald-500 text-white text-xs sm:text-sm px-5 py-2.5 rounded-xl
+                             hover:bg-emerald-600 transition-all duration-300
+                             shadow-lg shadow-emerald-500/20 whitespace-nowrap font-medium"
+                >
+                  Login
+                </a>
+              </motion.div>
+            )}
+          </div>
         </div>
         <AnimatePresence>
           {menuOpen && session && (

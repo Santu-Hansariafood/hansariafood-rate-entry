@@ -43,7 +43,7 @@ export default function RateTableBody({
 
   return (
     <div
-      className={`max-h-[70vh] overflow-auto transition-all duration-300 ${
+      className={`transition-all duration-300 ${
         allRatesFilled ? "bg-green-50" : "bg-red-50"
       }`}
     >

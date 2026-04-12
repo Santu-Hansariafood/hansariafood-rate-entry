@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
 import TaskChat from "@/components/common/Footer/TaskChat/TaskChat";
 import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
+import BottomNav from "@/components/common/BottomNav/BottomNav";
 
 const geistSans = Geist({
   variable: "--font-body",
@@ -214,7 +215,7 @@ export default function RootLayout({ children }) {
               <SocketProvider>
                 <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
 
-                <main className="flex-1 pt-16">
+                <main className="flex-1 pt-16 pb-20 md:pb-0">
                   {children}
                   <ToastContainer
                     position="top-right"
@@ -229,6 +230,7 @@ export default function RootLayout({ children }) {
                 </main>
 
                 <Footer className="mt-auto" />
+                <BottomNav />
                 <TaskChat />
                 <ScrollToTop />
               </SocketProvider>
