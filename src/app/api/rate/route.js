@@ -45,13 +45,6 @@ export async function POST(req) {
       hour12: true,
     });
 
-    // --- Update Rate Model ---
-    let rateEntry = await Rate.findOne({ 
-      company: cleanCompany, 
-      location: cleanLocation, 
-      commodity: cleanCommodity 
-    });
-
     const numericNewRate = Number(newRate);
     if (isNaN(numericNewRate)) {
       return NextResponse.json(
@@ -60,52 +53,65 @@ export async function POST(req) {
       );
     }
 
-    if (rateEntry) {
-      if (!Array.isArray(rateEntry.oldRates)) {
-        rateEntry.oldRates = [];
-      }
-
-      const lastUpdated = rateEntry.newRateDate ? new Date(rateEntry.newRateDate) : null;
-      if (lastUpdated && !isNaN(lastUpdated.getTime())) {
-        lastUpdated.setHours(0, 0, 0, 0);
-        
-        if (lastUpdated.getTime() !== today.getTime() && rateEntry.newRate !== undefined && rateEntry.newRate !== null) {
-          rateEntry.oldRates.push({
-            rate: rateEntry.newRate,
-            date: rateEntry.newRateDate,
-          });
-        }
-      }
-
-      rateEntry.newRate = numericNewRate;
-      rateEntry.newRateDate = today;
-      rateEntry.mobile = mobile || rateEntry.mobile;
-      
-      const numericQuantity = Number(quantity);
-      rateEntry.quantity = isNaN(numericQuantity) ? (rateEntry.quantity || 0) : numericQuantity;
-      
-      rateEntry.payment = payment !== undefined ? String(payment) : rateEntry.payment;
-      rateEntry.others = others !== undefined ? String(others) : rateEntry.others;
-
-      await rateEntry.save();
-    } else {
-      const numericQuantity = Number(quantity);
-      rateEntry = new Rate({
-        company: cleanCompany,
-        location: cleanLocation,
-        commodity: cleanCommodity,
-        newRate: numericNewRate,
-        newRateDate: today,
-        oldRates: [],
-        mobile,
-        quantity: isNaN(numericQuantity) ? 0 : numericQuantity,
-        payment: payment !== undefined ? String(payment) : "",
-        others: others !== undefined ? String(others) : "",
+    // --- 1. Update/Create Rate Model ---
+    let rateEntry;
+    try {
+      rateEntry = await Rate.findOne({ 
+        company: cleanCompany, 
+        location: cleanLocation, 
+        commodity: cleanCommodity 
       });
-      await rateEntry.save();
+
+      if (rateEntry) {
+        if (!Array.isArray(rateEntry.oldRates)) {
+          rateEntry.oldRates = [];
+        }
+
+        const lastUpdated = rateEntry.newRateDate ? new Date(rateEntry.newRateDate) : null;
+        if (lastUpdated && !isNaN(lastUpdated.getTime())) {
+          lastUpdated.setHours(0, 0, 0, 0);
+          
+          if (lastUpdated.getTime() !== today.getTime() && rateEntry.newRate !== undefined && rateEntry.newRate !== null) {
+            rateEntry.oldRates.push({
+              rate: rateEntry.newRate,
+              date: rateEntry.newRateDate,
+            });
+          }
+        }
+
+        rateEntry.newRate = numericNewRate;
+        rateEntry.newRateDate = today;
+        rateEntry.mobile = mobile || rateEntry.mobile;
+        
+        const numericQuantity = Number(quantity);
+        rateEntry.quantity = isNaN(numericQuantity) ? (rateEntry.quantity || 0) : numericQuantity;
+        
+        rateEntry.payment = payment !== undefined ? String(payment) : rateEntry.payment;
+        rateEntry.others = others !== undefined ? String(others) : rateEntry.others;
+
+        await rateEntry.save();
+      } else {
+        const numericQuantity = Number(quantity);
+        rateEntry = new Rate({
+          company: cleanCompany,
+          location: cleanLocation,
+          commodity: cleanCommodity,
+          newRate: numericNewRate,
+          newRateDate: today,
+          oldRates: [],
+          mobile,
+          quantity: isNaN(numericQuantity) ? 0 : numericQuantity,
+          payment: payment !== undefined ? String(payment) : "",
+          others: others !== undefined ? String(others) : "",
+        });
+        await rateEntry.save();
+      }
+    } catch (rateErr) {
+      console.error("Error saving Rate model:", rateErr);
+      throw new Error(`Rate model save failed: ${rateErr.message}`);
     }
 
-    // --- Update RateHistory Model (for notifications and history) ---
+    // --- 2. Update RateHistory Model (for notifications and history) ---
     let companyIdForSocket = null;
     try {
       // Escape special regex characters in cleanCompany
@@ -116,88 +122,102 @@ export async function POST(req) {
 
       if (companyDoc) {
         companyIdForSocket = companyDoc._id;
-        // Prepare numeric values safely
-        const numericRate = Number(newRate);
-        if (isNaN(numericRate)) {
-          throw new Error(`Invalid rate value: ${newRate}`);
-        }
+        
+        const numericRate = numericNewRate;
 
-        const historyDoc = await RateHistory.findOne({
+        // Check if history already has entry for today
+        const historyRecord = await RateHistory.findOne({
           companyId: companyDoc._id,
           location: cleanLocation,
           commodity: cleanCommodity,
         });
 
-        let previousRate = 0;
-        if (historyDoc && historyDoc.history && historyDoc.history.length > 0) {
-          const prev = [...historyDoc.history]
-            .filter((h) => h.date < todayStr)
-            .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-          previousRate = prev?.finalRate || 0;
-        }
+        if (historyRecord) {
+          const todayEntryIndex = historyRecord.history.findIndex(h => h.date === todayStr);
 
-        const todayExists = await RateHistory.findOne({
-          companyId: companyDoc._id,
-          location: cleanLocation,
-          commodity: cleanCommodity,
-          "history.date": todayStr,
-        });
+          if (todayEntryIndex !== -1) {
+            // Update existing today entry
+            await RateHistory.updateOne(
+              {
+                _id: historyRecord._id,
+                "history.date": todayStr
+              },
+              {
+                $push: {
+                  "history.$.tempRates": {
+                    rate: numericRate,
+                    time: currentTime,
+                    note: others || "",
+                  },
+                },
+                $set: {
+                  "history.$.finalRate": numericRate,
+                  "history.$.others": others || "",
+                },
+              }
+            );
+          } else {
+            // Document exists but no entry for today, so push new history entry
+            let previousRate = 0;
+            if (historyRecord.history.length > 0) {
+              const prev = [...historyRecord.history]
+                .filter((h) => h.date < todayStr)
+                .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+              previousRate = prev?.finalRate || 0;
+            }
 
-        if (todayExists) {
-          await RateHistory.updateOne(
-            {
-              companyId: companyDoc._id,
-              location: cleanLocation,
-              commodity: cleanCommodity,
-              "history.date": todayStr,
-            },
-            {
-              $push: {
-                "history.$.tempRates": {
+            await RateHistory.updateOne(
+              { _id: historyRecord._id },
+              {
+                $push: {
+                  history: {
+                    date: todayStr,
+                    oldRate: previousRate,
+                    tempRates: [
+                      {
+                        rate: numericRate,
+                        time: currentTime,
+                        note: others || "",
+                      },
+                    ],
+                    finalRate: numericRate,
+                    others: others || "",
+                  },
+                },
+              }
+            );
+          }
+        } else {
+          // No RateHistory document at all, create one
+          await RateHistory.create({
+            companyId: companyDoc._id,
+            location: cleanLocation,
+            commodity: cleanCommodity,
+            history: [{
+              date: todayStr,
+              oldRate: 0,
+              tempRates: [
+                {
                   rate: numericRate,
                   time: currentTime,
                   note: others || "",
                 },
-              },
-              $set: {
-                "history.$.finalRate": numericRate,
-                "history.$.others": others || "",
-              },
-            }
-          );
-        } else {
-          await RateHistory.findOneAndUpdate(
-            {
-              companyId: companyDoc._id,
-              location: cleanLocation,
-              commodity: cleanCommodity,
-            },
-            {
-              $push: {
-                history: {
-                  date: todayStr,
-                  oldRate: previousRate,
-                  tempRates: [
-                    {
-                      rate: numericRate,
-                      time: currentTime,
-                      note: others || "",
-                    },
-                  ],
-                  finalRate: numericRate,
-                  others: others || "",
-                },
-              },
-            },
-            { upsert: true, new: true }
-          );
+              ],
+              finalRate: numericRate,
+              others: others || "",
+            }]
+          });
         }
+      } else {
+        console.warn(`ManageCompany not found for: ${cleanCompany}`);
       }
-    } catch (err) {
-      console.warn("Failed to update RateHistory:", err);
+    } catch (historyErr) {
+      // We don't want to fail the whole request if history update fails, 
+      // but we should log it clearly.
+      console.warn("Failed to update RateHistory:", historyErr.message);
     }
 
-    // --- Emit Socket Notification ---
+    // --- 3. Emit Socket Notification ---
     try {
       emitNotification({
         type: "rate",
@@ -211,25 +231,21 @@ export async function POST(req) {
           updateTime: currentTime,
         },
       });
-    } catch (err) {
-      console.warn("Failed to emit notification:", err);
+    } catch (socketErr) {
+      console.warn("Failed to emit notification:", socketErr.message);
     }
 
     return NextResponse.json(
-      { message: "Rate saved and history updated!" },
+      { message: "Rate saved successfully!" },
       { status: 200 },
     );
   } catch (error) {
-      console.error("Error in POST /api/rate:", {
-        message: error.message,
-        stack: error.stack,
-        body: { cleanCompany, cleanLocation, cleanCommodity, newRate }
-      });
-      return NextResponse.json({ 
-        error: "Error saving rate", 
-        details: error.message 
-      }, { status: 500 });
-    }
+    console.error("Critical Error in POST /api/rate:", error);
+    return NextResponse.json({ 
+      error: "Error saving rate", 
+      details: error.message 
+    }, { status: 500 });
+  }
 }
 
 export async function GET(req) {
