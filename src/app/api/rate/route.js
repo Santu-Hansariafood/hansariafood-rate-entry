@@ -36,14 +36,23 @@ export async function POST(req) {
       );
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split("T")[0];
-    const currentTime = new Date().toLocaleTimeString("en-IN", {
-      hour: "2-digit",
+    const now = new Date();
+    const todayStr = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(now);
+    
+    const today = new Date(todayStr + 'T00:00:00Z');
+
+    const istTimeStr = now.toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "numeric",
       minute: "2-digit",
       hour12: true,
     });
+    const currentTime = istTimeStr;
 
     const numericNewRate = Number(newRate);
     if (isNaN(numericNewRate)) {
@@ -53,46 +62,64 @@ export async function POST(req) {
       );
     }
 
-    // --- 1. Update/Create Rate Model ---
-    let rateEntry;
+    let companyIdForSocket = null;
     try {
-      rateEntry = await Rate.findOne({ 
+      console.log("Saving rate for company:", cleanCompany, "Date:", todayStr);
+      
+      const existingRate = await Rate.findOne({ 
         company: cleanCompany, 
         location: cleanLocation, 
         commodity: cleanCommodity 
       });
 
-      if (rateEntry) {
-        if (!Array.isArray(rateEntry.oldRates)) {
-          rateEntry.oldRates = [];
-        }
+      const numericQuantity = isNaN(Number(quantity)) ? 0 : Number(quantity);
 
-        const lastUpdated = rateEntry.newRateDate ? new Date(rateEntry.newRateDate) : null;
+      const updateDoc = {
+        newRate: numericNewRate,
+        newRateDate: today,
+        mobile: mobile || (existingRate?.mobile || ""),
+        quantity: numericQuantity,
+        payment: payment !== undefined ? String(payment) : (existingRate?.payment || ""),
+        others: others !== undefined ? String(others) : (existingRate?.others || ""),
+        updatedAt: now,
+        updateTime: currentTime
+      };
+
+      if (existingRate) {
+        const lastUpdated = existingRate.newRateDate ? new Date(existingRate.newRateDate) : null;
+        let shouldShift = false;
+        
         if (lastUpdated && !isNaN(lastUpdated.getTime())) {
-          lastUpdated.setHours(0, 0, 0, 0);
-          
-          if (lastUpdated.getTime() !== today.getTime() && rateEntry.newRate !== undefined && rateEntry.newRate !== null) {
-            rateEntry.oldRates.push({
-              rate: rateEntry.newRate,
-              date: rateEntry.newRateDate,
-            });
+          const lastUpdatedStr = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).format(lastUpdated);
+
+          if (lastUpdatedStr !== todayStr && existingRate.newRate !== undefined) {
+            shouldShift = true;
           }
         }
 
-        rateEntry.newRate = numericNewRate;
-        rateEntry.newRateDate = today;
-        rateEntry.mobile = mobile || rateEntry.mobile;
-        
-        const numericQuantity = Number(quantity);
-        rateEntry.quantity = isNaN(numericQuantity) ? (rateEntry.quantity || 0) : numericQuantity;
-        
-        rateEntry.payment = payment !== undefined ? String(payment) : rateEntry.payment;
-        rateEntry.others = others !== undefined ? String(others) : rateEntry.others;
-
-        await rateEntry.save();
+        if (shouldShift) {
+          await Rate.updateOne(
+            { _id: existingRate._id },
+            { 
+              $push: { 
+                oldRates: { 
+                  rate: existingRate.newRate, 
+                  date: existingRate.newRateDate 
+                } 
+              },
+              $set: updateDoc
+            }
+          );
+        } else {
+          await Rate.updateOne({ _id: existingRate._id }, { $set: updateDoc });
+        }
       } else {
-        const numericQuantity = Number(quantity);
-        rateEntry = new Rate({
+        await Rate.create({
           company: cleanCompany,
           location: cleanLocation,
           commodity: cleanCommodity,
@@ -100,21 +127,18 @@ export async function POST(req) {
           newRateDate: today,
           oldRates: [],
           mobile,
-          quantity: isNaN(numericQuantity) ? 0 : numericQuantity,
+          quantity: numericQuantity,
           payment: payment !== undefined ? String(payment) : "",
           others: others !== undefined ? String(others) : "",
+          updateTime: currentTime
         });
-        await rateEntry.save();
       }
     } catch (rateErr) {
       console.error("Error saving Rate model:", rateErr);
       throw new Error(`Rate model save failed: ${rateErr.message}`);
     }
 
-    // --- 2. Update RateHistory Model (for notifications and history) ---
-    let companyIdForSocket = null;
     try {
-      // Escape special regex characters in cleanCompany
       const escapedCompany = cleanCompany.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const companyDoc = await ManageCompany.findOne({ 
         name: { $regex: new RegExp(`^${escapedCompany}$`, 'i') } 
@@ -125,7 +149,6 @@ export async function POST(req) {
         
         const numericRate = numericNewRate;
 
-        // Check if history already has entry for today
         const historyRecord = await RateHistory.findOne({
           companyId: companyDoc._id,
           location: cleanLocation,
@@ -136,7 +159,6 @@ export async function POST(req) {
           const todayEntryIndex = historyRecord.history.findIndex(h => h.date === todayStr);
 
           if (todayEntryIndex !== -1) {
-            // Update existing today entry
             await RateHistory.updateOne(
               {
                 _id: historyRecord._id,
@@ -157,13 +179,11 @@ export async function POST(req) {
               }
             );
           } else {
-            // Document exists but no entry for today, so push new history entry
             let previousRate = 0;
             if (historyRecord.history.length > 0) {
-              const prev = [...historyRecord.history]
-                .filter((h) => h.date < todayStr)
-                .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-              previousRate = prev?.finalRate || 0;
+              const historySorted = [...historyRecord.history].sort((a, b) => b.date.localeCompare(a.date));
+              const lastEntry = historySorted[0];
+              previousRate = lastEntry?.finalRate || 0;
             }
 
             await RateHistory.updateOne(
@@ -188,7 +208,6 @@ export async function POST(req) {
             );
           }
         } else {
-          // No RateHistory document at all, create one
           await RateHistory.create({
             companyId: companyDoc._id,
             location: cleanLocation,
@@ -208,16 +227,11 @@ export async function POST(req) {
             }]
           });
         }
-      } else {
-        console.warn(`ManageCompany not found for: ${cleanCompany}`);
       }
     } catch (historyErr) {
-      // We don't want to fail the whole request if history update fails, 
-      // but we should log it clearly.
       console.warn("Failed to update RateHistory:", historyErr.message);
     }
 
-    // --- 3. Emit Socket Notification ---
     try {
       emitNotification({
         type: "rate",
@@ -265,12 +279,18 @@ export async function GET(req) {
     if (company && company !== "all") query.company = company;
     if (commodity && commodity !== "all") query.commodity = commodity;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayStr = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(now);
+    const todayMidnight = new Date(todayStr + 'T00:00:00Z');
 
     const dbQuery = {
       ...query,
-      ...(todayOnly ? { newRateDate: { $gte: today } } : {}),
+      ...(todayOnly ? { newRateDate: { $gte: todayMidnight } } : {}),
     };
 
     const selectFields = minimal
@@ -280,13 +300,21 @@ export async function GET(req) {
     const rates = await Rate.find(dbQuery).select(selectFields).lean();
 
     const formattedRates = rates.map((rate) => {
-      const lastUpdated = new Date(rate.newRateDate);
-      lastUpdated.setHours(0, 0, 0, 0);
-      const isToday = lastUpdated.getTime() === today.getTime();
+      const lastUpdated = rate.newRateDate ? new Date(rate.newRateDate) : null;
+      let isToday = false;
+      
+      if (lastUpdated && !isNaN(lastUpdated.getTime())) {
+        const lastUpdatedStr = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(lastUpdated);
+        isToday = (lastUpdatedStr === todayStr);
+      }
 
       const oldRatesArray = Array.isArray(rate.oldRates) ? [...rate.oldRates] : [];
       
-      // If the stored newRate is from a previous day, treat it as an old rate for the UI
       if (!isToday && rate.newRate !== undefined && rate.newRate !== null) {
         oldRatesArray.push({
           rate: rate.newRate,
@@ -299,7 +327,6 @@ export async function GET(req) {
           `${old.rate} (${old.date ? new Date(old.date).toLocaleDateString("en-GB") : "Unknown"})`,
       );
 
-      // If it's not today, the rate should be empty (treated as new rate after midnight)
       const currentRate = isToday ? rate.newRate : "";
       const currentLastUpdated = isToday ? rate.newRateDate : null;
 
