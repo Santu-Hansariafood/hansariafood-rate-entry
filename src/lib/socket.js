@@ -7,10 +7,14 @@ export const getIO = () => {
 };
 
 export const emitNotification = (data) => {
-  const io = global._io;
-  if (io) {
-    io.emit('notification', data);
-  } else {
-    
+  try {
+    const io = global._io;
+    if (io && typeof io.emit === 'function') {
+      io.emit('notification', data);
+    } else {
+      console.warn("Socket.io instance not available for emission");
+    }
+  } catch (err) {
+    console.error("Error emitting socket notification:", err);
   }
 };

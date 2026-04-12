@@ -106,6 +106,7 @@ export async function POST(req) {
     }
 
     // --- Update RateHistory Model (for notifications and history) ---
+    let companyIdForSocket = null;
     try {
       // Escape special regex characters in cleanCompany
       const escapedCompany = cleanCompany.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -114,6 +115,7 @@ export async function POST(req) {
       });
 
       if (companyDoc) {
+        companyIdForSocket = companyDoc._id;
         // Prepare numeric values safely
         const numericRate = Number(newRate);
         if (isNaN(numericRate)) {
@@ -201,9 +203,10 @@ export async function POST(req) {
         type: "rate",
         data: {
           company: cleanCompany,
+          companyId: companyIdForSocket || null,
           location: cleanLocation,
           commodity: cleanCommodity,
-          rate: Number(newRate),
+          rate: numericNewRate,
           date: todayStr,
           updateTime: currentTime,
         },
