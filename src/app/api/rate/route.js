@@ -52,6 +52,14 @@ export async function POST(req) {
       commodity: cleanCommodity 
     });
 
+    const numericNewRate = Number(newRate);
+    if (isNaN(numericNewRate)) {
+      return NextResponse.json(
+        { error: "Invalid newRate value. Must be a number." },
+        { status: 400 },
+      );
+    }
+
     if (rateEntry) {
       if (!Array.isArray(rateEntry.oldRates)) {
         rateEntry.oldRates = [];
@@ -69,24 +77,28 @@ export async function POST(req) {
         }
       }
 
-      rateEntry.newRate = Number(newRate);
+      rateEntry.newRate = numericNewRate;
       rateEntry.newRateDate = today;
       rateEntry.mobile = mobile || rateEntry.mobile;
-      rateEntry.quantity = quantity !== undefined ? Number(quantity) : rateEntry.quantity;
+      
+      const numericQuantity = Number(quantity);
+      rateEntry.quantity = isNaN(numericQuantity) ? (rateEntry.quantity || 0) : numericQuantity;
+      
       rateEntry.payment = payment !== undefined ? String(payment) : rateEntry.payment;
       rateEntry.others = others !== undefined ? String(others) : rateEntry.others;
 
       await rateEntry.save();
     } else {
+      const numericQuantity = Number(quantity);
       rateEntry = new Rate({
         company: cleanCompany,
         location: cleanLocation,
         commodity: cleanCommodity,
-        newRate: Number(newRate),
+        newRate: numericNewRate,
         newRateDate: today,
         oldRates: [],
         mobile,
-        quantity: quantity !== undefined ? Number(quantity) : 0,
+        quantity: isNaN(numericQuantity) ? 0 : numericQuantity,
         payment: payment !== undefined ? String(payment) : "",
         others: others !== undefined ? String(others) : "",
       });
@@ -95,11 +107,19 @@ export async function POST(req) {
 
     // --- Update RateHistory Model (for notifications and history) ---
     try {
+      // Escape special regex characters in cleanCompany
+      const escapedCompany = cleanCompany.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const companyDoc = await ManageCompany.findOne({ 
-        name: { $regex: new RegExp(`^${cleanCompany}$`, 'i') } 
+        name: { $regex: new RegExp(`^${escapedCompany}$`, 'i') } 
       });
 
       if (companyDoc) {
+        // Prepare numeric values safely
+        const numericRate = Number(newRate);
+        if (isNaN(numericRate)) {
+          throw new Error(`Invalid rate value: ${newRate}`);
+        }
+
         const historyDoc = await RateHistory.findOne({
           companyId: companyDoc._id,
           location: cleanLocation,
@@ -107,7 +127,7 @@ export async function POST(req) {
         });
 
         let previousRate = 0;
-        if (historyDoc && historyDoc.history.length > 0) {
+        if (historyDoc && historyDoc.history && historyDoc.history.length > 0) {
           const prev = [...historyDoc.history]
             .filter((h) => h.date < todayStr)
             .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
@@ -132,13 +152,13 @@ export async function POST(req) {
             {
               $push: {
                 "history.$.tempRates": {
-                  rate: Number(newRate),
+                  rate: numericRate,
                   time: currentTime,
                   note: others || "",
                 },
               },
               $set: {
-                "history.$.finalRate": Number(newRate),
+                "history.$.finalRate": numericRate,
                 "history.$.others": others || "",
               },
             }
@@ -157,12 +177,12 @@ export async function POST(req) {
                   oldRate: previousRate,
                   tempRates: [
                     {
-                      rate: Number(newRate),
+                      rate: numericRate,
                       time: currentTime,
                       note: others || "",
                     },
                   ],
-                  finalRate: Number(newRate),
+                  finalRate: numericRate,
                   others: others || "",
                 },
               },
@@ -197,12 +217,16 @@ export async function POST(req) {
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error in POST /api/rate:", error);
-    return NextResponse.json({ 
-      error: "Error saving rate", 
-      details: error.message 
-    }, { status: 500 });
-  }
+      console.error("Error in POST /api/rate:", {
+        message: error.message,
+        stack: error.stack,
+        body: { cleanCompany, cleanLocation, cleanCommodity, newRate }
+      });
+      return NextResponse.json({ 
+        error: "Error saving rate", 
+        details: error.message 
+      }, { status: 500 });
+    }
 }
 
 export async function GET(req) {
