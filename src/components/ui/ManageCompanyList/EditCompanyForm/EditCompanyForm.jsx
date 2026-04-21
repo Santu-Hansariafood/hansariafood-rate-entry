@@ -180,7 +180,12 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
       onUpdated?.();
       onClose();
     } catch (error) {
-      toast.error("Failed to update company");
+      console.error("Update error:", error);
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.details?.join(", ") ||
+        "Failed to update company";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

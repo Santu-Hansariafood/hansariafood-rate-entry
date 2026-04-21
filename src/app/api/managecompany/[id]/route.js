@@ -56,8 +56,8 @@ export async function PUT(req, { params }) {
     const {
       name,
       location,
-      state,
-      category,
+      state = "N.A",
+      category = "N.A",
       commodities = [],
       mobileNumbers = [],
       type = [],
@@ -118,6 +118,29 @@ export async function PUT(req, { params }) {
     );
   } catch (error) {
     console.error("PUT /managecompany/[id] Error:", error);
+
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { error: "Company with this name and type already exists." },
+        { status: 409 },
+      );
+    }
+
+    if (error.name === "CastError") {
+      return NextResponse.json(
+        { error: "Invalid Company ID format." },
+        { status: 400 },
+      );
+    }
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return NextResponse.json(
+        { error: "Validation failed", details: messages },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       { error: error.message || "Failed to update company" },
       { status: 500 },
