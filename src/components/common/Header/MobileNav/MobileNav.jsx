@@ -428,6 +428,7 @@ export default function MobileNav({
                             >
                               <Link
                                 href={item.path}
+                                prefetch
                                 onClick={() => {
                                   setActiveLink(item.path);
                                   setRateDropdownOpen(false);
@@ -497,6 +498,7 @@ export default function MobileNav({
                             >
                               <Link
                                 href={item.path}
+                                prefetch
                                 onClick={() => {
                                   setActiveLink(item.path);
                                   setCompanyDropdownOpen(false);
@@ -526,6 +528,7 @@ export default function MobileNav({
                     <motion.li key={path} variants={itemVariants}>
                       <Link
                         href={path}
+                        prefetch
                         onClick={() => {
                           setActiveLink(path);
                           setIsOpen(false);

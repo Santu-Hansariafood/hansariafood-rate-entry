@@ -295,6 +295,7 @@ export default function DesktopNav({
                         <li key={path}>
                           <Link
                             href={path}
+                            prefetch
                             onClick={() => {
                               setActiveLink(path);
                               setOpenRateDropdown(false);
@@ -360,6 +361,7 @@ export default function DesktopNav({
                         <li key={path}>
                           <Link
                             href={path}
+                            prefetch
                             onClick={() => {
                               setActiveLink(path);
                               setOpenCompanyDropdown(false);
@@ -385,6 +387,7 @@ export default function DesktopNav({
             <motion.li key={path} whileHover={{ y: -2 }}>
               <Link
                 href={path}
+                prefetch
                 onClick={() => {
                   setActiveLink(path);
                   setOpenCompanyDropdown(false);
