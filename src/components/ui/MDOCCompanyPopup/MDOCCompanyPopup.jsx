@@ -123,19 +123,26 @@ export default function MDOCCompanyPopup({ isOpen, onClose, data, onRateUpdate }
   if (!isOpen || !data) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
-      <motion.div className="bg-white w-full max-w-5xl h-[80vh] rounded-xl overflow-hidden flex flex-col">
-        <div className="flex justify-between p-4 border-b">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 sm:p-6">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white dark:bg-gray-900 w-full max-w-5xl max-h-[95vh] rounded-2xl overflow-hidden flex flex-col shadow-2xl border border-gray-200 dark:border-gray-700"
+      >
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-shrink-0">
           <div>
-            <h2 className="font-semibold">{data.name}</h2>
-            <p className="text-sm text-gray-500">Date: {today}</p>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">{data.name}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Date: {today}</p>
           </div>
-          <button onClick={onClose}>
-            <X />
+          <button 
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-all"
+          >
+            <X size={24} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar">
           {loadingFetch ? (
             <Loading />
           ) : (

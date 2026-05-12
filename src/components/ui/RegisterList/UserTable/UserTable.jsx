@@ -179,7 +179,7 @@ export default function UserTable({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 sm:p-6"
             onClick={() => setPageModalOpen(false)}
           >
             <motion.div
@@ -187,22 +187,22 @@ export default function UserTable({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[95vh] overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700"
             >
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                   Manage Pages for {currentUser?.name}
                 </h3>
                 <button
                   onClick={() => setPageModalOpen(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors group"
                 >
-                  <X size={20} className="text-gray-500" />
+                  <X size={20} className="text-gray-500 group-hover:text-red-500" />
                 </button>
               </div>
 
-              <div className="p-6 overflow-y-auto flex-1">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {allPages.map((item) => {
                     const id = item.key || item.path;
                     const isSelected = selectedPages.includes(id);

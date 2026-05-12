@@ -76,7 +76,7 @@ const RateUpdatePopup = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6"
             onClick={() => setOpen(false)}
           >
             <motion.div
@@ -85,8 +85,8 @@ const RateUpdatePopup = () => {
               exit={{ scale: 0.9, opacity: 0, y: 50 }}
               transition={{ duration: 0.3 }}
               className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl 
-                   w-[95vw] sm:w-[90vw] lg:w-[85vw] max-w-7xl 
-                   max-h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700"
+                   w-full max-w-7xl 
+                   max-h-[95vh] flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
