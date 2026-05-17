@@ -4,6 +4,8 @@ import SaudaEntry from "@/models/SaudaEntry";
 import Seller from "@/models/Seller";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 
+export const revalidate = 300; // Cache for 5 minutes
+
 const getCutoffDate = (months) => {
   const d = new Date();
   d.setMonth(d.getMonth() - months);

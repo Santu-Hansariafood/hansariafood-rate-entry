@@ -37,6 +37,7 @@ const SaudaEntrySchema = new mongoose.Schema(
 SaudaEntrySchema.index({ date: 1 });
 SaudaEntrySchema.index({ company: 1 });
 SaudaEntrySchema.index({ date: 1, company: 1 }, { unique: true });
+SaudaEntrySchema.index({ createdAt: 1 });
 
 const CounterSchema = new mongoose.Schema({
   _id: { type: String, required: true },

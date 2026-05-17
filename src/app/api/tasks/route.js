@@ -25,6 +25,7 @@ export async function GET(req) {
       $or: [{ sender: mobile }, { "receivers.mobile": mobile }],
     })
       .sort({ createdAt: -1 })
+      .limit(50)
       .lean();
 
     return NextResponse.json(tasks);

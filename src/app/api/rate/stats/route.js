@@ -12,7 +12,15 @@ export async function GET(req) {
 
   try {
     await connectDB();
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
     const stats = await Rate.aggregate([
+      {
+        $match: {
+          newRateDate: { $gte: oneYearAgo },
+        },
+      },
       {
         $project: {
           oldDates: {

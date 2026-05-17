@@ -2,10 +2,14 @@ import { useState, useEffect, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 
+// Simple cache to avoid multiple requests for the same user list in the same session
+let cachedUsers = null;
+let usersPromise = null;
+
 const useRateEntries = () => {
   const [rates, setRates] = useState([]);
   const [saudas, setSaudas] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(cachedUsers || []);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState("");
 
@@ -20,10 +24,21 @@ const useRateEntries = () => {
       
       setLoading(true);
       try {
-        const [ratesRes, usersRes, saudaRes] = await Promise.all([
+        // Use existing promise if a request is already in flight
+        if (!usersPromise && !cachedUsers) {
+          usersPromise = axiosInstance.get("/auth/register?minimal=true").then(res => {
+            const userData = res.data?.users || res.data || [];
+            cachedUsers = Array.isArray(userData) ? userData : [];
+            return cachedUsers;
+          }).finally(() => {
+            usersPromise = null;
+          });
+        }
+
+        const [ratesRes, saudaRes, fetchedUsers] = await Promise.all([
           axiosInstance.get("/rate?todayOnly=true"),
-          axiosInstance.get("/auth/register"),
           axiosInstance.get(`/sauda/today?date=${date}`),
+          usersPromise || Promise.resolve(cachedUsers)
         ]);
 
         const safeRates = Array.isArray(ratesRes.data) ? ratesRes.data : [];
@@ -35,12 +50,7 @@ const useRateEntries = () => {
         const safeSaudas = Array.isArray(saudaRes.data) ? saudaRes.data : [];
         setSaudas(safeSaudas);
 
-        // API might return { users: [...] } or just [...]
-
-        const userData = usersRes.data?.users || usersRes.data || [];
-        const safeUsers = Array.isArray(userData) ? userData : [];
-
-        setUsers(safeUsers);
+        setUsers(fetchedUsers || []);
       } catch (error) {
         toast.error("Failed to fetch rate entries");
         console.error("Error fetching data:", error);

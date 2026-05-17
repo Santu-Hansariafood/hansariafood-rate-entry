@@ -23,6 +23,7 @@ const RateSchema = new mongoose.Schema({
 RateSchema.index({ company: 1, location: 1, commodity: 1 });
 RateSchema.index({ company: 1 });
 RateSchema.index({ newRateDate: 1 });
+RateSchema.index({ createdAt: 1 });
 
 RateSchema.pre("save", async function () {
   try {

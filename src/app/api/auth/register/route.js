@@ -48,7 +48,18 @@ export async function GET(req) {
 
   try {
     await connectDB();
-    const users = await User.find({}, { password: 0 })
+    const { searchParams } = new URL(req.url);
+    const mobile = searchParams.get("mobile");
+    const minimal = searchParams.get("minimal") === "true";
+
+    if (mobile) {
+      const user = await User.findOne({ mobile }, { password: 0 }).lean();
+      if (!user) return error("User not found", 404);
+      return NextResponse.json({ success: true, user }, { status: 200 });
+    }
+
+    const projection = minimal ? { mobile: 1, name: 1 } : { password: 0 };
+    const users = await User.find({}, projection)
       .sort({ createdAt: -1 })
       .lean();
 

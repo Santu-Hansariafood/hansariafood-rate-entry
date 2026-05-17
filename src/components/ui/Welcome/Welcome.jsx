@@ -63,37 +63,45 @@ export default function Welcome() {
     try {
       setLoading(true);
 
-      const companyResponse = await axiosInstance.get(
+      const sessionName = session?.user?.name;
+      const userNamePromise = (async () => {
+        if (sessionName) {
+          const formatted = formatName(sessionName);
+          setName(formatted);
+          localStorage.setItem("userName", formatted);
+          return formatted;
+        } else {
+          try {
+            const userResponse = await axiosInstance.get(`/auth/register?mobile=${effectiveMobile}`);
+            const userData = userResponse.data?.user;
+            if (userData?.name) {
+              const formatted = formatName(userData.name);
+              setName(formatted);
+              localStorage.setItem("userName", formatted);
+              return formatted;
+            } else {
+              const storedName = localStorage.getItem("userName");
+              const finalName = storedName || "Guest";
+              setName(finalName);
+              return finalName;
+            }
+          } catch {
+            const storedName = localStorage.getItem("userName");
+            const finalName = storedName || "Guest";
+            setName(finalName);
+            return finalName;
+          }
+        }
+      })();
+
+      const companyResponsePromise = axiosInstance.get(
         `/user-companies?mobile=${encodeURIComponent(effectiveMobile)}`
       );
 
-      const sessionName = session?.user?.name;
-      if (sessionName) {
-        const formatted = formatName(sessionName);
-        setName(formatted);
-        localStorage.setItem("userName", formatted);
-      } else {
-        try {
-          const userResponse = await axiosInstance.get("/auth/register");
-          const users = Array.isArray(userResponse.data?.users)
-            ? userResponse.data.users
-            : [];
-          const userData = users.find(
-            (u) => u.mobile?.toString() === effectiveMobile?.toString()
-          );
-          if (userData?.name) {
-            const formatted = formatName(userData.name);
-            setName(formatted);
-            localStorage.setItem("userName", formatted);
-          } else {
-            const storedName = localStorage.getItem("userName");
-            setName(storedName || "Guest");
-          }
-        } catch {
-          const storedName = localStorage.getItem("userName");
-          setName(storedName || "Guest");
-        }
-      }
+      const [_, companyResponse] = await Promise.all([
+        userNamePromise,
+        companyResponsePromise
+      ]);
 
       if (effectiveMobile) localStorage.setItem("mobile", effectiveMobile);
       setAssignedCompanies(companyResponse.data?.companies ?? []);
@@ -329,7 +337,7 @@ const TeamTasksPreview = ({ mobile }) => {
       setIsRefreshing(true);
       const [tasksRes, usersRes] = await Promise.all([
         axiosInstance.get(`/tasks?mobile=${encodeURIComponent(myMobile)}`),
-        axiosInstance.get("/auth/register"),
+        axiosInstance.get("/auth/register?minimal=true"),
       ]);
 
       const taskList = tasksRes?.data;
