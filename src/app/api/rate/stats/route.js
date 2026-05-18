@@ -12,13 +12,15 @@ export async function GET(req) {
 
   try {
     await connectDB();
+    const transitionDate = new Date(2026, 3, 1);
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const finalCutoff = oneYearAgo > transitionDate ? oneYearAgo : transitionDate;
 
     const stats = await Rate.aggregate([
       {
         $match: {
-          newRateDate: { $gte: oneYearAgo },
+          newRateDate: { $gte: finalCutoff },
         },
       },
       {

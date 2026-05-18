@@ -9,7 +9,8 @@ export const revalidate = 300; // Cache for 5 minutes
 const getCutoffDate = (months) => {
   const d = new Date();
   d.setMonth(d.getMonth() - months);
-  return d;
+  const transitionDate = new Date(2026, 3, 1);
+  return d > transitionDate ? d : transitionDate;
 };
 
 export async function GET(req) {

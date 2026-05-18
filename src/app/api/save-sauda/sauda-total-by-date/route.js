@@ -8,7 +8,8 @@ export const revalidate = 60;
 const getCutoffDate = (months) => {
   const d = new Date();
   d.setMonth(d.getMonth() - months);
-  return d;
+  const transitionDate = new Date(2026, 3, 1);
+  return d > transitionDate ? d : transitionDate;
 };
 
 export async function GET(req) {

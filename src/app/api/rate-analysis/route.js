@@ -36,7 +36,14 @@ export async function GET(req) {
       rateFilter.company = { $in: companyNames };
     }
 
-    const rates = await Rate.find(rateFilter);
+    const transitionDate = new Date(2026, 3, 1);
+    const rates = await Rate.find({
+      ...rateFilter,
+      $or: [
+        { newRateDate: { $gte: transitionDate } },
+        { "oldRates.date": { $gte: transitionDate } },
+      ],
+    });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -46,7 +53,11 @@ export async function GET(req) {
       lastUpdated.setHours(0, 0, 0, 0);
       const isToday = lastUpdated.getTime() === today.getTime();
 
-      const oldRatesFormatted = rate.oldRates.map(
+      const oldRatesFiltered = (rate.oldRates || []).filter(
+        (old) => new Date(old.date) >= transitionDate,
+      );
+
+      const oldRatesFormatted = oldRatesFiltered.map(
         (old) =>
           `${old.rate} (${new Date(old.date).toLocaleDateString("en-GB")})`,
       );
@@ -63,7 +74,7 @@ export async function GET(req) {
         hasNewRateToday: isToday,
         lastUpdated: isToday
           ? rate.newRateDate
-          : rate.oldRates.at(-1)?.date || null,
+          : oldRatesFiltered.at(-1)?.date || null,
         updateTime: rate.updateTime || "",
         mobile: rate.mobile || "",
       };

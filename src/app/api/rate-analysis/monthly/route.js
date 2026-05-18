@@ -22,9 +22,11 @@ export async function GET(req) {
       );
     }
 
+    const transitionDate = new Date(2026, 3, 1);
     const startDate = startDateStr
       ? new Date(startDateStr)
-      : new Date(new Date().getFullYear(), 0, 1);
+      : transitionDate;
+    const finalStartDate = startDate > transitionDate ? startDate : transitionDate;
     const endDate = endDateStr ? new Date(endDateStr) : new Date();
 
     const rates = await Rate.find({
@@ -38,7 +40,7 @@ export async function GET(req) {
       if (Array.isArray(r.oldRates)) {
         r.oldRates.forEach((old) => {
           const d = new Date(old.date);
-          if (d >= startDate && d <= endDate) {
+          if (d >= finalStartDate && d <= endDate) {
             allDataPoints.push({
               rate: old.rate,
               date: d,
@@ -51,7 +53,7 @@ export async function GET(req) {
 
       // Process current newRate
       const currentD = new Date(r.newRateDate);
-      if (currentD >= startDate && currentD <= endDate) {
+      if (currentD >= finalStartDate && currentD <= endDate) {
         allDataPoints.push({
           rate: r.newRate,
           date: currentD,
