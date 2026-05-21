@@ -18,12 +18,12 @@ const NotificationsPanel = ({ onClose }) => {
   const sortedNotifications = useMemo(() => {
     return [...filteredNotifications].sort((a, b) => {
       const saudaA = parseInt(
-        (a.saudaNo ? a.saudaNo.toString().split("-").pop() : "0"),
-        10
+        a.saudaNo ? a.saudaNo.toString().split("-").pop() : "0",
+        10,
       );
       const saudaB = parseInt(
-        (b.saudaNo ? b.saudaNo.toString().split("-").pop() : "0"),
-        10
+        b.saudaNo ? b.saudaNo.toString().split("-").pop() : "0",
+        10,
       );
       return saudaB - saudaA;
     });
@@ -34,12 +34,12 @@ const NotificationsPanel = ({ onClose }) => {
       `*✅ Sauda Confirmed*`,
       `\n`,
       `*Sauda details are as follows:*`,
+      item.saudaNo ? `*Sauda No:* ${formatSaudaNo(item.saudaNo)}` : null,
       `*Date:* ${item.date}`,
       `*Location:* ${item.location}`,
       `*Commodity:* ${item.commodity}`,
       `*Tons:* ${item.tons}`,
       `*Rate:* ₹${item.rate ?? "N/A"}`,
-      item.saudaNo ? `*Sauda No:* ${formatSaudaNo(item.saudaNo)}` : null,
       item.buyerName ? `*Buyer:* ${item.buyerName}` : null,
       item.sellerCompany ? `*Seller Company:* ${item.sellerCompany}` : null,
       item.payment !== null &&
