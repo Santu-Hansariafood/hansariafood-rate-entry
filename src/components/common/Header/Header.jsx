@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useSocket } from "@/context/SocketContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useRef } from "react";
 
 const Logo = dynamic(() => import("./Logo/Logo"), { ssr: false });
 const DesktopNav = dynamic(() => import("./DesktopNav/DesktopNav"), {
@@ -32,7 +31,6 @@ export default function Header() {
   const [notifications, setNotifications] = useState([]);
   const pathname = usePathname();
   const lastShownRef = useRef([]);
-  const audioRef = useRef(null);
 
   useEffect(() => {
     if (pathname) setActiveLink(pathname);
@@ -41,15 +39,6 @@ export default function Header() {
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       Notification.requestPermission().catch(() => {});
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      audioRef.current = new Audio("/notification/notification.wav");
-      audioRef.current.volume = 0.7;
-    } catch (err) {
-      console.warn("Audio init error:", err);
     }
   }, []);
 
@@ -82,15 +71,6 @@ export default function Header() {
         } catch (err) {
           console.warn("Notification error:", err);
         }
-
-        try {
-          if (audioRef.current) {
-            const sound = audioRef.current.cloneNode();
-            sound.play().catch(() => {});
-          }
-        } catch (err) {
-          console.warn("Sound playback error:", err);
-        }
       }
     });
   }, [notifications]);
@@ -108,18 +88,17 @@ export default function Header() {
           companyName: n.company,
           rate: n.newRate,
           date: n.lastUpdated,
-          // type "rate" to distinguish from "history"
           source: "rate",
         }));
 
-        const historyNotifications = (rateHistoryRes.data?.notifications || []).map(
-          (n) => ({
-            ...n,
-            company: n.companyName,
-            newRate: n.rate,
-            source: "history",
-          })
-        );
+        const historyNotifications = (
+          rateHistoryRes.data?.notifications || []
+        ).map((n) => ({
+          ...n,
+          company: n.companyName,
+          newRate: n.rate,
+          source: "history",
+        }));
 
         setNotifications([...rateNotifications, ...historyNotifications]);
       } catch (error) {
@@ -128,25 +107,25 @@ export default function Header() {
     };
 
     fetchNotifications();
-    
+
     if (!socket) return;
 
     const handleNotification = (payload) => {
-      if (payload.type === 'rate' || payload.type === 'sauda') {
+      if (payload.type === "rate" || payload.type === "sauda") {
         fetchNotifications();
       }
     };
 
-    socket.on('notification', handleNotification);
+    socket.on("notification", handleNotification);
 
     const handleRatesUpdated = () => {
       fetchNotifications();
     };
 
     window.addEventListener("rates-updated", handleRatesUpdated);
-    
+
     return () => {
-      socket.off('notification', handleNotification);
+      socket.off("notification", handleNotification);
       window.removeEventListener("rates-updated", handleRatesUpdated);
     };
   }, [socket]);
@@ -198,7 +177,7 @@ export default function Header() {
                   currentUserName={session?.user?.name}
                   currentUserPages={session?.user?.pages}
                 />
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all active:scale-95"
@@ -227,6 +206,7 @@ export default function Header() {
             )}
           </div>
         </div>
+
         <AnimatePresence>
           {menuOpen && session && (
             <MobileNav
@@ -242,6 +222,7 @@ export default function Header() {
           )}
         </AnimatePresence>
       </header>
+
       <CookieBanner />
     </>
   );
