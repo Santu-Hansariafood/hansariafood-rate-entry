@@ -10,7 +10,7 @@ import { SocketProvider } from "@/context/SocketContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
-import TaskChat from "@/components/common/Footer/TaskChat/TaskChat";
+import SariaAI from "@/components/common/Footer/SariaAI/SariaAI";
 import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
 import BottomNav from "@/components/common/BottomNav/BottomNav";
 
@@ -231,7 +231,8 @@ export default function RootLayout({ children }) {
 
                 <Footer className="mt-auto" />
                 <BottomNav />
-                <TaskChat />
+                {/* <TaskChat /> */}
+                <SariaAI />
                 <ScrollToTop />
               </SocketProvider>
             </UserProvider>
