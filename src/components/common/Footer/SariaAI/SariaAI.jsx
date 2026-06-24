@@ -2,17 +2,106 @@
 
 import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Send, X, Search, TrendingUp, Building, MapPin, User } from "lucide-react";
+import { Bot, Send, X, Copy, Mic, MicOff } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "../../Loading/Loading";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { useUser } from "@/context/UserContext";
 
 const SariaAI = () => {
+  const { data: session } = useSession();
+  const { mobile } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [userName, setUserName] = useState("Guest");
+  const [greeting, setGreeting] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
   const messagesEndRef = useRef(null);
+
+  // Get user name and set greeting
+  useEffect(() => {
+    // Set greeting based on time
+    const hour = new Date().getHours();
+    let newGreeting;
+    if (hour < 12) newGreeting = "Good morning";
+    else if (hour < 18) newGreeting = "Good afternoon";
+    else newGreeting = "Good evening";
+    setGreeting(newGreeting);
+
+    // Get user name
+    const sessionName = session?.user?.name;
+    const storedName = localStorage.getItem("userName");
+    const name = sessionName || storedName || "Guest";
+    // Format name
+    const formattedName = name
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+    setUserName(formattedName);
+  }, [session?.user?.name]);
+
+  // Initialize messages with greeting
+  useEffect(() => {
+    if (greeting && userName && messages.length === 0) {
+      setMessages([
+        {
+          id: 1,
+          role: "assistant",
+          content: `${greeting}, ${userName}! I'm SariaAI. How can I help you today?`,
+          data: null
+        }
+      ]);
+    }
+  }, [greeting, userName]);
+
+  // Setup voice recognition
+  useEffect(() => {
+    if (typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = "en-US";
+
+      rec.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsListening(false);
+      };
+
+      rec.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        toast.error("Voice recognition failed. Please try again.");
+        setIsListening(false);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(rec);
+    }
+  }, []);
+
+  const startListening = () => {
+    if (recognition) {
+      setIsListening(true);
+      recognition.start();
+    } else {
+      toast.error("Voice recognition is not supported in your browser.");
+    }
+  };
+
+  const stopListening = () => {
+    if (recognition) {
+      recognition.stop();
+      setIsListening(false);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -22,32 +111,70 @@ const SariaAI = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleCopy = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard!");
+    } catch (err) {
+      toast.error("Failed to copy");
+    }
+  };
 
-    const userMessage = {
-      id: Date.now(),
-      role: "user",
-      content: input.trim()
-    };
+  const formatDataForCopy = (data) => {
+    if (!Array.isArray(data)) return "";
+    return data.map((item, idx) => {
+      return `${idx + 1}. ` + Object.entries(item).map(([key, value]) => `${key}: ${value}`).join(", ");
+    }).join("\n");
+  };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+  const handleSend = async (queryOverride = null, page = 1) => {
+    const query = queryOverride || input.trim();
+    if (!query) return;
+
+    if (!queryOverride) {
+      const userMessage = {
+        id: Date.now(),
+        role: "user",
+        content: query
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
+    }
     setLoading(true);
 
     try {
       const { data } = await axiosInstance.post("/sariaai", {
-        query: userMessage.content
+        query,
+        page
       });
 
       const aiMessage = {
         id: Date.now() + 1,
         role: "assistant",
         content: data.response,
-        data: data.data
+        data: data.data,
+        hasMore: data.hasMore,
+        nextPage: page + 1,
+        originalQuery: query
       };
 
-      setMessages((prev) => [...prev, aiMessage]);
+      setMessages((prev) => {
+        if (queryOverride) {
+          // Replace last message for pagination
+          return prev.map((msg, idx) => {
+            if (idx === prev.length - 1) {
+              return {
+                ...msg,
+                data: [...(msg.data || []), ...(data.data || [])],
+                hasMore: data.hasMore,
+                nextPage: page + 1
+              };
+            }
+            return msg;
+          });
+        }
+        return [...prev, aiMessage];
+      });
     } catch (error) {
       toast.error("Failed to get response from SariaAI");
       console.error("SariaAI error:", error);
@@ -91,49 +218,23 @@ const SariaAI = () => {
               </button>
             </div>
 
-            <div className="flex gap-2 p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950">
-              <button
-                onClick={() => setInput("top rate")}
-                className="flex-1 px-3 py-2 text-xs font-medium bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-gray-700 dark:text-gray-300 transition flex items-center justify-center gap-1"
-              >
-                <TrendingUp size={12} /> Top Rate
-              </button>
-              <button
-                onClick={() => setInput("top 10 company rate with location")}
-                className="flex-1 px-3 py-2 text-xs font-medium bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-gray-700 dark:text-gray-300 transition flex items-center justify-center gap-1"
-              >
-                <Building size={12} /> Companies
-              </button>
-              <button
-                onClick={() => setInput("top 10 seller name")}
-                className="flex-1 px-3 py-2 text-xs font-medium bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-gray-700 dark:text-gray-300 transition flex items-center justify-center gap-1"
-              >
-                <User size={12} /> Sellers
-              </button>
-            </div>
-
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-950/50">
-              {messages.length === 0 ? (
-                <div className="text-center text-gray-400 py-10">
-                  <Bot size={48} className="mx-auto mb-4 text-emerald-500 opacity-50" />
-                  <p>Hi! I'm SariaAI. Ask me about rates, companies, or sellers!</p>
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div className={`max-w-[80%] p-4 rounded-xl ${
-                      msg.role === "user"
-                        ? "bg-emerald-600 text-white rounded-br-none"
-                        : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-200 dark:border-gray-700"
-                    }`}>
-                      <p className="text-sm">{msg.content}</p>
-                      
-                      {msg.data && Array.isArray(msg.data) && msg.data.length > 0 && (
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div className={`max-w-[85%] p-4 rounded-xl relative ${
+                    msg.role === "user"
+                      ? "bg-emerald-600 text-white rounded-br-none"
+                      : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-none border border-gray-200 dark:border-gray-700"
+                  }`}>
+                    <p className="text-sm">{msg.content}</p>
+                    
+                    {msg.data && Array.isArray(msg.data) && msg.data.length > 0 && (
+                      <>
                         <div className="mt-3 space-y-2">
                           {msg.data.map((item, idx) => (
                             <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-xs">
@@ -146,11 +247,26 @@ const SariaAI = () => {
                             </div>
                           ))}
                         </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))
-              )}
+                        <button
+                          onClick={() => handleCopy(`${msg.content}\n\n${formatDataForCopy(msg.data)}`)}
+                          className="mt-3 text-xs flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+                        >
+                          <Copy size={14} /> Copy
+                        </button>
+                        {msg.hasMore && (
+                          <button
+                            onClick={() => handleSend(msg.originalQuery, msg.nextPage)}
+                            disabled={loading}
+                            className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline disabled:opacity-50"
+                          >
+                            See More
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
 
               {loading && (
                 <div className="flex justify-start">
@@ -167,17 +283,27 @@ const SariaAI = () => {
             </div>
 
             <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  className={`p-2 rounded-full transition ${
+                    isListening 
+                      ? "bg-red-500 text-white animate-pulse" 
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                </button>
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask SariaAI..."
+                  placeholder={isListening ? "Listening..." : "Ask SariaAI..."}
                   onKeyDown={(e) => e.key === "Enter" && handleSend()}
                   className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full border-none focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                 />
                 <button
-                  onClick={handleSend}
+                  onClick={() => handleSend()}
                   disabled={loading}
                   className="p-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 transition"
                 >
