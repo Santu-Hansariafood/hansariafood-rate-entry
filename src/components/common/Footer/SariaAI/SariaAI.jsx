@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Send, X, Copy, Mic, MicOff } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
@@ -21,32 +21,39 @@ const SariaAI = () => {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState(null);
   const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
 
-  // Get user name and set greeting
-  useEffect(() => {
+  // Memoized: Get user name and set greeting
+  const userData = useMemo(() => {
     // Set greeting based on time
     const hour = new Date().getHours();
     let newGreeting;
     if (hour < 12) newGreeting = "Good morning";
     else if (hour < 18) newGreeting = "Good afternoon";
     else newGreeting = "Good evening";
-    setGreeting(newGreeting);
 
     // Get user name
     const sessionName = session?.user?.name;
-    const storedName = localStorage.getItem("userName");
+    const storedName = typeof window !== "undefined" ? localStorage.getItem("userName") : null;
     const name = sessionName || storedName || "Guest";
     // Format name
     const formattedName = name
       .split(" ")
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ");
-    setUserName(formattedName);
+
+    return { greeting: newGreeting, userName: formattedName };
   }, [session?.user?.name]);
 
-  // Initialize messages with greeting
+  // Update state when userData changes
   useEffect(() => {
-    if (greeting && userName && messages.length === 0) {
+    setGreeting(userData.greeting);
+    setUserName(userData.userName);
+  }, [userData]);
+
+  // Initialize messages with greeting only when chat opens
+  useEffect(() => {
+    if (isOpen && greeting && userName && messages.length === 0) {
       setMessages([
         {
           id: 1,
@@ -56,10 +63,12 @@ const SariaAI = () => {
         }
       ]);
     }
-  }, [greeting, userName]);
+  }, [isOpen, greeting, userName, messages.length]);
 
-  // Setup voice recognition
+  // Setup voice recognition only when chat is first opened
   useEffect(() => {
+    if (!isOpen || recognition) return;
+
     if (typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const rec = new SpeechRecognition();
@@ -84,50 +93,54 @@ const SariaAI = () => {
       };
 
       setRecognition(rec);
+      recognitionRef.current = rec;
     }
-  }, []);
+  }, [isOpen, recognition]);
 
-  const startListening = () => {
-    if (recognition) {
+  // Memoized handlers
+  const startListening = useCallback(() => {
+    if (recognitionRef.current) {
       setIsListening(true);
-      recognition.start();
+      recognitionRef.current.start();
     } else {
       toast.error("Voice recognition is not supported in your browser.");
     }
-  };
+  }, []);
 
-  const stopListening = () => {
-    if (recognition) {
-      recognition.stop();
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
       setIsListening(false);
     }
-  };
+  }, []);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (isOpen) {
+      scrollToBottom();
+    }
+  }, [messages, isOpen, scrollToBottom]);
 
-  const handleCopy = async (text) => {
+  const handleCopy = useCallback(async (text) => {
     try {
       await navigator.clipboard.writeText(text);
       toast.success("Copied to clipboard!");
     } catch (err) {
       toast.error("Failed to copy");
     }
-  };
+  }, []);
 
-  const formatDataForCopy = (data) => {
+  const formatDataForCopy = useCallback((data) => {
     if (!Array.isArray(data)) return "";
     return data.map((item, idx) => {
       return `${idx + 1}. ` + Object.entries(item).map(([key, value]) => `${key}: ${value}`).join(", ");
     }).join("\n");
-  };
+  }, []);
 
-  const handleSend = async (queryOverride = null, page = 1) => {
+  const handleSend = useCallback(async (queryOverride = null, page = 1) => {
     const query = queryOverride || input.trim();
     if (!query) return;
 
@@ -181,10 +194,10 @@ const SariaAI = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [input]);
 
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={null}>
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
