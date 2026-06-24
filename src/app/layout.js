@@ -233,7 +233,7 @@ export default function RootLayout({ children }) {
                 <BottomNav />
                 {/* <TaskChat /> */}
                 <SariaAI />
-                <ScrollToTop />
+               {/* <ScrollToTop /> */}
               </SocketProvider>
             </UserProvider>
           </AuthWrapper>
