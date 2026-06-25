@@ -134,21 +134,32 @@ const SariaAI = () => {
     }
   }, []);
 
-  const formatDataForCopy = useCallback((data) => {
-    if (!Array.isArray(data)) return "";
+  const formatDataForCopy = useCallback((data, topSellers) => {
+    let result = "";
     
-    return data.map((item, index) => {
-      let lines = [`--- Item ${index + 1} ---`];
-      
-      Object.entries(item).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== "") {
-          const formattedKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
-          lines.push(`${formattedKey}: ${value}`);
-        }
-      });
-      
-      return lines.join("\n");
-    }).join("\n\n");
+    if (Array.isArray(data) && data.length > 0) {
+      result += data.map((item, index) => {
+        let lines = [`--- Item ${index + 1} ---`];
+        
+        Object.entries(item).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== "") {
+            const formattedKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+            lines.push(`${formattedKey}: ${value}`);
+          }
+        });
+        
+        return lines.join("\n");
+      }).join("\n\n");
+    }
+    
+    if (Array.isArray(topSellers) && topSellers.length > 0) {
+      result += "\n\n--- Top Sellers ---\n";
+      result += topSellers.map((seller, index) => {
+        return `${index + 1}. ${seller.sellerName}: ${seller.companies}`;
+      }).join("\n");
+    }
+    
+    return result;
   }, []);
 
   const handleSend = useCallback(async (queryOverride = null, page = 1) => {
@@ -177,6 +188,7 @@ const SariaAI = () => {
         role: "assistant",
         content: data.response,
         data: data.data,
+        topSellers: data.topSellers,
         hasMore: data.hasMore,
         nextPage: page + 1,
         originalQuery: query
@@ -192,6 +204,7 @@ const SariaAI = () => {
               return {
                 ...msg,
                 data: [...existingData, ...newData],
+                topSellers: data.topSellers || msg.topSellers,
                 hasMore: data.hasMore,
                 nextPage: page + 1
               };
@@ -281,9 +294,23 @@ const SariaAI = () => {
                           </div>
                         ))}
                         
+                        {msg.topSellers && msg.topSellers.length > 0 && (
+                          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-xs">
+                            <p className="font-medium text-blue-700 dark:text-blue-300 mb-2">Top Sellers:</p>
+                            <div className="space-y-1">
+                              {msg.topSellers.map((seller, idx) => (
+                                <div key={idx} className="flex justify-between">
+                                  <span className="font-medium">{seller.sellerName}:</span>
+                                  <span className="text-gray-700 dark:text-gray-300">{seller.companies}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleCopy(`${msg.content}\n\n${formatDataForCopy(msg.data)}`)}
+                            onClick={() => handleCopy(`${msg.content}\n\n${formatDataForCopy(msg.data, msg.topSellers)}`)}
                             className="mt-2 text-xs flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
                           >
                             <Copy size={14} /> Copy Report

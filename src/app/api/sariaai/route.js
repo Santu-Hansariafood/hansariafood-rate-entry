@@ -44,40 +44,7 @@ export async function POST(req) {
 
     // --- Quick sellers response ---
     if (lowerQuery.includes("seller")) {
-      let sellerQuery = {};
-      let companyNameMatch = lowerQuery.match(/(?:for|of|with|top sellers for|top 10 sellers for|sellers for)?\s*["']?([^"'\n]+)["']?\s*(?:sellers|seller)?$/i);
-      let companyName = companyNameMatch ? companyNameMatch[1].trim() : null;
-
-      if (companyName) {
-        sellerQuery = {
-          companies: { $regex: companyName, $options: "i" }
-        };
-      }
-
-      const [sellers, total] = await Promise.all([
-        Seller.find(sellerQuery)
-          .select('sellerName companies')
-          .sort({ sellerName: 1 })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Seller.countDocuments(sellerQuery)
-      ]);
-
-      const hasMore = skip + sellers.length < total;
-
-      return NextResponse.json({
-        response: companyName
-          ? `Here are the sellers for "${companyName}":`
-          : "Here are the sellers:",
-        data: sellers.map(s => ({
-          sellerName: s.sellerName,
-          companies: Array.isArray(s.companies)
-            ? s.companies.map(c => typeof c === 'object' ? c.name : c).join(", ")
-            : s.companies
-        })),
-        hasMore
-      }, { status: 200 });
+      return await handleSellerSearch(lowerQuery, query, page, limit, skip);
     }
 
     // --- Quick rates with caching ---
@@ -145,7 +112,7 @@ export async function POST(req) {
 
     // --- Quick details fallback ---
     return NextResponse.json({
-      response: `${greeting()}, I'm SariaAI! Here are some things you can ask:\n- "top rate" for highest rates\n- "sellers" for seller list\n- "[Company Name] sellers" for company-specific sellers\n- "company rate with location" for company rates\n- "sauda [sauda number]" to find a sauda\n- "rate for [company]" to get rates for a company\n- "negotiable" or "negotiable rates" to find negotiable rates\n- "freight from [location] to [location]" for freight rates\n- Try voice search too!`,
+      response: `${greeting()}, I'm SariaAI! Here are some things you can ask:\n- "top rate" for highest rates\n- "sellers" for seller list\n- "[Company Name] sellers" for company-specific sellers\n- "company rate with location" for company rates\n- "sauda [sauda number]" to find a sauda\n- "rate for [company]" to get rates for a company\n- "freight from [location] to [location]" for freight rates\n- Try voice search too!`,
       data: null,
       hasMore: false
     }, { status: 200 });
@@ -158,6 +125,62 @@ export async function POST(req) {
       hasMore: false
     }, { status: 500 });
   }
+}
+
+// --- Helper function: Get Top Sellers for Company ---
+async function getTopSellersForCompany(companyName) {
+  const sellers = await Seller.find({
+    companies: { $regex: companyName, $options: "i" }
+  })
+    .select('sellerName companies')
+    .sort({ sellerName: 1 })
+    .limit(5)
+    .lean();
+
+  return sellers.map(s => ({
+    sellerName: s.sellerName,
+    companies: Array.isArray(s.companies)
+      ? s.companies.map(c => typeof c === 'object' ? c.name : c).join(", ")
+      : s.companies
+  }));
+}
+
+// --- Helper function: Handle Seller Search ---
+async function handleSellerSearch(lowerQuery, originalQuery, page, limit, skip) {
+  let sellerQuery = {};
+  let companyNameMatch = lowerQuery.match(/(?:for|of|with|top sellers for|top 10 sellers for|sellers for)?\s*["']?([^"'\n]+)["']?\s*(?:sellers|seller)?$/i);
+  let companyName = companyNameMatch ? companyNameMatch[1].trim() : null;
+
+  if (companyName) {
+    sellerQuery = {
+      companies: { $regex: companyName, $options: "i" }
+    };
+  }
+
+  const [sellers, total] = await Promise.all([
+    Seller.find(sellerQuery)
+      .select('sellerName companies')
+      .sort({ sellerName: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Seller.countDocuments(sellerQuery)
+  ]);
+
+  const hasMore = skip + sellers.length < total;
+
+  return NextResponse.json({
+    response: companyName
+      ? `Here are the sellers for "${companyName}":`
+      : "Here are the sellers:",
+    data: sellers.map(s => ({
+      sellerName: s.sellerName,
+      companies: Array.isArray(s.companies)
+        ? s.companies.map(c => typeof c === 'object' ? c.name : c).join(", ")
+        : s.companies
+    })),
+    hasMore
+  }, { status: 200 });
 }
 
 // --- Helper function: Handle Freight Search ---
@@ -215,6 +238,12 @@ async function handleFreightSearch(lowerQuery, originalQuery, page, limit, skip)
 
   const hasMore = skip + freights.length < total;
 
+  // If a company was specified, also get top sellers
+  let topSellers = [];
+  if (searchCompany) {
+    topSellers = await getTopSellersForCompany(searchCompany);
+  }
+
   let responseText = "Freight rates (default commodity: Maize):";
   if (searchFromLocation && searchToLocation) responseText = `Freight from "${searchFromLocation}" to "${searchToLocation}" (default commodity: Maize):`;
   else if (searchFromLocation) responseText = `Freight from "${searchFromLocation}" (default commodity: Maize):`;
@@ -231,6 +260,7 @@ async function handleFreightSearch(lowerQuery, originalQuery, page, limit, skip)
       freightRate: f.freightRate,
       previousRate: f.previousRate
     })),
+    topSellers: topSellers.length > 0 ? topSellers : null,
     hasMore
   }, { status: 200 });
 }
@@ -290,6 +320,7 @@ async function handleSaudaSearch(lowerQuery, originalQuery, page, limit, skip) {
   let result;
   let hasMore = false;
   let count = 0;
+  let searchCompany = null;
 
   if (saudaNumber) {
     const exactMatchPipeline = [
@@ -315,7 +346,7 @@ async function handleSaudaSearch(lowerQuery, originalQuery, page, limit, skip) {
   } else {
     // If no sauda number, try company name or return recent saudus
     let companyMatch = lowerQuery.match(/(?:sauda|find|get|search)\s+(?:for|of|with|at)?\s*["']?([^"'\n]+)["']?$/i);
-    let searchCompany = companyMatch ? companyMatch[1].trim() : null;
+    searchCompany = companyMatch ? companyMatch[1].trim() : null;
 
     let matchStage = {};
     if (searchCompany) {
@@ -342,10 +373,17 @@ async function handleSaudaSearch(lowerQuery, originalQuery, page, limit, skip) {
     result = await SaudaEntry.aggregate(pipeline);
   }
 
+  // If a company was specified, also get top sellers
+  let topSellers = [];
+  if (searchCompany) {
+    topSellers = await getTopSellersForCompany(searchCompany);
+  }
+
   if (result && result.length > 0) {
     return NextResponse.json({
       response: `Found ${result.length} sauda${result.length > 1 ? 's' : ''}:`,
       data: result,
+      topSellers: topSellers.length > 0 ? topSellers : null,
       hasMore
     }, { status: 200 });
   }
@@ -353,6 +391,7 @@ async function handleSaudaSearch(lowerQuery, originalQuery, page, limit, skip) {
   return NextResponse.json({
     response: "No sauda found. Try providing a sauda number or company name.",
     data: null,
+    topSellers: null,
     hasMore: false
   }, { status: 200 });
 }
@@ -363,7 +402,6 @@ async function handleRateSearch(lowerQuery, originalQuery, page, limit, skip) {
   let searchCompany = null;
   let searchLocation = null;
   let searchCommodity = null;
-  let isNegotiable = lowerQuery.includes("negotiable");
 
   // Extract company name
   let companyMatch = lowerQuery.match(/(?:rate|price|rates)\s+(?:for|of|with|at)?\s*["']?([^"'\n,]+)["']?(?:,|\s|$)/i);
@@ -386,14 +424,6 @@ async function handleRateSearch(lowerQuery, originalQuery, page, limit, skip) {
     rateQuery.commodity = { $regex: searchCommodity, $options: "i" };
   }
 
-  // Handle negotiable
-  if (isNegotiable) {
-    rateQuery.$or = [
-      { others: { $regex: "negotiable", $options: "i" } },
-      { payment: { $regex: "negotiable", $options: "i" } }
-    ];
-  }
-
   const [rates, total] = await Promise.all([
     Rate.find(rateQuery)
       .sort({ newRate: -1 })
@@ -405,10 +435,15 @@ async function handleRateSearch(lowerQuery, originalQuery, page, limit, skip) {
 
   const hasMore = skip + rates.length < total;
 
+  // If a company was specified, also get top sellers
+  let topSellers = [];
+  if (searchCompany) {
+    topSellers = await getTopSellersForCompany(searchCompany);
+  }
+
   let responseText = "Here are the rates:";
   if (searchCompany) responseText = `Rates for "${searchCompany}":`;
   if (searchCompany && searchLocation) responseText = `Rates for "${searchCompany}" at "${searchLocation}":`;
-  if (isNegotiable) responseText = "Negotiable rates:";
 
   return NextResponse.json({
     response: responseText,
@@ -417,12 +452,12 @@ async function handleRateSearch(lowerQuery, originalQuery, page, limit, skip) {
       location: r.location,
       commodity: r.commodity,
       rate: r.newRate,
-      negotiable: isNegotiable || (r.others && r.others.toLowerCase().includes("negotiable")) || (r.payment && r.payment.toLowerCase().includes("negotiable")),
       payment: r.payment,
       others: r.others,
       time: r.updateTime,
       date: r.newRateDate
     })),
+    topSellers: topSellers.length > 0 ? topSellers : null,
     hasMore
   }, { status: 200 });
 }
@@ -433,4 +468,3 @@ function greeting() {
   if (hour < 18) return "Good afternoon";
   return "Good evening";
 }
-
