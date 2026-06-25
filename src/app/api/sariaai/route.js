@@ -12,6 +12,50 @@ let quickRatesCache = null;
 let quickRatesCacheTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds
 
+// --- AI Conversation Helper ---
+function generateAIResponse(type, data, searchParams) {
+  const greetings = [
+    "Sure!",
+    "Got it!",
+    "Great question!",
+    "Absolutely!",
+    "Let me check that for you!",
+    "Here's what I found!"
+  ];
+  
+  const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+  
+  let baseResponse = randomGreeting;
+  
+  if (type === "rates") {
+    if (searchParams.commodity && searchParams.company && searchParams.location) {
+      baseResponse = `Sure! Here are the ${searchParams.commodity} rates for ${searchParams.company} in ${searchParams.location}:`;
+    } else if (searchParams.commodity && searchParams.company) {
+      baseResponse = `Got it! Here are the ${searchParams.commodity} rates for ${searchParams.company}:`;
+    } else if (searchParams.commodity && searchParams.location) {
+      baseResponse = `Great! Here are the ${searchParams.commodity} rates in ${searchParams.location}:`;
+    } else if (searchParams.company) {
+      baseResponse = `Absolutely! Here are the rates for ${searchParams.company}:`;
+    } else if (searchParams.commodity) {
+      baseResponse = `Sure! Here are the ${searchParams.commodity} rates:`;
+    }
+  } else if (type === "sauda") {
+    if (searchParams.company) {
+      baseResponse = `Got it! Here are the sauda entries for ${searchParams.company}:`;
+    }
+  } else if (type === "freight") {
+    if (searchParams.fromLocation && searchParams.toLocation) {
+      baseResponse = `Sure! Here are the freight rates from ${searchParams.fromLocation} to ${searchParams.toLocation}:`;
+    } else if (searchParams.fromLocation) {
+      baseResponse = `Got it! Here are the freight rates from ${searchParams.fromLocation}:`;
+    } else if (searchParams.toLocation) {
+      baseResponse = `Great! Here are the freight rates to ${searchParams.toLocation}:`;
+    }
+  }
+  
+  return baseResponse;
+}
+
 export async function POST(req) {
   try {
     await connectDB();
@@ -52,7 +96,7 @@ export async function POST(req) {
       const now = Date.now();
       if (quickRatesCache && now - quickRatesCacheTime < CACHE_DURATION) {
         return NextResponse.json({
-          response: "Here are the top rates:",
+          response: "Sure! Here are the top current rates:",
           data: quickRatesCache,
           hasMore: false
         }, { status: 200 });
@@ -76,7 +120,7 @@ export async function POST(req) {
       quickRatesCacheTime = now;
 
       return NextResponse.json({
-        response: "Here are the top rates:",
+        response: "Absolutely! Here are the top current rates:",
         data: formattedRates,
         hasMore: false
       }, { status: 200 });
@@ -98,7 +142,7 @@ export async function POST(req) {
       ]);
 
       return NextResponse.json({
-        response: "Here are the top companies with their rates and locations:",
+        response: "Great! Here are the top companies with their rates and locations:",
         data: companyRates.map(c => ({
           company: c._id.company,
           location: c._id.location,
@@ -110,9 +154,18 @@ export async function POST(req) {
       }, { status: 200 });
     }
 
-    // --- Quick details fallback ---
+    // --- Fallback for general questions ---
+    const generalResponses = [
+      `Hello! I'm SariaAI, your helpful assistant. Here's what I can help with:\n- Check rates\n- Find sauda entries\n- Get freight rates\n- View sellers\nTry asking "maize rate" or "sauda for ABC Traders"!`,
+      `${greeting()}! I'm SariaAI. I can help you find information about rates, saudus, freight, and sellers.`,
+      `Hi there! I'm SariaAI. Ask me about rates, saudus, freight, or sellers!`,
+      `${greeting()}! I'm SariaAI. How can I assist you today? You can ask about rates, saudus, freight, or sellers.`
+    ];
+    
+    const fallbackResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)];
+
     return NextResponse.json({
-      response: `${greeting()}, I'm SariaAI! Here are some things you can ask:\n- "top rate" for highest rates\n- "sellers" for seller list\n- "[Company Name] sellers" for company-specific sellers\n- "company rate with location" for company rates\n- "sauda [sauda number]" to find a sauda\n- "rate for [company]" to get rates for a company\n- "freight from [location] to [location]" for freight rates\n- Try voice search too!`,
+      response: fallbackResponse,
       data: null,
       hasMore: false
     }, { status: 200 });
@@ -120,7 +173,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("SariaAI error:", error);
     return NextResponse.json({
-      response: "Sorry, I encountered an error. Please try again later.",
+      response: "Oops! I'm sorry, I ran into an error. Please try again later.",
       data: null,
       hasMore: false
     }, { status: 500 });
@@ -169,10 +222,17 @@ async function handleSellerSearch(lowerQuery, originalQuery, page, limit, skip) 
 
   const hasMore = skip + sellers.length < total;
 
+  // Generate AI-like response for sellers
+  const sellerResponses = [
+    companyName ? `Got it! Here are the sellers for ${companyName}:` : "Sure! Here are the sellers:",
+    companyName ? `Absolutely! Here are the sellers associated with ${companyName}:` : "Great! Here are the sellers:",
+    companyName ? `Got it! Let me show you the sellers for ${companyName}:` : "Here's the list of sellers:"
+  ];
+  
+  const responseText = sellerResponses[Math.floor(Math.random() * sellerResponses.length)];
+
   return NextResponse.json({
-    response: companyName
-      ? `Here are the sellers for "${companyName}":`
-      : "Here are the sellers:",
+    response: responseText,
     data: sellers.map(s => ({
       sellerName: s.sellerName,
       companies: Array.isArray(s.companies)
@@ -244,10 +304,12 @@ async function handleFreightSearch(lowerQuery, originalQuery, page, limit, skip)
     topSellers = await getTopSellersForCompany(searchCompany);
   }
 
-  let responseText = "Freight rates (default commodity: Maize):";
-  if (searchFromLocation && searchToLocation) responseText = `Freight from "${searchFromLocation}" to "${searchToLocation}" (default commodity: Maize):`;
-  else if (searchFromLocation) responseText = `Freight from "${searchFromLocation}" (default commodity: Maize):`;
-  else if (searchToLocation) responseText = `Freight to "${searchToLocation}" (default commodity: Maize):`;
+  // Generate AI-like response
+  const responseText = generateAIResponse("freight", freights, {
+    fromLocation: searchFromLocation,
+    toLocation: searchToLocation,
+    commodity: commodity
+  });
 
   return NextResponse.json({
     response: responseText,
@@ -344,9 +406,23 @@ async function handleSaudaSearch(lowerQuery, originalQuery, page, limit, skip) {
       result = await SaudaEntry.aggregate(suffixPipeline);
     }
   } else {
-    // If no sauda number, try company name or return recent saudus
-    let companyMatch = lowerQuery.match(/(?:sauda|find|get|search)\s+(?:for|of|with|at)?\s*["']?([^"'\n]+)["']?$/i);
-    searchCompany = companyMatch ? companyMatch[1].trim() : null;
+    // More flexible company extraction for sauda search
+    const companyPatterns = [
+      /(?:sauda|find|get|search)\s+(?:for|of|with|at)?\s*["']?([^"'\n]+)["']?$/i,
+      /(?:for|of|with)\s+(?:company\s+)?(["']?[\w\s]+?["']?)(?:\s|,|$)/i,
+      /(["']?[\w\s]+?["']?)\s+(?:sauda|company)/i
+    ];
+    
+    for (let pattern of companyPatterns) {
+      let match = lowerQuery.match(pattern);
+      if (match && match[1]) {
+        let candidate = match[1].trim().replace(/["']/g, "");
+        if (!["for", "of", "with", "at", "in", "location", "commodity", "a", "sauda", "find", "get", "search"].includes(candidate.toLowerCase())) {
+          searchCompany = candidate;
+          break;
+        }
+      }
+    }
 
     let matchStage = {};
     if (searchCompany) {
@@ -379,17 +455,30 @@ async function handleSaudaSearch(lowerQuery, originalQuery, page, limit, skip) {
     topSellers = await getTopSellersForCompany(searchCompany);
   }
 
+  // Generate AI-like response
   if (result && result.length > 0) {
+    const responseText = generateAIResponse("sauda", result, {
+      company: searchCompany
+    });
+    
     return NextResponse.json({
-      response: `Found ${result.length} sauda${result.length > 1 ? 's' : ''}:`,
+      response: responseText,
       data: result,
       topSellers: topSellers.length > 0 ? topSellers : null,
       hasMore
     }, { status: 200 });
   }
 
+  const noResultResponses = [
+    "I couldn't find any sauda matching your request. Try providing a sauda number or company name!",
+    "Sorry, no sauda found. Could you try a different company name or sauda number?",
+    "Hmm, I didn't find any sauda entries. Let's try another search!"
+  ];
+  
+  const noResultText = noResultResponses[Math.floor(Math.random() * noResultResponses.length)];
+
   return NextResponse.json({
-    response: "No sauda found. Try providing a sauda number or company name.",
+    response: noResultText,
     data: null,
     topSellers: null,
     hasMore: false
@@ -403,25 +492,61 @@ async function handleRateSearch(lowerQuery, originalQuery, page, limit, skip) {
   let searchLocation = null;
   let searchCommodity = null;
 
-  // Extract company name
-  let companyMatch = lowerQuery.match(/(?:rate|price|rates)\s+(?:for|of|with|at)?\s*["']?([^"'\n,]+)["']?(?:,|\s|$)/i);
-  if (companyMatch) {
-    searchCompany = companyMatch[1].trim();
-    rateQuery.company = { $regex: searchCompany, $options: "i" };
+  // More flexible commodity extraction (works even if commodity is mentioned first)
+  // Patterns: "maize rate", "rate of maize", "maize price", etc.
+  const commodityPatterns = [
+    /(?:^|\s)([\w\s]+?)\s+(?:rate|price|rates)/i, // Commodity first: "maize rate"
+    /(?:rate|price|rates)\s+(?:for|of)\s+([\w\s]+?)(?:\s|,|$)/i, // Commodity after: "rate of maize"
+    /(?:commodity)\s+(?:of|with)?\s*["']?([^"'\n,]+)["']?(?:,|\s|$)/i
+  ];
+  
+  for (let pattern of commodityPatterns) {
+    let match = lowerQuery.match(pattern);
+    if (match && match[1]) {
+      let candidate = match[1].trim();
+      // Avoid matching words like "for", "of", "at", "in", "company", "location"
+      if (!["for", "of", "with", "at", "in", "company", "location", "a"].includes(candidate.toLowerCase())) {
+        searchCommodity = candidate;
+        rateQuery.commodity = { $regex: searchCommodity, $options: "i" };
+        break;
+      }
+    }
   }
 
-  // Extract location
-  let locationMatch = lowerQuery.match(/(?:location|at)\s+(?:for|of|with|in)?\s*["']?([^"'\n,]+)["']?(?:,|\s|$)/i);
-  if (locationMatch) {
-    searchLocation = locationMatch[1].trim();
-    rateQuery.location = { $regex: searchLocation, $options: "i" };
+  // More flexible company extraction
+  const companyPatterns = [
+    /(?:for|of|with)\s+(?:company\s+)?(["']?[\w\s]+?["']?)(?:\s|,|$)/i,
+    /(["']?[\w\s]+?["']?)\s+(?:company|rates?|prices?)/i
+  ];
+  
+  for (let pattern of companyPatterns) {
+    let match = lowerQuery.match(pattern);
+    if (match && match[1]) {
+      let candidate = match[1].trim().replace(/["']/g, "");
+      if (!["for", "of", "with", "at", "in", "location", "commodity", "a"].includes(candidate.toLowerCase())) {
+        searchCompany = candidate;
+        rateQuery.company = { $regex: searchCompany, $options: "i" };
+        break;
+      }
+    }
   }
 
-  // Extract commodity
-  let commodityMatch = lowerQuery.match(/(?:commodity)\s+(?:of|with)?\s*["']?([^"'\n,]+)["']?(?:,|\s|$)/i);
-  if (commodityMatch) {
-    searchCommodity = commodityMatch[1].trim();
-    rateQuery.commodity = { $regex: searchCommodity, $options: "i" };
+  // More flexible location extraction
+  const locationPatterns = [
+    /(?:at|in)\s+(?:location\s+)?(["']?[\w\s]+?["']?)(?:\s|,|$)/i,
+    /(["']?[\w\s]+?["']?)\s+(?:location|rates?|prices?)/i
+  ];
+  
+  for (let pattern of locationPatterns) {
+    let match = lowerQuery.match(pattern);
+    if (match && match[1]) {
+      let candidate = match[1].trim().replace(/["']/g, "");
+      if (!["for", "of", "with", "at", "in", "company", "commodity", "a"].includes(candidate.toLowerCase())) {
+        searchLocation = candidate;
+        rateQuery.location = { $regex: searchLocation, $options: "i" };
+        break;
+      }
+    }
   }
 
   const [rates, total] = await Promise.all([
@@ -441,9 +566,12 @@ async function handleRateSearch(lowerQuery, originalQuery, page, limit, skip) {
     topSellers = await getTopSellersForCompany(searchCompany);
   }
 
-  let responseText = "Here are the rates:";
-  if (searchCompany) responseText = `Rates for "${searchCompany}":`;
-  if (searchCompany && searchLocation) responseText = `Rates for "${searchCompany}" at "${searchLocation}":`;
+  // Generate AI-like response
+  const responseText = generateAIResponse("rates", rates, {
+    commodity: searchCommodity,
+    company: searchCompany,
+    location: searchLocation
+  });
 
   return NextResponse.json({
     response: responseText,
