@@ -12,6 +12,11 @@ import { useUser } from "@/context/UserContext";
 const SariaAI = () => {
   const { data: session } = useSession();
   const { mobile } = useUser();
+
+  if (!session) {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
@@ -25,18 +30,15 @@ const SariaAI = () => {
 
   // Memoized: Get user name and set greeting
   const userData = useMemo(() => {
-    // Set greeting based on time
     const hour = new Date().getHours();
     let newGreeting;
     if (hour < 12) newGreeting = "Good morning";
     else if (hour < 18) newGreeting = "Good afternoon";
     else newGreeting = "Good evening";
 
-    // Get user name
     const sessionName = session?.user?.name;
     const storedName = typeof window !== "undefined" ? localStorage.getItem("userName") : null;
     const name = sessionName || storedName || "Guest";
-    // Format name
     const formattedName = name
       .split(" ")
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -97,7 +99,6 @@ const SariaAI = () => {
     }
   }, [isOpen, recognition]);
 
-  // Memoized handlers
   const startListening = useCallback(() => {
     if (recognitionRef.current) {
       setIsListening(true);
@@ -135,9 +136,19 @@ const SariaAI = () => {
 
   const formatDataForCopy = useCallback((data) => {
     if (!Array.isArray(data)) return "";
-    return data.map((item, idx) => {
-      return `${idx + 1}. ` + Object.entries(item).map(([key, value]) => `${key}: ${value}`).join(", ");
-    }).join("\n");
+    
+    return data.map((item, index) => {
+      let lines = [`--- Item ${index + 1} ---`];
+      
+      Object.entries(item).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          const formattedKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+          lines.push(`${formattedKey}: ${value}`);
+        }
+      });
+      
+      return lines.join("\n");
+    }).join("\n\n");
   }, []);
 
   const handleSend = useCallback(async (queryOverride = null, page = 1) => {
@@ -176,9 +187,11 @@ const SariaAI = () => {
           // Replace last message for pagination
           return prev.map((msg, idx) => {
             if (idx === prev.length - 1) {
+              const existingData = msg.data || [];
+              const newData = data.data || [];
               return {
                 ...msg,
-                data: [...(msg.data || []), ...(data.data || [])],
+                data: [...existingData, ...newData],
                 hasMore: data.hasMore,
                 nextPage: page + 1
               };
@@ -244,28 +257,39 @@ const SariaAI = () => {
                       ? "bg-emerald-600 text-white rounded-br-none"
                       : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-none border border-gray-200 dark:border-gray-700"
                   }`}>
-                    <p className="text-sm">{msg.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                     
                     {msg.data && Array.isArray(msg.data) && msg.data.length > 0 && (
-                      <>
-                        <div className="mt-3 space-y-2">
-                          {msg.data.map((item, idx) => (
-                            <div key={idx} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-xs">
-                              {Object.entries(item).map(([key, value]) => (
+                      <div className="mt-3 space-y-3">
+                        {msg.data.map((item, idx) => (
+                          <div 
+                            key={idx} 
+                            className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-xs space-y-1"
+                          >
+                            {Object.entries(item).map(([key, value]) => {
+                              if (value === null || value === undefined || value === "") {
+                                return null;
+                              }
+                              const formattedKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+                              return (
                                 <div key={key} className="flex justify-between">
-                                  <span className="font-medium capitalize">{key}:</span>
-                                  <span>{value}</span>
+                                  <span className="font-medium">{formattedKey}:</span>
+                                  <span className="text-gray-700 dark:text-gray-300">{value}</span>
                                 </div>
-                              ))}
-                            </div>
-                          ))}
+                              );
+                            })}
+                          </div>
+                        ))}
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleCopy(`${msg.content}\n\n${formatDataForCopy(msg.data)}`)}
+                            className="mt-2 text-xs flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+                          >
+                            <Copy size={14} /> Copy Report
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleCopy(`${msg.content}\n\n${formatDataForCopy(msg.data)}`)}
-                          className="mt-3 text-xs flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
-                        >
-                          <Copy size={14} /> Copy
-                        </button>
+
                         {msg.hasMore && (
                           <button
                             onClick={() => handleSend(msg.originalQuery, msg.nextPage)}
@@ -275,7 +299,7 @@ const SariaAI = () => {
                             See More
                           </button>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
                 </motion.div>
@@ -300,8 +324,8 @@ const SariaAI = () => {
                 <button
                   onClick={isListening ? stopListening : startListening}
                   className={`p-2 rounded-full transition ${
-                    isListening 
-                      ? "bg-red-500 text-white animate-pulse" 
+                    isListening
+                      ? "bg-red-500 text-white animate-pulse"
                       : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
                 >
