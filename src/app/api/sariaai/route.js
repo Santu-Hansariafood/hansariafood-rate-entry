@@ -156,10 +156,10 @@ export async function POST(req) {
 
     // --- Fallback for general questions ---
     const generalResponses = [
-      `Hello! I'm SariaAI, your helpful assistant. Here's what I can help with:\n- Check rates\n- Find sauda entries\n- Get freight rates\n- View sellers\nTry asking "maize rate" or "sauda for ABC Traders"!`,
-      `${greeting()}! I'm SariaAI. I can help you find information about rates, saudus, freight, and sellers.`,
-      `Hi there! I'm SariaAI. Ask me about rates, saudus, freight, or sellers!`,
-      `${greeting()}! I'm SariaAI. How can I assist you today? You can ask about rates, saudus, freight, or sellers.`
+      `Hello! I'm SariaAI, your helpful assistant. Here's what I can help with:\n- Check rates\n- Find sauda entries\n- Get freight rates\n- View sellers\nTry asking "maize rate for ABC Traders", "sauda for XYZ Company", or "view sellers in ABC Traders"!`,
+      `${greeting()}! I'm SariaAI. I can help you find information about rates, saudus, freight, and sellers. Try "view sellers in [company name]"!`,
+      `Hi there! I'm SariaAI. Ask me about rates, saudus, freight, or sellers! Like "view sellers in ABC Traders"!`,
+      `${greeting()}! I'm SariaAI. How can I assist you today? You can ask about rates, saudus, freight, or sellers. Try "show sellers in XYZ Company"!`
     ];
     
     const fallbackResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)];
@@ -201,12 +201,29 @@ async function getTopSellersForCompany(companyName) {
 // --- Helper function: Handle Seller Search ---
 async function handleSellerSearch(lowerQuery, originalQuery, page, limit, skip) {
   let sellerQuery = {};
-  let companyNameMatch = lowerQuery.match(/(?:for|of|with|top sellers for|top 10 sellers for|sellers for)?\s*["']?([^"'\n]+)["']?\s*(?:sellers|seller)?$/i);
-  let companyName = companyNameMatch ? companyNameMatch[1].trim() : null;
+  let searchCompany = null;
 
-  if (companyName) {
+  // More flexible company extraction for seller search
+  const companyPatterns = [
+    /(?:view|show|find|get|sellers for|for|of|with)\s+(?:company\s+)?(["']?[\w\s]+?["']?)(?:\s|,|$)/i,
+    /(["']?[\w\s]+?["']?)\s+(?:sellers|seller|company)/i,
+    /(?:view|show|find|get|sellers for|for|of|with)?\s*["']?([^"'\n]+)["']?\s*(?:sellers|seller)?$/i
+  ];
+  
+  for (let pattern of companyPatterns) {
+    let match = lowerQuery.match(pattern);
+    if (match && match[1]) {
+      let candidate = match[1].trim().replace(/["']/g, "");
+      if (!["for", "of", "with", "at", "in", "location", "commodity", "a", "sauda", "find", "get", "search", "view", "show", "sellers", "seller", "company"].includes(candidate.toLowerCase())) {
+        searchCompany = candidate;
+        break;
+      }
+    }
+  }
+
+  if (searchCompany) {
     sellerQuery = {
-      companies: { $regex: companyName, $options: "i" }
+      companies: { $regex: searchCompany, $options: "i" }
     };
   }
 
@@ -224,9 +241,9 @@ async function handleSellerSearch(lowerQuery, originalQuery, page, limit, skip) 
 
   // Generate AI-like response for sellers
   const sellerResponses = [
-    companyName ? `Got it! Here are the sellers for ${companyName}:` : "Sure! Here are the sellers:",
-    companyName ? `Absolutely! Here are the sellers associated with ${companyName}:` : "Great! Here are the sellers:",
-    companyName ? `Got it! Let me show you the sellers for ${companyName}:` : "Here's the list of sellers:"
+    searchCompany ? `Got it! Here are the sellers for ${searchCompany}:` : "Sure! Here are the sellers:",
+    searchCompany ? `Absolutely! Here are the sellers associated with ${searchCompany}:` : "Great! Here are the sellers:",
+    searchCompany ? `Got it! Let me show you the sellers for ${searchCompany}:` : "Here's the list of sellers:"
   ];
   
   const responseText = sellerResponses[Math.floor(Math.random() * sellerResponses.length)];

@@ -60,7 +60,7 @@ const SariaAI = () => {
         {
           id: 1,
           role: "assistant",
-          content: `${greeting}, ${userName}! I'm SariaAI. How can I help you today?`,
+          content: `${greeting}, ${userName}! I'm Saria AI. How can I help you today?`,
           data: null
         }
       ]);
@@ -215,8 +215,8 @@ const SariaAI = () => {
         return [...prev, aiMessage];
       });
     } catch (error) {
-      toast.error("Failed to get response from SariaAI");
-      console.error("SariaAI error:", error);
+      toast.error("Failed to get response from Saria AI");
+      console.error("Saria AI error:", error);
     } finally {
       setLoading(false);
     }
@@ -229,7 +229,7 @@ const SariaAI = () => {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         className="fixed bottom-32 right-6 z-[60] flex items-center justify-center w-14 h-14 bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-500 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(16,185,129,0.3)] border border-white/20 backdrop-blur-sm transition-all duration-300"
-        title="SariaAI Assistant"
+        title="Saria AI Assistant"
       >
         <Bot size={26} strokeWidth={2} />
       </motion.button>
@@ -248,7 +248,7 @@ const SariaAI = () => {
                   <Bot size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">SariaAI</h3>
+                  <h3 className="font-bold text-lg">Saria AI</h3>
                   <p className="text-xs text-emerald-100">Your AI Assistant</p>
                 </div>
               </div>
