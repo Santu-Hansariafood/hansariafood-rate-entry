@@ -72,208 +72,10 @@ const SariaAI = () => {
     []
   );
 
-  // Update suggestions when input changes
-  useEffect(() => {
-    fetchCompanySuggestions(input);
-  }, [input, fetchCompanySuggestions]);
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        suggestionDropdownRef.current &&
-        !suggestionDropdownRef.current.contains(event.target)
-      ) {
-        setShowCompanySuggestions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   // Handle company selection
   const handleCompanySelect = useCallback((companyName) => {
     setInput(companyName);
     setShowCompanySuggestions(false);
-  }, []);
-
-  // Load messages from localStorage on mount
-  useEffect(() => {
-    const savedMessages = localStorage.getItem("sariaai_chat");
-    if (savedMessages) {
-      try {
-        const parsed = JSON.parse(savedMessages);
-        setMessages(parsed);
-      } catch (e) {
-        console.error("Failed to load saved messages:", e);
-      }
-    }
-  }, []);
-
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem("sariaai_chat", JSON.stringify(messages));
-    }
-  }, [messages]);
-
-  // Memoized: Get user name and set greeting
-  const userData = useMemo(() => {
-    const hour = new Date().getHours();
-    let newGreeting;
-    if (hour < 12) newGreeting = "Good morning";
-    else if (hour < 18) newGreeting = "Good afternoon";
-    else newGreeting = "Good evening";
-
-    const sessionName = session?.user?.name;
-    const storedName = typeof window !== "undefined" ? localStorage.getItem("userName") : null;
-    const name = sessionName || storedName || "Guest";
-    const formattedName = name
-      .split(" ")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-
-    return { greeting: newGreeting, userName: formattedName };
-  }, [session?.user?.name]);
-
-  // Update state when userData changes
-  useEffect(() => {
-    setGreeting(userData.greeting);
-    setUserName(userData.userName);
-  }, [userData]);
-
-  // Initialize messages with greeting only when chat opens and no saved messages
-  useEffect(() => {
-    if (isOpen && greeting && userName && messages.length === 0) {
-      const welcomeMessage = {
-        id: Date.now(),
-        role: "assistant",
-        content: `${greeting}, ${userName}! I'm Saria AI. How can I help you today?`,
-        data: null
-      };
-      setMessages([welcomeMessage]);
-    }
-  }, [isOpen, greeting, userName, messages.length]);
-
-  // Manage auto-clear timer when chat opens/closes
-  useEffect(() => {
-    if (isOpen) {
-      startAutoClearTimer();
-    } else if (autoClearTimerRef.current) {
-      clearTimeout(autoClearTimerRef.current);
-    }
-    return () => {
-      if (autoClearTimerRef.current) {
-        clearTimeout(autoClearTimerRef.current);
-      }
-    };
-  }, [isOpen, startAutoClearTimer]);
-
-  // Reset timer when user interacts with chat
-  useEffect(() => {
-    if (isOpen && messages.length > 0) {
-      resetAutoClearTimer();
-    }
-  }, [messages, isOpen, resetAutoClearTimer]);
-
-  // Setup voice recognition only when chat is first opened
-  useEffect(() => {
-    if (!isOpen || recognition) return;
-
-    if (typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const rec = new SpeechRecognition();
-      rec.continuous = false;
-      rec.interimResults = false;
-      rec.lang = "en-US";
-
-      rec.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
-        setIsListening(false);
-      };
-
-      rec.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-        toast.error("Voice recognition failed. Please try again.");
-        setIsListening(false);
-      };
-
-      rec.onend = () => {
-        setIsListening(false);
-      };
-
-      setRecognition(rec);
-      recognitionRef.current = rec;
-    }
-  }, [isOpen, recognition]);
-
-  const startListening = useCallback(() => {
-    if (recognitionRef.current) {
-      setIsListening(true);
-      recognitionRef.current.start();
-    } else {
-      toast.error("Voice recognition is not supported in your browser.");
-    }
-  }, []);
-
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-    }
-  }, []);
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
-    }
-  }, [messages, isOpen, scrollToBottom]);
-
-  const handleCopy = useCallback(async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Copied to clipboard!");
-    } catch (err) {
-      toast.error("Failed to copy");
-    }
-  }, []);
-
-  const formatDataForCopy = useCallback((data, topSellers) => {
-    let result = "";
-    
-    if (Array.isArray(data) && data.length > 0) {
-      result += data.map((item, index) => {
-        let lines = [`--- Item ${index + 1} ---`];
-        
-        Object.entries(item).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== "") {
-            const formattedKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
-            lines.push(`${formattedKey}: ${value}`);
-          }
-        });
-        
-        return lines.join("\n");
-      }).join("\n\n");
-    }
-    
-    if (Array.isArray(topSellers) && topSellers.length > 0) {
-      result += "\n\n--- Top Sellers ---\n";
-      result += topSellers.map((seller, index) => {
-        let line = `${index + 1}. ${seller.sellerName}: ${seller.companies}`;
-        if (seller.totalTons !== undefined) {
-          line += ` (${seller.totalTons} tons, ${seller.saudaCount} saudas)`;
-        }
-        return line;
-      }).join("\n");
-    }
-    
-    return result;
   }, []);
 
   // Auto-clear timer functions
@@ -382,6 +184,204 @@ const SariaAI = () => {
       setLoading(false);
     }
   }, [input, resetAutoClearTimer]);
+
+  const startListening = useCallback(() => {
+    if (recognitionRef.current) {
+      setIsListening(true);
+      recognitionRef.current.start();
+    } else {
+      toast.error("Voice recognition is not supported in your browser.");
+    }
+  }, []);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
+  const handleCopy = useCallback(async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard!");
+    } catch (err) {
+      toast.error("Failed to copy");
+    }
+  }, []);
+
+  const formatDataForCopy = useCallback((data, topSellers) => {
+    let result = "";
+    
+    if (Array.isArray(data) && data.length > 0) {
+      result += data.map((item, index) => {
+        let lines = [`--- Item ${index + 1} ---`];
+        
+        Object.entries(item).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== "") {
+            const formattedKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+            lines.push(`${formattedKey}: ${value}`);
+          }
+        });
+        
+        return lines.join("\n");
+      }).join("\n\n");
+    }
+    
+    if (Array.isArray(topSellers) && topSellers.length > 0) {
+      result += "\n\n--- Top Sellers ---\n";
+      result += topSellers.map((seller, index) => {
+        let line = `${index + 1}. ${seller.sellerName}: ${seller.companies}`;
+        if (seller.totalTons !== undefined) {
+          line += ` (${seller.totalTons} tons, ${seller.saudaCount} saudas)`;
+        }
+        return line;
+      }).join("\n");
+    }
+    
+    return result;
+  }, []);
+
+  // Memoized: Get user name and set greeting
+  const userData = useMemo(() => {
+    const hour = new Date().getHours();
+    let newGreeting;
+    if (hour < 12) newGreeting = "Good morning";
+    else if (hour < 18) newGreeting = "Good afternoon";
+    else newGreeting = "Good evening";
+
+    const sessionName = session?.user?.name;
+    const storedName = typeof window !== "undefined" ? localStorage.getItem("userName") : null;
+    const name = sessionName || storedName || "Guest";
+    const formattedName = name
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+
+    return { greeting: newGreeting, userName: formattedName };
+  }, [session?.user?.name]);
+
+  // Load messages from localStorage on mount
+  useEffect(() => {
+    const savedMessages = localStorage.getItem("sariaai_chat");
+    if (savedMessages) {
+      try {
+        const parsed = JSON.parse(savedMessages);
+        setMessages(parsed);
+      } catch (e) {
+        console.error("Failed to load saved messages:", e);
+      }
+    }
+  }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("sariaai_chat", JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  // Update state when userData changes
+  useEffect(() => {
+    setGreeting(userData.greeting);
+    setUserName(userData.userName);
+  }, [userData]);
+
+  // Initialize messages with greeting only when chat opens and no saved messages
+  useEffect(() => {
+    if (isOpen && greeting && userName && messages.length === 0) {
+      const welcomeMessage = {
+        id: Date.now(),
+        role: "assistant",
+        content: `${greeting}, ${userName}! I'm Saria AI. How can I help you today?`,
+        data: null
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, [isOpen, greeting, userName, messages.length]);
+
+  // Update suggestions when input changes
+  useEffect(() => {
+    fetchCompanySuggestions(input);
+  }, [input, fetchCompanySuggestions]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionDropdownRef.current &&
+        !suggestionDropdownRef.current.contains(event.target)
+      ) {
+        setShowCompanySuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Manage auto-clear timer when chat opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      startAutoClearTimer();
+    } else if (autoClearTimerRef.current) {
+      clearTimeout(autoClearTimerRef.current);
+    }
+    return () => {
+      if (autoClearTimerRef.current) {
+        clearTimeout(autoClearTimerRef.current);
+      }
+    };
+  }, [isOpen, startAutoClearTimer]);
+
+  // Reset timer when user interacts with chat
+  useEffect(() => {
+    if (isOpen && messages.length > 0) {
+      resetAutoClearTimer();
+    }
+  }, [messages, isOpen, resetAutoClearTimer]);
+
+  // Setup voice recognition only when chat is first opened
+  useEffect(() => {
+    if (!isOpen || recognition) return;
+
+    if (typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = "en-US";
+
+      rec.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        setIsListening(false);
+      };
+
+      rec.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        toast.error("Voice recognition failed. Please try again.");
+        setIsListening(false);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(rec);
+      recognitionRef.current = rec;
+    }
+  }, [isOpen, recognition]);
+
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom();
+    }
+  }, [messages, isOpen, scrollToBottom]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
