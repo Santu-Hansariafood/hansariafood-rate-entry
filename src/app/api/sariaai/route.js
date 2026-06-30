@@ -180,22 +180,69 @@ export async function POST(req) {
   }
 }
 
-// --- Helper function: Get Top Sellers for Company ---
+// --- Helper function: Get Top Sellers for Company (with sauda stats) ---
 async function getTopSellersForCompany(companyName) {
+  // First, get all sellers associated with the company
   const sellers = await Seller.find({
     companies: { $regex: companyName, $options: "i" }
   })
     .select('sellerName companies')
-    .sort({ sellerName: 1 })
-    .limit(5)
     .lean();
+  
+  // Now, get sauda stats for these sellers for this company
+  const sellerStats = await SaudaEntry.aggregate([
+    { $match: { company: { $regex: companyName, $options: "i" } } },
+    { $project: { saudaEntriesArray: { $objectToArray: "$saudaEntries" } } },
+    { $unwind: "$saudaEntriesArray" },
+    { $unwind: "$saudaEntriesArray.v" },
+    {
+      $match: {
+        "saudaEntriesArray.v.sellerName": { $in: sellers.map(s => s.sellerName) },
+        $expr: {
+          $and: [
+            { $gt: [{ $toDouble: { $ifNull: ["$saudaEntriesArray.v.finalRate", 0] } }, 0] },
+            { $gt: [{ $toDouble: { $ifNull: ["$saudaEntriesArray.v.tons", 0] } }, 0] }
+          ]
+        }
+      }
+    },
+    {
+      $group: {
+        _id: "$saudaEntriesArray.v.sellerName",
+        totalTons: { $sum: { $toDouble: { $ifNull: ["$saudaEntriesArray.v.tons", 0] } } },
+        saudaCount: { $sum: 1 }
+      }
+    },
+    { $sort: { totalTons: -1, saudaCount: -1 } }
+  ]);
 
-  return sellers.map(s => ({
-    sellerName: s.sellerName,
-    companies: Array.isArray(s.companies)
-      ? s.companies.map(c => typeof c === 'object' ? c.name : c).join(", ")
-      : s.companies
-  }));
+  // Map the stats back to the seller list
+  const sellerMap = new Map();
+  for (const stat of sellerStats) {
+    sellerMap.set(stat._id, stat);
+  }
+
+  // Sort the sellers based on their stats
+  const sortedSellers = sellers.sort((a, b) => {
+    const aStats = sellerMap.get(a.sellerName) || { totalTons: 0, saudaCount: 0 };
+    const bStats = sellerMap.get(b.sellerName) || { totalTons: 0, saudaCount: 0 };
+    if (bStats.totalTons !== aStats.totalTons) {
+      return bStats.totalTons - aStats.totalTons;
+    }
+    return bStats.saudaCount - aStats.saudaCount;
+  }).slice(0, 5); // Return top 5
+
+  return sortedSellers.map(s => {
+    const stats = sellerMap.get(s.sellerName) || { totalTons: 0, saudaCount: 0 };
+    return {
+      sellerName: s.sellerName,
+      companies: Array.isArray(s.companies)
+        ? s.companies.map(c => typeof c === 'object' ? c.name : c).join(", ")
+        : s.companies,
+      totalTons: stats.totalTons,
+      saudaCount: stats.saudaCount
+    };
+  });
 }
 
 // --- Helper function: Handle Seller Search ---
