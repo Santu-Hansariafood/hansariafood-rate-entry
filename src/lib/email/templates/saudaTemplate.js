@@ -94,11 +94,6 @@ export const generateSaudaEmailTemplate = ({
     </head>
     <body>
       <div class="container">
-        <div class="header">
-          <h1 style="margin: 0; font-size: 24px;">${company}</h1>
-          <p style="margin: 5px 0 0 0; font-size: 16px;">Daily Sauda Report</p>
-        </div>
-        
         <div class="content">
           <div style="margin-top: 20px; padding: 10px; background-color: #eff6ff; border-radius: 4px;">
              <p style="margin: 0; font-size: 14px;"><strong> This Sauda report confirmed by:</strong> ${userName || userEmail || "Unknown"}</p>
