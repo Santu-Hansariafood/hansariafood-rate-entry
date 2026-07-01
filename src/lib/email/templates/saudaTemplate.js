@@ -1,4 +1,3 @@
-
 export const generateSaudaEmailTemplate = ({
   company,
   date,
@@ -16,30 +15,30 @@ export const generateSaudaEmailTemplate = ({
   const entriesList = [];
   const formatSaudaNo = (value) =>
     value ? value.toString().split("-").pop() : "-";
-  
+
   if (saudaEntries instanceof Map) {
-      for (const [key, list] of saudaEntries.entries()) {
-          if (Array.isArray(list)) {
-              entriesList.push(...list);
-          }
+    for (const [key, list] of saudaEntries.entries()) {
+      if (Array.isArray(list)) {
+        entriesList.push(...list);
       }
-  } else if (typeof saudaEntries === 'object') {
-       for (const [key, list] of Object.entries(saudaEntries)) {
-          if (Array.isArray(list)) {
-              entriesList.push(...list);
-          }
+    }
+  } else if (typeof saudaEntries === "object") {
+    for (const [key, list] of Object.entries(saudaEntries)) {
+      if (Array.isArray(list)) {
+        entriesList.push(...list);
       }
+    }
   }
 
   entriesList.forEach((entry) => {
     const tons = Number(entry.tons) || 0;
     const rate = Number(entry.finalRate) || 0;
     const value = tons * rate * 1000;
-    
+
     if (tons <= 0 && rate <= 0) return;
 
     totalTons += tons;
-    const itemValue = tons * rate; 
+    const itemValue = tons * rate;
     totalValue += itemValue;
 
     summaryBlock += `
@@ -68,7 +67,7 @@ export const generateSaudaEmailTemplate = ({
         <td style="padding: 8px;">${entry.commodity || "-"}</td>
         <td style="padding: 8px; text-align: right;">${rate.toFixed(2)}</td>
         <td style="padding: 8px; text-align: right;">${tons.toFixed(3)}</td>
-        <td style="padding: 8px; text-align: right;">${itemValue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</td>
+        <td style="padding: 8px; text-align: right;">${itemValue.toLocaleString("en-IN", { style: "currency", currency: "INR" })}</td>
         <td style="padding: 8px;">${entry.sellerCompany || "-"}</td>
         <td style="padding: 8px;">${entry.sellerName || "-"}</td>
         <td style="padding: 8px;">${entry.deliveryDate || "-"}</td>
@@ -101,10 +100,8 @@ export const generateSaudaEmailTemplate = ({
         </div>
         
         <div class="content">
-          ${summaryBlock}
-
           <div style="margin-top: 20px; padding: 10px; background-color: #eff6ff; border-radius: 4px;">
-             <p style="margin: 0; font-size: 14px;"><strong>Sauda confirmed by:</strong> ${userName || userEmail || "Unknown"}</p>
+             <p style="margin: 0; font-size: 14px;"><strong> This Sauda report confirmed by:</strong> ${userName || userEmail || "Unknown"}</p>
           </div>
 
           <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
@@ -137,7 +134,7 @@ export const generateSaudaEmailTemplate = ({
               <tr class="total-row">
                 <td colspan="4" style="text-align: right; padding: 10px;">Total:</td>
                 <td style="text-align: right; padding: 10px;">${totalTons.toFixed(3)} Tons</td>
-                <td style="text-align: right; padding: 10px;">${totalValue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</td>
+                <td style="text-align: right; padding: 10px;">${totalValue.toLocaleString("en-IN", { style: "currency", currency: "INR" })}</td>
                 <td colspan="5"></td>
               </tr>
             </tfoot>
