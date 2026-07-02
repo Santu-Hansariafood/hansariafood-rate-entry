@@ -48,7 +48,6 @@ export const generateSaudaEmailTemplate = ({
         <td style="padding: 14px 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">${tons.toFixed(3)}</td>
         <td style="padding: 14px 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">${itemValue.toLocaleString("en-IN", { style: "currency", currency: "INR" })}</td>
         <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.sellerCompany || "-"}</td>
-        <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.sellerName || "-"}</td>
         <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.deliveryDate || "-"}</td>
         <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.others || "-"}</td>
         <td style="padding: 14px 10px; text-align: center; font-weight: 600; border-bottom: 1px solid #e5e7eb;">${formatSaudaNo(entry.saudaNo)}</td>
@@ -312,7 +311,6 @@ export const generateSaudaEmailTemplate = ({
                       <th style="text-align: right;">Tons</th>
                       <th style="text-align: right;">Total Value</th>
                       <th>Seller Company</th>
-                      <th>Seller Name</th>
                       <th>Delivery</th>
                       <th>Remarks</th>
                       <th style="text-align: center;">Sauda No</th>
