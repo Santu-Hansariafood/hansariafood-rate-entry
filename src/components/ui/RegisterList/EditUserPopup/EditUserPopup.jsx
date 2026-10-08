@@ -131,7 +131,7 @@ const EditUserPopup = ({ open, onClose, user, onUpdate }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              External App User ID
+              External App User ID (used for Sauda and OTP messages)
             </label>
             <input
               type="text"

@@ -253,10 +253,6 @@ export default function RateTable({
       toast.success("Rate saved!");
       if (data.notificationDelivery?.error) {
         toast.warn("Rate saved, but the app notification could not be sent.");
-      } else if (data.notificationDelivery?.skipped) {
-        toast.warn(
-          `${data.notificationDelivery.skipped} registered user(s) need an app user ID to receive this rate.`
-        );
       }
       setEditIndex(null);
       // Trigger notification update

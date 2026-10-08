@@ -45,6 +45,7 @@ HANSARIA_API_KEY=
 HANSARIA_ADMIN_ID=
 HANSARIA_ADMIN_PASSWORD=
 HANSARIA_RATE_TEMPLATE_ID=
+HANSARIA_RATE_TO_USER_ID=
 HANSARIA_SAUDA_TEMPLATE_ID=
 HANSARIA_OTP_TEMPLATE_ID=
 ```
@@ -53,7 +54,8 @@ HANSARIA_OTP_TEMPLATE_ID=
 `/api/v1/messages/bulk`. Template IDs are configured separately for rate,
 sauda, and OTP notifications. Add the values to the deployment's server
 environment or local `.env.local` file, and restart the server after changing
-them.
+them. Rate notifications are sent only to `HANSARIA_RATE_TO_USER_ID`; other
+message types can still use each registered user's external app user ID.
 
 ## Learn More
 
