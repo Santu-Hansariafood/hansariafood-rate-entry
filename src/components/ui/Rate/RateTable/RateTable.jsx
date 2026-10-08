@@ -255,6 +255,10 @@ export default function RateTable({
         toast.warn(
           `Rate saved, but the app notification could not be sent: ${data.notificationDelivery.error}`
         );
+      } else if (data.notificationDelivery?.skipped) {
+        toast.warn(
+          `${data.notificationDelivery.skipped} registered user(s) were skipped because they do not have an external app user ID.`
+        );
       }
       setEditIndex(null);
       // Trigger notification update

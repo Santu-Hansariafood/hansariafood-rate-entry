@@ -155,41 +155,6 @@ export const sendTemplateToUser = async (user, templateIdEnv, variables) => {
   return { ...result, skipped: 0 };
 };
 
-export const sendTemplateToConfiguredUsers = async (
-  templateIdEnv,
-  recipientIdsEnv,
-  recipientLanguagesEnv,
-  variables
-) => {
-  const toUserIds = process.env[recipientIdsEnv]
-    ?.split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
-  if (!toUserIds?.length) {
-    throw new Error(`Missing message API configuration: ${recipientIdsEnv}`);
-  }
-
-  const languages = process.env[recipientLanguagesEnv]
-    ?.split(",")
-    .map((language) => language.trim().toLowerCase());
-  if (
-    languages &&
-    (languages.length !== toUserIds.length || languages.some((language) => !language))
-  ) {
-    throw new Error(
-      `${recipientLanguagesEnv} must contain one language per ${recipientIdsEnv} entry`
-    );
-  }
-
-  const recipients = toUserIds.map((toUserId, index) => ({
-    toUserId,
-    name: "",
-    ...(languages ? { language: languages[index] } : {}),
-  }));
-
-  return sendTemplateMessages(recipients, templateIdEnv, variables);
-};
-
 export const sendTemplateToRegisteredUsers = async (
   templateIdEnv,
   variables
