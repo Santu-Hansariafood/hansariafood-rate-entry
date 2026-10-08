@@ -9,6 +9,7 @@ import { sendEmail } from "@/lib/email/sendEmail";
 import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
 import DeletedSauda from "@/models/DeletedSauda";
 import { emitNotification } from "@/lib/socket";
+import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
 
 export async function POST(req) {
   await connectDB();
@@ -42,6 +43,8 @@ export async function POST(req) {
     }
 
     let existingEntry;
+    let shouldSendTemplateNotification = false;
+    let notificationEntries = {};
     let retryCount = 0;
     const maxRetries = 2;
 
@@ -169,6 +172,8 @@ export async function POST(req) {
 
             await existingEntry.save();
           }
+          shouldSendTemplateNotification = overallHasChanges;
+          notificationEntries = normalizedEntries;
         } else {
           existingEntry = await SaudaEntry.create({
             company: company.trim(),
@@ -180,6 +185,11 @@ export async function POST(req) {
             saudaEntries: normalizedEntries,
             lastUpdated: new Date(),
           });
+          notificationEntries = normalizedEntries;
+          shouldSendTemplateNotification =
+            Object.values(normalizedEntries).some(
+              (entries) => entries.length > 0
+            );
         }
 
         // If we reached here, save was successful
@@ -254,8 +264,44 @@ export async function POST(req) {
       console.error("Error generating or sending email:", emailError);
     }
 
+    let notificationDelivery = { sent: 0, skipped: 0 };
+    if (shouldSendTemplateNotification) {
+      const saudaDetails = Object.values(notificationEntries)
+        .flat()
+        .map((entry) =>
+          [
+            `Sauda No: ${entry.saudaNo || "N/A"}`,
+            `Commodity: ${entry.commodity || "N/A"}`,
+            `Tons: ${entry.tons}`,
+            `Rate: ${entry.finalRate}`,
+            `Seller: ${entry.sellerCompany || entry.sellerName || "N/A"}`,
+            `Delivery: ${entry.deliveryDate || "N/A"}`,
+          ].join(", ")
+        )
+        .join("; ");
+
+      try {
+        notificationDelivery = await sendTemplateToRegisteredUsers(
+          "HANSARIA_SAUDA_TEMPLATE_ID",
+          {
+            company: existingEntry.company,
+            date: existingEntry.date,
+            time: existingEntry.time || "",
+            saudaDetails,
+          }
+        );
+      } catch (messageError) {
+        console.error("Failed to send sauda template messages:", messageError);
+        notificationDelivery = { sent: 0, error: messageError.message };
+      }
+    }
+
     return NextResponse.json(
-      { message: "Sauda entry saved successfully", entry: existingEntry },
+      {
+        message: "Sauda entry saved successfully",
+        entry: existingEntry,
+        notificationDelivery,
+      },
       { status: 201 },
     );
   } catch (error) {

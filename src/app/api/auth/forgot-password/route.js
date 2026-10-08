@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { getOtpEmailTemplate } from "@/lib/email/templates/otpTemplate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { sendTemplateToUser } from "@/lib/hansariaMessages";
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -52,8 +53,31 @@ export async function POST(req) {
       html: getOtpEmailTemplate(user.name, otp),
     });
 
+    let inAppDelivery;
+    try {
+      inAppDelivery = await sendTemplateToUser(
+        user,
+        "HANSARIA_OTP_TEMPLATE_ID",
+        { otp }
+      );
+    } catch (messageError) {
+      console.error("Failed to send OTP template message:", messageError);
+      inAppDelivery = { sent: 0, error: messageError.message };
+    }
+
     return NextResponse.json(
-      { message: "OTP sent to your registered email.", email: user.email },
+      {
+        message:
+          inAppDelivery.sent > 0
+            ? "OTP sent to your registered email and app."
+            : inAppDelivery.error
+              ? "OTP sent to email, but the app message could not be sent."
+              : inAppDelivery.skipped
+                ? "OTP sent to email; link your app account to receive OTP messages there."
+                : "OTP sent to your registered email.",
+        email: user.email,
+        inAppDelivery,
+      },
       { status: 200 },
     );
   } catch (error) {

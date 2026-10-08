@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import RateHistory from "@/models/RateHistory";
+import ManageCompany from "@/models/ManageCompany";
 import { connectDB } from "@/lib/mongodb";
 import { emitNotification } from "@/lib/socket";
+import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
 
 export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
@@ -200,20 +202,46 @@ export async function POST(req, { params }) {
       );
     }
 
-    // Emit socket notification
+    const rate = finalRate ?? tempRate;
+
     emitNotification({
       type: "rate",
       data: {
         companyId: id,
         location: locationName,
         commodity: commodityName,
-        rate: finalRate ?? tempRate,
+        rate,
         updateTime: time,
       },
     });
 
+    let notificationDelivery = { sent: 0, skipped: 0 };
+    if (rate !== undefined && rate !== null) {
+      try {
+        const company = await ManageCompany.findById(id).select("name").lean();
+        notificationDelivery = await sendTemplateToRegisteredUsers(
+          "HANSARIA_RATE_TEMPLATE_ID",
+          {
+            company: company?.name || id,
+            location: locationName,
+            commodity: commodityName,
+            rate: String(rate),
+            date: today,
+            updateTime: time,
+          }
+        );
+      } catch (messageError) {
+        console.error("Failed to send rate template messages:", messageError);
+        notificationDelivery = { sent: 0, error: messageError.message };
+      }
+    }
+
     return NextResponse.json(
-      { success: true, message: "Rate updated successfully" },
+      {
+        success: true,
+        message: "Rate updated successfully",
+        notificationDelivery,
+      },
       { status: 200 },
     );
   } catch (error) {

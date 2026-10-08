@@ -5,6 +5,7 @@ import RateHistory from "@/models/RateHistory";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
+import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
 
 export async function POST(req) {
   try {
@@ -249,8 +250,26 @@ export async function POST(req) {
       console.warn("Failed to emit notification:", socketErr.message);
     }
 
+    let notificationDelivery;
+    try {
+      notificationDelivery = await sendTemplateToRegisteredUsers(
+        "HANSARIA_RATE_TEMPLATE_ID",
+        {
+          company: cleanCompany,
+          location: cleanLocation,
+          commodity: cleanCommodity,
+          rate: String(numericNewRate),
+          date: todayStr,
+          updateTime: currentTime,
+        }
+      );
+    } catch (messageError) {
+      console.error("Failed to send rate template messages:", messageError);
+      notificationDelivery = { sent: 0, error: messageError.message };
+    }
+
     return NextResponse.json(
-      { message: "Rate saved successfully!" },
+      { message: "Rate saved successfully!", notificationDelivery },
       { status: 200 },
     );
   } catch (error) {
@@ -429,8 +448,39 @@ export async function PUT(req) {
 
     await rateToUpdate.save();
 
+    const todayStr = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    const updateTime = new Date().toLocaleTimeString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    let notificationDelivery;
+    try {
+      notificationDelivery = await sendTemplateToRegisteredUsers(
+        "HANSARIA_RATE_TEMPLATE_ID",
+        {
+          company: cleanCompany,
+          location: cleanLocation,
+          commodity: cleanCommodity,
+          rate: String(Number(newRate)),
+          date: todayStr,
+          updateTime,
+        }
+      );
+    } catch (messageError) {
+      console.error("Failed to send rate template messages:", messageError);
+      notificationDelivery = { sent: 0, error: messageError.message };
+    }
+
     return NextResponse.json(
-      { message: "Rate updated successfully!" },
+      { message: "Rate updated successfully!", notificationDelivery },
       { status: 200 },
     );
   } catch (error) {

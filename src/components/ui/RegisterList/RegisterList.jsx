@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { AnimatePresence } from "framer-motion";
 import Loading from "@/components/common/Loading/Loading";
@@ -34,7 +34,7 @@ export default function RegisterList() {
   const [editOpen, setEditOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {

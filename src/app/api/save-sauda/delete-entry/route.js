@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { generateDeletedSaudaEmailTemplate } from "@/lib/email/templates/deletedSaudaTemplate";
 import { emitNotification } from "@/lib/socket";
+import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -106,8 +107,32 @@ export async function POST(req) {
       console.error("Error sending deleted sauda email:", emailError);
     }
 
+    let notificationDelivery;
+    try {
+      notificationDelivery = await sendTemplateToRegisteredUsers(
+        "HANSARIA_SAUDA_TEMPLATE_ID",
+        {
+          company: doc.company,
+          date: doc.date,
+          time: doc.time,
+          saudaDetails: [
+            "Deleted sauda",
+            `Sauda No: ${doc.saudaNo || "N/A"}`,
+            `Commodity: ${doc.commodity || "N/A"}`,
+            `Tons: ${doc.tons}`,
+            `Rate: ${doc.finalRate}`,
+            `Seller: ${doc.sellerCompany || doc.sellerName || "N/A"}`,
+            `Reason: ${doc.deletedReason || "Not provided"}`,
+          ].join(", "),
+        }
+      );
+    } catch (messageError) {
+      console.error("Failed to send deleted sauda template messages:", messageError);
+      notificationDelivery = { sent: 0, error: messageError.message };
+    }
+
     return NextResponse.json(
-      { message: "Deleted sauda logged successfully" },
+      { message: "Deleted sauda logged successfully", notificationDelivery },
       { status: 201 },
     );
   } catch (error) {

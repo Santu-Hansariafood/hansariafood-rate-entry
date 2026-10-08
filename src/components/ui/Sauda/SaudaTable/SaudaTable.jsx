@@ -106,26 +106,39 @@ export default function SaudaTable({
         const saudaEntry = list[removeDialog.idx];
 
         if (saudaEntry) {
-          await axiosInstance.post("/save-sauda/delete-entry", {
-            company: company.name,
-            date,
-            saudaEntry: {
-              saudaNo: saudaEntry.saudaNo,
-              unit: saudaEntry.unit || removeDialog.key.split("-")[0] || "",
-              commodity:
-                saudaEntry.commodity ||
-                removeDialog.key.split("-")[1] ||
-                "",
-              tons: saudaEntry.tons,
-              finalRate: saudaEntry.finalRate,
-              sellerName: saudaEntry.sellerName,
-              sellerCompany: saudaEntry.sellerCompany,
-              deliveryDate: saudaEntry.deliveryDate,
-              others: saudaEntry.others,
-            },
-            reason: trimmed,
-            mobile,
-          });
+          const { data } = await axiosInstance.post(
+            "/save-sauda/delete-entry",
+            {
+              company: company.name,
+              date,
+              saudaEntry: {
+                saudaNo: saudaEntry.saudaNo,
+                unit: saudaEntry.unit || removeDialog.key.split("-")[0] || "",
+                commodity:
+                  saudaEntry.commodity ||
+                  removeDialog.key.split("-")[1] ||
+                  "",
+                tons: saudaEntry.tons,
+                finalRate: saudaEntry.finalRate,
+                sellerName: saudaEntry.sellerName,
+                sellerCompany: saudaEntry.sellerCompany,
+                deliveryDate: saudaEntry.deliveryDate,
+                others: saudaEntry.others,
+              },
+              reason: trimmed,
+              mobile,
+            }
+          );
+
+          if (data.notificationDelivery?.error) {
+            toast.warn(
+              "Sauda deleted, but the app notification could not be sent."
+            );
+          } else if (data.notificationDelivery?.skipped) {
+            toast.warn(
+              `${data.notificationDelivery.skipped} registered user(s) need an app user ID to receive this sauda update.`
+            );
+          }
         }
 
         removeRow(removeDialog.key, removeDialog.idx);

@@ -96,6 +96,15 @@ export const useSaudaSave = (
           applyServerEntries(key, savedList);
         }
         toast.success(`Saved successfully for ${unit} - ${commodity}`);
+        if (data.notificationDelivery?.error) {
+          toast.warn(
+            "Sauda saved, but the app notification could not be sent."
+          );
+        } else if (data.notificationDelivery?.skipped) {
+          toast.warn(
+            `${data.notificationDelivery.skipped} registered user(s) need an app user ID to receive this sauda.`
+          );
+        }
         setLastUpdated(data.entry.lastUpdated);
         setSaveStatus((prev) => ({ ...prev, [entryId]: "success" }));
         setTimeout(() => {
