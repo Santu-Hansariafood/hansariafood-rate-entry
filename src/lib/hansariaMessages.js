@@ -1,8 +1,6 @@
 import User from "@/models/User";
 
-const MESSAGE_ENDPOINT = "/api/v1/messages/bulk";
-const MAX_RECIPIENTS = 1000;
-const MAX_REQUEST_BYTES = 2 * 1024 * 1024;
+const MESSAGE_ENDPOINT = "/api/v1/messages/send";
 
 const getConfiguration = (templateIdEnv) => {
   const names = [
@@ -41,55 +39,6 @@ const getConfiguration = (templateIdEnv) => {
   };
 };
 
-const createRequestBody = (config, recipients, variables) =>
-  JSON.stringify({
-    adminUserId: config.adminUserId,
-    adminPassword: config.adminPassword,
-    templateId: config.templateId,
-    recipients: recipients.map((recipient) => ({
-      toUserId: recipient.toUserId,
-      ...(recipient.language ? { language: recipient.language } : {}),
-      variables: {
-        ...variables,
-        name: recipient.name,
-      },
-    })),
-  });
-
-const splitRecipientsIntoBatches = (recipients, config, variables) => {
-  const batches = [];
-  let batch = [];
-
-  for (const recipient of recipients) {
-    const candidate = [...batch, recipient];
-    const candidateBody = createRequestBody(config, candidate, variables);
-    const exceedsSize =
-      Buffer.byteLength(candidateBody, "utf8") > MAX_REQUEST_BYTES;
-
-    if (
-      (candidate.length > MAX_RECIPIENTS || exceedsSize) &&
-      batch.length > 0
-    ) {
-      batches.push(batch);
-      batch = [recipient];
-    } else {
-      batch = candidate;
-    }
-
-    if (
-      Buffer.byteLength(
-        createRequestBody(config, batch, variables),
-        "utf8"
-      ) > MAX_REQUEST_BYTES
-    ) {
-      throw new Error("A single message request exceeds the 2 MB API limit");
-    }
-  }
-
-  if (batch.length > 0) batches.push(batch);
-  return batches;
-};
-
 const sendTemplateMessages = async (
   recipients,
   templateIdEnv,
@@ -98,38 +47,54 @@ const sendTemplateMessages = async (
   if (recipients.length === 0) return { sent: 0 };
 
   const config = getConfiguration(templateIdEnv);
-  const batches = splitRecipientsIntoBatches(recipients, config, variables);
   let sent = 0;
 
-  for (const batch of batches) {
-    const body = createRequestBody(config, batch, variables);
+  for (const recipient of recipients) {
     const response = await fetch(`${config.baseUrl}${MESSAGE_ENDPOINT}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
       },
-      body,
+      body: JSON.stringify({
+        adminUserId: config.adminUserId,
+        adminPassword: config.adminPassword,
+        templateName: config.templateId,
+        language: recipient.language || "en",
+        toUserId: recipient.toUserId,
+        variables: {
+          ...variables,
+          name: recipient.name,
+        },
+      }),
       signal: AbortSignal.timeout(15000),
     });
 
-    if (response.status === 429) {
-      const retryAfter = response.headers.get("Retry-After") || "1";
-      throw new Error(
-        `Message API rate limit reached; retry after ${retryAfter} seconds`
-      );
+    let result;
+    try {
+      result = await response.json();
+    } catch (error) {
+      if (response.ok) {
+        throw new Error("Message API returned an invalid JSON response", {
+          cause: error,
+        });
+      }
     }
 
     if (!response.ok) {
-      throw new Error(`Message API request failed with HTTP ${response.status}`);
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After") || "1";
+        throw new Error(
+          result?.error ||
+            `Message API rate limit reached; retry after ${retryAfter} seconds`
+        );
+      }
+      throw new Error(
+        result?.error || `Message API request failed with HTTP ${response.status}`
+      );
     }
 
-    const result = await response.json();
-    if (!Number.isInteger(result?.sent) || result.sent < 0) {
-      throw new Error("Message API returned an invalid sent count");
-    }
-
-    sent += result.sent;
+    sent += 1;
   }
 
   return { sent };

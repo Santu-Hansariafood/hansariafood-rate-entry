@@ -40,7 +40,7 @@ Configure these server-side environment variables before using message delivery.
 Keep the API key and admin password out of client-side code and source control:
 
 ```env
-HANSARIA_API_BASE_URL=https://YOUR_DOMAIN
+HANSARIA_API_BASE_URL=https://hfconnect.in
 HANSARIA_API_KEY=
 HANSARIA_ADMIN_ID=
 HANSARIA_ADMIN_PASSWORD=
@@ -50,7 +50,7 @@ HANSARIA_OTP_TEMPLATE_ID=
 ```
 
 `HANSARIA_API_BASE_URL` should be the API host only; the application appends
-`/api/v1/messages/bulk`. Template IDs are configured separately for rate,
+`/api/v1/messages/send` and sends one request per recipient. Template IDs are configured separately for rate,
 sauda, and OTP notifications. Add the values to the deployment's server
 environment or local `.env.local` file, and restart the server after changing
 them. Rate notifications are sent to registered users who have an external
