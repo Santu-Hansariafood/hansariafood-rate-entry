@@ -5,7 +5,7 @@ import RateHistory from "@/models/RateHistory";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
-import { sendTemplateToConfiguredUser } from "@/lib/hansariaMessages";
+import { sendTemplateToConfiguredUsers } from "@/lib/hansariaMessages";
 
 export async function POST(req) {
   try {
@@ -62,6 +62,7 @@ export async function POST(req) {
         { status: 400 },
       );
     }
+    const numericQuantity = isNaN(Number(quantity)) ? 0 : Number(quantity);
 
     let companyIdForSocket = null;
     try {
@@ -72,8 +73,6 @@ export async function POST(req) {
         location: cleanLocation, 
         commodity: cleanCommodity 
       });
-
-      const numericQuantity = isNaN(Number(quantity)) ? 0 : Number(quantity);
 
       const updateDoc = {
         newRate: numericNewRate,
@@ -252,13 +251,15 @@ export async function POST(req) {
 
     let notificationDelivery;
     try {
-      notificationDelivery = await sendTemplateToConfiguredUser(
+      notificationDelivery = await sendTemplateToConfiguredUsers(
         "HANSARIA_RATE_TEMPLATE_ID",
-        "HANSARIA_RATE_TO_USER_ID",
+        "HANSARIA_RATE_TO_USER_IDS",
+        "HANSARIA_RATE_LANGUAGES",
         {
           company: cleanCompany,
           location: cleanLocation,
           commodity: cleanCommodity,
+          quantaty: String(numericQuantity),
           rate: String(numericNewRate),
           date: todayStr,
           updateTime: currentTime,
@@ -464,13 +465,15 @@ export async function PUT(req) {
 
     let notificationDelivery;
     try {
-      notificationDelivery = await sendTemplateToConfiguredUser(
+      notificationDelivery = await sendTemplateToConfiguredUsers(
         "HANSARIA_RATE_TEMPLATE_ID",
-        "HANSARIA_RATE_TO_USER_ID",
+        "HANSARIA_RATE_TO_USER_IDS",
+        "HANSARIA_RATE_LANGUAGES",
         {
           company: cleanCompany,
           location: cleanLocation,
           commodity: cleanCommodity,
+          quantaty: String(rateToUpdate.quantity ?? ""),
           rate: String(Number(newRate)),
           date: todayStr,
           updateTime,
