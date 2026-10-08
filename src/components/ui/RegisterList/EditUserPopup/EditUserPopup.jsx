@@ -12,6 +12,8 @@ const EditUserPopup = ({ open, onClose, user, onUpdate }) => {
     name: "",
     mobile: "",
     email: "",
+    toUserId: "",
+    language: "en",
     password: "",
   });
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,8 @@ const EditUserPopup = ({ open, onClose, user, onUpdate }) => {
         name: user.name || "",
         mobile: user.mobile || "",
         email: user.email || "",
+        toUserId: user.toUserId || "",
+        language: user.language || "en",
         password: "",
       });
     }
@@ -42,6 +46,8 @@ const EditUserPopup = ({ open, onClose, user, onUpdate }) => {
         name: formData.name,
         mobile: formData.mobile,
         email: formData.email,
+        toUserId: formData.toUserId,
+        language: formData.language,
       };
       if (formData.password) payload.password = formData.password;
 
@@ -119,6 +125,34 @@ const EditUserPopup = ({ open, onClose, user, onUpdate }) => {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              External App User ID
+            </label>
+            <input
+              type="text"
+              name="toUserId"
+              value={formData.toUserId}
+              onChange={handleChange}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Message Language
+            </label>
+            <input
+              type="text"
+              name="language"
+              value={formData.language}
+              onChange={handleChange}
+              placeholder="en"
+              required
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>

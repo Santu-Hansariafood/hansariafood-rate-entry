@@ -16,13 +16,15 @@ export default function useCompaniesWithRateUpdate(open) {
       try {
         setLoading(true);
 
-        const res = await axiosInstance.get("/managecompany?limit=5000");
+        const today = new Date().toISOString().split("T")[0];
+        const [res, todayRes] = await Promise.all([
+          axiosInstance.get("/managecompany?limit=5000"),
+          axiosInstance.get("/rateupdate", { params: { date: today } }),
+        ]);
         const companyList = res.data?.companies || [];
         setCompanies(companyList);
 
-        const todayRes = await axiosInstance.get("/rateupdate");
-        const today = new Date().toISOString().split("T")[0];
-        const todayUpdate = todayRes.data?.data?.find((u) => u.date === today);
+        const todayUpdate = todayRes.data?.data?.[0];
 
         setSelectedCompanies(todayUpdate ? todayUpdate.companies : []);
       } catch (error) {

@@ -40,10 +40,12 @@ export async function POST(req) {
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   await connectDB();
   try {
-    const data = await RateUpdate.find().sort({ date: -1 });
+    const date = new URL(req.url).searchParams.get("date");
+    const filter = date ? { date } : {};
+    const data = await RateUpdate.find(filter).sort({ date: -1 });
     return NextResponse.json({ success: true, data });
   } catch (err) {
     console.error("RateUpdate GET error:", err);

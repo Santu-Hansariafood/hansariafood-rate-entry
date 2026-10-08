@@ -12,11 +12,17 @@ export async function GET(req) {
   }
 
   try {
+    const { searchParams } = new URL(req.url);
+    const companies = searchParams
+      .getAll("company")
+      .map((company) => company.trim())
+      .filter(Boolean);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const ratesToday = await Rate.find({
       newRateDate: { $gte: today },
+      ...(companies.length > 0 ? { company: { $in: companies } } : {}),
     })
       .select("company commodity -_id")
       .lean();

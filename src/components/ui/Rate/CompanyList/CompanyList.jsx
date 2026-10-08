@@ -62,19 +62,18 @@ export default function CompanyList({
     return () => {
       window.removeEventListener("rates-updated", handleRatesUpdated);
     };
-  }, [completedCompanies]);
+  }, []);
 
   useEffect(() => {
     const fetchDisabledCompanies = async () => {
       try {
-        const res = await axiosInstance.get("/rateupdate");
+        const today = new Date().toISOString().split("T")[0];
+        const res = await axiosInstance.get("/rateupdate", {
+          params: { date: today },
+        });
         const data = res.data;
         if (data.success && data.data.length > 0) {
-          const today = new Date().toISOString().split("T")[0];
-          const todayEntry = data.data.find((d) => d.date === today);
-          if (todayEntry) {
-            setDisabledCompanies(todayEntry.companies || []);
-          }
+          setDisabledCompanies(data.data[0].companies || []);
         }
       } catch (err) {
         console.error("Error fetching disabled companies:", err);

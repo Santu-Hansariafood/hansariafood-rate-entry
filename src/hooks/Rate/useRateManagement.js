@@ -87,8 +87,11 @@ export default function useRateManagement() {
       setLoading(false);
 
       if (names.length > 0) {
+        const statusParams = new URLSearchParams();
+        names.forEach((name) => statusParams.append("company", name));
+
         axiosInstance
-          .get("/rate/status")
+          .get(`/rate/status?${statusParams.toString()}`)
           .then((ratesRes) => {
             const rawRates = Array.isArray(ratesRes.data)
               ? ratesRes.data

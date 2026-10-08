@@ -10,7 +10,15 @@ export async function PUT(req) {
 
   try {
     await connectDB();
-    const { id, name, mobile, email, password } = await req.json();
+    const {
+      id,
+      name,
+      mobile,
+      email,
+      password,
+      toUserId,
+      language,
+    } = await req.json();
 
     if (!id)
       return NextResponse.json(
@@ -44,6 +52,15 @@ export async function PUT(req) {
           );
       }
       user.email = email;
+    }
+
+    if (typeof toUserId === "string") {
+      user.toUserId = toUserId.trim();
+    }
+
+    if (typeof language === "string") {
+      const normalizedLanguage = language.trim().toLowerCase();
+      if (normalizedLanguage) user.language = normalizedLanguage;
     }
 
     if (password && password.trim() !== "") {
