@@ -252,7 +252,9 @@ export default function RateTable({
 
       toast.success("Rate saved!");
       if (data.notificationDelivery?.error) {
-        toast.warn("Rate saved, but the app notification could not be sent.");
+        toast.warn(
+          `Rate saved, but the app notification could not be sent: ${data.notificationDelivery.error}`
+        );
       }
       setEditIndex(null);
       // Trigger notification update
