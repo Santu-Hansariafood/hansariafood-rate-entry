@@ -120,24 +120,6 @@ export const sendTemplateToUser = async (user, templateIdEnv, variables) => {
   return { ...result, skipped: 0 };
 };
 
-export const sendTemplateToConfiguredUser = async (
-  templateIdEnv,
-  variables
-) => {
-  const toUserId = process.env.HANSARIA_RATE_TO_USER_ID?.trim();
-  if (!toUserId) {
-    throw new Error(
-      "Missing message API configuration: HANSARIA_RATE_TO_USER_ID"
-    );
-  }
-
-  return sendTemplateMessages(
-    [{ toUserId, name: "", language: "en" }],
-    templateIdEnv,
-    variables
-  );
-};
-
 export const sendTemplateToRegisteredUsers = async (
   templateIdEnv,
   variables
