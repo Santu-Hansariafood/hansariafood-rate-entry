@@ -253,7 +253,6 @@ export async function POST(req) {
     try {
       notificationDelivery = await sendTemplateToConfiguredUser(
         "HANSARIA_RATE_TEMPLATE_ID",
-        "HANSARIA_RATE_TO_USER_ID",
         {
           company: cleanCompany,
           location: cleanLocation,
@@ -466,7 +465,6 @@ export async function PUT(req) {
     try {
       notificationDelivery = await sendTemplateToConfiguredUser(
         "HANSARIA_RATE_TEMPLATE_ID",
-        "HANSARIA_RATE_TO_USER_ID",
         {
           company: cleanCompany,
           location: cleanLocation,

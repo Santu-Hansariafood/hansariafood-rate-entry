@@ -122,12 +122,13 @@ export const sendTemplateToUser = async (user, templateIdEnv, variables) => {
 
 export const sendTemplateToConfiguredUser = async (
   templateIdEnv,
-  recipientIdEnv,
   variables
 ) => {
-  const toUserId = process.env[recipientIdEnv]?.trim();
+  const toUserId = process.env.HANSARIA_RATE_TO_USER_ID?.trim();
   if (!toUserId) {
-    throw new Error(`Missing message API configuration: ${recipientIdEnv}`);
+    throw new Error(
+      "Missing message API configuration: HANSARIA_RATE_TO_USER_ID"
+    );
   }
 
   return sendTemplateMessages(

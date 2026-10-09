@@ -221,7 +221,6 @@ export async function POST(req, { params }) {
         const company = await ManageCompany.findById(id).select("name").lean();
         notificationDelivery = await sendTemplateToConfiguredUser(
           "HANSARIA_RATE_TEMPLATE_ID",
-          "HANSARIA_RATE_TO_USER_ID",
           {
             company: company?.name || id,
             location: locationName,
