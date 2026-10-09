@@ -1,4 +1,5 @@
 import User from "@/models/User";
+import mongoose from "mongoose";
 
 const MESSAGE_ENDPOINT = "/api/v1/messages/send";
 
@@ -125,13 +126,45 @@ export const sendTemplateToConfiguredUser = async (
   recipientIdEnv,
   variables
 ) => {
-  const toUserId = process.env[recipientIdEnv]?.trim();
-  if (!toUserId) {
+  const recipientIdentifier = process.env[recipientIdEnv]?.trim();
+  if (!recipientIdentifier) {
     throw new Error(`Missing message API configuration: ${recipientIdEnv}`);
   }
 
+  let user;
+  if (mongoose.isValidObjectId(recipientIdentifier)) {
+    user = await User.findById(recipientIdentifier)
+      .select("name toUserId language")
+      .lean();
+  }
+
+  if (!user && /^\d+$/.test(recipientIdentifier)) {
+    const mobile = Number(recipientIdentifier);
+    if (Number.isSafeInteger(mobile)) {
+      user = await User.findOne({ mobile })
+        .select("name toUserId language")
+        .lean();
+    }
+  }
+
+  if (!user) {
+    throw new Error(
+      `No registered user found for ${recipientIdEnv} as a MongoDB ID or mobile number`
+    );
+  }
+
+  if (typeof user.toUserId !== "string" || !user.toUserId.trim()) {
+    throw new Error(
+      "The registered user has no linked hfconnect chat-account ID"
+    );
+  }
+
   return sendTemplateMessages(
-    [{ toUserId, name: "", language: "en" }],
+    [{
+      toUserId: user.toUserId.trim(),
+      name: user.name || "",
+      language: user.language || "en",
+    }],
     templateIdEnv,
     variables
   );
