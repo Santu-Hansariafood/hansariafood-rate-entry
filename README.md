@@ -45,6 +45,7 @@ HANSARIA_API_KEY=
 HANSARIA_ADMIN_ID=tradeconfirmation@hansariafood.com
 HANSARIA_ADMIN_PASSWORD=
 HANSARIA_RATE_TEMPLATE_ID=6ac76937c5d0a603f0d7e0f8
+HANSARIA_RATE_TO_USER_ID=9876543210
 HANSARIA_SAUDA_TEMPLATE_ID=6ac76988c5d0a603f0d7e0f9
 HANSARIA_OTP_TEMPLATE_ID=6ac7682dc5d0a603f0d7e0f7
 ```
@@ -52,11 +53,13 @@ HANSARIA_OTP_TEMPLATE_ID=6ac7682dc5d0a603f0d7e0f7
 `HANSARIA_API_BASE_URL` should be the API host only; the application appends
 `/api/v1/messages/send` and sends one request per recipient.
 `HANSARIA_ADMIN_ID` and `HANSARIA_ADMIN_PASSWORD` authenticate the sender;
-add the API key and admin password to the deployment's server environment or
-local `.env.local` file, and restart the server after changing them. Rate
-notifications are sent to each registered user with a saved external app user
-ID, using their saved message language. Users without an external app user ID
-are skipped.
+`HANSARIA_RATE_TO_USER_ID` is the rate notification's recipient chat-account
+ID. Add the API key and admin password to the deployment's server environment
+or local `.env.local` file, and restart the server after changing them. Rate
+notifications are sent to that configured recipient in English and include
+the date, company, commodity, quantity (`quantaty` per the template), rate,
+location, and update time. Sauda and OTP notifications continue to use
+registered users' saved external app user IDs and message languages.
 
 ## Learn More
 

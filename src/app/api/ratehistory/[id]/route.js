@@ -4,7 +4,7 @@ import RateHistory from "@/models/RateHistory";
 import ManageCompany from "@/models/ManageCompany";
 import { connectDB } from "@/lib/mongodb";
 import { emitNotification } from "@/lib/socket";
-import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
+import { sendTemplateToConfiguredUser } from "@/lib/hansariaMessages";
 
 export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
@@ -219,8 +219,9 @@ export async function POST(req, { params }) {
     if (rate !== undefined && rate !== null) {
       try {
         const company = await ManageCompany.findById(id).select("name").lean();
-        notificationDelivery = await sendTemplateToRegisteredUsers(
+        notificationDelivery = await sendTemplateToConfiguredUser(
           "HANSARIA_RATE_TEMPLATE_ID",
+          "HANSARIA_RATE_TO_USER_ID",
           {
             company: company?.name || id,
             location: locationName,

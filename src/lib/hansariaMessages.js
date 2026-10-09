@@ -120,6 +120,23 @@ export const sendTemplateToUser = async (user, templateIdEnv, variables) => {
   return { ...result, skipped: 0 };
 };
 
+export const sendTemplateToConfiguredUser = async (
+  templateIdEnv,
+  recipientIdEnv,
+  variables
+) => {
+  const toUserId = process.env[recipientIdEnv]?.trim();
+  if (!toUserId) {
+    throw new Error(`Missing message API configuration: ${recipientIdEnv}`);
+  }
+
+  return sendTemplateMessages(
+    [{ toUserId, name: "", language: "en" }],
+    templateIdEnv,
+    variables
+  );
+};
+
 export const sendTemplateToRegisteredUsers = async (
   templateIdEnv,
   variables
