@@ -8,7 +8,6 @@ const getConfiguration = (templateIdEnv) => {
     "HANSARIA_API_BASE_URL",
     "HANSARIA_API_KEY",
     "HANSARIA_ADMIN_ID",
-    "HANSARIA_ADMIN_PASSWORD",
     templateIdEnv,
   ];
   const config = Object.fromEntries(
@@ -31,11 +30,14 @@ const getConfiguration = (templateIdEnv) => {
     throw new Error("HANSARIA_API_BASE_URL must use HTTPS");
   }
 
+  if (!mongoose.isValidObjectId(config.HANSARIA_ADMIN_ID)) {
+    throw new Error("HANSARIA_ADMIN_ID must be a valid sender user ID");
+  }
+
   return {
     baseUrl: baseUrl.toString().replace(/\/$/, ""),
     apiKey: config.HANSARIA_API_KEY,
-    adminUserId: config.HANSARIA_ADMIN_ID,
-    adminPassword: config.HANSARIA_ADMIN_PASSWORD,
+    senderUserId: config.HANSARIA_ADMIN_ID,
     templateId: config[templateIdEnv],
   };
 };
@@ -58,8 +60,7 @@ const sendTemplateMessages = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        adminUserId: config.adminUserId,
-        adminPassword: config.adminPassword,
+        fromUserId: config.senderUserId,
         templateName: config.templateId,
         language: recipient.language || "en",
         toUserId: recipient.toUserId,
@@ -126,45 +127,13 @@ export const sendTemplateToConfiguredUser = async (
   recipientIdEnv,
   variables
 ) => {
-  const recipientIdentifier = process.env[recipientIdEnv]?.trim();
-  if (!recipientIdentifier) {
+  const toUserId = process.env[recipientIdEnv]?.trim();
+  if (!toUserId) {
     throw new Error(`Missing message API configuration: ${recipientIdEnv}`);
   }
 
-  let user;
-  if (mongoose.isValidObjectId(recipientIdentifier)) {
-    user = await User.findById(recipientIdentifier)
-      .select("name toUserId language")
-      .lean();
-  }
-
-  if (!user && /^\d+$/.test(recipientIdentifier)) {
-    const mobile = Number(recipientIdentifier);
-    if (Number.isSafeInteger(mobile)) {
-      user = await User.findOne({ mobile })
-        .select("name toUserId language")
-        .lean();
-    }
-  }
-
-  if (!user) {
-    throw new Error(
-      `No registered user found for ${recipientIdEnv} as a MongoDB ID or mobile number`
-    );
-  }
-
-  if (typeof user.toUserId !== "string" || !user.toUserId.trim()) {
-    throw new Error(
-      "The registered user has no linked hfconnect chat-account ID"
-    );
-  }
-
   return sendTemplateMessages(
-    [{
-      toUserId: user.toUserId.trim(),
-      name: user.name || "",
-      language: user.language || "en",
-    }],
+    [{ toUserId, name: "", language: "en" }],
     templateIdEnv,
     variables
   );
