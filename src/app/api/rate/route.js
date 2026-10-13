@@ -5,7 +5,7 @@ import RateHistory from "@/models/RateHistory";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
-import { sendTemplateToConfiguredUser } from "@/lib/hansariaMessages";
+import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
 
 export async function POST(req) {
   try {
@@ -251,9 +251,8 @@ export async function POST(req) {
 
     let notificationDelivery;
     try {
-      notificationDelivery = await sendTemplateToConfiguredUser(
+      notificationDelivery = await sendTemplateToRegisteredUsers(
         "HANSARIA_RATE_TEMPLATE_ID",
-        "HANSARIA_RATE_TO_USER_ID",
         {
           company: cleanCompany,
           location: cleanLocation,
@@ -464,9 +463,8 @@ export async function PUT(req) {
 
     let notificationDelivery;
     try {
-      notificationDelivery = await sendTemplateToConfiguredUser(
+      notificationDelivery = await sendTemplateToRegisteredUsers(
         "HANSARIA_RATE_TEMPLATE_ID",
-        "HANSARIA_RATE_TO_USER_ID",
         {
           company: cleanCompany,
           location: cleanLocation,

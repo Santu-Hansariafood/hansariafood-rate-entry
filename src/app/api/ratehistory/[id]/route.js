@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import RateHistory from "@/models/RateHistory";
+import Rate from "@/models/Rate";
 import ManageCompany from "@/models/ManageCompany";
 import { connectDB } from "@/lib/mongodb";
 import { emitNotification } from "@/lib/socket";
-import { sendTemplateToConfiguredUser } from "@/lib/hansariaMessages";
+import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
 
 export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
@@ -219,14 +220,22 @@ export async function POST(req, { params }) {
     if (rate !== undefined && rate !== null) {
       try {
         const company = await ManageCompany.findById(id).select("name").lean();
-        notificationDelivery = await sendTemplateToConfiguredUser(
+        const savedRate = company?.name
+          ? await Rate.findOne({
+              company: company.name,
+              location: locationName,
+              commodity: commodityName,
+            })
+              .select("quantity")
+              .lean()
+          : null;
+        notificationDelivery = await sendTemplateToRegisteredUsers(
           "HANSARIA_RATE_TEMPLATE_ID",
-          "HANSARIA_RATE_TO_USER_ID",
           {
             company: company?.name || id,
             location: locationName,
             commodity: commodityName,
-            quantaty: "",
+            quantaty: String(savedRate?.quantity ?? ""),
             rate: String(rate),
             date: today,
             updateTime: time,
