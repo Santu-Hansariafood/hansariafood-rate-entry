@@ -54,6 +54,9 @@ HANSARIA_OTP_TEMPLATE_ID=6ac7682dc5d0a603f0d7e0f7
 `HANSARIA_API_KEY` authenticates the request. `HANSARIA_ADMIN_ID` must be the
 sender's MongoDB user ID on hfconnect; it is sent as `fromUserId`. If the API
 key is bound to a sender account, this ID must match that account.
+The `HANSARIA_*_TEMPLATE_ID` values are hfconnect template MongoDB IDs and are
+sent as `templateId` (not `templateName`); each template must be accessible to
+the API key's workspace.
 `HANSARIA_RATE_TO_USER_ID` is passed directly to hfconnect as the recipient's
 chat-account ID or registered mobile number; the recipient does not need to
 exist in this app's user database. Add the API key, sender ID, and recipient

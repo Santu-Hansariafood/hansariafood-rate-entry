@@ -61,7 +61,7 @@ const sendTemplateMessages = async (
       },
       body: JSON.stringify({
         fromUserId: config.senderUserId,
-        templateName: config.templateId,
+        templateId: config.templateId,
         language: recipient.language || "en",
         toUserId: recipient.toUserId,
         variables: {
