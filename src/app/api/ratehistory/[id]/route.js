@@ -239,7 +239,8 @@ export async function POST(req, { params }) {
             rate: String(rate),
             date: today,
             updateTime: time,
-          }
+          },
+          { includeName: false }
         );
       } catch (messageError) {
         console.error("Failed to send rate template messages:", messageError);

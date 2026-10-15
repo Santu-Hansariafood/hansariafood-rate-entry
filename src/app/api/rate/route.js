@@ -261,7 +261,8 @@ export async function POST(req) {
           rate: String(numericNewRate),
           date: todayStr,
           updateTime: currentTime,
-        }
+        },
+        { includeName: false }
       );
     } catch (messageError) {
       console.error("Failed to send rate template messages:", messageError);
@@ -473,7 +474,8 @@ export async function PUT(req) {
           rate: String(Number(newRate)),
           date: todayStr,
           updateTime,
-        }
+        },
+        { includeName: false }
       );
     } catch (messageError) {
       console.error("Failed to send rate template messages:", messageError);

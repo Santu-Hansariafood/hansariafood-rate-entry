@@ -45,7 +45,8 @@ const getConfiguration = (templateIdEnv) => {
 const sendTemplateMessages = async (
   recipients,
   templateIdEnv,
-  variables
+  variables,
+  includeName = true
 ) => {
   if (recipients.length === 0) return { sent: 0 };
 
@@ -60,14 +61,13 @@ const sendTemplateMessages = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        fromUserId: config.senderUserId,
+        adminId: config.senderUserId,
         templateId: config.templateId,
         language: recipient.language || "en",
         toUserId: recipient.toUserId,
-        variables: {
-          ...variables,
-          name: recipient.name,
-        },
+        variables: includeName
+          ? { ...variables, name: recipient.name }
+          : variables,
       }),
       signal: AbortSignal.timeout(15000),
     });
@@ -141,7 +141,8 @@ export const sendTemplateToConfiguredUser = async (
 
 export const sendTemplateToRegisteredUsers = async (
   templateIdEnv,
-  variables
+  variables,
+  { includeName = true } = {}
 ) => {
   const users = await User.find({})
     .select("name toUserId language -_id")
@@ -161,7 +162,8 @@ export const sendTemplateToRegisteredUsers = async (
   const result = await sendTemplateMessages(
     recipients,
     templateIdEnv,
-    variables
+    variables,
+    includeName
   );
   return { ...result, skipped: users.length - recipients.length };
 };

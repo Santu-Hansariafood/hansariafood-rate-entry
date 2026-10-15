@@ -51,7 +51,7 @@ HANSARIA_OTP_TEMPLATE_ID=6ac7682dc5d0a603f0d7e0f7
 `HANSARIA_API_BASE_URL` should be the API host only; the application appends
 `/api/v1/messages/send` and sends one request per recipient.
 `HANSARIA_API_KEY` authenticates the request. `HANSARIA_ADMIN_ID` must be the
-sender's MongoDB user ID on hfconnect; it is sent as `fromUserId`. If the API
+sender's MongoDB user ID on hfconnect; it is sent as `adminId`. If the API
 key is bound to a sender account, this ID must match that account.
 The `HANSARIA_*_TEMPLATE_ID` values are hfconnect template MongoDB IDs and are
 sent as `templateId` (not `templateName`); each template must be accessible to
@@ -60,10 +60,13 @@ Add the API key, sender ID, and template IDs to the deployment's server
 environment or local `.env.local` file, and restart the server after changing
 them. Rate notifications are sent to every registered user with a saved
 hfconnect `toUserId`, using that user's saved message language (English when
-none is set). Users without a saved `toUserId` are skipped. The rate template
+none is set). Set each recipient's hfconnect user ID in the Registered Users
+user editor; users without a saved `toUserId` are skipped. The rate template
 includes the date, company, commodity, quantity (`quantaty` per the template),
-rate, location, and update time. Sauda and OTP notifications continue to use
-registered users' saved external app user IDs and message languages.
+rate, location, and update time, with the exact template variables `date`,
+`company`, `commodity`, `quantaty`, `rate`, `location`, and `updateTime`.
+Sauda and OTP notifications continue to use registered users' saved external
+app user IDs and message languages.
 
 ## Learn More
 
