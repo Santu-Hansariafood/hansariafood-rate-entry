@@ -3,6 +3,7 @@ import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 const success = (msg, data = {}) =>
   NextResponse.json({ success: true, message: msg, ...data }, { status: 200 });
@@ -19,6 +20,12 @@ export async function POST(req) {
 
     if (!name || !mobile || !password || !email)
       return error("All fields are required", 400);
+
+    if (!validationPatterns.name.test(String(name).trim()))
+      return error("Name should be 2-50 letters only", 400);
+
+    if (!validationPatterns.mobile.test(String(mobile).trim()))
+      return error("Enter a valid 10-digit mobile number", 400);
 
     const existing = await User.findOne({ $or: [{ mobile }, { email }] });
     if (existing) {

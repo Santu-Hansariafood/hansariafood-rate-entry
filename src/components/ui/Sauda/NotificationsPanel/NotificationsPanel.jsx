@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import useSaudaNotifications from "@/hooks/SaudaData/useSaudaNotifications";
 import DownloadExcelButton from "./DownloadExcelButton/DownloadExcelButton";
 import Loading from "@/components/common/Loading/Loading";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const NotificationsPanel = ({ onClose }) => {
   const { loading, searchQuery, setSearchQuery, filteredNotifications } =
@@ -40,8 +41,10 @@ const NotificationsPanel = ({ onClose }) => {
       `*Commodity:* ${item.commodity}`,
       `*Tons:* ${item.tons}`,
       `*Rate:* ₹${item.rate ?? "N/A"}`,
-      item.buyerName ? `*Buyer:* ${item.buyerName}` : null,
-      item.sellerCompany ? `*Seller Company:* ${item.sellerCompany}` : null,
+      item.buyerName ? `*Buyer:* ${toTitleCase(item.buyerName)}` : null,
+      item.sellerCompany
+        ? `*Seller Company:* ${toTitleCase(item.sellerCompany)}`
+        : null,
       item.payment !== null &&
       item.payment !== undefined &&
       String(item.payment).trim() !== ""
@@ -123,7 +126,7 @@ const NotificationsPanel = ({ onClose }) => {
                 <div className="flex justify-between items-start gap-2">
                   <div className="flex-1">
                     <span className="flex items-center gap-1 font-semibold text-gray-800 dark:text-gray-200">
-                      🏢 {item.company}
+                      🏢 {toTitleCase(item.company)}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400 block mt-1">
                       {item.date}
@@ -175,10 +178,14 @@ const NotificationsPanel = ({ onClose }) => {
                 )}
 
                 <div className="space-y-1 text-xs text-gray-500 dark:text-gray-500">
-                  {item.buyerName && <div>🧑‍💼 Buyer: {item.buyerName}</div>}
-                  {item.sellerName && <div>🏭 Seller: {item.sellerName}</div>}
+                  {item.buyerName && (
+                    <div>🧑‍💼 Buyer: {toTitleCase(item.buyerName)}</div>
+                  )}
+                  {item.sellerName && (
+                    <div>🏭 Seller: {toTitleCase(item.sellerName)}</div>
+                  )}
                   {item.sellerCompany && (
-                    <div>🏢 Company: {item.sellerCompany}</div>
+                    <div>🏢 Company: {toTitleCase(item.sellerCompany)}</div>
                   )}
                   {item.saudaNo && (
                     <div># Sauda No: {formatSaudaNo(item.saudaNo)}</div>

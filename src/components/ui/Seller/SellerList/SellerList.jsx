@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import useSellerList from "@/hooks/Seller/useSellerList";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"), {
   suspense: true,
@@ -104,12 +105,14 @@ export default function SellerList() {
         <Table
           data={sellers.map((item, index) => ({
             slno: (currentPage - 1) * ITEMS_PER_PAGE + index + 1,
-            sellerName: item?.sellerName || "Unknown",
+            sellerName: item?.sellerName
+              ? toTitleCase(item.sellerName)
+              : "Unknown",
             companies:
               item?.companies
                 ?.slice()
                 ?.sort((a, b) => (a?.name || "").localeCompare(b?.name || ""))
-                ?.map((c) => c?.name || "Unknown")
+                ?.map((c) => toTitleCase(c?.name) || "Unknown")
                 ?.join(", ") || "—",
             actions: (
               <Actions
@@ -203,7 +206,9 @@ export default function SellerList() {
               ) : (
                 <Suspense fallback={<Loading />}>
                   <h2 className="text-xl font-bold mb-4">
-                    {selectedSeller?.sellerName || "Unknown Seller"}
+                    {selectedSeller?.sellerName
+                      ? toTitleCase(selectedSeller.sellerName)
+                      : "Unknown Seller"}
                   </h2>
                   <p className="text-sm mb-2 font-semibold">Companies:</p>
                   <ul className="list-disc list-inside space-y-1">
@@ -213,7 +218,7 @@ export default function SellerList() {
                         (a?.name || "").localeCompare(b?.name || "")
                       )
                       ?.map((c, i) => (
-                        <li key={i}>{c?.name || "Unknown"}</li>
+                        <li key={i}>{toTitleCase(c?.name) || "Unknown"}</li>
                       ))}
                   </ul>
                 </Suspense>

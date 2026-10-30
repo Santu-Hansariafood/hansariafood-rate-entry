@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 export async function GET(req, { params }) {
   if (!verifyApiKey(req)) {
@@ -85,6 +86,24 @@ export async function PUT(req, { params }) {
     ) {
       return NextResponse.json(
         { error: "Type must include buyer/seller." },
+        { status: 400 },
+      );
+    }
+
+    const invalidContact = (mobileNumbers || []).find(
+      (m) =>
+        (m.primaryMobile &&
+          !validationPatterns.mobile.test(String(m.primaryMobile).trim())) ||
+        (m.contactPerson &&
+          !validationPatterns.name.test(String(m.contactPerson).trim())),
+    );
+
+    if (invalidContact) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid contact details. Mobile must be 10 digits starting 6-9 and name only alphabets.",
+        },
         { status: 400 },
       );
     }

@@ -8,6 +8,7 @@ import useUsers from "@/hooks/Register/useUsers";
 import useRegisterActions from "@/hooks/Register/useRegisterActions";
 import useCompanies from "@/hooks/Register/useCompanies";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const AssignPopup = dynamic(() =>
@@ -56,7 +57,7 @@ export default function RegisterList() {
       const res = await axiosInstance.get(
         `/user-companies?mobile=${user.mobile}`
       );
-      setViewingUser(user.name);
+      setViewingUser(toTitleCase(user.name));
       setViewingCompanies(res.data.companies || []);
       setViewOpen(true);
     } catch (err) {

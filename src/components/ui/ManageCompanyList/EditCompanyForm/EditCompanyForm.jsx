@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import useCompany from "@/hooks/Company/useCompany";
 import Loading from "@/components/common/Loading/Loading";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 const Dropdown = dynamic(() => import("@/components/common/Dropdown/Dropdown"));
 const InputBox = dynamic(() => import("@/components/common/InputBox/InputBox"));
@@ -147,20 +148,41 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
     }
 
     const mobileNumbers = [];
+    let invalidContactMessage = "";
     Object.entries(locationCommodityContacts).forEach(
       ([location, commodityMap]) => {
         Object.entries(commodityMap).forEach(([commodity, info]) => {
-          if (info.primaryMobile || info.contactPerson) {
-            mobileNumbers.push({
-              location,
-              commodity,
-              primaryMobile: info.primaryMobile,
-              contactPerson: info.contactPerson,
-            });
+          if (!info.primaryMobile && !info.contactPerson) return;
+
+          if (
+            info.primaryMobile &&
+            !validationPatterns.mobile.test(String(info.primaryMobile).trim())
+          ) {
+            invalidContactMessage = `Invalid mobile for ${location} - ${commodity}. It must be 10 digits starting 6-9.`;
+            return;
           }
+          if (
+            info.contactPerson &&
+            !validationPatterns.name.test(String(info.contactPerson).trim())
+          ) {
+            invalidContactMessage = `Invalid contact person for ${location} - ${commodity}. Only alphabets and spaces are allowed.`;
+            return;
+          }
+
+          mobileNumbers.push({
+            location,
+            commodity,
+            primaryMobile: info.primaryMobile,
+            contactPerson: info.contactPerson,
+          });
         });
       }
     );
+
+    if (invalidContactMessage) {
+      toast.error(invalidContactMessage);
+      return;
+    }
 
     setLoading(true);
     try {

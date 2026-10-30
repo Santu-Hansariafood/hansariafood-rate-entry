@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -193,6 +194,13 @@ const useSellerList = () => {
   const handleSaveEdit = async () => {
     if (!formData.sellerName || !formData.sellerName.trim()) {
       toast.error("Seller name is required");
+      return;
+    }
+
+    if (!validationPatterns.name.test(formData.sellerName.trim())) {
+      toast.error(
+        "Enter a valid seller name (letters and spaces only, 2-50 characters)"
+      );
       return;
     }
 

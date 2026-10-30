@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
 import RateUpdate from "@/models/RateUpdate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -33,6 +34,24 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Name, location & valid type (buyer/seller) are required." },
+        { status: 400 },
+      );
+    }
+
+    const invalidContact = (mobileNumbers || []).find(
+      (m) =>
+        (m.primaryMobile &&
+          !validationPatterns.mobile.test(String(m.primaryMobile).trim())) ||
+        (m.contactPerson &&
+          !validationPatterns.name.test(String(m.contactPerson).trim())),
+    );
+
+    if (invalidContact) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid contact details. Mobile must be 10 digits starting 6-9 and name only alphabets.",
+        },
         { status: 400 },
       );
     }

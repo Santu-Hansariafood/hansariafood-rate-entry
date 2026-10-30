@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { X, Loader2, Check } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const CompanyCard = dynamic(() =>
   import("@/components/ui/RegisterList/CompanyCard/CompanyCard")
@@ -44,7 +45,7 @@ export default function AssignPopup({
             <h3 className="text-xl font-semibold">
               Assign Companies & Locations to{" "}
               <span className="text-blue-600 dark:text-blue-400">
-                {selectedUser?.name || ""}
+                {toTitleCase(selectedUser?.name) || ""}
               </span>
             </h3>
             <button

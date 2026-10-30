@@ -8,6 +8,7 @@ import { sendEmail } from "@/lib/email/sendEmail";
 import { generateDeletedSaudaEmailTemplate } from "@/lib/email/templates/deletedSaudaTemplate";
 import { emitNotification } from "@/lib/socket";
 import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 export async function POST(req) {
   if (!verifyApiKey(req)) {
@@ -27,6 +28,27 @@ export async function POST(req) {
     if (!company || !date || !saudaEntry) {
       return NextResponse.json(
         { error: "Missing required fields" },
+        { status: 400 },
+      );
+    }
+
+    if (
+      userMobile &&
+      !validationPatterns.mobile.test(String(userMobile).trim())
+    ) {
+      return NextResponse.json(
+        { error: "Invalid mobile number. It must be 10 digits starting 6-9." },
+        { status: 400 },
+      );
+    }
+
+    const sellerName = (saudaEntry.sellerName || "").trim();
+    if (sellerName && !validationPatterns.name.test(sellerName)) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid seller name. Only alphabets and spaces are allowed (2-50 characters).",
+        },
         { status: 400 },
       );
     }

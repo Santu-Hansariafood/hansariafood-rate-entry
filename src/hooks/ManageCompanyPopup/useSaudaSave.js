@@ -11,7 +11,9 @@ export const useSaudaSave = (
   lastUpdated,
   setLastUpdated,
   mobile,
-  applyServerEntries
+  applyServerEntries,
+  sellerIdToName,
+  companyIdToName
 ) => {
   const [saveStatus, setSaveStatus] = useState({});
   const savingRefs = useRef({});
@@ -39,9 +41,10 @@ export const useSaudaSave = (
     const rowsToPersist = entryList.filter((row) => {
       const hasTons = Number(row.tons) > 0;
       const hasRate = Number(row.finalRate) > 0;
-      const hasSellerName = (row.sellerName || "").trim() !== "";
-      const hasSellerCompany = (row.sellerCompany || "").trim() !== "";
-      return hasTons && hasRate && hasSellerName && hasSellerCompany;
+      const hasSeller = (row.sellerId || "").toString().trim() !== "";
+      const hasSellerCompany =
+        (row.sellerCompanyId || "").toString().trim() !== "";
+      return hasTons && hasRate && hasSeller && hasSellerCompany;
     });
 
     if (rowsToPersist.length === 0) {
@@ -57,15 +60,23 @@ export const useSaudaSave = (
       date: today,
       time: currentTime,
       saudaEntries: {
-        [key]: rowsToPersist.map((entry) => ({
-          ...entry,
-          tons: +entry.tons || 0,
-          unit,
-          commodity,
-          sellerName: entry.sellerName || "",
-          sellerCompany: entry.sellerCompany || "",
-          deliveryDate: entry.deliveryDate || "",
-        })),
+        [key]: rowsToPersist.map((entry) => {
+          // Operations are id based, so resolve the ids back to the original
+          // names just before persisting (the database stays name based).
+          const { sellerId, sellerCompanyId, ...rest } = entry;
+          return {
+            ...rest,
+            tons: +entry.tons || 0,
+            unit,
+            commodity,
+            sellerName: sellerIdToName?.get(sellerId) || sellerId || "",
+            sellerCompany:
+              companyIdToName?.get(sellerCompanyId) ||
+              sellerCompanyId ||
+              "",
+            deliveryDate: entry.deliveryDate || "",
+          };
+        }),
       },
       lastUpdated,
       mobile, // Include mobile in payload

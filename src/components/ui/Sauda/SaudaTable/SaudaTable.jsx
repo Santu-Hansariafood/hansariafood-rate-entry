@@ -26,6 +26,9 @@ export default function SaudaTable({
   removeRow,
   saveStatus,
   sellers,
+  companyNameToId,
+  sellerIdToName,
+  companyIdToName,
   date,
   mobile,
 }) {
@@ -38,22 +41,30 @@ export default function SaudaTable({
     error: "",
   });
 
-  const sellerOptions = useMemo(() => 
-    sellers.map((s) => ({
-      label: s.sellerName,
-      value: s.sellerName,
-    })), [sellers]);
+  // Dropdown values are Seller ids while the labels keep showing the names.
+  const sellerOptions = useMemo(
+    () =>
+      sellers.map((s) => ({
+        label: s.sellerName,
+        value: s._id,
+      })),
+    [sellers]
+  );
 
+  // Seller id -> that seller's companies (values are Company ids).
   const sellerCompaniesMap = useMemo(() => {
     const map = new Map();
     sellers.forEach((s) => {
-      map.set(s.sellerName, (s.companies || []).map(name => ({
-        label: name,
-        value: name
-      })));
+      map.set(
+        s._id,
+        (s.companies || []).map((name) => ({
+          label: name,
+          value: companyNameToId?.get(name) ?? name,
+        }))
+      );
     });
     return map;
-  }, [sellers]);
+  }, [sellers, companyNameToId]);
 
   const openRemoveDialog = (key, idx) => {
     setRemoveDialog({
@@ -120,8 +131,14 @@ export default function SaudaTable({
                   "",
                 tons: saudaEntry.tons,
                 finalRate: saudaEntry.finalRate,
-                sellerName: saudaEntry.sellerName,
-                sellerCompany: saudaEntry.sellerCompany,
+                sellerName:
+                  sellerIdToName?.get(saudaEntry.sellerId) ||
+                  saudaEntry.sellerId ||
+                  "",
+                sellerCompany:
+                  companyIdToName?.get(saudaEntry.sellerCompanyId) ||
+                  saudaEntry.sellerCompanyId ||
+                  "",
                 deliveryDate: saudaEntry.deliveryDate,
                 others: saudaEntry.others,
               },
@@ -217,8 +234,8 @@ export default function SaudaTable({
                         const isFilled =
                           e?.tons &&
                           e?.finalRate &&
-                          e?.sellerName &&
-                          e?.sellerCompany;
+                          e?.sellerId &&
+                          e?.sellerCompanyId;
                         const entryId = `${key}-${idx}`;
 
                         return (
@@ -276,20 +293,20 @@ export default function SaudaTable({
                               <Dropdown
                                 label="Seller"
                                 options={sellerOptions}
-                                value={e.sellerName || ""}
+                                value={e.sellerId || ""}
                                 onChange={(val) => {
-                                  handleChange(key, idx, "sellerName", val);
-                                  handleChange(key, idx, "sellerCompany", "");
+                                  handleChange(key, idx, "sellerId", val);
+                                  handleChange(key, idx, "sellerCompanyId", "");
                                 }}
                                 placeholder="Select Seller..."
                               />
 
                               <Dropdown
                                 label="Company"
-                                options={sellerCompaniesMap.get(e.sellerName) || []}
-                                value={e.sellerCompany || ""}
+                                options={sellerCompaniesMap.get(e.sellerId) || []}
+                                value={e.sellerCompanyId || ""}
                                 onChange={(val) =>
-                                  handleChange(key, idx, "sellerCompany", val)
+                                  handleChange(key, idx, "sellerCompanyId", val)
                                 }
                                 placeholder="Select Company..."
                               />

@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useState } from "react";
 import { NAV_CONFIG, RATE_DROPDOWN, COMPANY_DROPDOWN } from "@/config/navigation";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const Table = dynamic(() => import("@/components/common/Tables/Tables"));
 
@@ -74,6 +75,7 @@ export default function UserTable({
 
   const usersWithActions = safeUsers.map((user) => ({
     ...user,
+    name: toTitleCase(user.name),
 
     action: (
       <div className="flex flex-wrap gap-2">
@@ -191,7 +193,7 @@ export default function UserTable({
             >
               <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Manage Pages for {currentUser?.name}
+                  Manage Pages for {toTitleCase(currentUser?.name)}
                 </h3>
                 <button
                   onClick={() => setPageModalOpen(false)}

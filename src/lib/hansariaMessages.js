@@ -2,6 +2,19 @@ import User from "@/models/User";
 import mongoose from "mongoose";
 
 const MESSAGE_ENDPOINT = "/api/v1/messages/send";
+const BULK_MESSAGE_ENDPOINT = "/api/v1/messages/bulk";
+
+// Dynamic destination list for the new-bid sauda notification. Add or remove
+// numbers here — 10-digit Indian numbers, the 91 country code is added
+// automatically so they match the API's toUserId format.
+const SAUDA_BID_RECIPIENTS = ["7029481930", "9064527639"];
+
+export const getSaudaBidRecipients = () =>
+  SAUDA_BID_RECIPIENTS.map((number) => {
+    const digits = String(number).replace(/\D/g, "");
+    if (!digits) return "";
+    return digits.length === 10 ? `91${digits}` : digits;
+  }).filter(Boolean);
 
 const getConfiguration = (templateIdEnv) => {
   const names = [
@@ -166,4 +179,111 @@ export const sendTemplateToRegisteredUsers = async (
     includeName
   );
   return { ...result, skipped: users.length - recipients.length };
+};
+
+const getBulkConfiguration = () => {
+  const names = ["HANSARIA_API_BASE_URL", "HANSARIA_API_KEY"];
+  const config = Object.fromEntries(
+    names.map((name) => [name, process.env[name]?.trim()])
+  );
+  const missing = names.filter((name) => !config[name]);
+
+  if (missing.length > 0) {
+    throw new Error(`Missing message API configuration: ${missing.join(", ")}`);
+  }
+
+  let baseUrl;
+  try {
+    baseUrl = new URL(config.HANSARIA_API_BASE_URL);
+  } catch {
+    throw new Error("HANSARIA_API_BASE_URL must be a valid HTTPS URL");
+  }
+
+  if (baseUrl.protocol !== "https:") {
+    throw new Error("HANSARIA_API_BASE_URL must use HTTPS");
+  }
+
+  return {
+    baseUrl: baseUrl.toString().replace(/\/$/, ""),
+    apiKey: config.HANSARIA_API_KEY,
+  };
+};
+
+// Sends the new-bid sauda notification through the bulk endpoint. Each saved
+// sauda line becomes one message (the template carries a single sauda per
+// message), delivered to every configured bid recipient.
+export const sendSaudaBidTemplate = async (
+  company,
+  entries,
+  templateName = process.env.HANSARIA_SAUDA_BID_TEMPLATE || "hansaria_new_bid"
+) => {
+  const list = Array.isArray(entries) ? entries : [];
+  if (list.length === 0) return { sent: 0 };
+
+  const recipients = getSaudaBidRecipients();
+  if (recipients.length === 0) return { sent: 0 };
+
+  const config = getBulkConfiguration();
+  let sent = 0;
+  const errors = [];
+  const jobs = [];
+
+  for (const entry of list) {
+    const variables = {
+      commodity: entry.commodity || "",
+      group: company || "",
+      consignee: entry.sellerName || "",
+      origin: entry.unit || "",
+      quantity: String(entry.tons ?? ""),
+      rate: String(entry.finalRate ?? ""),
+      endTime: entry.deliveryDate || "",
+    };
+
+    try {
+      const response = await fetch(`${config.baseUrl}${BULK_MESSAGE_ENDPOINT}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          templateName,
+          recipients: recipients.map((toUserId) => ({
+            toUserId,
+            language: "en",
+            variables,
+          })),
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (error) {
+        if (response.ok) {
+          throw new Error("Message API returned an invalid JSON response", {
+            cause: error,
+          });
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+            `Message API request failed with HTTP ${response.status}`
+        );
+      }
+
+      sent += recipients.length;
+      jobs.push({ jobId: result?.jobId, statusUrl: result?.statusUrl });
+      console.log("Job:", result?.jobId, "Status:", result?.statusUrl);
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+
+  return errors.length > 0
+    ? { sent, jobs, error: errors.join("; ") }
+    : { sent, jobs };
 };

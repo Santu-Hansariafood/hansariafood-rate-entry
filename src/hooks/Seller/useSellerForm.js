@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 const useSellerForm = () => {
   const [sellerName, setSellerName] = useState("");
@@ -39,6 +40,12 @@ const useSellerForm = () => {
   const handleSave = async () => {
     if (!sellerName.trim()) {
       toast.warning("Seller name is required!");
+      return;
+    }
+    if (!validationPatterns.name.test(sellerName.trim())) {
+      toast.warning(
+        "Enter a valid seller name (letters and spaces only, 2-50 characters)."
+      );
       return;
     }
     if (selectedCompanies.length === 0) {

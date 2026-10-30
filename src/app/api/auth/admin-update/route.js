@@ -3,6 +3,7 @@ import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 export async function PUT(req) {
   if (!verifyApiKey(req))
@@ -29,6 +30,18 @@ export async function PUT(req) {
     const user = await User.findById(id);
     if (!user)
       return NextResponse.json({ message: "User not found" }, { status: 404 });
+
+    if (name && !validationPatterns.name.test(String(name).trim()))
+      return NextResponse.json(
+        { message: "Name should be 2-50 letters only" },
+        { status: 400 },
+      );
+
+    if (mobile && !validationPatterns.mobile.test(String(mobile).trim()))
+      return NextResponse.json(
+        { message: "Enter a valid 10-digit mobile number" },
+        { status: 400 },
+      );
 
     if (name) user.name = name;
     if (mobile) {

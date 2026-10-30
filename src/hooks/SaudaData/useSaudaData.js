@@ -50,6 +50,16 @@ const useSaudaData = () => {
     }
   }, []);
 
+  // Maps a company name to its id so operations can be keyed by id while the
+  // UI keeps displaying names.
+  const companyNameToId = useMemo(() => {
+    const map = new Map();
+    allCompanies.forEach((company) => {
+      if (company?.name) map.set(company.name, company._id);
+    });
+    return map;
+  }, [allCompanies]);
+
   const hasRateSet = useMemo(() => {
     const set = new Set();
     rateData.forEach((rate) => {
@@ -60,21 +70,21 @@ const useSaudaData = () => {
         rate.newRate !== "" &&
         !isNaN(rate.newRate)
       ) {
-        set.add(rate.company);
+        set.add(companyNameToId.get(rate.company) ?? rate.company);
       }
     });
     return set;
-  }, [rateData]);
+  }, [rateData, companyNameToId]);
 
   const hasRate = useCallback(
-    (companyName) => hasRateSet.has(companyName),
+    (companyId) => hasRateSet.has(companyId),
     [hasRateSet]
   );
 
-  const updateCompanyStatus = useCallback((companyName, status) => {
+  const updateCompanyStatus = useCallback((companyId, status) => {
     setSaudaStatusMap((prev) => ({
       ...prev,
-      [companyName]: status,
+      [companyId]: status,
     }));
   }, []);
 
@@ -123,6 +133,12 @@ const useSaudaData = () => {
       setRateData(allRates);
       setCachedData(CACHE_KEYS.companies, fetchedAllCompanies);
       setCachedData(CACHE_KEYS.rates, allRates);
+
+      // Maps company name -> company id for the companies fetched below.
+      const nameToId = new Map();
+      fetchedAllCompanies.forEach((c) => {
+        if (c?.name) nameToId.set(c.name, c._id);
+      });
 
       // Only fetch sauda status for companies that actually have a rate today
       const companiesWithRates = fetchedAllCompanies
@@ -191,7 +207,7 @@ const useSaudaData = () => {
             else if (hasSauda) status = "yellow";
           }
 
-          saudaStatuses[company] = status;
+          saudaStatuses[nameToId.get(company) ?? company] = status;
         }
 
         setSaudaStatusMap(saudaStatuses);
@@ -250,6 +266,7 @@ const useSaudaData = () => {
   return {
     companies,
     rateData,
+    companyNameToId,
     saudaStatusMap,
     loading,
     hasRate,

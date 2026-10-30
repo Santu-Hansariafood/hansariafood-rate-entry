@@ -9,7 +9,8 @@ import { sendEmail } from "@/lib/email/sendEmail";
 import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
 import DeletedSauda from "@/models/DeletedSauda";
 import { emitNotification } from "@/lib/socket";
-import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
+import { sendTemplateToRegisteredUsers, sendSaudaBidTemplate } from "@/lib/hansariaMessages";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 export async function POST(req) {
   await connectDB();
@@ -38,6 +39,13 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: "Missing or invalid required fields" },
+        { status: 400 },
+      );
+    }
+
+    if (mobile && !validationPatterns.mobile.test(String(mobile).trim())) {
+      return NextResponse.json(
+        { error: "Invalid mobile number. It must be 10 digits starting 6-9." },
         { status: 400 },
       );
     }
@@ -74,6 +82,17 @@ export async function POST(req) {
           for (const entry of list) {
             // Skip entries with no tons or rate to avoid saving empty rows
             if (!Number(entry.tons) || !Number(entry.finalRate)) continue;
+
+            const sellerName = (entry.sellerName || "").trim();
+            if (sellerName && !validationPatterns.name.test(sellerName)) {
+              return NextResponse.json(
+                {
+                  error:
+                    "Invalid seller name. Only alphabets and spaces are allowed (2-50 characters).",
+                },
+                { status: 400 },
+              );
+            }
 
             let saudaNumber = String(entry.saudaNo || "").trim();
 
@@ -296,11 +315,26 @@ export async function POST(req) {
       }
     }
 
+    // New-bid sauda notification sent to the configured bid numbers.
+    let bidNotificationDelivery = null;
+    if (shouldSendTemplateNotification) {
+      try {
+        bidNotificationDelivery = await sendSaudaBidTemplate(
+          existingEntry.company,
+          Object.values(notificationEntries).flat(),
+        );
+      } catch (bidError) {
+        console.error("Failed to send sauda bid messages:", bidError);
+        bidNotificationDelivery = { sent: 0, error: bidError.message };
+      }
+    }
+
     return NextResponse.json(
       {
         message: "Sauda entry saved successfully",
         entry: existingEntry,
         notificationDelivery,
+        bidNotificationDelivery,
       },
       { status: 201 },
     );

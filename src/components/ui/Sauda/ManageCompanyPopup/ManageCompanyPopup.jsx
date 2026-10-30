@@ -40,27 +40,41 @@ const TradeModeSelector = dynamic(
   { suspense: true }
 );
 
-export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
+export default function ManageCompanyPopup({
+  company,
+  companyNameToId,
+  onClose,
+  onSaudaAdded,
+}) {
   const { mobile } = useUser();
   const today = useToday();
-  const { company, loading: loadingCompany, role } = useCompanyData(name);
-  const { rates, rateMap, loading: loadingRates } = useRateData(company?.name);
+  const {
+    company: companyDetail,
+    loading: loadingCompany,
+    role,
+  } = useCompanyData(company?.name);
+  const { rates, rateMap, loading: loadingRates } = useRateData(
+    companyDetail?.name
+  );
+  const { sellers, loading: loadingSellers } = useSellers();
   const {
     entries,
+    displayEntries,
+    sellerIdToName,
+    companyIdToName,
     handleChange,
     addRow,
     removeRow,
     totalTons,
     applyServerEntries,
     loading: loadingSauda,
-  } = useSaudaEntries(company, rateMap);
-  const { sellers, loading: loadingSellers } = useSellers();
+  } = useSaudaEntries(companyDetail, rateMap, sellers, companyNameToId);
 
   const [lastUpdated, setLastUpdated] = useState(null);
   const [tradeMode, setTradeMode] = useState("");
 
   const { handleUnitSave, saveStatus } = useSaudaSave(
-    company,
+    companyDetail,
     entries,
     role,
     tradeMode,
@@ -68,19 +82,26 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
     lastUpdated,
     setLastUpdated,
     mobile,
-    applyServerEntries
+    applyServerEntries,
+    sellerIdToName,
+    companyIdToName
   );
-  const exportHook = useSaudaExport({ company, today, rates, entries });
+  const exportHook = useSaudaExport({
+    company: companyDetail,
+    today,
+    rates,
+    entries: displayEntries,
+  });
 
-  const firstLoading = useFirstLoadBlocker([!loadingCompany, company]);
+  const firstLoading = useFirstLoadBlocker([!loadingCompany, companyDetail]);
 
   useEffect(() => {
     let isCancelled = false;
     const fetchSauda = async () => {
-      if (!company?.name) return;
+      if (!companyDetail?.name) return;
       try {
         const res = await axiosInstance.get(
-          `/save-sauda?company=${company.name}&date=${today}`
+          `/save-sauda?company=${companyDetail.name}&date=${today}`
         );
         if (!isCancelled && res?.data?.entry) {
           setLastUpdated(res.data.entry.lastUpdated);
@@ -93,7 +114,7 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
     return () => {
       isCancelled = true;
     };
-  }, [company?.name, today]);
+  }, [companyDetail?.name, today]);
 
   useEffect(() => {
     if (!tradeMode && (role === "buyer" || role === "seller")) {
@@ -101,7 +122,7 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
     }
   }, [role, tradeMode]);
 
-  if (firstLoading || !company) return <Loading />;
+  if (firstLoading || !companyDetail) return <Loading />;
 
   const loading = loadingRates || loadingSauda || loadingSellers;
 
@@ -128,7 +149,7 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
           </button>
 
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <Title text={company.name} />
+            <Title text={companyDetail.name} />
             <div className="flex items-center gap-4">
               <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">
                 📅 Date:{" "}
@@ -144,7 +165,7 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
               </div>
             ) : (
               <SaudaTable
-                company={company}
+                company={companyDetail}
                 rateMap={rateMap}
                 entries={entries}
                 totalTons={totalTons}
@@ -154,6 +175,9 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
                 removeRow={removeRow}
                 saveStatus={saveStatus}
                 sellers={sellers}
+                companyNameToId={companyNameToId}
+                sellerIdToName={sellerIdToName}
+                companyIdToName={companyIdToName}
                 date={today}
                 mobile={mobile}
               />
@@ -162,23 +186,23 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
 
           {exportHook.showSharePopup && (
             <SaudaSharePopup
-              company={company.name}
+              company={companyDetail.name}
               date={today}
-              saudaEntries={entries}
+              saudaEntries={displayEntries}
               rateData={rates}
               onClose={() => exportHook.setShowSharePopup(false)}
             />
           )}
           {exportHook.showCommodityPicker && (
             <CommodityPickerPopup
-              options={company.commodities}
+              options={companyDetail.commodities}
               onCancel={() => exportHook.setShowCommodityPicker(false)}
               onDone={exportHook.handleCommodityDone}
             />
           )}
           {exportHook.showRatePicker && (
             <CommodityPickerPopup
-              options={company.commodities}
+              options={companyDetail.commodities}
               onCancel={() => exportHook.setShowRatePicker(false)}
               onDone={exportHook.handleRateDone}
             />
@@ -190,7 +214,7 @@ export default function ManageCompanyPopup({ name, onClose, onSaudaAdded }) {
           />
         </div>
       </div>
-      {company?.type?.length === 2 && !tradeMode && (
+      {companyDetail?.type?.length === 2 && !tradeMode && (
         <TradeModeSelector onSelect={setTradeMode} />
       )}
     </Suspense>

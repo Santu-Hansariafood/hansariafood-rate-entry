@@ -11,6 +11,7 @@ import React, {
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useSaudaData from "@/hooks/SaudaData/useSaudaData";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const ManageCompanyPopup = dynamic(
   () => import("@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup"),
@@ -48,6 +49,7 @@ const Sauda = () => {
 
   const {
     companies,
+    companyNameToId,
     saudaStatusMap,
     loading,
     hasRate,
@@ -64,7 +66,7 @@ const Sauda = () => {
     const filterLower = filterType.toLowerCase();
 
     return companies.filter((c) => {
-      if (!hasRate(c.name)) return false;
+      if (!hasRate(c._id)) return false;
 
       if (
         searchLower &&
@@ -82,9 +84,9 @@ const Sauda = () => {
   }, [companies, debouncedSearchTerm, filterType, hasRate]);
 
   const handlePopupClose = useCallback(
-    (companyName, status = null) => {
+    (companyId, status = null) => {
       setSelectedCompany(null);
-      if (status) updateCompanyStatus(companyName, status);
+      if (status) updateCompanyStatus(companyId, status);
       clearTimeout(inactivityTimer.current);
     },
     [updateCompanyStatus]
@@ -94,7 +96,7 @@ const Sauda = () => {
     if (selectedCompany) {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
-        handlePopupClose(selectedCompany);
+        handlePopupClose(selectedCompany._id);
       }, 5 * 60 * 1000);
     }
     return () => clearTimeout(inactivityTimer.current);
@@ -140,7 +142,7 @@ const Sauda = () => {
                   >
                     {filteredCompanies.map((company) => {
                       const statusColor =
-                        saudaStatusMap[company.name] || "green";
+                        saudaStatusMap[company._id] || "green";
 
                       const bgColor =
                         statusColor === "blue"
@@ -159,7 +161,7 @@ const Sauda = () => {
                       return (
                         <div
                           key={company._id}
-                          onClick={() => setSelectedCompany(company.name)}
+                          onClick={() => setSelectedCompany(company)}
                           className={`
                             p-3 rounded-lg border shadow-sm cursor-pointer
                             transition-transform duration-200
@@ -170,7 +172,7 @@ const Sauda = () => {
                           <h4
                             className={`text-sm font-bold mb-1 truncate ${textColor}`}
                           >
-                            {company.name}
+                            {toTitleCase(company.name)}
                           </h4>
                           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                             {company.category}
@@ -200,8 +202,9 @@ const Sauda = () => {
         </div>
         {selectedCompany && (
           <ManageCompanyPopup
-            name={selectedCompany}
-            onClose={(status) => handlePopupClose(selectedCompany, status)}
+            company={selectedCompany}
+            companyNameToId={companyNameToId}
+            onClose={(status) => handlePopupClose(selectedCompany._id, status)}
             onSaudaAdded={refreshSaudaData}
           />
         )}

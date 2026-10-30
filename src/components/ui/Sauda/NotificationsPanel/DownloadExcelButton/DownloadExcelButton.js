@@ -1,15 +1,18 @@
 "use client";
 
 import { FileDown } from "lucide-react";
-import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { toast } from "react-toastify";
 import useSaudaNotifications from "@/hooks/SaudaData/useSaudaNotifications";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const DownloadExcelButton = ({ data }) => {
   const { filteredNotifications, notifications } = useSaudaNotifications();
 
   const handleDownloadExcel = async () => {
+    // Heavy library loaded on demand so it never weighs down the initial page.
+    const ExcelJS = (await import("exceljs")).default;
+
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Sauda Notifications");
 
@@ -54,7 +57,7 @@ const DownloadExcelButton = ({ data }) => {
       const mode = item.sellerCompany === item.company ? "Seller" : "Buyer";
 
       const row = sheet.addRow({
-        buyer: item.company,
+        buyer: toTitleCase(item.company),
         mode,
         date: item.date,
         location: item.location,
@@ -62,8 +65,8 @@ const DownloadExcelButton = ({ data }) => {
         tons: item.tons,
         rate: item.rate ?? "N/A",
         payment: item.payment ?? "",
-        seller: item.sellerName ?? "",
-        sellerCompany: item.sellerCompany ?? "",
+        seller: toTitleCase(item.sellerName),
+        sellerCompany: toTitleCase(item.sellerCompany),
         saudaNo: item.saudaNo ?? "",
         others: item.others ?? "",
       });

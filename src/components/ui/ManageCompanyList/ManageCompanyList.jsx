@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import useManageCompanyList from "@/hooks/ManageCompany/useManageCompanyList";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const EditCompanyForm = dynamic(
   () =>
@@ -69,13 +70,13 @@ const ManageCompanyList = () => {
       const parts = [];
       if (m.primaryMobile) parts.push(`📱 ${m.primaryMobile}`);
       if (m.secondaryMobile) parts.push(`📞 ${m.secondaryMobile}`);
-      if (m.contactPerson) parts.push(`👤 ${m.contactPerson}`);
+      if (m.contactPerson) parts.push(`👤 ${toTitleCase(m.contactPerson)}`);
       return parts.join(" | ");
     };
 
     return companies.map((row, index) => ({
       serial: <span>{(currentPage - 1) * itemsPerPage + index + 1}</span>,
-      name: <strong>{row.name || "N/A"}</strong>,
+      name: <strong>{toTitleCase(row.name) || "N/A"}</strong>,
       buyerSellerDisplay: (
         <span>
           {(row.type || [])
@@ -115,7 +116,7 @@ const ManageCompanyList = () => {
         <Actions
           item={{
             id: row._id,
-            title: row.name,
+            title: toTitleCase(row.name),
             onView: () => {
               setSelectedCompany(row);
               setEditingCompany(null);
@@ -214,7 +215,7 @@ const ManageCompanyList = () => {
                   <h2 className="text-xl font-bold mb-4">Company Details</h2>
                   <ul className="space-y-2 text-sm">
                     <li>
-                      <strong>Name:</strong> {selectedCompany.name}
+                      <strong>Name:</strong> {toTitleCase(selectedCompany.name)}
                     </li>
                     <li>
                       <strong>Category:</strong> {selectedCompany.category}
@@ -250,7 +251,8 @@ const ManageCompanyList = () => {
                             )}
                             {m.primaryMobile && `📱 ${m.primaryMobile} `}
                             {m.secondaryMobile && `| 📞 ${m.secondaryMobile} `}
-                            {m.contactPerson && `| 👤 ${m.contactPerson}`}
+                            {m.contactPerson &&
+                              `| 👤 ${toTitleCase(m.contactPerson)}`}
                           </li>
                         ))}
                       </ul>

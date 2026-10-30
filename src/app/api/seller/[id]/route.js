@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Seller from "@/models/Seller";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
 export async function GET(req, { params }) {
   await connectDB();
@@ -42,6 +43,16 @@ export async function PUT(req, { params }) {
     if (!sellerNameTrimmed) {
       return NextResponse.json(
         { error: "Seller name is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!validationPatterns.name.test(sellerNameTrimmed)) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid seller name. Only alphabets and spaces are allowed (2-50 characters).",
+        },
         { status: 400 },
       );
     }
