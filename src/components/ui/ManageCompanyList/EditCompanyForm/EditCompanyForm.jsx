@@ -165,7 +165,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
             info.contactPerson &&
             !validationPatterns.name.test(String(info.contactPerson).trim())
           ) {
-            invalidContactMessage = `Invalid contact person for ${location} - ${commodity}. Only alphabets and spaces are allowed.`;
+            invalidContactMessage = `Invalid contact person for ${location} - ${commodity}. Use letters, numbers, spaces and common symbols (2-100 characters).`;
             return;
           }
 

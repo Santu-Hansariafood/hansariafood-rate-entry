@@ -47,7 +47,7 @@ export async function POST(req) {
       return NextResponse.json(
         {
           error:
-            "Invalid seller name. Only alphabets and spaces are allowed (2-50 characters).",
+            "Invalid seller name. Use letters, numbers, spaces and common symbols (2-100 characters).",
         },
         { status: 400 },
       );

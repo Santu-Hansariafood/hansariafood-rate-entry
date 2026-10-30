@@ -44,7 +44,7 @@ const useSellerForm = () => {
     }
     if (!validationPatterns.name.test(sellerName.trim())) {
       toast.warning(
-        "Enter a valid seller name (letters and spaces only, 2-50 characters)."
+        "Enter a valid seller name (letters, numbers, spaces and common symbols, 2-100 characters)."
       );
       return;
     }
