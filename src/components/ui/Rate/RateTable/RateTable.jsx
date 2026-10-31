@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 import { useUser } from "@/context/UserContext";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 let locationStateMapCache = null;
 let locationStateMapPromise = null;
@@ -292,7 +293,7 @@ export default function RateTable({
                 checked={selectedCommodities.includes(cmd)}
                 onChange={() => toggleCommodity(cmd)}
               />
-              <span>{cmd}</span>
+              <span>{toTitleCase(cmd)}</span>
             </label>
           ))}
         </div>

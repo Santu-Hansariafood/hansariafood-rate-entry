@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const COMMODITY_STORAGE_KEY =
   process.env.NEXT_PUBLIC_COMMODITY_STORAGE_KEY || "selectedCommodities";
@@ -64,10 +65,10 @@ export default function CommodityCard({ onFilterChange, maxItems = 15 }) {
 
       if (isRemoving) {
         delete updated[commodity._id];
-        toast.info(`Filter removed: ${commodity.name}`);
+        toast.info(`Filter removed: ${toTitleCase(commodity.name)}`);
       } else {
         updated[commodity._id] = commodity.name;
-        toast.success(`Filter added: ${commodity.name}`);
+        toast.success(`Filter added: ${toTitleCase(commodity.name)}`);
       }
       return updated;
     });
@@ -92,7 +93,7 @@ export default function CommodityCard({ onFilterChange, maxItems = 15 }) {
           >
             <div className="p-4">
               <h3 className="text-sm font-medium text-gray-800 truncate">
-                {commodity.name}
+                {toTitleCase(commodity.name)}
               </h3>
 
               <motion.button

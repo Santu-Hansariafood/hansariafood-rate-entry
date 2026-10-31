@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { X, Check } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Suspense, useCallback } from "react";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const RateTableBody = dynamic(() => import("../RateTableBody/RateTableBody"), {
   loading: () => <Loading />,
@@ -64,7 +65,7 @@ export default function RateTableModal({
                     `}
                     >
                       {isChecked && <Check className="w-3.5 h-3.5 shrink-0" />}
-                      {c}
+                      {toTitleCase(c)}
                     </span>
                   </label>
                 );
@@ -93,7 +94,7 @@ export default function RateTableModal({
           <div className="flex justify-between items-start gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
               <h3 className="text-xl sm:text-2xl font-bold text-gray-800 truncate">
-                Rates for {selectedCompany}
+                Rates for {toTitleCase(selectedCompany)}
               </h3>
               {renderFilter()}
             </div>

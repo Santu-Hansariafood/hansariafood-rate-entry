@@ -8,6 +8,7 @@ import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
 import useDebouncedSearch from "@/hooks/useDebouncedSearch/useDebouncedSearch";
+import { toTitleCase } from "@/utils/formatName/formatName";
 const NotificationList = dynamic(() =>
   import("@/components/NotificationList/NotificationList")
 );
@@ -184,7 +185,7 @@ export default function CompanyList({
                                 : "text-red-800"
                             }`}
                           >
-                            {company}
+                            {toTitleCase(company)}
                           </h3>
                           <p
                             className={`text-sm ${

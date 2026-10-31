@@ -4,6 +4,7 @@ import { CheckCircle, Info, List, Copy, Search } from "lucide-react";
 import Loading from "@/components/common/Loading/Loading";
 import useNotificationFilter from "@/hooks/Notifications/useNotificationFilter";
 import useCopyNotification from "@/hooks/Notifications/useCopyNotification";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 export default function NotificationList({ notifications = [] }) {
   const [searchInput, setSearchInput] = useState("");
@@ -33,7 +34,7 @@ export default function NotificationList({ notifications = [] }) {
     filteredNotifications,
   } = useNotificationFilter(notifications, parseUpdateTime);
 
-  const { handleCopy, capitalizeFirst } = useCopyNotification();
+  const { handleCopy } = useCopyNotification();
 
   // Debounce search input
   useEffect(() => {
@@ -141,17 +142,17 @@ export default function NotificationList({ notifications = [] }) {
                     <div>
                       <div className="font-medium">
                         <span className="text-green-600 dark:text-green-400">
-                          {n.company || n.companyName || "Unknown Company"}
+                          {toTitleCase(n.company || n.companyName || "Unknown Company")}
                         </span>{" "}
                         (
                         <span className="text-yellow-600 dark:text-yellow-400">
-                          {n.location}
+                          {toTitleCase(n.location)}
                         </span>
                         )
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-blue-600 dark:text-blue-400">
-                          {capitalizeFirst(n.commodity || n.type || "N/A")}
+                          {toTitleCase(n.commodity || n.type || "N/A")}
                         </span>
                         <span className="font-semibold text-red-500 dark:text-red-400">
                           ₹{n.newRate || n.rate}
@@ -163,7 +164,7 @@ export default function NotificationList({ notifications = [] }) {
                         )}
                         {n.payment && (
                           <span className="text-purple-500 dark:text-purple-400 font-medium">
-                            Payment: {n.payment}
+                            Payment: {toTitleCase(n.payment)}
                           </span>
                         )}
                         {n.others && (
@@ -178,7 +179,7 @@ export default function NotificationList({ notifications = [] }) {
                               maxWidth: "280px",
                             }}
                           >
-                            Notes: {n.others}
+                            Notes: {toTitleCase(n.others)}
                           </span>
                         )}
                         <button

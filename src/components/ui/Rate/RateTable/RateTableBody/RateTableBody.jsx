@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const RateTableRow = dynamic(() =>
   import("@/components/ui/Rate/RateTable/RateTableRow/RateTableRow")
@@ -59,7 +60,7 @@ export default function RateTableBody({
                   : "bg-white text-gray-800 hover:bg-gray-50"
               }`}
             >
-              {state}
+              {toTitleCase(state)}
             </button>
             <AnimatePresence>
               {expandedStates[state] && (

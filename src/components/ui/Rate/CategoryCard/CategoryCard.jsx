@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Plus, Check } from "lucide-react";
 import Loading from "@/components/common/Loading/Loading";
 import useCategories from "@/hooks/CardCategory/useCategories";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 const CategoryCard = ({ onFilterChange }) => {
   const { categories, isLoading, selectedFilters, handleFilterClick } =
@@ -35,7 +36,7 @@ const CategoryCard = ({ onFilterChange }) => {
 
                 <div className="relative z-10 p-6 flex flex-col items-center text-center gap-4">
                   <h3 className="text-sm md:text-base font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
-                    {category.name}
+                    {toTitleCase(category.name)}
                   </h3>
 
                   <motion.button

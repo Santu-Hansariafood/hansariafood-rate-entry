@@ -1,5 +1,7 @@
 "use client";
 
+import { toTitleCase } from "@/utils/formatName/formatName";
+
 const CompanyCheckbox = ({ company, selected, toggleCompany }) => {
   return (
     <label
@@ -18,7 +20,7 @@ const CompanyCheckbox = ({ company, selected, toggleCompany }) => {
         onChange={() => toggleCompany(company.name)}
         className="accent-green-600 w-4 h-4"
       />
-      <span className="truncate font-medium">{company.name}</span>
+      <span className="truncate font-medium">{toTitleCase(company.name)}</span>
     </label>
   );
 };

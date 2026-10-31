@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Edit2, Save, X, UserCircle, PhoneCall } from "lucide-react";
+import { toTitleCase } from "@/utils/formatName/formatName";
 
 export default function RateTableRow({
   rate,
@@ -23,7 +24,7 @@ export default function RateTableRow({
       }`}
     >
       <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap align-top">
-        <div className="font-semibold">{rate.location}</div>
+        <div className="font-semibold">{toTitleCase(rate.location)}</div>
         <div className="text-sm text-gray-600 mt-1 space-y-1">
           {rate.primaryMobile && (
             <div className="flex items-center gap-2 flex-wrap">
@@ -39,18 +40,16 @@ export default function RateTableRow({
           {rate.contactPerson && (
             <div className="flex items-center gap-2 flex-wrap">
               <UserCircle className="w-4 h-4 text-gray-600" />
-              {rate.contactPerson}
+              {toTitleCase(rate.contactPerson)}
             </div>
           )}
         </div>
       </td>
       <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap align-middle">
-        {rate.state || "—"}
+        {toTitleCase(rate.state) || "—"}
       </td>
       <td className="px-6 py-4 border-b text-gray-800 whitespace-nowrap align-middle">
-        {commodity
-          ? commodity.charAt(0).toUpperCase() + commodity.slice(1).toLowerCase()
-          : "—"}
+        {commodity ? toTitleCase(commodity) : "—"}
       </td>
 
       <td className="px-6 py-4 border-b text-gray-600 text-sm whitespace-nowrap align-middle">
@@ -119,7 +118,7 @@ export default function RateTableRow({
           />
         ) : (
           <span className="text-gray-800">
-            {rate.payment ? rate.payment : "-"}
+            {rate.payment ? toTitleCase(rate.payment) : "-"}
           </span>
         )}
       </td>
@@ -140,7 +139,7 @@ export default function RateTableRow({
             placeholder="Enter details"
           />
         ) : (
-          <span className="text-gray-800">{rate.others || "-"}</span>
+          <span className="text-gray-800">{toTitleCase(rate.others) || "-"}</span>
         )}
       </td>
 
