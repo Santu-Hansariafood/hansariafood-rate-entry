@@ -22,16 +22,21 @@ const Footer = () => {
         transition={{ duration: 0.6, ease: "easeOut" }}
         viewport={{ once: true }}
         className="
-          relative bg-gradient-to-br from-black via-gray-950 to-black
-          text-white py-8 px-4 mt-10
-          border-t border-emerald-500/30
+          relative overflow-hidden mt-10
+          bg-gradient-to-b from-neutral-950 via-black to-neutral-950
+          text-white
         "
       >
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
+        <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-[36rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.08),transparent_60%)]" />
 
-        <div className="container mx-auto flex flex-col items-center justify-center gap-3">
-          <FooterLinks />
-          <FooterCopyright />
+        <div className="relative container mx-auto px-4 py-10 md:px-8">
+          <div className="flex flex-col items-center gap-6">
+            <FooterLinks />
+            <div className="h-px w-full max-w-3xl bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            <FooterCopyright />
+          </div>
         </div>
       </motion.footer>
     </Suspense>

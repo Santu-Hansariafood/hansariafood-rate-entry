@@ -8,7 +8,7 @@ const FooterCopyright = () => {
       whileInView={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
       viewport={{ once: true }}
-      className="text-sm text-gray-300"
+      className="text-center text-xs tracking-wide text-gray-400 sm:text-sm"
     >
       Developed by
       <a
@@ -17,14 +17,14 @@ const FooterCopyright = () => {
         rel="noopener noreferrer"
         className="
           ml-1 font-semibold
-          text-emerald-400 hover:text-emerald-300
+          bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent
           transition-all duration-300
-          hover:drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]
+          hover:drop-shadow-[0_0_8px_rgba(52,211,153,0.55)]
         "
       >
         Hansaria Food Private Limited
       </a>
-      <span className="ml-1 text-gray-400">
+      <span className="ml-2 text-gray-500">
         © 2025 - {new Date().getFullYear()}
       </span>
     </motion.p>

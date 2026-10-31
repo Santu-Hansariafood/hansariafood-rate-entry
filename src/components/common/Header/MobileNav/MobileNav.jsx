@@ -293,8 +293,9 @@ export default function MobileNav({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed top-0 right-0 w-full max-w-sm sm:w-80 h-full bg-gradient-to-br from-gray-900 via-gray-900 to-black text-white z-50 shadow-2xl flex flex-col overflow-hidden"
+            className="fixed top-0 right-0 w-full max-w-sm sm:w-80 h-full bg-gradient-to-b from-neutral-950 via-neutral-900 to-black text-white z-50 shadow-2xl flex flex-col overflow-hidden border-l border-emerald-500/10"
           >
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800/50 bg-gradient-to-r from-gray-900/50 to-transparent backdrop-blur-sm">
               <h2 className="text-lg font-semibold tracking-wide bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                 Menu

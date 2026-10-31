@@ -9,40 +9,46 @@ const FooterLinks = () => {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       viewport={{ once: true }}
-      className="flex flex-col items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm"
+      className="flex w-full flex-col items-center justify-center gap-5 text-xs sm:text-sm"
     >
       <a
         href="https://bid.hansariafood.in"
         target="_blank"
         rel="noopener noreferrer"
         className="
-          flex items-center gap-1
-          text-gray-300 hover:text-emerald-400
+          group inline-flex items-center gap-2 rounded-full
+          border border-emerald-500/30 bg-emerald-500/10
+          px-5 py-2.5 font-medium text-emerald-300
+          backdrop-blur-sm shadow-[0_0_0_1px_rgba(16,185,129,0.08)]
           transition-all duration-300
-          hover:translate-x-1
+          hover:border-emerald-400/60 hover:bg-emerald-500/20 hover:text-emerald-200
+          hover:shadow-[0_8px_30px_-8px_rgba(16,185,129,0.6)]
         "
       >
         Click to Generate Bill and Bids
-        <ExternalLink size={14} />
+        <ExternalLink
+          size={14}
+          className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+        />
       </a>
-      <div className="flex flex-wrap items-center justify-center gap-2 text-gray-300">
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-gray-400">
         <a
           href="/privacy-policy"
-          className="hover:text-emerald-400 transition-colors duration-300"
+          className="relative transition-colors duration-300 hover:text-emerald-400"
         >
           Privacy Policy
         </a>
-        <span className="text-gray-500">|</span>
+        <span className="h-3 w-px bg-white/15" />
         <a
           href="/terms-and-conditions"
-          className="hover:text-emerald-400 transition-colors duration-300"
+          className="relative transition-colors duration-300 hover:text-emerald-400"
         >
           Terms &amp; Conditions
         </a>
-        <span className="text-gray-500">|</span>
+        <span className="h-3 w-px bg-white/15" />
         <a
           href="/broker-commission-policy"
-          className="hover:text-emerald-400 transition-colors duration-300"
+          className="relative transition-colors duration-300 hover:text-emerald-400"
         >
           Broker Commission Policy
         </a>
