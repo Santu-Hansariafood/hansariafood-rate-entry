@@ -3,8 +3,12 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { cachedJson, rateLimitGuard } from "@/lib/apiUtils";
 
 export async function GET(request) {
+  const limited = rateLimitGuard(request, "read");
+  if (limited) return limited;
+
   await connectDB();
   if (!verifyApiKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -152,22 +156,25 @@ export async function GET(request) {
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, 10);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        dailyData,
-        summary: {
-          totalRateEntries,
-          totalSaudasDone,
-          totalTonsDone,
-          conversionRate:
-            totalRateEntries > 0
-              ? ((totalSaudasDone / totalRateEntries) * 100).toFixed(2)
-              : 0,
+    return cachedJson(
+      {
+        success: true,
+        data: {
+          dailyData,
+          summary: {
+            totalRateEntries,
+            totalSaudasDone,
+            totalTonsDone,
+            conversionRate:
+              totalRateEntries > 0
+                ? ((totalSaudasDone / totalRateEntries) * 100).toFixed(2)
+                : 0,
+          },
+          worksDone: sortedWorks,
         },
-        worksDone: sortedWorks,
       },
-    });
+      { maxAge: 60, staleWhileRevalidate: 300 },
+    );
   } catch (error) {
     console.error("Error fetching weekly summary:", error);
     return NextResponse.json(

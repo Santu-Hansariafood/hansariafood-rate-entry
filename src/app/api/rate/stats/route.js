@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { cachedJson, rateLimitGuard } from "@/lib/apiUtils";
 
 export const revalidate = 60;
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -66,7 +70,7 @@ export async function GET(req) {
       },
     ]);
 
-    return NextResponse.json(stats, { status: 200 });
+    return cachedJson(stats, { maxAge: 60, staleWhileRevalidate: 300 });
   } catch (error) {
     console.error("Error in GET /rate/stats:", error);
     return NextResponse.json(

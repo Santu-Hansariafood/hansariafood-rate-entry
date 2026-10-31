@@ -3,6 +3,15 @@ import React from 'react'
 import AuthWrapper from '@/components/AuthWrapper/AuthWrapper'
 const UnauthorizedPage = dynamic(() => import('@/components/ui/Unauthorized/Unauthorized'));
 
+export const metadata = {
+  title: 'Unauthorized',
+  description: 'You do not have permission to access this page.',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 const page = () => {
   return (
     <AuthWrapper>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { cachedJson, rateLimitGuard } from "@/lib/apiUtils";
 
 export const revalidate = 60;
 
@@ -13,6 +14,9 @@ const getCutoffDate = (months) => {
 };
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -50,7 +54,7 @@ export async function GET(req) {
       { $sort: { date: 1 } },
     ]);
 
-    return NextResponse.json(totals, { status: 200 });
+    return cachedJson(totals, { maxAge: 60, staleWhileRevalidate: 300 });
   } catch (error) {
     console.error("Error in GET /sauda-total-by-date:", error);
     return NextResponse.json(

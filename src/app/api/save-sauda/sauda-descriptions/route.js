@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import Seller from "@/models/Seller";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export const revalidate = 300; // Cache for 5 minutes
 
@@ -14,6 +15,9 @@ const getCutoffDate = (months) => {
 };
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   await connectDB();
   try {
     if (!verifyApiKey(req)) {

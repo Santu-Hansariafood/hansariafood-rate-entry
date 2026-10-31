@@ -13,6 +13,7 @@ import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
 import SariaAI from "@/components/common/Footer/SariaAI/SariaAI";
 import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
 import BottomNav from "@/components/common/BottomNav/BottomNav";
+import { OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-body",
@@ -36,6 +37,144 @@ const poppins = Poppins({
   preload: true,
 });
 
+const SITE_KEYWORDS = [
+  "hansaria food",
+  "Hansaria Food Private Limited",
+  "Gopal Agarwal",
+  "leading maize supplier in India",
+  "maize supplier India",
+  "maize rate today",
+  "maize corn supplier West Bengal",
+  "bulk maize suppliers",
+  "maize exporters India",
+  "soya DOC supplier",
+  "soya DOC rate today",
+  "M DOC rate",
+  "DDGS supplier India",
+  "rice DDGS rate",
+  "poultry feed raw material supplier",
+  "poultry feed ingredients India",
+  "animal feed ingredients supplier",
+  "cattle feed raw materials",
+  "feed mill raw material supplier",
+  "brokerage services India",
+  "commodity broker Kolkata",
+  "agribusiness commodity trading India",
+  "landing cost calculator India",
+  "freight rate management",
+  "animal feed exports India",
+].join(", ");
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+      legalName: SITE_NAME,
+      alternateName: "Hansaria Food",
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}${OG_IMAGE.url}`,
+        width: OG_IMAGE.width,
+        height: OG_IMAGE.height,
+      },
+      image: `${SITE_URL}${OG_IMAGE.url}`,
+      description:
+        "Hansaria Food Private Limited, led by Gopal Agarwal, is a leading maize supplier in India and a trusted brokerage firm for poultry and animal feed raw materials like soya DOC, M DOC and DDGS.",
+      slogan: "Leading maize supplier and feed raw material brokerage in India",
+      foundingDate: "2018-06-15",
+
+      founder: [
+        { "@type": "Person", name: "Gopal Agarwal" },
+        { "@type": "Person", name: "Sunita Agarwalla" },
+      ],
+
+      address: {
+        "@type": "PostalAddress",
+        streetAddress:
+          "Primarc Square, Plot No.1, Salt Lake Bypass, LA Block, Sector 3, Bidhannagar",
+        addressLocality: "Kolkata",
+        addressRegion: "West Bengal",
+        postalCode: "700098",
+        addressCountry: "IN",
+      },
+
+      telephone: "+91-98304-33535",
+      email: "info@hansariafood.com",
+
+      contactPoint: [
+        {
+          "@type": "ContactPoint",
+          telephone: "+91-98304-33535",
+          contactType: "customer service",
+          email: "info@hansariafood.com",
+          areaServed: "IN",
+          availableLanguage: ["en", "hi"],
+        },
+      ],
+
+      areaServed: { "@type": "Country", name: "India" },
+
+      knowsAbout: [
+        "Maize (corn) supply",
+        "Soya DOC",
+        "M DOC",
+        "DDGS",
+        "Poultry feed raw materials",
+        "Animal feed ingredients",
+        "Commodity brokerage",
+        "Freight and landing cost",
+      ],
+
+      sameAs: [
+        "https://www.facebook.com/hansariafood",
+        "https://www.instagram.com/hansaria_food",
+        "https://www.youtube.com/@hansariafood",
+        "https://www.linkedin.com/company/hansaria-food",
+        "https://www.x.com/hansariafood",
+      ],
+    },
+
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: SITE_NAME,
+      inLanguage: "en-IN",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+
+    {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/#webpage`,
+      url: SITE_URL,
+      name: "Hansaria Food Private Limited | Leading Maize Supplier in India",
+      isPartOf: { "@id": `${SITE_URL}/#website` },
+      about: { "@id": `${SITE_URL}/#organization` },
+      inLanguage: "en-IN",
+    },
+
+    {
+      "@type": "Person",
+      "@id": `${SITE_URL}/#developer`,
+      name: "Santu De",
+      jobTitle: "Full Stack Developer",
+      url: SITE_URL,
+      worksFor: { "@id": `${SITE_URL}/#organization` },
+      knowsAbout: [
+        "Next.js",
+        "React",
+        "Node.js",
+        "MongoDB",
+        "Web Application Development",
+      ],
+    },
+  ],
+};
+
 export const viewport = {
   width: "device-width",
   initialScale: 1,
@@ -44,13 +183,8 @@ export const viewport = {
 };
 
 export async function generateMetadata() {
-  const baseKeywords =
-    "hansaria food, Gopal Agarwal, India Maize, leading maize supplier in India, brokerage services, poultry feed raw material supplier India, maize supplier India, soya DOC supplier, DDGS supplier, animal feed ingredients, poultry feed raw materials, feed mill raw material supplier, agribusiness commodity trading India, maize corn supplier West Bengal, maize exporters India, bulk maize suppliers, animal feed exports India";
-
-  const keywords = baseKeywords;
-
   return {
-    metadataBase: new URL("https://www.hansariafood.in"),
+    metadataBase: new URL(SITE_URL),
 
     title: {
       default:
@@ -61,12 +195,20 @@ export async function generateMetadata() {
     description:
       "Hansaria Food Private Limited, led by Gopal Agarwal in Kolkata, is a leading maize supplier in India and a trusted provider of brokerage services for poultry and animal feed raw materials including soya DOC, rice DDGS and bulk feed ingredients.",
 
-    keywords: keywords,
+    keywords: SITE_KEYWORDS,
 
     authors: [{ name: "Santu De" }],
+    creator: "Santu De",
+    publisher: SITE_NAME,
+    category: "Agriculture & Commodity Trading",
+    applicationName: "Hansaria Food",
 
     alternates: {
       canonical: "/",
+      languages: {
+        "en-IN": "/",
+        "x-default": "/",
+      },
     },
 
     appleWebApp: {
@@ -102,17 +244,10 @@ export async function generateMetadata() {
         "Hansaria Food Pvt. Ltd. | Leading Maize Supplier in India & Brokerage Services",
       description:
         "Hansaria Food Pvt. Ltd., led by Gopal Agarwal, is India's leading maize supplier and brokerage firm for soya DOC, DDGS and poultry feed ingredients.",
-      url: "https://www.hansariafood.in",
-      siteName: "Hansaria Food Private Limited",
+      url: SITE_URL,
+      siteName: SITE_NAME,
       locale: "en_IN",
-      images: [
-        {
-          url: "/images/og-image1.png",
-          width: 1200,
-          height: 630,
-          alt: "Hansaria Food Pvt. Ltd. Leading Maize Supplier India",
-        },
-      ],
+      images: [OG_IMAGE],
       type: "website",
     },
 
@@ -122,7 +257,7 @@ export async function generateMetadata() {
         "Hansaria Food Pvt. Ltd. | Leading Maize Supplier & Brokerage Services",
       description:
         "Leading supplier of maize, soya DOC, DDGS and animal feed ingredients across India, led by Gopal Agarwal Kolkata.",
-      images: ["/images/og-image1.png"],
+      images: [OG_IMAGE.url],
     },
 
     icons: {
@@ -152,48 +287,9 @@ export default function RootLayout({ children }) {
         <meta name="distribution" content="global" />
         <script
           type="application/ld+json"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Corporation",
-              name: "Hansaria Food Private Limited",
-              url: "https://www.hansariafood.in",
-              logo: "https://www.hansariafood.in/images/og-image1.png",
-              description:
-                "Hansaria Food Private Limited, led by Gopal Agarwal, is a leading maize supplier in India and trusted brokerage firm for poultry feed raw materials like soya DOC and DDGS.",
-
-              founder: [
-                { "@type": "Person", name: "Gopal Agarwal" },
-                { "@type": "Person", name: "Sunita Agarwalla" },
-              ],
-
-              foundingDate: "2018-06-15",
-
-              address: {
-                "@type": "PostalAddress",
-                streetAddress:
-                  "Primarc Square, Plot No.1, Salt Lake Bypass, LA Block, Sector 3, Bidhannagar",
-                addressLocality: "Kolkata",
-                addressRegion: "West Bengal",
-                postalCode: "700098",
-                addressCountry: "IN",
-              },
-
-              contactPoint: {
-                "@type": "ContactPoint",
-                telephone: "+91-98304-33535",
-                contactType: "customer service",
-                email: "info@hansariafood.com",
-              },
-
-              sameAs: [
-                "https://www.facebook.com/hansariafood",
-                "https://www.instagram.com/hansaria_food",
-                "https://www.youtube.com/@hansariafood",
-                "https://www.linkedin.com/company/hansaria-food",
-                "https://www.x.com/hansariafood",
-              ],
-            }),
+            __html: JSON.stringify(structuredData),
           }}
         />
       </head>
@@ -233,7 +329,7 @@ export default function RootLayout({ children }) {
                 <BottomNav />
                 {/* <TaskChat /> */}
                 <SariaAI />
-               {/* <ScrollToTop /> */}
+                {/* <ScrollToTop /> */}
               </SocketProvider>
             </UserProvider>
           </AuthWrapper>

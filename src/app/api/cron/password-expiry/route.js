@@ -4,10 +4,14 @@ import User from "@/models/User";
 import { sendEmail } from "@/lib/email/sendEmail";
 import { generatePasswordExpiryEmailTemplate } from "@/lib/email/templates/passwordExpiryTemplate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import DeletedSauda from "@/models/DeletedSauda";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
@@ -9,8 +9,12 @@ import { generateDeletedSaudaEmailTemplate } from "@/lib/email/templates/deleted
 import { emitNotification } from "@/lib/socket";
 import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -129,32 +133,41 @@ export async function POST(req) {
       console.error("Error sending deleted sauda email:", emailError);
     }
 
-    let notificationDelivery;
-    try {
-      notificationDelivery = await sendTemplateToRegisteredUsers(
-        "HANSARIA_SAUDA_TEMPLATE_ID",
-        {
-          company: doc.company,
-          date: doc.date,
-          time: doc.time,
-          saudaDetails: [
-            "Deleted sauda",
-            `Sauda No: ${doc.saudaNo || "N/A"}`,
-            `Commodity: ${doc.commodity || "N/A"}`,
-            `Tons: ${doc.tons}`,
-            `Rate: ${doc.finalRate}`,
-            `Seller: ${doc.sellerCompany || doc.sellerName || "N/A"}`,
-            `Reason: ${doc.deletedReason || "Not provided"}`,
-          ].join(", "),
-        }
-      );
-    } catch (messageError) {
-      console.error("Failed to send deleted sauda template messages:", messageError);
-      notificationDelivery = { sent: 0, error: messageError.message };
-    }
+    // Delivery happens after the response is flushed so logging stays snappy.
+    const notificationPayload = {
+      company: doc.company,
+      date: doc.date,
+      time: doc.time,
+      saudaDetails: [
+        "Deleted sauda",
+        `Sauda No: ${doc.saudaNo || "N/A"}`,
+        `Commodity: ${doc.commodity || "N/A"}`,
+        `Tons: ${doc.tons}`,
+        `Rate: ${doc.finalRate}`,
+        `Seller: ${doc.sellerCompany || doc.sellerName || "N/A"}`,
+        `Reason: ${doc.deletedReason || "Not provided"}`,
+      ].join(", "),
+    };
+
+    after(async () => {
+      try {
+        await sendTemplateToRegisteredUsers(
+          "HANSARIA_SAUDA_TEMPLATE_ID",
+          notificationPayload
+        );
+      } catch (messageError) {
+        console.error(
+          "Failed to send deleted sauda template messages:",
+          messageError
+        );
+      }
+    });
 
     return NextResponse.json(
-      { message: "Deleted sauda logged successfully", notificationDelivery },
+      {
+        message: "Deleted sauda logged successfully",
+        notificationDelivery: { queued: true },
+      },
       { status: 201 },
     );
   } catch (error) {

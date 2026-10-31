@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import RateHistory from "@/models/RateHistory";
 import Rate from "@/models/Rate";
@@ -6,8 +6,12 @@ import ManageCompany from "@/models/ManageCompany";
 import { connectDB } from "@/lib/mongodb";
 import { emitNotification } from "@/lib/socket";
 import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function GET(req, { params }) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -67,6 +71,9 @@ export async function GET(req, { params }) {
 }
 
 export async function POST(req, { params }) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -216,43 +223,44 @@ export async function POST(req, { params }) {
       },
     });
 
-    let notificationDelivery = { sent: 0 };
+    // Delivery happens after the response is flushed so the update stays snappy.
     if (rate !== undefined && rate !== null) {
-      try {
-        const company = await ManageCompany.findById(id).select("name").lean();
-        const savedRate = company?.name
-          ? await Rate.findOne({
-              company: company.name,
+      after(async () => {
+        try {
+          const company = await ManageCompany.findById(id).select("name").lean();
+          const savedRate = company?.name
+            ? await Rate.findOne({
+                company: company.name,
+                location: locationName,
+                commodity: commodityName,
+              })
+                .select("quantity")
+                .lean()
+            : null;
+          await sendTemplateToRegisteredUsers(
+            "HANSARIA_RATE_TEMPLATE_ID",
+            {
+              company: company?.name || id,
               location: locationName,
               commodity: commodityName,
-            })
-              .select("quantity")
-              .lean()
-          : null;
-        notificationDelivery = await sendTemplateToRegisteredUsers(
-          "HANSARIA_RATE_TEMPLATE_ID",
-          {
-            company: company?.name || id,
-            location: locationName,
-            commodity: commodityName,
-            quantaty: String(savedRate?.quantity ?? ""),
-            rate: String(rate),
-            date: today,
-            updateTime: time,
-          },
-          { includeName: false }
-        );
-      } catch (messageError) {
-        console.error("Failed to send rate template messages:", messageError);
-        notificationDelivery = { sent: 0, error: messageError.message };
-      }
+              quantaty: String(savedRate?.quantity ?? ""),
+              rate: String(rate),
+              date: today,
+              updateTime: time,
+            },
+            { includeName: false }
+          );
+        } catch (messageError) {
+          console.error("Failed to send rate template messages:", messageError);
+        }
+      });
     }
 
     return NextResponse.json(
       {
         success: true,
         message: "Rate updated successfully",
-        notificationDelivery,
+        notificationDelivery: { queued: true },
       },
       { status: 200 },
     );

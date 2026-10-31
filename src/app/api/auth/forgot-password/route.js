@@ -5,8 +5,12 @@ import { sendEmail } from "@/lib/email/sendEmail";
 import { getOtpEmailTemplate } from "@/lib/email/templates/otpTemplate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { sendTemplateToUser } from "@/lib/hansariaMessages";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "auth");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }

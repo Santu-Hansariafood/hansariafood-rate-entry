@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function GET(request) {
+  const limited = rateLimitGuard(request, "read");
+  if (limited) return limited;
+
   if (!verifyApiKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

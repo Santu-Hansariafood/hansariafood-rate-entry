@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function GET(req, { params }) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   try {
     await connectDB();
 

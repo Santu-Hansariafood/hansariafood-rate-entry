@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { cachedJson, rateLimitGuard } from "@/lib/apiUtils";
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -142,17 +146,20 @@ export async function GET(req) {
       }))
       .sort((a, b) => b.avg - a.avg);
 
-    return NextResponse.json({
-      summary: {
-        avgRate: Math.round(totalSum / allDataPoints.length),
-        maxRate,
-        minRate,
-        totalUpdates: allDataPoints.length,
+    return cachedJson(
+      {
+        summary: {
+          avgRate: Math.round(totalSum / allDataPoints.length),
+          maxRate,
+          minRate,
+          totalUpdates: allDataPoints.length,
+        },
+        monthlyData,
+        companyWise,
+        allDataPoints: allDataPoints.slice(-50), // Return last 50 for detail view
       },
-      monthlyData,
-      companyWise,
-      allDataPoints: allDataPoints.slice(-50), // Return last 50 for detail view
-    });
+      { maxAge: 60, staleWhileRevalidate: 300 },
+    );
   } catch (error) {
     console.error("Error in GET /rate-analysis/monthly:", error);
     return NextResponse.json(

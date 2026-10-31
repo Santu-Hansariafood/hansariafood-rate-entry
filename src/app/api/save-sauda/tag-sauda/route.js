@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import TagSauda from "@/models/TagSauda";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   await connectDB();
 
   const authorized = await verifyApiKey(req);
@@ -96,6 +100,9 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   await connectDB();
 
   const authorized = await verifyApiKey(req);
@@ -223,6 +230,9 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   await connectDB();
 
   const authorized = await verifyApiKey(req);

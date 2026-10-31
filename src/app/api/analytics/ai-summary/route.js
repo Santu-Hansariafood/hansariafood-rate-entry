@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function POST(request) {
+  const limited = rateLimitGuard(request, "write");
+  if (limited) return limited;
+
   if (!verifyApiKey(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -1,14 +1,19 @@
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = buildPageMetadata({
   title: "Freight Management",
   description:
     "Set and manage route-wise freight rates to power accurate landing cost calculations.",
-  alternates: {
-    canonical: "/freight",
-  },
-};
+  path: "/freight",
+  keywords: [
+    "freight rate management",
+    "route wise freight rate India",
+    "commodity freight calculator",
+    "transport cost feed ingredients",
+  ],
+});
 
 const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),

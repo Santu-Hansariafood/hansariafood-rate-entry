@@ -1,6 +1,7 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
+import { buildPageMetadata } from "@/lib/seo";
 
 const AuthWrapper = dynamic(
   () => import("@/components/AuthWrapper/AuthWrapper"),
@@ -19,16 +20,17 @@ export function generateMetadata({ params }) {
   const name =
     base.charAt(0).toUpperCase() + base.slice(1).toLowerCase();
 
-  const title = `${name} Rate`;
-  const description = `View the latest ${name} commodity rate updates, history and landed cost insights from Hansaria Food.`;
-
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: `/rate/${raw}`,
-    },
-  };
+  return buildPageMetadata({
+    title: `${name} Rate`,
+    description: `View the latest ${name} commodity rate updates, history and landed cost insights from Hansaria Food.`,
+    path: `/rate/${raw}`,
+    keywords: [
+      `${name} rate today`,
+      `${name} price India`,
+      `${name} supplier India`,
+      `${name} commodity rate`,
+    ],
+  });
 }
 
 const Page = ({ params }) => {

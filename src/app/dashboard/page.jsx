@@ -5,6 +5,10 @@ export const metadata = {
   title: "Dashboard",
   description:
     "Welcome to Hansaria Food dashboard. Monitor market trends and manage your commodity trade operations.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 const Welcome = dynamic(() => import("@/components/ui/Welcome/Welcome"), {

@@ -5,8 +5,12 @@ import { connectDB } from "@/lib/mongodb";
 import Location from "@/models/Location";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -57,6 +61,9 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

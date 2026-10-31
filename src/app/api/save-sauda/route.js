@@ -11,8 +11,12 @@ import DeletedSauda from "@/models/DeletedSauda";
 import { emitNotification } from "@/lib/socket";
 import { sendTemplateToRegisteredUsers, sendSaudaBidTemplate } from "@/lib/hansariaMessages";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -345,6 +349,9 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

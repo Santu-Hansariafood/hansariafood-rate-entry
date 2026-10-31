@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { generateSaudaExcel } from "@/lib/excel/generateSaudaExcel";
 import { sendSaudaEmail } from "@/lib/email/sendSaudaEmail";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,14 +35,21 @@ export async function POST(req) {
 
     const buffer = await generateSaudaExcel(saudaEntries);
 
-    await sendSaudaEmail({
-      to,
-      buffer,
-      filename: "SaudaReport.xlsx",
+    // Delivery happens after the response is flushed so the export stays snappy.
+    after(async () => {
+      try {
+        await sendSaudaEmail({
+          to,
+          buffer,
+          filename: "SaudaReport.xlsx",
+        });
+      } catch (emailError) {
+        console.error("Failed to send sauda report email:", emailError);
+      }
     });
 
     return NextResponse.json(
-      { message: "Email sent successfully" },
+      { message: "Email queued for delivery" },
       { status: 200 },
     );
   } catch (error) {

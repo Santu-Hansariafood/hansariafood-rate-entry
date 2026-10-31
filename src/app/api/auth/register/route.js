@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 const success = (msg, data = {}) =>
   NextResponse.json({ success: true, message: msg, ...data }, { status: 200 });
@@ -12,6 +13,9 @@ const error = (msg, status = 500, extra = {}) =>
   NextResponse.json({ success: false, message: msg, ...extra }, { status });
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "auth");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
@@ -51,6 +55,9 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "auth");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
@@ -78,6 +85,9 @@ export async function GET(req) {
 }
 
 export async function PUT(req) {
+  const limited = rateLimitGuard(req, "auth");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
@@ -126,6 +136,9 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
+  const limited = rateLimitGuard(req, "auth");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {
@@ -145,6 +158,9 @@ export async function DELETE(req) {
 }
 
 export async function PATCH(req) {
+  const limited = rateLimitGuard(req, "auth");
+  if (limited) return limited;
+
   if (!verifyApiKey(req)) return error("Unauthorized", 401);
 
   try {

@@ -4,8 +4,12 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function PUT(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   if (!verifyApiKey(req))
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 

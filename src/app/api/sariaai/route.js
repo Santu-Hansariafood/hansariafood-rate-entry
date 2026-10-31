@@ -6,6 +6,7 @@ import Rate from "@/models/Rate";
 import SaudaEntry from "@/models/SaudaEntry";
 import Freight from "@/models/Freight";
 import ManageCompany from "@/models/ManageCompany";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 // Caching for quick responses
 let quickRatesCache = null;
@@ -57,6 +58,9 @@ function generateAIResponse(type, data, searchParams) {
 }
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   try {
     await connectDB();
     const { query, page = 1 } = await req.json();

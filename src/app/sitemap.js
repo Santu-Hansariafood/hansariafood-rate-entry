@@ -55,12 +55,6 @@ export default async function sitemap() {
       changeFrequency: "monthly",
       priority: 0.7,
     },
-    {
-      url: `${BASE_URL}/seller`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
 
     {
       url: `${BASE_URL}/soya`,
@@ -95,6 +89,12 @@ export default async function sitemap() {
     },
     {
       url: `${BASE_URL}/privacy-policy`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/cookie-policy`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.5,

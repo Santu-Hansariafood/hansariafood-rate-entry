@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Rate from "@/models/Rate";
 import RateHistory from "@/models/RateHistory";
@@ -6,8 +6,28 @@ import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
 import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
+import { rateLimitGuard } from "@/lib/apiUtils";
+
+// Hoisted out of request handlers: constructing an Intl formatter is expensive
+// and the time zone never changes, so one shared instance is enough.
+const istDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Kolkata",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+const istTimeFormatter = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   try {
     await connectDB();
     if (!verifyApiKey(req)) {
@@ -38,22 +58,10 @@ export async function POST(req) {
     }
 
     const now = new Date();
-    const todayStr = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Kolkata',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).format(now);
-    
+    const todayStr = istDateFormatter.format(now);
     const today = new Date(todayStr + 'T00:00:00Z');
 
-    const istTimeStr = now.toLocaleTimeString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-    const currentTime = istTimeStr;
+    const currentTime = istTimeFormatter.format(now);
 
     const numericNewRate = Number(newRate);
     if (isNaN(numericNewRate)) {
@@ -90,12 +98,7 @@ export async function POST(req) {
         let shouldShift = false;
         
         if (lastUpdated && !isNaN(lastUpdated.getTime())) {
-          const lastUpdatedStr = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Asia/Kolkata',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          }).format(lastUpdated);
+          const lastUpdatedStr = istDateFormatter.format(lastUpdated);
 
           if (lastUpdatedStr !== todayStr && existingRate.newRate !== undefined) {
             shouldShift = true;
@@ -249,28 +252,31 @@ export async function POST(req) {
       console.warn("Failed to emit notification:", socketErr.message);
     }
 
-    let notificationDelivery;
-    try {
-      notificationDelivery = await sendTemplateToRegisteredUsers(
-        "HANSARIA_RATE_TEMPLATE_ID",
-        {
-          company: cleanCompany,
-          location: cleanLocation,
-          commodity: cleanCommodity,
-          quantaty: String(numericQuantity),
-          rate: String(numericNewRate),
-          date: todayStr,
-          updateTime: currentTime,
-        },
-        { includeName: false }
-      );
-    } catch (messageError) {
-      console.error("Failed to send rate template messages:", messageError);
-      notificationDelivery = { sent: 0, error: messageError.message };
-    }
+    // Delivery happens after the response is flushed so the save stays snappy.
+    const notificationPayload = {
+      company: cleanCompany,
+      location: cleanLocation,
+      commodity: cleanCommodity,
+      quantaty: String(numericQuantity),
+      rate: String(numericNewRate),
+      date: todayStr,
+      updateTime: currentTime,
+    };
+
+    after(async () => {
+      try {
+        await sendTemplateToRegisteredUsers(
+          "HANSARIA_RATE_TEMPLATE_ID",
+          notificationPayload,
+          { includeName: false }
+        );
+      } catch (messageError) {
+        console.error("Failed to send rate template messages:", messageError);
+      }
+    });
 
     return NextResponse.json(
-      { message: "Rate saved successfully!", notificationDelivery },
+      { message: "Rate saved successfully!", notificationDelivery: { queued: true } },
       { status: 200 },
     );
   } catch (error) {
@@ -283,6 +289,9 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -300,12 +309,7 @@ export async function GET(req) {
     if (commodity && commodity !== "all") query.commodity = commodity;
 
     const now = new Date();
-    const todayStr = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Kolkata',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).format(now);
+    const todayStr = istDateFormatter.format(now);
     const todayMidnight = new Date(todayStr + 'T00:00:00Z');
 
     const dbQuery = {
@@ -324,13 +328,7 @@ export async function GET(req) {
       let isToday = false;
       
       if (lastUpdated && !isNaN(lastUpdated.getTime())) {
-        const lastUpdatedStr = new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'Asia/Kolkata',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        }).format(lastUpdated);
-        isToday = (lastUpdatedStr === todayStr);
+        isToday = istDateFormatter.format(lastUpdated) === todayStr;
       }
 
       const oldRatesArray = Array.isArray(rate.oldRates) ? [...rate.oldRates] : [];
@@ -385,6 +383,9 @@ export async function GET(req) {
 }
 
 export async function PUT(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   try {
     await connectDB();
     if (!verifyApiKey(req)) {
@@ -449,41 +450,35 @@ export async function PUT(req) {
 
     await rateToUpdate.save();
 
-    const todayStr = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
-    const updateTime = new Date().toLocaleTimeString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
+    const now = new Date();
+    const todayStr = istDateFormatter.format(now);
+    const updateTime = istTimeFormatter.format(now);
+
+    // Delivery happens after the response is flushed so the update stays snappy.
+    const notificationPayload = {
+      company: cleanCompany,
+      location: cleanLocation,
+      commodity: cleanCommodity,
+      quantaty: String(rateToUpdate.quantity ?? ""),
+      rate: String(Number(newRate)),
+      date: todayStr,
+      updateTime,
+    };
+
+    after(async () => {
+      try {
+        await sendTemplateToRegisteredUsers(
+          "HANSARIA_RATE_TEMPLATE_ID",
+          notificationPayload,
+          { includeName: false }
+        );
+      } catch (messageError) {
+        console.error("Failed to send rate template messages:", messageError);
+      }
     });
 
-    let notificationDelivery;
-    try {
-      notificationDelivery = await sendTemplateToRegisteredUsers(
-        "HANSARIA_RATE_TEMPLATE_ID",
-        {
-          company: cleanCompany,
-          location: cleanLocation,
-          commodity: cleanCommodity,
-          quantaty: String(rateToUpdate.quantity ?? ""),
-          rate: String(Number(newRate)),
-          date: todayStr,
-          updateTime,
-        },
-        { includeName: false }
-      );
-    } catch (messageError) {
-      console.error("Failed to send rate template messages:", messageError);
-      notificationDelivery = { sent: 0, error: messageError.message };
-    }
-
     return NextResponse.json(
-      { message: "Rate updated successfully!", notificationDelivery },
+      { message: "Rate updated successfully!", notificationDelivery: { queued: true } },
       { status: 200 },
     );
   } catch (error) {
@@ -496,6 +491,9 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   await connectDB();
   if (!verifyApiKey(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

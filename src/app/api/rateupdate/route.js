@@ -3,8 +3,12 @@ import { connectDB } from "@/lib/mongodb";
 import RateUpdate from "@/models/RateUpdate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
+import { rateLimitGuard } from "@/lib/apiUtils";
 
 export async function POST(req) {
+  const limited = rateLimitGuard(req, "write");
+  if (limited) return limited;
+
   await connectDB();
   try {
     if (!verifyApiKey(req)) {
@@ -41,6 +45,9 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  const limited = rateLimitGuard(req, "read");
+  if (limited) return limited;
+
   await connectDB();
   try {
     const date = new URL(req.url).searchParams.get("date");
