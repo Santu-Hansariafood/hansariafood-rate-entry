@@ -81,7 +81,7 @@ const EditUserPopup = ({ open, onClose, user, onUpdate }) => {
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-red-500 transition-colors p-1"
+            className="text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors p-1"
           >
             <X size={20} />
           </button>
@@ -167,7 +167,7 @@ const EditUserPopup = ({ open, onClose, user, onUpdate }) => {
               value={formData.password}
               onChange={handleChange}
               placeholder="Enter new password to reset"
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-400"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 

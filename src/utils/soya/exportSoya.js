@@ -1,7 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
-
 function extractText(value) {
   if (value === null || value === undefined) return "-";
 
@@ -42,7 +38,8 @@ function getRequiredCellHeight(rates) {
   return Math.max(26, rates.length * 18 + 8);
 }
 
-export function exportToExcel(rows) {
+export async function exportToExcel(rows) {
+  const XLSX = await import("xlsx");
   const excelRows = rows.map((row) => {
     const newRow = {};
     Object.keys(row).forEach((key) => {
@@ -94,7 +91,9 @@ function drawHeaderFooter(doc, pageWidth, pageHeight, date, time) {
   );
 }
 
-export function exportToPDF(rows, columns, selectedDate) {
+export async function exportToPDF(rows, columns, selectedDate) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF({
     orientation: "landscape",
     unit: "pt",

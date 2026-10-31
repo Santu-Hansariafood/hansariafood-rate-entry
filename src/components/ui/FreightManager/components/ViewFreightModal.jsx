@@ -6,8 +6,8 @@ const ViewFreightModal = ({ viewingFreight, setViewingFreight }) => {
     if (!viewingFreight) return null;
 
     return (
-        <Modal onClose={() => setViewingFreight(null)} className="max-w-lg">
-          <div className="p-6 space-y-6">
+        <Modal onClose={() => setViewingFreight(null)} className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="p-4 sm:p-6 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                 Freight Details
@@ -17,13 +17,13 @@ const ViewFreightModal = ({ viewingFreight, setViewingFreight }) => {
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-xl space-y-3">
                 <div className="flex items-start justify-between">
-                  <span className="text-sm font-medium text-gray-500">ID</span>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">ID</span>
                   <span className="font-mono text-sm font-bold text-gray-800 dark:text-gray-200">
                     #{viewingFreight._id.slice(-6).toUpperCase()}
                   </span>
                 </div>
                 <div className="flex items-start justify-between">
-                  <span className="text-sm font-medium text-gray-500">
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Commodity
                   </span>
                   <span className="font-medium text-gray-800 dark:text-gray-200">
@@ -64,7 +64,7 @@ const ViewFreightModal = ({ viewingFreight, setViewingFreight }) => {
                 </label>
                 <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   ₹{viewingFreight.freightRate}
-                  <span className="text-lg text-gray-500 font-medium ml-1">
+                  <span className="text-lg text-gray-500 dark:text-gray-400 font-medium ml-1">
                     /MT
                   </span>
                 </div>

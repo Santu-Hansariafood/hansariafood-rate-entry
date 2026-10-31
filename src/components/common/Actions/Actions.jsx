@@ -87,7 +87,7 @@ const Actions = ({ item }) => {
             >
               <button
                 onClick={closeModal}
-                className="absolute top-3 right-3 text-gray-500 hover:text-red-500 transition"
+                className="absolute top-3 right-3 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors"
               >
                 <X size={22} />
               </button>

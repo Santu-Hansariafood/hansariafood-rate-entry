@@ -9,7 +9,7 @@ export default function ActionButtons({ onSave, onShare, onExportRate }) {
     <Suspense fallback={<Loading />}>
       <div className="mt-6 flex flex-wrap justify-end gap-3">
         <button
-          className="flex items-center gap-2 rounded-md 
+          className="flex items-center gap-2 rounded-md transition-colors
             bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 
             dark:bg-blue-500 dark:hover:bg-blue-600"
           onClick={onShare}
@@ -18,7 +18,7 @@ export default function ActionButtons({ onSave, onShare, onExportRate }) {
           Share Sauda
         </button>
         <button
-          className="flex items-center gap-2 rounded-md 
+          className="flex items-center gap-2 rounded-md transition-colors
             bg-purple-600 px-4 py-2 text-white hover:bg-purple-700 
             dark:bg-purple-500 dark:hover:bg-purple-600"
           onClick={onExportRate}

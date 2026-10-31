@@ -1,11 +1,11 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
-export const downloadSaudaPDF = (
+export const downloadSaudaPDF = async (
   data,
   date,
   companyName = "HANSARIA FOOD PRIVATE LIMITED"
 ) => {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
   const doc = new jsPDF("l", "mm", "a4");
 
   const pageWidth = doc.internal.pageSize.getWidth();

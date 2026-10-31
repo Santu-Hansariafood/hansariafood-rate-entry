@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Download } from "lucide-react";
 
 export default function DownloadLandingCostPDF({
@@ -8,8 +6,13 @@ export default function DownloadLandingCostPDF({
   selectedCommodity,
   selectedLocation,
 }) {
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!tableRows || tableRows.length === 0) return;
+
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
 
     const doc = new jsPDF({
       orientation: "landscape",

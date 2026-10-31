@@ -33,7 +33,7 @@ const SaudaEntryList = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="relative min-h-screen p-6 bg-gray-100 dark:bg-gray-950 overflow-hidden">
+      <div className="relative min-h-screen p-4 sm:p-6 bg-gray-100 dark:bg-gray-950 overflow-hidden">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-yellow-500/30 rounded-full blur-3xl" />
         <div className="absolute top-1/2 -right-32 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl" />
 
@@ -105,7 +105,7 @@ const SaudaEntryList = () => {
 
                     <motion.span
                       animate={{ rotate: expandedMobile === mobile ? 180 : 0 }}
-                      className="text-gray-500"
+                      className="text-gray-500 dark:text-gray-400"
                     >
                       ▼
                     </motion.span>
@@ -134,14 +134,14 @@ const SaudaEntryList = () => {
                                   <Building2 size={14} className="inline mr-1" />
                                   {sauda.company}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
                                   Sauda #{formatSaudaNo(sauda.saudaNo)}
                                 </div>
                               </div>
                               <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300 mt-2">
                                 <div>📦 {sauda.commodity}</div>
                                 <div>⚖️ {sauda.tons} Tons</div>
-                                <div className="font-semibold text-green-600">
+                                <div className="font-semibold text-green-600 dark:text-green-400">
                                   💰 ₹{sauda.finalRate}
                                 </div>
                                 <div>👤 {sauda.sellerName}</div>

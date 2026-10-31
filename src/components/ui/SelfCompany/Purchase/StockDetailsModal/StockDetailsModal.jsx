@@ -369,43 +369,43 @@ const StockDetailsModal = ({ details, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-[95%] max-w-6xl p-6 relative animate-fadeIn">
+      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-2xl shadow-2xl w-[95%] max-w-6xl mx-auto p-4 sm:p-6 relative animate-fadeIn max-h-[90vh] overflow-y-auto">
         <button
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition"
+          className="absolute top-3 right-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition"
           onClick={onClose}
         >
           <X className="w-6 h-6" />
         </button>
 
-        <h4 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b pb-2">
+        <h4 className="text-xl font-semibold mb-4 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
           {type === "purchase" ? "Purchase" : "Sale"} Details – {commodity} (
           {unit})
         </h4>
 
-        <div className="max-h-[500px] overflow-y-auto rounded-md border border-gray-100 relative">
+        <div className="max-h-[500px] overflow-y-auto rounded-md border border-gray-100 dark:border-gray-700 relative">
           <table className="w-full text-sm">
-            <thead className="bg-gray-100 sticky top-0">
+            <thead className="bg-gray-100 dark:bg-gray-800 sticky top-0">
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 w-[120px]">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300 w-[120px]">
                   <Calendar className="w-4 h-4 inline mr-1" /> Date
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 w-[140px]">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300 w-[140px]">
                   <Hash className="w-4 h-4 inline mr-1" />{" "}
                   {type === "purchase" ? "Purchase Sauda No" : "Sale Sauda No"}
                 </th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600 w-[250px]">
+                <th className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300 w-[250px]">
                   {labelText}
                 </th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600">
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">
                   Tons
                 </th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600">
+                <th className="px-3 py-2 text-right font-medium text-gray-600 dark:text-gray-300">
                   Rate
                 </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 w-[120px]">
+                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300 w-[120px]">
                   Status
                 </th>
-                <th className="px-3 py-2 text-center font-medium text-gray-600 w-[80px]">
+                <th className="px-3 py-2 text-center font-medium text-gray-600 dark:text-gray-300 w-[80px]">
                   Action
                 </th>
               </tr>
@@ -414,7 +414,7 @@ const StockDetailsModal = ({ details, onClose }) => {
             <tbody>
               {loadingData ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-4 text-gray-500">
+                  <td colSpan="7" className="text-center py-4 text-gray-500 dark:text-gray-400">
                     Loading sauda data...
                   </td>
                 </tr>
@@ -435,14 +435,14 @@ const StockDetailsModal = ({ details, onClose }) => {
                   return (
                     <tr
                       key={i}
-                      className={`border-t hover:bg-gray-50 transition-colors relative ${
-                        isWithinTolerance ? "bg-green-50" : ""
+                      className={`border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors relative ${
+                        isWithinTolerance ? "bg-green-50 dark:bg-green-900/20" : ""
                       }`}
                     >
                       <td className="px-3 py-2">{formatDate(e.date)}</td>
 
                       <td
-                        className="px-3 py-2 text-blue-600 font-medium relative"
+                        className="px-3 py-2 text-blue-600 dark:text-blue-400 font-medium relative"
                         onMouseEnter={() => setHoveredIndex(i)}
                         onMouseLeave={() => setHoveredIndex(null)}
                       >
@@ -452,41 +452,41 @@ const StockDetailsModal = ({ details, onClose }) => {
                         </div>
 
                         {hoveredIndex === i && (
-                          <div className="absolute left-0 top-8 bg-white border border-gray-300 shadow-lg rounded-lg p-3 text-xs w-64 z-50 animate-fadeIn">
-                            <p className="font-semibold text-gray-700 mb-1">
+                          <div className="absolute left-0 top-8 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 shadow-lg rounded-lg p-3 text-xs w-64 z-50 animate-fadeIn">
+                            <p className="font-semibold text-gray-700 dark:text-gray-200 mb-1">
                               Sauda Details
                             </p>
                             <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                              <span className="text-gray-500">Date:</span>
+                              <span className="text-gray-500 dark:text-gray-400">Date:</span>
                               <span className="font-medium">
                                 {formatDate(mainDetails?.date ?? e.date)}
                               </span>
 
-                              <span className="text-gray-500">Tons:</span>
+                              <span className="text-gray-500 dark:text-gray-400">Tons:</span>
                               <span className="font-medium">
                                 {(mainDetails?.tons ?? e.tons)?.toFixed
                                   ? (mainDetails?.tons ?? e.tons)?.toFixed(2)
                                   : mainDetails?.tons ?? e.tons}
                               </span>
 
-                              <span className="text-gray-500">Rate:</span>
+                              <span className="text-gray-500 dark:text-gray-400">Rate:</span>
                               <span className="font-medium">
                                 {mainDetails?.finalRate ?? e.finalRate ?? "-"}
                               </span>
 
-                              <span className="text-gray-500">Commodity:</span>
+                              <span className="text-gray-500 dark:text-gray-400">Commodity:</span>
                               <span className="font-medium">
                                 {mainDetails?.commodity ?? e.commodity ?? "-"}
                               </span>
 
-                              <span className="text-gray-500">Unit:</span>
+                              <span className="text-gray-500 dark:text-gray-400">Unit:</span>
                               <span className="font-medium">
                                 {mainDetails?.unit ?? e.unit ?? "-"}
                               </span>
 
                               {mainDetails?.sellerName && (
                                 <>
-                                  <span className="text-gray-500">Seller:</span>
+                                  <span className="text-gray-500 dark:text-gray-400">Seller:</span>
                                   <span className="font-medium">
                                     {mainDetails.sellerName}
                                   </span>
@@ -494,7 +494,7 @@ const StockDetailsModal = ({ details, onClose }) => {
                               )}
                               {mainDetails?.sellerCompany && (
                                 <>
-                                  <span className="text-gray-500">
+                                  <span className="text-gray-500 dark:text-gray-400">
                                     Seller Co.:
                                   </span>
                                   <span className="font-medium">
@@ -503,12 +503,12 @@ const StockDetailsModal = ({ details, onClose }) => {
                                 </>
                               )}
 
-                              <span className="text-gray-500">Status:</span>
+                              <span className="text-gray-500 dark:text-gray-400">Status:</span>
                               <span
                                 className={`font-medium ${
                                   status === "Complete"
-                                    ? "text-green-600"
-                                    : "text-blue-600"
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-blue-600 dark:text-blue-400"
                                 }`}
                               >
                                 {mainDetails?.status ?? status}
@@ -525,8 +525,8 @@ const StockDetailsModal = ({ details, onClose }) => {
                               key={tIdx}
                               className={`flex items-center ${
                                 status === "Complete"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-blue-100 text-blue-700"
+                                  ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"
+                                  : "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
                               } px-2 py-1 rounded-full text-xs font-medium`}
                             >
                               {tag}
@@ -549,16 +549,16 @@ const StockDetailsModal = ({ details, onClose }) => {
                               handleTagInput(i, e.currentTarget.value);
                             }
                           }}
-                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
 
                         <div className="mt-2">
                           <div className="flex justify-between text-xs mb-1">
-                            <span className="text-gray-600">
+                            <span className="text-gray-600 dark:text-gray-300">
                               Tagged:{" "}
                               <span
                                 className={`font-medium ${
-                                  status === "Complete" ? "text-green-600" : ""
+                                  status === "Complete" ? "text-green-600 dark:text-green-400" : ""
                                 }`}
                               >
                                 {taggedQty.toFixed(2)}
@@ -572,16 +572,16 @@ const StockDetailsModal = ({ details, onClose }) => {
                             <span
                               className={
                                 isWithinTolerance
-                                  ? "text-green-600 font-bold"
-                                  : "text-gray-600"
+                                  ? "text-green-600 dark:text-green-400 font-bold"
+                                  : "text-gray-600 dark:text-gray-300"
                               }
                             >
                               Status: {status}
                             </span>
                           </div>
                           {tags.length > 0 && (
-                            <div className="mt-2 border rounded-md p-2 bg-gray-50">
-                              <p className="text-xs font-medium text-gray-700 mb-2 border-b pb-1">
+                            <div className="mt-2 border border-gray-200 dark:border-gray-700 rounded-md p-2 bg-gray-50 dark:bg-gray-800">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 border-b border-gray-200 dark:border-gray-700 pb-1">
                                 Linked Sauda Details:
                               </p>
                               <div className="grid grid-cols-2 gap-2">
@@ -590,66 +590,66 @@ const StockDetailsModal = ({ details, onClose }) => {
                                   return (
                                     <div
                                       key={idx}
-                                      className="text-xs bg-white p-1 rounded border border-gray-200 shadow-sm"
+                                      className="text-xs bg-white dark:bg-gray-900 p-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm"
                                     >
                                       <div className="flex justify-between items-center mb-1">
-                                        <span className="text-gray-500 text-[10px]">
+                                        <span className="text-gray-500 dark:text-gray-400 text-[10px]">
                                           Sauda No.
                                         </span>
-                                        <span className="font-medium text-blue-600">
+                                        <span className="font-medium text-blue-600 dark:text-blue-400">
                                           {tag}
                                         </span>
                                       </div>
                                       {details && (
-                                        <div className="mt-1 pt-1 border-t border-gray-100">
+                                        <div className="mt-1 pt-1 border-t border-gray-100 dark:border-gray-700">
                                           <div className="grid grid-cols-2 gap-1">
-                                            <div className="text-gray-500">
+                                            <div className="text-gray-500 dark:text-gray-400">
                                               Date:
                                             </div>
                                             <div className="font-medium">
                                               {formatDate(details.date)}
                                             </div>
-                                            <div className="text-gray-500">
+                                            <div className="text-gray-500 dark:text-gray-400">
                                               Company:
                                             </div>
                                             <div className="font-medium">
                                               {details.company || "-"}
                                             </div>
-                                            <div className="text-gray-500">
+                                            <div className="text-gray-500 dark:text-gray-400">
                                               Buyer:
                                             </div>
                                             <div className="font-medium">
                                               {details.buyer || "-"}
                                             </div>
-                                            <div className="text-gray-500">
+                                            <div className="text-gray-500 dark:text-gray-400">
                                               Seller:
                                             </div>
                                             <div className="font-medium">
                                               {details.seller || "-"}
                                             </div>
 
-                                            <div className="text-gray-500">
+                                            <div className="text-gray-500 dark:text-gray-400">
                                               Tons:
                                             </div>
                                             <div className="font-medium">
                                               {details.tons?.toFixed(2) || "-"}
                                             </div>
 
-                                            <div className="text-gray-500">
+                                            <div className="text-gray-500 dark:text-gray-400">
                                               Rate:
                                             </div>
                                             <div className="font-medium">
                                               {details.finalRate || "-"}
                                             </div>
 
-                                            <div className="text-gray-500">
+                                            <div className="text-gray-500 dark:text-gray-400">
                                               Status:
                                             </div>
                                             <div
                                               className={`font-medium ${
                                                 details.status === "Complete"
-                                                  ? "text-green-600"
-                                                  : "text-blue-600"
+                                                  ? "text-green-600 dark:text-green-400"
+                                                  : "text-blue-600 dark:text-blue-400"
                                               }`}
                                             >
                                               {details.status || "Pending"}
@@ -666,18 +666,18 @@ const StockDetailsModal = ({ details, onClose }) => {
                         </div>
                       </td>
 
-                      <td className="px-3 py-2 text-right text-gray-700">
+                      <td className="px-3 py-2 text-right text-gray-700 dark:text-gray-300">
                         {e.tons}
                       </td>
-                      <td className="px-3 py-2 text-right font-semibold text-gray-800">
+                      <td className="px-3 py-2 text-right font-semibold text-gray-800 dark:text-gray-100">
                         {e.finalRate || "-"}
                       </td>
                       <td className="px-3 py-2 text-center font-semibold">
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
                             status === "Complete"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300"
+                              : "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300"
                           }`}
                         >
                           {status}
@@ -689,7 +689,7 @@ const StockDetailsModal = ({ details, onClose }) => {
                           disabled={loadingIndex === i}
                           className={`${
                             loadingIndex === i
-                              ? "bg-gray-300 cursor-not-allowed"
+                              ? "bg-gray-300 dark:bg-gray-600 cursor-not-allowed"
                               : status === "Complete"
                               ? "bg-green-500 hover:bg-green-600"
                               : "bg-blue-500 hover:bg-blue-600"

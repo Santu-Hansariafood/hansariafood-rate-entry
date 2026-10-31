@@ -12,11 +12,11 @@ const RateTableBody = dynamic(() => import("../RateTableBody/RateTableBody"), {
 });
 
 const palette = [
-  { bg: "bg-blue-100", text: "text-blue-800", ring: "ring-blue-300" },
-  { bg: "bg-emerald-100", text: "text-emerald-800", ring: "ring-emerald-300" },
-  { bg: "bg-purple-100", text: "text-purple-800", ring: "ring-purple-300" },
-  { bg: "bg-pink-100", text: "text-pink-800", ring: "ring-pink-300" },
-  { bg: "bg-yellow-100", text: "text-yellow-800", ring: "ring-yellow-300" },
+  { bg: "bg-blue-100 dark:bg-blue-900/50", text: "text-blue-800 dark:text-blue-200", ring: "ring-blue-300" },
+  { bg: "bg-emerald-100 dark:bg-emerald-900/50", text: "text-emerald-800 dark:text-emerald-200", ring: "ring-emerald-300" },
+  { bg: "bg-purple-100 dark:bg-purple-900/50", text: "text-purple-800 dark:text-purple-200", ring: "ring-purple-300" },
+  { bg: "bg-pink-100 dark:bg-pink-900/50", text: "text-pink-800 dark:text-pink-200", ring: "ring-pink-300" },
+  { bg: "bg-yellow-100 dark:bg-yellow-900/50", text: "text-yellow-800 dark:text-yellow-200", ring: "ring-yellow-300" },
 ];
 
 export default function RateTableModal({
@@ -38,7 +38,7 @@ export default function RateTableModal({
   const renderFilter = useCallback(
     () =>
       availableCommodities?.length > 1 && (
-        <div className="mt-2 text-sm text-gray-700">
+        <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
           <p className="font-medium mb-1">Filter by Commodity:</p>
           <div className="flex flex-wrap gap-3">
             {[...availableCommodities]
@@ -58,7 +58,7 @@ export default function RateTableModal({
                       className="sr-only peer"
                     />
                     <span
-                      className={`flex items-center gap-1 px-3 py-1 rounded-full border border-gray-300 transition
+                      className={`flex items-center gap-1 px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 transition
                       ${bg} ${text}
                       peer-checked:ring-2 peer-checked:${ring}
                       hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:${ring}
@@ -88,26 +88,26 @@ export default function RateTableModal({
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden"
+        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden"
       >
-        <div className="p-4 sm:p-6 border-b shrink-0">
+        <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <div className="flex justify-between items-start gap-4 flex-wrap">
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 truncate">
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 truncate">
                 Rates for {toTitleCase(selectedCompany)}
               </h3>
               {renderFilter()}
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition shrink-0"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition shrink-0"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto min-h-0 bg-gray-50/50">
+        <div className="flex-1 overflow-auto min-h-0 bg-gray-50/50 dark:bg-gray-950/50">
           <Suspense fallback={<Loading />}>
             <RateTableBody
               rates={rates}
@@ -123,7 +123,7 @@ export default function RateTableModal({
         </div>
 
         {children && (
-          <div className="p-4 border-t bg-white shrink-0">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
             {children}
           </div>
         )}

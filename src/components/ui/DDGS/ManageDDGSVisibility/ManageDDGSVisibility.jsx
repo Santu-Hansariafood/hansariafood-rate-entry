@@ -98,8 +98,8 @@ export default function ManageDDGSVisibility({ onUpdated }) {
                 className={`p-2 rounded-lg transition disabled:opacity-50
                   ${
                     company.isDDGSVisible
-                      ? "bg-green-100 text-green-700 hover:bg-green-200"
-                      : "bg-red-100 text-red-700 hover:bg-red-200"
+                      ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60"
+                      : "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60"
                   }`}
               >
                 {company.isDDGSVisible ? (
@@ -114,7 +114,7 @@ export default function ManageDDGSVisibility({ onUpdated }) {
       )}
 
       {!loading && companies.length === 0 && (
-        <p className="text-gray-400 mt-6">No companies found.</p>
+        <p className="text-gray-400 dark:text-gray-500 mt-6">No companies found.</p>
       )}
     </div>
   );

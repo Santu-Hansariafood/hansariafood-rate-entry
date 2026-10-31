@@ -1,8 +1,6 @@
 "use client";
 
 import { useRef } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { CalendarDays } from "lucide-react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -40,6 +38,11 @@ const DownloadRateCalendarPDF = ({
   };
 
   const handleDownload = async () => {
+    const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+      import("jspdf"),
+      import("html2canvas"),
+    ]);
+
     const entries = rateData.filter(
       (d) => d.company === selectedCompany && d.commodity === selectedCommodity
     );

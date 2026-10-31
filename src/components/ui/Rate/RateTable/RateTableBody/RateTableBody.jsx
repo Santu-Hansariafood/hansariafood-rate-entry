@@ -45,19 +45,19 @@ export default function RateTableBody({
   return (
     <div
       className={`transition-all duration-300 ${
-        allRatesFilled ? "bg-green-50" : "bg-red-50"
+        allRatesFilled ? "bg-green-50 dark:bg-green-950/40" : "bg-red-50 dark:bg-red-950/40"
       }`}
     >
       {Object.entries(groupedRates)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([state, stateRates]) => (
-          <div key={state} className="border-b">
+          <div key={state} className="border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => toggleState(state)}
-              className={`w-full text-left px-6 py-4 font-semibold text-lg transition ${
+              className={`w-full text-left px-4 sm:px-6 py-4 font-semibold text-lg transition ${
                 expandedStates[state]
-                  ? "bg-green-100 text-green-800"
-                  : "bg-white text-gray-800 hover:bg-gray-50"
+                  ? "bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200"
+                  : "bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               {toTitleCase(state)}
@@ -72,34 +72,34 @@ export default function RateTableBody({
                   className="overflow-hidden"
                 >
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse bg-white">
-                      <thead className="bg-gray-50 sticky top-0 z-10">
+                    <table className="w-full border-collapse bg-white dark:bg-gray-900">
+                      <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
                         <tr>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             Location
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             State
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             Commodity
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             Last Rate
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             Quantity
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             New Rate
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             Payment
                           </th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             Others
                           </th>
-                          <th className="px-6 py-4 text-center text-sm font-semibold text-gray-600 border-b">
+                          <th className="px-4 sm:px-6 py-4 text-center text-sm font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                             Actions
                           </th>
                         </tr>

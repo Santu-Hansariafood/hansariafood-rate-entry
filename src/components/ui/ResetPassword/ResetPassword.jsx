@@ -76,16 +76,16 @@ const ResetPassword = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
-        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md space-y-6">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950 p-4 sm:p-6">
+        <div className="bg-white dark:bg-gray-900 p-6 sm:p-8 rounded-lg shadow-md w-full max-w-md space-y-6 transition-colors duration-300">
           <Title text="Reset Password" />
           <InputBox
             label="Name"
             value={userName || "Guest"}
             readOnly
-            className="bg-gray-100 cursor-not-allowed"
+            className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
           />
-          <p className="text-[10px] text-gray-500 -mt-3">
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 -mt-3">
             Mobile: {mobile || "-"}
           </p>
           <InputBox
@@ -94,10 +94,10 @@ const ResetPassword = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
             Password policy: minimum 6 characters. Numbers and letters are allowed.
           </p>
-          <p className="text-[10px] text-gray-500 mt-1">
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
             {expiryLoading
               ? "Checking password expiry..."
               : passwordExpiresAt

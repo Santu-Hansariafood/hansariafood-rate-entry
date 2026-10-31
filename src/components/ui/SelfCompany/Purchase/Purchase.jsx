@@ -130,37 +130,37 @@ const Purchase = ({ company, fromDate, toDate }) => {
       {loading ? (
         <Loading />
       ) : stockData.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">No data found.</p>
+        <p className="text-gray-500 dark:text-gray-400 text-center py-8">No data found.</p>
       ) : (
-        <div className="overflow-x-auto bg-white rounded-lg shadow">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0">
+        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600 dark:text-gray-300">
                   Commodity
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">
+                <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600 dark:text-gray-300">
                   Opening
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">
+                <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600 dark:text-gray-300">
                   Purchase
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">
+                <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600 dark:text-gray-300">
                   Sale
                 </th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600">
+                <th className="px-4 py-2 text-right text-xs font-semibold text-gray-600 dark:text-gray-300">
                   Closing
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
               {stockData.map((row, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 transition">
-                  <td className="px-4 py-2 text-sm text-gray-800 flex items-center gap-1">
+                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                  <td className="px-4 py-2 text-sm text-gray-800 dark:text-gray-100 flex items-center gap-1">
                     <Leaf className="w-4 h-4 text-green-500" />
                     {row.commodity}
                   </td>
-                  <td className="px-4 py-2 text-sm text-gray-600 flex items-center gap-1">
+                  <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-1">
                     <MapPin className="w-4 h-4 text-gray-400" />
                     {row.unit}
                   </td>
@@ -168,7 +168,7 @@ const Purchase = ({ company, fromDate, toDate }) => {
                     {row.opening.toFixed(2)}
                   </td>
                   <td
-                    className="px-4 py-2 text-sm text-right text-blue-600 font-semibold cursor-pointer hover:underline"
+                    className="px-4 py-2 text-sm text-right text-blue-600 dark:text-blue-400 font-semibold cursor-pointer hover:underline"
                     onClick={() =>
                       setSelectedDetails({
                         type: "purchase",
@@ -189,7 +189,7 @@ const Purchase = ({ company, fromDate, toDate }) => {
                     {row.purchase.toFixed(2)}
                   </td>
                   <td
-                    className="px-4 py-2 text-sm text-right text-red-600 font-semibold cursor-pointer hover:underline"
+                    className="px-4 py-2 text-sm text-right text-red-600 dark:text-red-400 font-semibold cursor-pointer hover:underline"
                     onClick={() =>
                       setSelectedDetails({
                         type: "sale",

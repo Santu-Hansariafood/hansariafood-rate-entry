@@ -20,8 +20,8 @@ export default function CommodityPickerPopup({
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="relative w-[22rem] rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg transition-colors">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/70">
+        <div className="relative w-full max-w-[22rem] mx-auto max-h-[90vh] overflow-y-auto rounded-lg bg-white dark:bg-gray-900 p-6 shadow-lg transition-colors">
           <button
             aria-label="Close"
             onClick={onCancel}

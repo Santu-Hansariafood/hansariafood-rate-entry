@@ -91,7 +91,7 @@ export default function DDGSRate() {
             className={`px-5 py-2 rounded-xl font-medium transition ${
               showRateList
                 ? "bg-green-600 text-white shadow-md shadow-green-500/30"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
             Rate Companies
@@ -102,7 +102,7 @@ export default function DDGSRate() {
             className={`px-5 py-2 rounded-xl font-medium transition ${
               !showRateList
                 ? "bg-green-600 text-white shadow-md shadow-green-500/30"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
             }`}
           >
             Manage Visibility

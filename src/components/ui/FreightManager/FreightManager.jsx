@@ -41,7 +41,7 @@ export default function FreightManager() {
           <FreightHeader onDownloadExcel={downloadFreightExcel} />
         </div>
 
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700">
+        <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 transition-colors">
           <CommodityTabs
             selectedCommodity={selectedCommodity}
             setSelectedCommodity={setSelectedCommodity}

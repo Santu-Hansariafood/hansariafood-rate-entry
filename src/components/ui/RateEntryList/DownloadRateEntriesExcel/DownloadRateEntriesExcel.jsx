@@ -1,7 +1,6 @@
 "use client";
 
 import { Download } from "lucide-react";
-import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import { toast } from "react-toastify";
 import useRateEntries from "@/hooks/RateEntries/useRateEntries";
@@ -11,6 +10,7 @@ const DownloadRateEntriesExcel = () => {
 
   const handleDownloadExcel = async () => {
     try {
+      const { default: ExcelJS } = await import("exceljs");
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-GB", {
         day: "2-digit",

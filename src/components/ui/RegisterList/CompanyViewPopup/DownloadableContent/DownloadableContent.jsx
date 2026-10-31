@@ -29,13 +29,13 @@ export default function DownloadableContent({
       <Suspense fallback={<Loading />}>
         <div
           ref={refObj}
-          className="overflow-x-auto border rounded-md p-4 bg-white text-black text-xs"
+          className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-md p-4 bg-white dark:bg-gray-900 text-black dark:text-gray-100 text-xs transition-colors duration-300"
         >
           <h2 className="text-lg font-semibold mb-4 text-center">
             Weekly Rate Sheet for {userName || "User"}
           </h2>
 
-          <p className="mb-4 text-sm text-center text-gray-600">
+          <p className="mb-4 text-sm text-center text-gray-600 dark:text-gray-300">
             Week: {format(weekDates[0], "dd MMM yyyy")} -{" "}
             {format(weekDates[6], "dd MMM yyyy")}
           </p>

@@ -48,7 +48,7 @@ const FreightList = ({
       header: "ID",
       accessor: "_id",
       cell: (item) => (
-        <span className="font-mono text-gray-500">
+        <span className="font-mono text-gray-500 dark:text-gray-400">
           #{item._id.slice(-6).toUpperCase()}
         </span>
       ),
@@ -100,7 +100,7 @@ const FreightList = ({
       accessor: "createdBy",
       cell: (item) => (
         <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {item.createdBy || <span className="text-gray-400 italic">Unknown</span>}
+          {item.createdBy || <span className="text-gray-400 dark:text-gray-500 italic">Unknown</span>}
         </div>
       ),
     },

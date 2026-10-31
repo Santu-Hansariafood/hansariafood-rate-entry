@@ -164,7 +164,7 @@ const TaskChat = () => {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className="fixed bottom-40 right-6 z-50 w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[500px]"
+            className="fixed bottom-40 right-4 sm:right-6 z-50 w-[calc(100%-32px)] sm:w-full sm:max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[80vh] sm:max-h-[500px]"
           >
             <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-center">
               <h3 className="font-bold text-lg">Team Tasks</h3>
@@ -179,7 +179,7 @@ const TaskChat = () => {
                 className={`flex-1 py-3 text-sm font-medium transition ${
                   activeTab === "inbox"
                     ? "text-indigo-600 border-b-2 border-indigo-600 dark:text-indigo-400"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 }`}
               >
                 Assigned to Me ({myTasks.filter(t => t.status === 'pending').length})
@@ -189,7 +189,7 @@ const TaskChat = () => {
                 className={`flex-1 py-3 text-sm font-medium transition ${
                   activeTab === "sent"
                     ? "text-indigo-600 border-b-2 border-indigo-600 dark:text-indigo-400"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                 }`}
               >
                 Assigned by Me
@@ -236,7 +236,7 @@ const TaskChat = () => {
                       </div>
                       
                       {task.status === "done" && (
-                        <span className="text-green-600 text-xs font-bold flex items-center gap-1 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+                        <span className="text-green-600 dark:text-green-300 text-xs font-bold flex items-center gap-1 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
                           <CheckCircle size={12} /> Done
                         </span>
                       )}
@@ -245,7 +245,7 @@ const TaskChat = () => {
                     <div className="pl-11">
                         {task.isImportant && (
                             <div className="mb-2">
-                                <span className="bg-red-50 text-red-600 border border-red-100 text-[10px] px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
+                                <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 border border-red-100 dark:border-red-800 text-[10px] px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1">
                                     <AlertCircle size={10} /> Important
                                 </span>
                             </div>
@@ -255,7 +255,7 @@ const TaskChat = () => {
                         </p>
                     </div>
 
-                    <div className="flex justify-end items-center text-xs text-gray-500 pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <div className="flex justify-end items-center text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">
                       {activeTab === "inbox" && task.status === "pending" && (
                         <button
                           onClick={() => handleMarkDone(task._id)}
@@ -282,7 +282,7 @@ const TaskChat = () => {
                       <User size={14} className="text-gray-400" />
                       <div>
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{user.name}</p>
-                        <p className="text-xs text-gray-500">{user.mobile}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{user.mobile}</p>
                       </div>
                     </button>
                   ))}

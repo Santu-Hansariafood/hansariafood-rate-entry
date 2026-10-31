@@ -83,7 +83,7 @@ export default function CreateCommodity() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 p-4 sm:p-6">
         <ToastContainer position="top-right" autoClose={3000} theme="dark" />
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md space-y-6">
           <Title text="Create Commodity" className="dark:text-white" />

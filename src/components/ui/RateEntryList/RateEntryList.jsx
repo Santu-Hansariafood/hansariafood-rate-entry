@@ -22,7 +22,7 @@ const RateEntryList = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="relative min-h-screen p-6 bg-gray-100 dark:bg-gray-950 overflow-hidden">
+      <div className="relative min-h-screen p-4 sm:p-6 bg-gray-100 dark:bg-gray-950 overflow-hidden">
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl" />
         <div className="absolute top-1/2 -right-32 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl" />
 
@@ -74,7 +74,7 @@ const RateEntryList = () => {
 
                     <motion.span
                       animate={{ rotate: expandedMobile === mobile ? 180 : 0 }}
-                      className="text-gray-500"
+                      className="text-gray-500 dark:text-gray-400"
                     >
                       ▼
                     </motion.span>
@@ -105,7 +105,7 @@ const RateEntryList = () => {
                                       <Building2 size={14} className="inline mr-1" />
                                       {entry.company}
                                     </div>
-                                    <div className="text-xs text-gray-500">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">
                                       <Clock4 size={12} className="inline mr-1" />
                                       {new Date(entry.lastUpdated).toLocaleTimeString("en-GB", { hour: '2-digit', minute: '2-digit' })}
                                     </div>

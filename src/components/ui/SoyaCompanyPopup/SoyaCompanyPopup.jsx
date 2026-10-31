@@ -148,7 +148,7 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-all"
+            className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-all"
           >
             <X size={24} />
           </button>
@@ -163,10 +163,10 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
             <Loading />
           ) : (
             data.location.map((loc) => (
-              <div key={loc} className="border rounded mb-3">
+              <div key={loc} className="border border-gray-200 dark:border-gray-700 rounded mb-3 transition-colors">
                 <button
                   onClick={() => toggleLocation(loc)}
-                  className="w-full px-4 py-3 flex justify-between bg-gray-50"
+                  className="w-full px-4 py-3 flex justify-between bg-gray-50 dark:bg-gray-800 transition-colors"
                 >
                   <span>{loc}</span>
                   {expandedLocations.includes(loc) ? (
@@ -183,13 +183,13 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                       const key = `${loc}_${index}`;
 
                       return (
-                        <div key={index} className="bg-gray-50 p-4 rounded">
+                        <div key={index} className="bg-gray-50 dark:bg-gray-800 p-4 rounded transition-colors">
                           <div className="flex justify-between mb-3">
                             <strong>{item.commodity}</strong>
                             {!isEditing ? (
                               <button
                                 onClick={() => toggleEdit(loc, index)}
-                                className="text-xs border px-3 py-1"
+                                className="text-xs border border-gray-300 dark:border-gray-600 px-3 py-1 rounded transition-colors"
                               >
                                 Edit
                               </button>
@@ -261,7 +261,7 @@ export default function SoyaCompanyPopup({ isOpen, onClose, data, onRateUpdate }
                                           ? "text-green-600"
                                           : diff < 0
                                           ? "text-red-600"
-                                          : "text-gray-500"
+                                          : "text-gray-500 dark:text-gray-400"
                                       }
                                     >
                                       {diff > 0 ? `+${diff}` : diff}

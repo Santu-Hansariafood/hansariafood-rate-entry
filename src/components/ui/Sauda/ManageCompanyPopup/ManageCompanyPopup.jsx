@@ -139,7 +139,7 @@ export default function ManageCompanyPopup({
   return (
     <Suspense fallback={<Loading />}>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm">
-        <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto rounded-2xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+        <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto rounded-2xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 p-4 sm:p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
           <button
             aria-label="Close"
             onClick={() => onClose("red")}

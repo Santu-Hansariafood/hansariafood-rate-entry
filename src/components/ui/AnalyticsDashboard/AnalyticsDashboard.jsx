@@ -155,7 +155,7 @@ const AnalyticsDashboard = () => {
               disabled={pdfLoading || loading}
               className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold shadow-lg transition-all
                 ${pdfLoading || loading 
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
                   : 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95'}`}
             >
               {pdfLoading ? (
@@ -173,7 +173,7 @@ const AnalyticsDashboard = () => {
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     period === p
                       ? 'bg-emerald-500 text-white shadow-md'
-                      : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
                   {p === '7days' ? 'Last 7 Days' : p === '14days' ? 'Last 14 Days' : 'Month Wise'}
@@ -181,7 +181,7 @@ const AnalyticsDashboard = () => {
               ))}
             </div>
             <div className="bg-white dark:bg-gray-900 px-4 py-2 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 flex items-center">
-              <span className="text-sm font-medium text-gray-500 mr-2">Status: </span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 mr-2">Status: </span>
               <span className="text-sm font-bold text-emerald-600 uppercase">{period.replace('days', ' Days')}</span>
             </div>
           </div>
@@ -296,7 +296,7 @@ const AnalyticsDashboard = () => {
               </div>
             ))}
             {(!data?.worksDone || data.worksDone.length === 0) && (
-              <p className="text-sm text-gray-500 italic col-span-full py-8 text-center">No recent works recorded.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 italic col-span-full py-8 text-center">No recent works recorded.</p>
             )}
           </div>
         </motion.div>

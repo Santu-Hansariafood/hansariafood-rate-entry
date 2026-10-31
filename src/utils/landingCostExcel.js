@@ -1,8 +1,6 @@
 "use client";
 
-import * as XLSX from "xlsx";
-
-export const exportLandingCostToExcel = (
+export const exportLandingCostToExcel = async (
   tableRows,
   selectedCommodity,
   selectedLocation
@@ -10,6 +8,8 @@ export const exportLandingCostToExcel = (
   if (!Array.isArray(tableRows) || tableRows.length === 0) {
     return false;
   }
+
+  const XLSX = await import("xlsx");
 
   const header = [
     "Sl No",

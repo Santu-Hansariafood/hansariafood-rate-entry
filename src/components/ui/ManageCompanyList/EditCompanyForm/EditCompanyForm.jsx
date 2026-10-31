@@ -266,7 +266,7 @@ export default function EditCompanyForm({ company, onClose, onUpdated }) {
               {selectedLocations.map((loc) => (
                 <div
                   key={loc}
-                  className="bg-gray-50 dark:bg-gray-700 p-4 rounded border dark:border-gray-600"
+                  className="bg-gray-50 dark:bg-gray-700 p-4 rounded border border-gray-200 dark:border-gray-600"
                 >
                   <h3 className="text-md font-semibold text-blue-700 dark:text-blue-400 mb-2">
                     {loc}

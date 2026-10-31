@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
-import * as XLSX from "xlsx";
 
 export const COMMODITIES = ["Maize DDGS", "M DOC", "Soya", "Maize Ddgs Doc"];
 
@@ -179,6 +178,7 @@ export const useFreightManager = () => {
   const downloadFreightExcel = useCallback(async () => {
     try {
       setLoading(true);
+      const XLSX = await import("xlsx");
       const workbook = XLSX.utils.book_new();
 
       for (const commodity of COMMODITIES) {

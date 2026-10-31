@@ -27,7 +27,7 @@ const FreightForm = ({ context, isEdit = false }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
         <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
             <MapPin size={16} /> Source Location
           </h3>
 
@@ -48,7 +48,7 @@ const FreightForm = ({ context, isEdit = false }) => {
         </div>
 
         <div className="space-y-4 p-5 bg-gray-50 dark:bg-gray-700/30 rounded-2xl border border-gray-100 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
             <MapPin size={16} /> Destination Location
           </h3>
 
@@ -85,7 +85,7 @@ const FreightForm = ({ context, isEdit = false }) => {
               setFormData({ ...formData, freightRate: e.target.value })
             }
             placeholder="Enter freight rate..."
-            className="w-full px-4 py-3 text-center text-lg font-bold rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-3 text-center text-lg font-bold rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all"
           />
         </div>
       </div>

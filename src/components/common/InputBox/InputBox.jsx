@@ -41,7 +41,7 @@ const InputBox = ({
           placeholder-gray-400 dark:placeholder-gray-500
           ${
             readOnly
-              ? "border-gray-200 dark:border-gray-700 text-gray-500 cursor-not-allowed"
+              ? "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
               : "border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-400/60 hover:border-emerald-400/80"
           }`}
       />

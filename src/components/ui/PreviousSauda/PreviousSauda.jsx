@@ -129,25 +129,25 @@ const PreviousSauda = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 md:p-6 space-y-5 bg-gray-50 min-h-screen">
+      <div className="p-4 md:p-6 space-y-5 bg-gray-50 dark:bg-gray-900 min-h-screen">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <Title text="Previous Sauda Entries" />
           <div className="flex gap-2">
             <button
               onClick={handleDownloadExcel}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors"
             >
               Download Excel
             </button>
             <button
               onClick={handleDownloadPDF}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm"
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition-colors"
             >
               Download PDF
             </button>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
           <DateSelector value={date} onChange={setDate} />
           <SearchBox
             value={search}
@@ -155,7 +155,7 @@ const PreviousSauda = () => {
             placeholder="Search by Sauda No..."
           />
         </div>
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-x-auto">
           {loading ? (
             <Loading />
           ) : (

@@ -72,7 +72,7 @@ export default function NotificationsPanel({ notifications = [] }) {
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
-                    <Building2 size={16} className="text-emerald-600" />
+                    <Building2 size={16} className="text-emerald-600 dark:text-emerald-400" />
                     <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
                       {item.companyName}
                     </h4>
@@ -80,7 +80,7 @@ export default function NotificationsPanel({ notifications = [] }) {
 
                   <button
                     onClick={() => handleCopy(item)}
-                    className="p-2 rounded-full bg-emerald-100 hover:bg-emerald-200 text-emerald-700 transition"
+                    className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 transition-colors"
                     title="Copy message"
                   >
                     <Copy size={14} />

@@ -117,9 +117,9 @@ export default function RateCalendar() {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
-        <div className="flex">
-          <div className="w-80 bg-white/80 backdrop-blur-sm border-r border-white/30 shadow-xl dark:bg-slate-900/60 dark:border-slate-800">
-            <div className="p-6">
+        <div className="flex flex-col lg:flex-row">
+          <div className="w-full lg:w-80 bg-white/80 backdrop-blur-sm border-b lg:border-b-0 lg:border-r border-white/30 shadow-xl dark:bg-slate-900/60 dark:border-slate-800">
+            <div className="p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
@@ -170,7 +170,7 @@ export default function RateCalendar() {
             </div>
           </div>
 
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-4 sm:p-6">
               <div className="max-w-6xl mx-auto">
                 <motion.div
                   initial={{ opacity: 0, y: -30 }}

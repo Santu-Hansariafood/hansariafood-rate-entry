@@ -84,15 +84,15 @@ const CommodityCard = ({ onFilterChange }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
+              className="group relative bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
             >
               <div className="p-4">
-                <h3 className="text-sm font-medium text-gray-800 truncate">
+                <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
                   {commodity.name}
                 </h3>
                 {commodity.subCategories &&
                   commodity.subCategories.length > 0 && (
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {commodity.subCategories.join(", ")}
                     </p>
                   )}

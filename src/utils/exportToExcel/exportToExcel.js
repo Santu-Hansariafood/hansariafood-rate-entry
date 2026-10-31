@@ -1,7 +1,7 @@
-import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-export function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
+export async function exportWeeklyRateToExcel(groupedCompanies, weekDates, userName) {
+  const XLSX = await import("xlsx");
   const wb = XLSX.utils.book_new();
   const rows = [];
   const merges = [];

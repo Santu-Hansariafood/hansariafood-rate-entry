@@ -81,7 +81,7 @@ const CompanyList = () => {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="border rounded-md px-3 py-2 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="border border-gray-300 rounded-md px-3 py-2 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
             >
               <option value="">All</option>
               <option value="buyer">Buyer</option>

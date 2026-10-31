@@ -77,7 +77,11 @@ export default function CommodityCard({ onFilterChange, maxItems = 15 }) {
   if (isLoading) return <Loading />;
 
   if (!commodities.length) {
-    return <p className="text-center text-gray-500">No commodities found.</p>;
+    return (
+      <p className="text-center text-gray-500 dark:text-gray-400">
+        No commodities found.
+      </p>
+    );
   }
 
   return (
@@ -89,10 +93,10 @@ export default function CommodityCard({ onFilterChange, maxItems = 15 }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
+            className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
           >
             <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-800 truncate">
+              <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
                 {toTitleCase(commodity.name)}
               </h3>
 

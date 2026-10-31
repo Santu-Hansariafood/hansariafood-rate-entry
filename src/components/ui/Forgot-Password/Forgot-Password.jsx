@@ -79,7 +79,7 @@ const ForgotPassword = () => {
       transition={{ duration: 0.6 }}
     >
       <motion.div
-        className="w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-8 backdrop-blur-md"
+        className="w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl rounded-3xl p-6 sm:p-8 backdrop-blur-md transition-colors duration-300"
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2 }}
@@ -181,7 +181,7 @@ const ForgotPassword = () => {
              <button
               type="button"
               onClick={() => setStep(1)}
-              className="w-full text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline"
+              className="w-full text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 underline transition-colors duration-200"
             >
               Back to Request OTP
             </button>

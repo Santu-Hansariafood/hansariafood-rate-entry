@@ -281,17 +281,21 @@ export default function RateTable({
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="px-4 py-2 bg-white rounded-t-md border-b">
-        <h4 className="font-semibold text-gray-700 mb-2">
+      <div className="px-4 py-2 bg-white dark:bg-gray-900 rounded-t-md border-b border-gray-200 dark:border-gray-700">
+        <h4 className="font-semibold text-gray-700 dark:text-gray-200 mb-2">
           Filter by Commodity:
         </h4>
         <div className="flex flex-wrap gap-3">
           {availableCommodities.map((cmd) => (
-            <label key={cmd} className="flex items-center space-x-2 text-sm">
+            <label
+              key={cmd}
+              className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300"
+            >
               <input
                 type="checkbox"
                 checked={selectedCommodities.includes(cmd)}
                 onChange={() => toggleCommodity(cmd)}
+                className="accent-green-600"
               />
               <span>{toTitleCase(cmd)}</span>
             </label>

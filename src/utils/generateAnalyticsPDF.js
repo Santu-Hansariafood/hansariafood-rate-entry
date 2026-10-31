@@ -1,5 +1,3 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
 
 const loadImage = (src) =>
@@ -17,6 +15,8 @@ const loadImage = (src) =>
   });
 
 export async function generateAnalyticsPDF({ data, period, aiAnalysis }) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
 
   const pageW = doc.internal.pageSize.getWidth();

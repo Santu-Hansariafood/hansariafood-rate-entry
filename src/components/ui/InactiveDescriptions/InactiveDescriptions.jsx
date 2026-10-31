@@ -134,8 +134,8 @@ export default function InactiveDescriptions() {
   return (
     <Suspense fallback={<Loading />}>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-8">
-        <div className="max-w-4xl mx-auto px-4 bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6">
-          <div className="flex justify-between items-center mb-6">
+        <div className="max-w-4xl mx-auto px-4 bg-white dark:bg-gray-900 rounded-xl shadow-lg p-4 sm:p-6">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
             <Title text={`Sauda is Not Done Yet ${days} Days`} />
             <select
               value={days}

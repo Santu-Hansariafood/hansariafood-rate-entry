@@ -110,7 +110,7 @@ const DownloadExcelButton = ({ data }) => {
     <button
       onClick={handleDownloadExcel}
       title="Download Excel"
-      className="text-white hover:text-gray-200"
+      className="text-white hover:text-gray-200 transition-colors"
     >
       <FileDown className="w-5 h-5" />
     </button>

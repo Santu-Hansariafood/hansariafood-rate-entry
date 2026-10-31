@@ -73,7 +73,7 @@ export default function NotificationList({ notifications = [] }) {
           backgroundSize: "20px 20px",
         }}
       >
-        <div className="flex justify-between items-center px-4 py-2 border-b bg-white/60 dark:bg-gray-800/60 backdrop-blur-md sticky top-0 z-10">
+        <div className="flex justify-between items-center px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md sticky top-0 z-10">
           <h2 className="text-gray-800 dark:text-gray-200 font-semibold text-lg flex items-center gap-2">
             🔔 <span>Notifications</span>
           </h2>
@@ -94,7 +94,7 @@ export default function NotificationList({ notifications = [] }) {
               placeholder="Search by company name..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full pl-10 pr-4 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-1.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
         </div>

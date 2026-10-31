@@ -146,7 +146,7 @@ export default function DateSelector({
 
             {view === "date" && (
               <>
-                <div className="grid grid-cols-7 text-xs text-center mb-2 text-gray-500">
+                <div className="grid grid-cols-7 text-xs text-center mb-2 text-gray-500 dark:text-gray-400">
                   {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
                     <div key={d}>{d}</div>
                   ))}
@@ -179,9 +179,9 @@ export default function DateSelector({
                           ${future ? "cursor-not-allowed opacity-60" : ""}
                           ${
                             isRedDay
-                              ? "bg-red-100 text-red-600 hover:bg-red-200"
+                              ? "bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60"
                               : todayFlag
-                              ? "bg-emerald-100 text-emerald-700"
+                              ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
                               : "hover:bg-gray-100 dark:hover:bg-gray-800"
                           }
                         `}

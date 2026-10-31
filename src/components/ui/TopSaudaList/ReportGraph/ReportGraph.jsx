@@ -602,7 +602,7 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -750,7 +750,7 @@ const ReportGraph = ({ saudaDetails, selectedSeller }) => {
         </div>
       )}
       {(hasPieData || hasBarData || hasLineData) && (
-        <div className="min-h-[400px] bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+        <div className="min-h-[400px] bg-gray-50 dark:bg-gray-700 rounded-lg p-4 sm:p-6">
           {activeTab === "pie" && hasPieData && (
             <PieChartComponent data={processedData.pieData} />
           )}

@@ -19,7 +19,7 @@ export default function Register() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl w-full max-w-md"
+          className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md transition-colors duration-300"
         >
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">

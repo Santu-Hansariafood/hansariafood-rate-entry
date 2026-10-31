@@ -191,15 +191,15 @@ export default function RateGraph({ rateData, company, location }) {
       >
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-100 shadow-inner">
-              <TrendingUp className="w-5 h-5 text-green-600" />
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 shadow-inner">
+              <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-800">Rate Trends</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Rate Trends</h3>
           </div>
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-500" />
+            <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             <select
-              className="px-4 py-2 border border-gray-200 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
             >
@@ -209,11 +209,11 @@ export default function RateGraph({ rateData, company, location }) {
           </div>
         </div>
 
-        <p className="text-sm text-gray-600 mb-2 text-center">
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 text-center">
           Showing data from <strong>{dateRangeLabel}</strong>
         </p>
 
-        <div className="w-full overflow-x-auto bg-white rounded-xl p-4 shadow-[0_20px_30px_rgba(0,128,0,0.15)] min-h-[250px] md:min-h-[300px] lg:min-h-[400px]">
+        <div className="w-full overflow-x-auto bg-white dark:bg-gray-900 rounded-xl p-4 shadow-[0_20px_30px_rgba(0,128,0,0.15)] min-h-[250px] md:min-h-[300px] lg:min-h-[400px]">
           <Bar data={data} options={options} />
         </div>
       </motion.div>

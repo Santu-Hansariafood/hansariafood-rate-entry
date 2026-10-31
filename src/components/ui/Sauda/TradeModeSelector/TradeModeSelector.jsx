@@ -6,7 +6,7 @@ export default function TradeModeSelector({ onSelect }) {
   return (
     <Suspense fallback={<div className="text-center">Loading...</div>}>
       <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 dark:bg-black/70">
-        <div className="rounded-xl bg-white dark:bg-gray-900 p-6 shadow-lg max-w-sm text-center space-y-4">
+        <div className="w-full max-w-sm mx-auto rounded-xl bg-white dark:bg-gray-900 p-6 shadow-lg text-center space-y-4">
           <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
             Select Trade Mode
           </p>

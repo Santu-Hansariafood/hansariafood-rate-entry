@@ -169,7 +169,7 @@ export default function UserTable({
   return (
     <>
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow 
+        className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-x-auto
                    text-gray-900 dark:text-gray-100 transition-colors"
       >
         <Table data={usersWithActions} columns={columns} />
@@ -199,7 +199,7 @@ export default function UserTable({
                   onClick={() => setPageModalOpen(false)}
                   className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors group"
                 >
-                  <X size={20} className="text-gray-500 group-hover:text-red-500" />
+                  <X size={20} className="text-gray-500 dark:text-gray-400 group-hover:text-red-500" />
                 </button>
               </div>
 

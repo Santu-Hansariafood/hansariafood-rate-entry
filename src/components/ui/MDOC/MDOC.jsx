@@ -49,7 +49,7 @@ export default function MDOC() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="p-4 md:p-6 space-y-5 bg-gray-50 min-h-screen">
+      <div className="p-4 md:p-6 space-y-5 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <Title text="M DOC & Maize Ddgs Doc Rate" />
 
@@ -70,7 +70,7 @@ export default function MDOC() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-gray-900 p-4 rounded-lg shadow-sm transition-colors">
           <DateSelector value={date} onChange={setDate} label="Rate Date" />
 
           <SearchBox
@@ -80,7 +80,7 @@ export default function MDOC() {
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm overflow-hidden transition-colors">
           {loading ? <Loading /> : <Table data={tableData} columns={columns} />}
         </div>
       </div>

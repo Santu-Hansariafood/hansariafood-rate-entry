@@ -1,10 +1,13 @@
 import React from "react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { Download } from "lucide-react";
 
 const DownloadSaudaEntriesPDF = ({ saudaGroups, mobileToName, date }) => {
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
+
     const doc = new jsPDF({
       orientation: "landscape",
       unit: "pt",

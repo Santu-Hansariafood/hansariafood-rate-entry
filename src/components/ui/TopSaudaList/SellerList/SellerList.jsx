@@ -133,7 +133,7 @@ const SellerList = ({
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="lg:col-span-1 w-full bg-gradient-to-br from-green-50 to-yellow-50 dark:from-green-900 dark:to-yellow-900 rounded-2xl shadow-xl border border-green-200 dark:border-green-700 p-6">
+      <div className="lg:col-span-1 w-full bg-gradient-to-br from-green-50 to-yellow-50 dark:from-green-900 dark:to-yellow-900 rounded-2xl shadow-xl border border-green-200 dark:border-green-700 p-4 sm:p-6">
         <div className="sticky top-0 bg-gradient-to-br from-green-50 to-yellow-50 dark:from-green-900 dark:to-yellow-900 z-10 pb-4">
           <div className="flex flex-col mb-4">
             <h2 className="text-2xl font-bold tracking-tight text-green-800 dark:text-yellow-200">

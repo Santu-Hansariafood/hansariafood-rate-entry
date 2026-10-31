@@ -1,7 +1,7 @@
-import * as XLSX from "xlsx";
-
-export const downloadSaudaExcel = (rows, fileName = "Previous_Sauda.xlsx") => {
+export const downloadSaudaExcel = async (rows, fileName = "Previous_Sauda.xlsx") => {
   if (!rows || !rows.length) return;
+
+  const XLSX = await import("xlsx");
 
   const excelData = rows.map((row) => ({
     "S.No": row.sl,

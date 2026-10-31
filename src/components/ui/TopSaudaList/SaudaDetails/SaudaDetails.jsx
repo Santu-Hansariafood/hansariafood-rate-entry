@@ -159,7 +159,7 @@ const SaudaDetails = ({
     <Suspense fallback={<Loading />}>
       <div className="lg:col-span-3">
         <div className="bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl border border-gray-300 dark:border-gray-700 p-6">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
             <Title text={`${selectedSeller} - Sauda Details`} />
             <button
               onClick={onClearSelection}

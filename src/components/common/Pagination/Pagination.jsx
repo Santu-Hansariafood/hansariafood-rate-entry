@@ -11,7 +11,7 @@ export default function Pagination({
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="flex items-center justify-between py-4 px-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className="flex flex-wrap items-center justify-between gap-2 py-4 px-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors duration-300">
       <div className="text-sm text-gray-600 dark:text-gray-300">
         Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
         {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}{" "}

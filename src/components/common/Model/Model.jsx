@@ -8,7 +8,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-colors duration-300">
-      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-2xl p-4 relative transition-colors duration-300">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4 relative transition-colors duration-300">
         <button
           className="absolute top-2 right-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-200"
           onClick={onClose}

@@ -38,7 +38,7 @@ export default function CompanyCard({
           >
             {company.name || "Unnamed Company"}
             {availableLocations.length < company.location.length && (
-              <span className="ml-2 text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+              <span className="ml-2 text-xs text-yellow-600 bg-yellow-100 dark:bg-yellow-900/40 dark:text-yellow-200 px-2 py-1 rounded-full transition-colors duration-300">
                 {company.location.length - availableLocations.length} assigned
               </span>
             )}

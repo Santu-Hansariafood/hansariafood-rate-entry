@@ -117,7 +117,7 @@ export default function LocationList() {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm p-2 focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm p-2 focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter location name"
                   />
                 </label>
@@ -129,7 +129,7 @@ export default function LocationList() {
                     name="state"
                     value={formData.state}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 shadow-sm p-2 focus:ring-2 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 shadow-sm p-2 focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="" disabled>
                       Select a state

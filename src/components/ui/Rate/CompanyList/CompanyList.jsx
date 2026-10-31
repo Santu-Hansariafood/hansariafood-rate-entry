@@ -127,7 +127,7 @@ export default function CompanyList({
                 placeholder="Search by company name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
               />
             </div>
           </motion.div>
@@ -155,25 +155,25 @@ export default function CompanyList({
                       disabled={isDisabled}
                       className={`group relative overflow-hidden rounded-xl p-4 transition-all duration-200 ${
                         isDisabled
-                          ? "bg-gray-200 border border-gray-300 cursor-not-allowed opacity-60"
+                          ? "bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 cursor-not-allowed opacity-60"
                           : completedCompanies[company]
-                          ? "bg-green-50 hover:bg-green-100 border border-green-200"
-                          : "bg-red-50 hover:bg-red-100 border border-red-200"
+                          ? "bg-green-50 dark:bg-green-950/40 hover:bg-green-100 dark:hover:bg-green-900/40 border border-green-200 dark:border-green-900"
+                          : "bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-900"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={`p-2 rounded-lg ${
                             completedCompanies[company]
-                              ? "bg-green-100 group-hover:bg-green-200"
-                              : "bg-red-100 group-hover:bg-red-200"
+                              ? "bg-green-100 dark:bg-green-900/50 group-hover:bg-green-200 dark:group-hover:bg-green-900"
+                              : "bg-red-100 dark:bg-red-900/50 group-hover:bg-red-200 dark:group-hover:bg-red-900"
                           }`}
                         >
                           <Building2
                             className={`w-5 h-5 ${
                               completedCompanies[company]
-                                ? "text-green-600"
-                                : "text-red-600"
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
                             }`}
                           />
                         </div>
@@ -181,8 +181,8 @@ export default function CompanyList({
                           <h3
                             className={`font-medium truncate ${
                               completedCompanies[company]
-                                ? "text-green-800"
-                                : "text-red-800"
+                                ? "text-green-800 dark:text-green-200"
+                                : "text-red-800 dark:text-red-200"
                             }`}
                           >
                             {toTitleCase(company)}
@@ -190,8 +190,8 @@ export default function CompanyList({
                           <p
                             className={`text-sm ${
                               completedCompanies[company]
-                                ? "text-green-600"
-                                : "text-red-600"
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-red-600 dark:text-red-400"
                             }`}
                           >
                             {completedCompanies[company]
@@ -204,14 +204,14 @@ export default function CompanyList({
                         <div
                           className={`p-1 rounded-full ${
                             completedCompanies[company]
-                              ? "bg-green-100 group-hover:bg-green-200"
-                              : "bg-red-100 group-hover:bg-red-200"
+                              ? "bg-green-100 dark:bg-green-900/50 group-hover:bg-green-200 dark:group-hover:bg-green-900"
+                              : "bg-red-100 dark:bg-red-900/50 group-hover:bg-red-200 dark:group-hover:bg-red-900"
                           }`}
                         >
                           {completedCompanies[company] ? (
-                            <CheckCircle2 className="w-5 h-5 text-green-600" />
+                            <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
                           ) : (
-                            <XCircle className="w-5 h-5 text-red-600" />
+                            <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                           )}
                         </div>
                       </div>
@@ -228,13 +228,13 @@ export default function CompanyList({
               animate={{ opacity: 1 }}
               className="text-center py-12"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                <Search className="w-8 h-8 text-gray-400" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                <Search className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                 No companies found
               </h3>
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-gray-400">
                 Try adjusting your search query to find what you're looking for.
               </p>
             </motion.div>

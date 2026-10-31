@@ -133,7 +133,7 @@ const ViewRate = () => {
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="relative min-h-screen p-6 bg-gray-100 dark:bg-gray-950 overflow-hidden">
+      <div className="relative min-h-screen p-4 sm:p-6 bg-gray-100 dark:bg-gray-950 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl" />
         <div className="absolute top-1/2 -right-40 w-96 h-96 bg-teal-400/30 rounded-full blur-3xl" />
 
