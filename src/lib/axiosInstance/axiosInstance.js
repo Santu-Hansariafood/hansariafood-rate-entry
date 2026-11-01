@@ -6,8 +6,6 @@ const MAX_TIMEOUT = 60000;
 const MAX_RETRIES = 2;
 const RETRY_BASE_DELAY_MS = 400;
 
-// Endpoints that routinely take longer than a normal read (bulk aggregates,
-// full rate sweeps, exports). They get a wider timeout budget.
 const SLOW_PATH_PATTERNS = [
   /\/rate(\?|$)/,
   /\/rate-analysis/,
@@ -15,16 +13,10 @@ const SLOW_PATH_PATTERNS = [
   /\/export-sauda/,
   /\/sauda-descriptions/,
   /\/ratehistory/,
-  /\/send-monthly-report/,
 ];
 
-// Only idempotent verbs are retried. Replaying a POST/PUT could duplicate a
-// sauda or a rate, so a flaky network must not silently double-write.
 const RETRYABLE_METHODS = new Set(["get", "head", "options"]);
 
-// Identical concurrent GETs share a single network request. Entries are dropped
-// as soon as the request settles (or when a mutation is sent), so any call made
-// after a write always goes to the network and never resolves with stale data.
 const inflightGets = new Map();
 
 const axiosInstance = axios.create({
@@ -39,7 +31,6 @@ const axiosInstance = axios.create({
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const resolveTimeout = (config) => {
-  // Respect a timeout the caller set explicitly.
   if (config.timeout && config.timeout !== DEFAULT_TIMEOUT) return config.timeout;
 
   const url = `${config.url || ""}${config.params ? "?" : ""}`;
@@ -57,7 +48,6 @@ const shouldRetry = (error) => {
   const method = (config.method || "get").toLowerCase();
   if (!RETRYABLE_METHODS.has(method)) return false;
 
-  // Network/timeout failures have no response; retry those and 5xx responses.
   if (!error.response) return error.code !== "ERR_CANCELED";
   return error.response.status >= 500;
 };
@@ -70,7 +60,6 @@ axiosInstance.interceptors.request.use((config) => {
     config.__timeoutResolved = true;
   }
 
-  // A write is about to happen: never let a stale read be served from cache.
   if ((config.method || "get").toLowerCase() !== "get") {
     inflightGets.clear();
   }
@@ -86,7 +75,6 @@ axiosInstance.interceptors.response.use(
     const config = error.config;
     config.__retryCount += 1;
 
-    // Give each retry a little more headroom than the attempt that timed out.
     config.timeout = Math.min(
       (config.timeout || DEFAULT_TIMEOUT) * 2,
       MAX_TIMEOUT,
@@ -109,8 +97,6 @@ axiosInstance.get = function dedupedGet(url, config = {}) {
     return originalGet(url, config);
   }
 
-  // A caller-supplied signal must stay private: sharing a request would let one
-  // caller's abort cancel it for everyone else.
   if (config?.signal) {
     return originalGet(url, config);
   }

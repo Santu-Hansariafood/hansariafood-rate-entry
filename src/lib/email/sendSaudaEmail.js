@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 
-export async function sendSaudaEmail({ buffer, filename }) {
+const DEFAULT_RECIPIENT = "gopal@hansariafood.com";
+
+export async function sendSaudaEmail({ to, buffer, filename }) {
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
@@ -13,7 +15,7 @@ export async function sendSaudaEmail({ buffer, filename }) {
 
   const mailOptions = {
     from: "santu@hansariafood.com",
-    to: "gopal@hansariafood.com",
+    to: to || DEFAULT_RECIPIENT,
     subject: "Sauda Report",
     text: "Please find attached the Sauda Report Excel file.",
     attachments: [

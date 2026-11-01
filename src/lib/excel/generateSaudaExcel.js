@@ -1,8 +1,38 @@
 import ExcelJS from "exceljs";
 
+const toGroupEntries = (value) => {
+  if (!value) return [];
+  if (value instanceof Map) return [...value.entries()];
+  return Object.entries(value);
+};
+
+const makeSheetNamer = () => {
+  const used = new Set();
+
+  return (name) => {
+    const base =
+      String(name || "Sheet")
+        .replace(/[[\]\\/?*:]/g, "-")
+        .trim()
+        .slice(0, 31) || "Sheet";
+
+    let candidate = base;
+    let suffixIndex = 2;
+    while (used.has(candidate.toLowerCase())) {
+      const suffix = ` (${suffixIndex++})`;
+      candidate = `${base.slice(0, 31 - suffix.length)}${suffix}`;
+    }
+
+    used.add(candidate.toLowerCase());
+    return candidate;
+  };
+};
+
 export async function generateSaudaExcel(saudaEntries) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "YourApp";
+  workbook.creator = "Hansaria Food";
+
+  const nextSheetName = makeSheetNamer();
 
   const grouped = {};
   for (const entry of saudaEntries) {
@@ -13,7 +43,7 @@ export async function generateSaudaExcel(saudaEntries) {
   }
 
   for (const [company, entries] of Object.entries(grouped)) {
-    const sheet = workbook.addWorksheet(company);
+    const sheet = workbook.addWorksheet(nextSheetName(company));
 
     sheet.columns = [
       { header: "Date", key: "date", width: 15 },
@@ -28,7 +58,7 @@ export async function generateSaudaExcel(saudaEntries) {
     ];
 
     for (const e of entries) {
-      for (const [group, list] of e.saudaEntries.entries()) {
+      for (const [group, list] of toGroupEntries(e.saudaEntries)) {
         for (const item of list) {
           sheet.addRow({
             date: e.date,
