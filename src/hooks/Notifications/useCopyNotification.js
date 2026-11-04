@@ -1,8 +1,10 @@
 "use client";
+
 import { toast } from "react-toastify";
 
 export default function useCopyNotification() {
-  const normalize = (s) => (s || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const normalize = (s) =>
+    (s || "").toLowerCase().replace(/\s+/g, " ").trim();
 
   const capitalizeWords = (str) =>
     str
@@ -56,14 +58,19 @@ export default function useCopyNotification() {
     } = notification;
 
     const todayDate = new Date().toLocaleDateString("en-IN");
-    const datePart = new Date(newRateDate || Date.now()).toLocaleDateString(
-      "en-IN"
-    );
+
+    const datePart = new Date(
+      newRateDate || Date.now()
+    ).toLocaleDateString("en-IN");
+
     const time = `${datePart}, ${updateTime || "N/A"}`;
 
-    const rawCommodityLower = normalize(notification.commodity || "N/A");
+    const rawCommodityLower = normalize(
+      notification.commodity || "N/A"
+    );
 
     let label = "";
+
     if (OFFERING_SET.has(rawCommodityLower)) {
       label = "is offering";
     } else if (REQUIRED_SET.has(rawCommodityLower)) {
@@ -74,30 +81,43 @@ export default function useCopyNotification() {
 
     const commodity = capitalizeWords(rawCommodityLower);
 
-    const copyText = `*Today* ${todayDate}
-*${company}* ${label} 
+    const copyText = `🪔 *HAPPY DIWALI!* 🪔
+
+✨ *Hansaria Food Private Limited* wishes all our valued buyers, sellers, suppliers and business partners a very Happy and Prosperous Diwali!
+
+May this Diwali bring happiness, prosperity, success and new business opportunities to everyone.
+
+
+*Today* ${todayDate}
+*${company}* ${label}
 *${commodity}* - *${
       quantity && quantity !== "" ? `${quantity}mt @` : ""
-    }${newRate}/-* 
-for the *${location}* location 
+    }${newRate}/-*
+for the *${location}* location
 ${payment && payment !== "" ? `*Payment Terms: ${payment}*` : ""}${
       others && others !== "" ? `\n*Notes: ${others}*` : ""
     }
-(Updated on: ${time}).  
+
+(Updated on: ${time}).
 
 👉 *For rates and orders, please click the link below to participate in the bid.*
 
-📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_  
-🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_  
+📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_
+🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_
 
-*Thanks,*  
-*Purchase Team*  
+
+🎉 *Let's celebrate this Diwali with new opportunities, stronger partnerships and successful business together!*
+
+*Thanks & Regards,*
+*Purchase Team*
 *Hansaria Food Pvt. Ltd.*
+
+🪔 *Wishing You a Prosperous Diwali!* 🪔
 `;
 
     try {
       await navigator.clipboard.writeText(copyText);
-      toast.success("Details copied to clipboard!");
+      toast.success("Diwali greeting and bid details copied!");
     } catch (err) {
       console.error(err);
       toast.error("Failed to copy text.");

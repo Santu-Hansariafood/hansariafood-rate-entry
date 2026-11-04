@@ -30,45 +30,60 @@ const NotificationsPanel = ({ onClose }) => {
     });
   }, [filteredNotifications]);
 
-  const handleCopy = (item) => {
-    const lines = [
-      `*✅ Sauda Confirmed*`,
-      `\n`,
-      `*Sauda details are as follows:*`,
-      item.saudaNo ? `*Sauda No:* ${formatSaudaNo(item.saudaNo)}` : null,
-      `*Date:* ${item.date}`,
-      `*Location:* ${item.location}`,
-      `*Commodity:* ${item.commodity}`,
-      `*Tons:* ${item.tons}`,
-      `*Rate:* ₹${item.rate ?? "N/A"}`,
-      item.buyerName ? `*Buyer:* ${toTitleCase(item.buyerName)}` : null,
-      item.sellerCompany
-        ? `*Seller Company:* ${toTitleCase(item.sellerCompany)}`
-        : null,
-      item.payment !== null &&
-      item.payment !== undefined &&
-      String(item.payment).trim() !== ""
-        ? `*Payment Terms:* ${item.payment} *Days*`
-        : null,
-      item.deliveryDate ? `*Delivery Date:* ${item.deliveryDate}` : null,
-      item.others ? `*Notes:* ${item.others}` : null,
-      `\n`,
-      `*We are pleased to inform you that the Proper Sauda Contract will be shared with you shortly.*`,
-      `*Kindly check your registered email address for the contract details.*`,
-      `*Thank you for your patience and cooperation.*`,
-      `\n`,
-      `📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_`,
-      `🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_`,
-      `*Thanks*,`,
-      `*Purchasing Team*`,
-      `*Hansaria Food Private Limited*`,
-    ].filter(Boolean);
+  
+const handleCopy = (item) => {
+  const lines = [
+    `🪔 *HAPPY DIWALI!* 🪔`,
+    `\n`,
+    `✨ *Hansaria Food Private Limited* wishes all our valued buyers, sellers, suppliers and business partners a very Happy and Prosperous Diwali!`,
+    `May this Diwali bring happiness, prosperity, success and new business opportunities to everyone.`,
+    `\n`,
+    `━━━━━━━━━━━━━━━━━━`,
+    `\n`,
+    `*✅ Sauda Confirmed*`,
+    `\n`,
+    `*Sauda details are as follows:*`,
+    item.saudaNo ? `*Sauda No:* ${formatSaudaNo(item.saudaNo)}` : null,
+    `*Date:* ${item.date}`,
+    `*Location:* ${item.location}`,
+    `*Commodity:* ${item.commodity}`,
+    `*Tons:* ${item.tons}`,
+    `*Rate:* ₹${item.rate ?? "N/A"}`,
+    item.buyerName ? `*Buyer:* ${toTitleCase(item.buyerName)}` : null,
+    item.sellerCompany
+      ? `*Seller Company:* ${toTitleCase(item.sellerCompany)}`
+      : null,
+    item.payment !== null &&
+    item.payment !== undefined &&
+    String(item.payment).trim() !== ""
+      ? `*Payment Terms:* ${item.payment} *Days*`
+      : null,
+    item.deliveryDate ? `*Delivery Date:* ${item.deliveryDate}` : null,
+    item.others ? `*Notes:* ${item.others}` : null,
+    `\n`,
+    `*We are pleased to inform you that the Proper Sauda Contract will be shared with you shortly.*`,
+    `*Kindly check your registered email address for the contract details.*`,
+    `*Thank you for your patience and cooperation.*`,
+    `\n`,
+    `━━━━━━━━━━━━━━━━━━`,
+    `\n`,
+    `🎉 *Let's celebrate this Diwali with new opportunities, stronger partnerships and successful business together!*`,
+    `\n`,
+    `📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_`,
+    `🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_`,
+    `\n`,
+    `*Thanks & Regards,*`,
+    `*Purchase Team*`,
+    `*Hansaria Food Private Limited*`,
+    `\n`,
+    `🪔 *Wishing You a Prosperous Diwali!* 🪔`,
+  ].filter(Boolean);
 
-    navigator.clipboard
-      .writeText(lines.join("\n"))
-      .then(() => toast.success("📋 Copied to clipboard!"))
-      .catch(() => toast.error("Failed to copy"));
-  };
+  navigator.clipboard
+    .writeText(lines.join("\n"))
+    .then(() => toast.success("🪔 Diwali Sauda message copied!"))
+    .catch(() => toast.error("Failed to copy"));
+};
 
   return (
     <>

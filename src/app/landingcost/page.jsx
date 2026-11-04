@@ -1,3 +1,4 @@
+import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
 import LandingCost from "@/components/ui/LandingCost/LandingCost";
 import { buildPageMetadata } from "@/lib/seo";
 
@@ -15,5 +16,11 @@ export const metadata = buildPageMetadata({
 });
 
 export default function LandingCostPage() {
-  return <LandingCost />;
+  return (
+    <AuthWrapper>
+      <section role="region" aria-label="Landing Cost">
+        <LandingCost />
+      </section>
+    </AuthWrapper>
+  )
 }
