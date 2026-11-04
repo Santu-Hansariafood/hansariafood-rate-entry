@@ -83,9 +83,9 @@ export default function useCopyNotification() {
 
     const copyText = `🪔 *HAPPY DIWALI!* 🪔
 
-✨ *Hansaria Food Private Limited* wishes all our valued buyers, sellers, suppliers and business partners a very Happy and Prosperous Diwali!
+✨ *Hansaria Food Private Limited* wishes all our valued Buyers, Sellers and Business Partners a very Happy and Prosperous Diwali!
 
-May this Diwali bring happiness, prosperity, success and new business opportunities to everyone.
+May this Diwali bring Happiness, Prosperity, Success and New Business Opportunities to Everyone.
 
 
 *Today* ${todayDate}
