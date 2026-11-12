@@ -30,19 +30,18 @@ const NotificationsPanel = ({ onClose }) => {
     });
   }, [filteredNotifications]);
 
-  
 const handleCopy = (item) => {
   const lines = [
-    `🪔 *HAPPY DIWALI!* 🪔`,
+    `🌅🙏 *छठ पूजा की हार्दिक शुभकामनाएँ!* 🙏🌅`,
     `\n`,
-    `✨ *Hansaria Food Private Limited* wishes all our valued Buyers, Sellers and Business Partners a very Happy and Prosperous Diwali!`,
-    `May this Diwali bring Happiness, Prosperity, Success and New Business Opportunities to Everyone.`,
-    `\n`,
-    `━━━━━━━━━━━━━━━━━━`,
+    `✨ *Hansaria Food Private Limited* की ओर से हमारे सभी सम्मानित Buyers, Sellers एवं Business Partners को छठ महापर्व की हार्दिक बधाई एवं शुभकामनाएँ।`,
+    ``,
+    `छठी मैया और भगवान सूर्य देव की कृपा से आपके जीवन में सुख, शांति, समृद्धि, उत्तम स्वास्थ्य एवं सफलता बनी रहे।`,
+    `आपका व्यापार निरंतर उन्नति करे और हमारे व्यावसायिक संबंध विश्वास एवं सहयोग के साथ और मजबूत हों।`,
     `\n`,
     `*✅ Sauda Confirmed*`,
     `\n`,
-    `*Sauda details are as follows:*`,
+    `*Sauda का विवरण निम्नलिखित है:*`,
     item.saudaNo ? `*Sauda No:* ${formatSaudaNo(item.saudaNo)}` : null,
     `*Date:* ${item.date}`,
     `*Location:* ${item.location}`,
@@ -61,27 +60,25 @@ const handleCopy = (item) => {
     item.deliveryDate ? `*Delivery Date:* ${item.deliveryDate}` : null,
     item.others ? `*Notes:* ${item.others}` : null,
     `\n`,
-    `*We are pleased to inform you that the Proper Sauda Contract will be shared with you shortly.*`,
-    `*Kindly check your registered email address for the contract details.*`,
-    `*Thank you for your patience and cooperation.*`,
+    `*आपको सूचित करते हुए हमें खुशी हो रही है कि Sauda का आधिकारिक Contract शीघ्र ही आपके साथ साझा किया जाएगा।*`,
+    `*कृपया Contract की जानकारी के लिए अपना Registered Email Address चेक करें।*`,
+    `*आपके धैर्य एवं सहयोग के लिए हार्दिक धन्यवाद।*`,
     `\n`,
-    `━━━━━━━━━━━━━━━━━━`,
-    `\n`,
-    `🎉 *Let's celebrate this Diwali with new opportunities, stronger partnerships and successful business together!*`,
+    `🌞 *आइए, इस छठ पूजा के पावन अवसर पर नई उम्मीदों, मजबूत व्यावसायिक रिश्तों और सफलता की नई ऊँचाइयों का स्वागत करें।*`,
     `\n`,
     `📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_`,
     `🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_`,
     `\n`,
-    `*Thanks & Regards,*`,
+    `*सादर धन्यवाद एवं शुभकामनाओं सहित,*`,
     `*Purchase Team*`,
     `*Hansaria Food Private Limited*`,
     `\n`,
-    `🪔 *Wishing You a Prosperous Diwali!* 🪔`,
+    `🌅🙏 *छठ पूजा की हार्दिक शुभकामनाएँ!* 🙏🌅`,
   ].filter(Boolean);
 
   navigator.clipboard
     .writeText(lines.join("\n"))
-    .then(() => toast.success("🪔 Diwali Sauda message copied!"))
+    .then(() => toast.success("🌅 छठ पूजा का Sauda मैसेज कॉपी हो गया!"))
     .catch(() => toast.error("Failed to copy"));
 };
 
