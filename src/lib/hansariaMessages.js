@@ -4,17 +4,21 @@ import mongoose from "mongoose";
 const MESSAGE_ENDPOINT = "/api/v1/messages/send";
 const BULK_MESSAGE_ENDPOINT = "/api/v1/messages/bulk";
 
-// Dynamic destination list for the new-bid sauda notification. Add or remove
-// numbers here — 10-digit Indian numbers, the 91 country code is added
-// automatically so they match the API's toUserId format.
-const SAUDA_BID_RECIPIENTS = ["7029481930", "9064527639"];
+export const getSaudaBidRecipients = async () => {
+  const users = await User.find({
+    toUserId: { $type: "string", $ne: "" },
+  })
+    .select("toUserId -_id")
+    .lean();
 
-export const getSaudaBidRecipients = () =>
-  SAUDA_BID_RECIPIENTS.map((number) => {
-    const digits = String(number).replace(/\D/g, "");
-    if (!digits) return "";
-    return digits.length === 10 ? `91${digits}` : digits;
-  }).filter(Boolean);
+  return [
+    ...new Set(
+      users
+        .map((user) => user.toUserId?.trim())
+        .filter(Boolean),
+    ),
+  ];
+};
 
 const getConfiguration = (templateIdEnv) => {
   const names = [
@@ -209,18 +213,11 @@ const getBulkConfiguration = () => {
   };
 };
 
-// Sends the new-bid sauda notification through the bulk endpoint. Each saved
-// sauda line becomes one message (the template carries a single sauda per
-// message), delivered to every configured bid recipient.
-export const sendSaudaBidTemplate = async (
-  company,
-  entries,
-  templateName = process.env.HANSARIA_SAUDA_BID_TEMPLATE || "hansaria_new_bid"
-) => {
+const sendSaudaBulkTemplate = async (entries, templateName, getVariables) => {
   const list = Array.isArray(entries) ? entries : [];
   if (list.length === 0) return { sent: 0 };
 
-  const recipients = getSaudaBidRecipients();
+  const recipients = await getSaudaBidRecipients();
   if (recipients.length === 0) return { sent: 0 };
 
   const config = getBulkConfiguration();
@@ -229,15 +226,7 @@ export const sendSaudaBidTemplate = async (
   const jobs = [];
 
   for (const entry of list) {
-    const variables = {
-      commodity: entry.commodity || "",
-      group: company || "",
-      consignee: entry.sellerName || "",
-      origin: entry.unit || "",
-      quantity: String(entry.tons ?? ""),
-      rate: String(entry.finalRate ?? ""),
-      endTime: entry.deliveryDate || "",
-    };
+    const variables = getVariables(entry);
 
     try {
       const response = await fetch(`${config.baseUrl}${BULK_MESSAGE_ENDPOINT}`, {
@@ -287,3 +276,37 @@ export const sendSaudaBidTemplate = async (
     ? { sent, jobs, error: errors.join("; ") }
     : { sent, jobs };
 };
+
+export const sendSaudaBidTemplate = (
+  company,
+  entries,
+  templateName = process.env.HANSARIA_SAUDA_BID_TEMPLATE || "hansaria_new_bid"
+) =>
+  sendSaudaBulkTemplate(entries, templateName, (entry) => ({
+    commodity: entry.commodity || "",
+    group: company || "",
+    consignee: entry.sellerName || "",
+    origin: entry.unit || "",
+    quantity: String(entry.tons ?? ""),
+    rate: String(entry.finalRate ?? ""),
+    endTime: entry.deliveryDate || "",
+  }));
+
+export const sendSaudaBidAcceptedTemplate = (
+  company,
+  entries,
+  sellerMobile,
+  templateName =
+    process.env.HANSARIA_SAUDA_BID_ACCEPTED_TEMPLATE ||
+    "hansaria_bid_accepted"
+) =>
+  sendSaudaBulkTemplate(entries, templateName, (entry) => ({
+    commodity: entry.commodity || "",
+    group: company || "",
+    origin: entry.unit || "",
+    consignee: entry.sellerName || "",
+    quantity: String(entry.tons ?? ""),
+    rate: String(entry.finalRate ?? ""),
+    sellerMobile: String(sellerMobile || ""),
+    notes: entry.others || "",
+  }));

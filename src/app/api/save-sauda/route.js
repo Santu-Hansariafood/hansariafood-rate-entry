@@ -9,7 +9,11 @@ import { sendEmail } from "@/lib/email/sendEmail";
 import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
 import DeletedSauda from "@/models/DeletedSauda";
 import { emitNotification } from "@/lib/socket";
-import { sendTemplateToRegisteredUsers, sendSaudaBidTemplate } from "@/lib/hansariaMessages";
+import {
+  sendTemplateToRegisteredUsers,
+  sendSaudaBidAcceptedTemplate,
+  sendSaudaBidTemplate,
+} from "@/lib/hansariaMessages";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 import { rateLimitGuard } from "@/lib/apiUtils";
 
@@ -319,8 +323,9 @@ export async function POST(req) {
       }
     }
 
-    // New-bid sauda notification sent to the configured bid numbers.
+    // Send bid notifications to registered users with saved hfconnect IDs.
     let bidNotificationDelivery = null;
+    let bidAcceptedNotificationDelivery = null;
     if (shouldSendTemplateNotification) {
       try {
         bidNotificationDelivery = await sendSaudaBidTemplate(
@@ -331,6 +336,23 @@ export async function POST(req) {
         console.error("Failed to send sauda bid messages:", bidError);
         bidNotificationDelivery = { sent: 0, error: bidError.message };
       }
+
+      try {
+        bidAcceptedNotificationDelivery = await sendSaudaBidAcceptedTemplate(
+          existingEntry.company,
+          Object.values(notificationEntries).flat(),
+          existingEntry.mobile,
+        );
+      } catch (bidAcceptedError) {
+        console.error(
+          "Failed to send accepted sauda bid messages:",
+          bidAcceptedError,
+        );
+        bidAcceptedNotificationDelivery = {
+          sent: 0,
+          error: bidAcceptedError.message,
+        };
+      }
     }
 
     return NextResponse.json(
@@ -339,6 +361,7 @@ export async function POST(req) {
         entry: existingEntry,
         notificationDelivery,
         bidNotificationDelivery,
+        bidAcceptedNotificationDelivery,
       },
       { status: 201 },
     );

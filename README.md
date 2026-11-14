@@ -67,6 +67,14 @@ rate, location, and update time, with the exact template variables `date`,
 `company`, `commodity`, `quantaty`, `rate`, `location`, and `updateTime`.
 Sauda and OTP notifications continue to use registered users' saved external
 app user IDs and message languages.
+New-bid Sauda notifications use the bulk `/api/v1/messages/bulk` endpoint with
+the `hansaria_new_bid` template name (overridable with
+`HANSARIA_SAUDA_BID_TEMPLATE`). They are sent automatically when a Sauda is
+created or updated, to every registered user with a saved hfconnect `toUserId`;
+users without one are skipped.
+The same save flow also sends `hansaria_bid_accepted` (overridable with
+`HANSARIA_SAUDA_BID_ACCEPTED_TEMPLATE`) using the commodity, group, origin,
+consignee, quantity, rate, saved Sauda mobile number, and notes.
 
 ## Learn More
 
