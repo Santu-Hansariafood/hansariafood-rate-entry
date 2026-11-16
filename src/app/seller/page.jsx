@@ -14,7 +14,8 @@ export const metadata = buildPageMetadata({
   description:
     "Browse seller companies and their commodity rates for maize, soya DOC, M DOC and DDGS across India.",
   path: "/seller",
-  canonicalPath: "/sellercompany",
+  canonicalPath: "/seller",
+  indexable: true,
   keywords: [
     "seller companies India",
     "commodity sellers directory",

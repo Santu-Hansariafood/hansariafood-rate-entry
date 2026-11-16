@@ -7,6 +7,7 @@ export const metadata = buildPageMetadata({
   description:
     "Read Hansaria Food’s Cookie Policy explaining how cookies and similar technologies are used on trading and brokerage platforms.",
   path: "/cookie-policy",
+  indexable: true,
   keywords: [
     "cookie policy",
     "hansaria food cookies",

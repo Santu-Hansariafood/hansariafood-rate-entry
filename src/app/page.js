@@ -6,6 +6,21 @@ export const metadata = {
   title: "Login | Hansaria Food Private Limited",
   description:
     "Access your Hansaria Food account to manage commodity rates, sauda entries, and brokerage services.",
+  alternates: {
+    canonical: "/",
+    languages: {
+      "en-IN": "/",
+      "x-default": "/",
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
 
 const Login = dynamic(() => import("@/components/ui/Login/Login"), {

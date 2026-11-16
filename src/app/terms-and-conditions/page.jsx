@@ -7,6 +7,7 @@ export const metadata = buildPageMetadata({
   description:
     "Read the Terms and Conditions for using Hansaria Food’s trading and brokerage platform for maize, soya, DDGS and related commodities.",
   path: "/terms-and-conditions",
+  indexable: true,
   keywords: [
     "hansaria food terms and conditions",
     "commodity trading terms India",

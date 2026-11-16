@@ -12,6 +12,7 @@ export const metadata = buildPageMetadata({
   description:
     "Read the Broker Commission Policy for Hansaria Food’s brokerage, service charges and commission structure for commodity trades.",
   path: "/broker-commission-policy",
+  indexable: true,
   keywords: [
     "broker commission policy",
     "commodity brokerage charges India",

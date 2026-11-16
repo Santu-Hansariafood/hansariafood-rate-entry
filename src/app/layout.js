@@ -203,14 +203,6 @@ export async function generateMetadata() {
     category: "Agriculture & Commodity Trading",
     applicationName: "Hansaria Food",
 
-    alternates: {
-      canonical: "/",
-      languages: {
-        "en-IN": "/",
-        "x-default": "/",
-      },
-    },
-
     appleWebApp: {
       capable: true,
       statusBarStyle: "default",
@@ -224,14 +216,11 @@ export async function generateMetadata() {
     manifest: "/manifest.json",
 
     robots: {
-      index: true,
-      follow: true,
+      index: false,
+      follow: false,
       googleBot: {
-        index: true,
-        follow: true,
-        "max-image-preview": "large",
-        "max-snippet": -1,
-        "max-video-preview": -1,
+        index: false,
+        follow: false,
       },
     },
 

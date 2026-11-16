@@ -16,6 +16,7 @@ export function buildPageMetadata({
   canonicalPath,
   keywords = [],
   type = "website",
+  indexable = false,
 }) {
   const normalizedPath = path === "/" ? "" : path;
   const canonical = canonicalPath ?? (path === "/" ? "/" : path);
@@ -24,6 +25,17 @@ export function buildPageMetadata({
     title,
     description,
     keywords: keywords.join(", "),
+    robots: {
+      index: indexable,
+      follow: indexable,
+      googleBot: {
+        index: indexable,
+        follow: indexable,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
 
     alternates: {
       canonical,

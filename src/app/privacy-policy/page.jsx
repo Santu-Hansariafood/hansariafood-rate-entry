@@ -11,6 +11,7 @@ export const metadata = buildPageMetadata({
   description:
     "Read Hansaria Food’s privacy, cookie and site usage policy for rate and freight tools.",
   path: "/privacy-policy",
+  indexable: true,
   keywords: [
     "hansaria food privacy policy",
     "cookie policy",

@@ -14,6 +14,7 @@ export const metadata = buildPageMetadata({
   description:
     "Browse buyer companies and their commodity requirements for poultry and animal feed raw materials across India.",
   path: "/buyercompany",
+  indexable: true,
   keywords: [
     "buyer companies India",
     "commodity buyers directory",
