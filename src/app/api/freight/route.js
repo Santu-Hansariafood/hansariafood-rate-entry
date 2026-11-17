@@ -57,7 +57,7 @@ export async function GET(req) {
       Freight.find(query)
         .populate("company", "name")
         .populate("deliveryCompany", "name")
-        .sort({ createdAt: -1 })
+        .sort({ updatedAt: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit),
       Freight.countDocuments(query),

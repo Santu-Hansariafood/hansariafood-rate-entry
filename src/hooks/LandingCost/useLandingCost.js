@@ -6,15 +6,6 @@ import { calculateLandingCost } from "@/utils/landingCost";
 
 const VALID_COMMODITIES = ["soya", "sbm", "ddgs", "m doc", "mdoc"];
 
-const getFreightCommodityKey = (commodity) => {
-  if (!commodity) return "";
-  const lower = commodity.toLowerCase();
-  if (lower.includes("sbm") || lower.includes("soya")) return "Soya";
-  if (lower.includes("ddgs")) return "Maize DDGS";
-  if (lower.includes("mdoc") || lower.includes("m doc")) return "M DOC";
-  return commodity;
-};
-
 export default function useLandingCost() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -117,15 +108,13 @@ export default function useLandingCost() {
 
   useEffect(() => {
     const fetchFreightRates = async () => {
-      if (!selectedCommodity || !selectedLocation) {
+      if (!selectedLocation) {
         setFreightMap({});
         return;
       }
 
       try {
-        const freightCommodity = getFreightCommodityKey(selectedCommodity);
         const query = new URLSearchParams({
-          commodity: freightCommodity,
           search: selectedLocation,
           limit: "1000",
         });
@@ -145,9 +134,13 @@ export default function useLandingCost() {
 
           const key = `${loc}|${destKey}`;
           const existing = nextMap[key];
+          const updatedAt = new Date(f.updatedAt || f.createdAt).getTime();
+          const existingUpdatedAt = existing
+            ? new Date(existing.updatedAt || existing.createdAt).getTime()
+            : 0;
           if (
             !existing ||
-            new Date(f.createdAt) > new Date(existing.createdAt)
+            updatedAt > existingUpdatedAt
           ) {
             nextMap[key] = f;
           }
@@ -161,7 +154,7 @@ export default function useLandingCost() {
     };
 
     fetchFreightRates();
-  }, [selectedCommodity, selectedLocation]);
+  }, [selectedLocation]);
 
   useEffect(() => {
     const fetchSpecificHistory = async () => {
