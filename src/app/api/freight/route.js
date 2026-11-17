@@ -20,6 +20,10 @@ export async function GET(req) {
     const search = searchParams.get("search") || "";
     const createdBy = searchParams.get("createdBy");
     const getCreators = searchParams.get("getCreators");
+    const sortBy =
+      searchParams.get("sortBy") === "updatedAt"
+        ? { updatedAt: -1, createdAt: -1 }
+        : { createdAt: -1 };
 
     if (getCreators) {
       const creators = await Freight.distinct("createdBy");
@@ -57,7 +61,7 @@ export async function GET(req) {
       Freight.find(query)
         .populate("company", "name")
         .populate("deliveryCompany", "name")
-        .sort({ updatedAt: -1, createdAt: -1 })
+        .sort(sortBy)
         .skip(skip)
         .limit(limit),
       Freight.countDocuments(query),

@@ -117,6 +117,7 @@ export default function useLandingCost() {
         const query = new URLSearchParams({
           search: selectedLocation,
           limit: "1000",
+          sortBy: "updatedAt",
         });
 
         const res = await axiosInstance.get(`/freight?${query.toString()}`);
