@@ -1,5 +1,4 @@
 "use client";
-
 import { toast } from "react-toastify";
 
 export default function useCopyNotification() {
@@ -57,71 +56,48 @@ export default function useCopyNotification() {
     } = notification;
 
     const todayDate = new Date().toLocaleDateString("en-IN");
-
     const datePart = new Date(newRateDate || Date.now()).toLocaleDateString(
-      "en-IN",
+      "en-IN"
     );
-
     const time = `${datePart}, ${updateTime || "N/A"}`;
 
     const rawCommodityLower = normalize(notification.commodity || "N/A");
 
     let label = "";
-
     if (OFFERING_SET.has(rawCommodityLower)) {
-      label = "की पेशकश कर रही है";
+      label = "is offering";
     } else if (REQUIRED_SET.has(rawCommodityLower)) {
-      label = "की आवश्यकता है";
+      label = "is required";
     } else {
-      label = "की पेशकश कर रही है";
+      label = "is offering";
     }
 
     const commodity = capitalizeWords(rawCommodityLower);
 
-    const copyText = `🌅🙏 *छठ पूजा की हार्दिक शुभकामनाएँ!* 🙏🌅
-
-*Hansaria Food Private Limited* की ओर से हमारे सभी सम्मानित Buyers, Sellers एवं Business Partners को छठ महापर्व की हार्दिक बधाई एवं शुभकामनाएँ!
-
-छठी मैया और भगवान सूर्य देव की कृपा से आपके जीवन में सुख, शांति, समृद्धि, उत्तम स्वास्थ्य एवं सफलता बनी रहे।
-
-आपका व्यापार निरंतर उन्नति करे और हमारे व्यावसायिक संबंध विश्वास एवं सहयोग के साथ और मजबूत हों।
-
-
-*आज की तारीख:* ${todayDate}
-
-*${company}* ${label}
-
+    const copyText = `*Today* ${todayDate}
+*${company}* ${label} 
 *${commodity}* - *${
-      quantity && quantity !== "" ? `${quantity} MT @` : ""
-    }${newRate}/-*
-
-*स्थान:* ${location}
-
+      quantity && quantity !== "" ? `${quantity}mt @` : ""
+    }${newRate}/-* 
+for the *${location}* location 
 ${payment && payment !== "" ? `*Payment Terms: ${payment}*` : ""}${
       others && others !== "" ? `\n*Notes: ${others}*` : ""
     }
+(Updated on: ${time}).  
 
-(Updated on: ${time}).
+👉 *For rates and orders, please click the link below to participate in the bid.*
 
-👉 *Rates एवं Orders की जानकारी प्राप्त करने और Bid में भाग लेने के लिए नीचे दिए गए लिंक पर क्लिक करें।*
+📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_  
+🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_  
 
-📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_
-🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_
-
-
-🌞 *आइए, इस छठ पूजा के पावन अवसर पर नई उम्मीदों, मजबूत व्यावसायिक रिश्तों और सफलता की नई ऊँचाइयों का स्वागत करें।*
-
-*सादर धन्यवाद एवं शुभकामनाओं सहित,*
-
-*Purchase Team*
+*Thanks,*  
+*Purchase Team*  
 *Hansaria Food Pvt. Ltd.*
-
-🌅🙏 *छठ पूजा की हार्दिक शुभकामनाएँ!* 🙏🌅
 `;
 
     try {
       await navigator.clipboard.writeText(copyText);
-      toast.success("🌅 छठ पूजा की शुभकामनाएँ और Bid Details कॉपी हो गईं!");
+      toast.success("Details copied to clipboard!");
     } catch (err) {
       console.error(err);
       toast.error("Failed to copy text.");

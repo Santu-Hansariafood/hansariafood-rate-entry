@@ -30,57 +30,45 @@ const NotificationsPanel = ({ onClose }) => {
     });
   }, [filteredNotifications]);
 
-const handleCopy = (item) => {
-  const lines = [
-    `🌅🙏 *छठ पूजा की हार्दिक शुभकामनाएँ!* 🙏🌅`,
-    `\n`,
-    `✨ *Hansaria Food Private Limited* की ओर से हमारे सभी सम्मानित Buyers, Sellers एवं Business Partners को छठ महापर्व की हार्दिक बधाई एवं शुभकामनाएँ।`,
-    ``,
-    `छठी मैया और भगवान सूर्य देव की कृपा से आपके जीवन में सुख, शांति, समृद्धि, उत्तम स्वास्थ्य एवं सफलता बनी रहे।`,
-    `आपका व्यापार निरंतर उन्नति करे और हमारे व्यावसायिक संबंध विश्वास एवं सहयोग के साथ और मजबूत हों।`,
-    `\n`,
-    `*✅ Sauda Confirmed*`,
-    `\n`,
-    `*Sauda का विवरण निम्नलिखित है:*`,
-    item.saudaNo ? `*Sauda No:* ${formatSaudaNo(item.saudaNo)}` : null,
-    `*Date:* ${item.date}`,
-    `*Location:* ${item.location}`,
-    `*Commodity:* ${item.commodity}`,
-    `*Tons:* ${item.tons}`,
-    `*Rate:* ₹${item.rate ?? "N/A"}`,
-    item.buyerName ? `*Buyer:* ${toTitleCase(item.buyerName)}` : null,
-    item.sellerCompany
-      ? `*Seller Company:* ${toTitleCase(item.sellerCompany)}`
-      : null,
-    item.payment !== null &&
-    item.payment !== undefined &&
-    String(item.payment).trim() !== ""
-      ? `*Payment Terms:* ${item.payment} *Days*`
-      : null,
-    item.deliveryDate ? `*Delivery Date:* ${item.deliveryDate}` : null,
-    item.others ? `*Notes:* ${item.others}` : null,
-    `\n`,
-    `*आपको सूचित करते हुए हमें खुशी हो रही है कि Sauda का आधिकारिक Contract शीघ्र ही आपके साथ साझा किया जाएगा।*`,
-    `*कृपया Contract की जानकारी के लिए अपना Registered Email Address चेक करें।*`,
-    `*आपके धैर्य एवं सहयोग के लिए हार्दिक धन्यवाद।*`,
-    `\n`,
-    `🌞 *आइए, इस छठ पूजा के पावन अवसर पर नई उम्मीदों, मजबूत व्यावसायिक रिश्तों और सफलता की नई ऊँचाइयों का स्वागत करें।*`,
-    `\n`,
-    `📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_`,
-    `🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_`,
-    `\n`,
-    `*सादर धन्यवाद एवं शुभकामनाओं सहित,*`,
-    `*Purchase Team*`,
-    `*Hansaria Food Private Limited*`,
-    `\n`,
-    `🌅🙏 *छठ पूजा की हार्दिक शुभकामनाएँ!* 🙏🌅`,
-  ].filter(Boolean);
+  const handleCopy = (item) => {
+    const lines = [
+      `*✅ Sauda Confirmed*`,
+      `\n`,
+      `*Sauda details are as follows:*`,
+      item.saudaNo ? `*Sauda No:* ${formatSaudaNo(item.saudaNo)}` : null,
+      `*Date:* ${item.date}`,
+      `*Location:* ${item.location}`,
+      `*Commodity:* ${item.commodity}`,
+      `*Tons:* ${item.tons}`,
+      `*Rate:* ₹${item.rate ?? "N/A"}`,
+      item.buyerName ? `*Buyer:* ${toTitleCase(item.buyerName)}` : null,
+      item.sellerCompany
+        ? `*Seller Company:* ${toTitleCase(item.sellerCompany)}`
+        : null,
+      item.payment !== null &&
+      item.payment !== undefined &&
+      String(item.payment).trim() !== ""
+        ? `*Payment Terms:* ${item.payment} *Days*`
+        : null,
+      item.deliveryDate ? `*Delivery Date:* ${item.deliveryDate}` : null,
+      item.others ? `*Notes:* ${item.others}` : null,
+      `\n`,
+      `*We are pleased to inform you that the Proper Sauda Contract will be shared with you shortly.*`,
+      `*Kindly check your registered email address for the contract details.*`,
+      `*Thank you for your patience and cooperation.*`,
+      `\n`,
+      `📱 *Play Store:* _https://play.google.com/store/apps/details?id=com.hansariafood.bid_`,
+      `🌐 *Web App:* _https://bid.hansariafood.in/manage-order/list-self-order_`,
+      `*Thanks*,`,
+      `*Purchasing Team*`,
+      `*Hansaria Food Private Limited*`,
+    ].filter(Boolean);
 
-  navigator.clipboard
-    .writeText(lines.join("\n"))
-    .then(() => toast.success("🌅 छठ पूजा का Sauda मैसेज कॉपी हो गया!"))
-    .catch(() => toast.error("Failed to copy"));
-};
+    navigator.clipboard
+      .writeText(lines.join("\n"))
+      .then(() => toast.success("📋 Copied to clipboard!"))
+      .catch(() => toast.error("Failed to copy"));
+  };
 
   return (
     <>
