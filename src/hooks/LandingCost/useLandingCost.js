@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import { calculateLandingCost } from "@/utils/landingCost";
 
 const VALID_COMMODITIES = ["soya", "sbm", "ddgs", "m doc", "mdoc"];
 
@@ -307,7 +308,11 @@ export default function useLandingCost() {
           }
         }
 
-        const landed = baseRate + freight;
+        const { gst, landed } = calculateLandingCost(
+          baseRate,
+          freight,
+          r.commodity
+        );
         const destination = selectedLocation || r.destinationLocation || "";
 
         return {
@@ -318,6 +323,7 @@ export default function useLandingCost() {
           destination,
           baseRate,
           freight,
+          gst,
           landed,
           date: r.date,
         };

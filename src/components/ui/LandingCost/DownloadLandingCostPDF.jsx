@@ -27,38 +27,23 @@ export default function DownloadLandingCostPDF({
     const marginRight = 40;
     const usableWidth = pageWidth - marginLeft - marginRight;
 
-    const today = new Date();
-    const dateToShow = today.toLocaleDateString("en-GB").replace(/\//g, "-");
-    const timeToShow = today.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    function drawHeaderFooter(doc, pageWidth, pageHeight, date, time) {
+    function drawHeaderFooter(doc, pageWidth, pageHeight) {
       try {
         doc.addImage("/logo/logo1.png", "PNG", 40, 25, 110, 38);
       } catch {}
 
-      doc.setFontSize(10);
-      doc.setTextColor(60);
-      doc.text(`Date: ${date}`, pageWidth - 40, 32, { align: "right" });
-
-      doc.setTextColor(37, 99, 235);
-      doc.text(`Time: ${time}`, pageWidth - 40, 48, { align: "right" });
-
       doc.setFont("times", "bold");
       doc.setFontSize(22);
       doc.setTextColor(0);
-      doc.text("LANDING COST REPORT", pageWidth / 2, 85, { align: "center" });
+      doc.text("LANDING COST REPORT", pageWidth / 2, 76, { align: "center" });
 
       doc.setFont("times", "normal");
       doc.setFontSize(11);
       doc.setTextColor(100);
       doc.text(
-        `Hansaria Food Private Limited • ${date} ${time} • Thanks`,
+        "Hansaria Food Private Limited",
         pageWidth / 2,
-        102,
+        94,
         {
           align: "center",
         }
@@ -66,7 +51,7 @@ export default function DownloadLandingCostPDF({
 
       doc.setDrawColor(22, 163, 74);
       doc.setLineWidth(1.2);
-      doc.line(40, 112, pageWidth - 40, 112);
+      doc.line(40, 104, pageWidth - 40, 104);
 
       doc.setFontSize(9);
       doc.setTextColor(130);
@@ -90,7 +75,7 @@ export default function DownloadLandingCostPDF({
       doc.setFont("helvetica", "normal");
       doc.setFontSize(11);
       doc.setTextColor(80);
-      doc.text(subtitle, pageWidth / 2, 122, { align: "center" });
+      doc.text(subtitle, pageWidth / 2, 116, { align: "center" });
     }
 
     const body = tableRows.map((row) => [
@@ -101,13 +86,13 @@ export default function DownloadLandingCostPDF({
       row.destination || "—",
       row.baseRate,
       row.freight,
+      row.gst,
       row.landed,
-      new Date(row.date).toLocaleDateString("en-IN"),
     ]);
 
     autoTable(doc, {
-      startY: 140,
-      margin: { top: 140, left: marginLeft, right: marginRight },
+      startY: 132,
+      margin: { top: 132, left: marginLeft, right: marginRight },
       pageBreak: "auto",
       rowPageBreak: "avoid",
       head: [
@@ -117,10 +102,10 @@ export default function DownloadLandingCostPDF({
           "Commodity",
           "Location",
           "Destination",
-          "Base Rate (₹)",
-          "Freight (₹)",
-          "Landed (₹)",
-          "Date",
+          "Base Rate",
+          "Freight",
+          "GST",
+          "Landed Cost",
         ],
       ],
       body,
@@ -138,26 +123,22 @@ export default function DownloadLandingCostPDF({
         halign: "center",
       },
       columnStyles: {
-        0: { cellWidth: usableWidth * 0.06, halign: "center" },
-        1: { cellWidth: usableWidth * 0.18 },
+        0: { cellWidth: usableWidth * 0.05, halign: "center" },
+        1: { cellWidth: usableWidth * 0.16 },
         2: { cellWidth: usableWidth * 0.12 },
-        3: { cellWidth: usableWidth * 0.12 },
-        4: { cellWidth: usableWidth * 0.12 },
+        3: { cellWidth: usableWidth * 0.11 },
+        4: { cellWidth: usableWidth * 0.11 },
         5: { cellWidth: usableWidth * 0.12, halign: "right" },
-        6: { cellWidth: usableWidth * 0.1, halign: "right" },
-        7: { cellWidth: usableWidth * 0.12, halign: "right" },
-        8: { cellWidth: usableWidth * 0.06 },
+        6: { cellWidth: usableWidth * 0.11, halign: "right" },
+        7: { cellWidth: usableWidth * 0.10, halign: "right" },
+        8: { cellWidth: usableWidth * 0.12, halign: "right" },
       },
       didDrawPage: () => {
-        drawHeaderFooter(doc, pageWidth, pageHeight, dateToShow, timeToShow);
+        drawHeaderFooter(doc, pageWidth, pageHeight);
       },
     });
 
-    const fileSafeTime = timeToShow.replace(/:/g, "-").replace(/ /g, "_");
-
-    doc.save(
-      `Landing_Cost_${selectedCommodity || "report"}_${dateToShow}_${fileSafeTime}_Thanks.pdf`
-    );
+    doc.save(`Landing_Cost_${selectedCommodity || "report"}.pdf`);
   };
 
   return (

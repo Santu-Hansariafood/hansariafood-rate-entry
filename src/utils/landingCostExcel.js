@@ -19,8 +19,8 @@ export const exportLandingCostToExcel = async (
     "Destination",
     "Base Rate",
     "Freight",
-    "Landed",
-    "Date",
+    "GST",
+    "Landed Cost",
   ];
 
   const rows = tableRows.map((row) => [
@@ -31,8 +31,8 @@ export const exportLandingCostToExcel = async (
     row.destination || "",
     row.baseRate,
     row.freight,
+    row.gst,
     row.landed,
-    new Date(row.date).toLocaleDateString("en-IN"),
   ]);
 
   const worksheet = XLSX.utils.aoa_to_sheet([header, ...rows]);

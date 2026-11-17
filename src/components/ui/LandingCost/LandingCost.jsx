@@ -6,7 +6,6 @@ import {
   TrendingUp,
   Info,
   X,
-  IndianRupee,
   Clock,
   History,
   Download,
@@ -16,6 +15,7 @@ import Loading from "@/components/common/Loading/Loading";
 import { toast } from "react-toastify";
 import useLandingCost from "@/hooks/LandingCost/useLandingCost";
 import { exportLandingCostToExcel } from "@/utils/landingCostExcel";
+import { calculateLandingCost } from "@/utils/landingCost";
 import DownloadLandingCostPDF from "./DownloadLandingCostPDF";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
@@ -76,7 +76,7 @@ export default function LandingCost() {
               <div className="flex-1 text-center md:text-left">
                 <Title text="Landing Cost" />
                 <p className="mt-2 max-w-xl text-sm md:text-base text-gray-500 dark:text-gray-400 mx-auto md:mx-0">
-                  Select category, buyer company, commodity, and location to see live landed cost with freight included.
+                  Select a category, buyer company, commodity, and location to see landed cost with freight and applicable GST.
                 </p>
               </div>
               {selectedCompany || selectedCommodity || selectedLocation ? (
@@ -89,7 +89,7 @@ export default function LandingCost() {
                   )}
                   {selectedCommodity && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 px-3 py-1 shadow-sm border border-emerald-100/80 dark:border-slate-700">
-                      <IndianRupee className="w-3 h-3 text-emerald-500" />
+                      <TrendingUp className="w-3 h-3 text-emerald-500" />
                       {selectedCommodity}
                     </span>
                   )}
@@ -232,21 +232,36 @@ export default function LandingCost() {
                           cell: (row) => row.destination || "—",
                         },
                         {
-                          header: "Base Rate (₹)",
-                          cell: (row) => `₹${row.baseRate}`,
-                        },
-                        {
-                          header: "Freight (₹)",
-                          cell: (row) => `₹${row.freight}`,
-                        },
-                        {
-                          header: "Landed (₹)",
-                          cell: (row) => `₹${row.landed}`,
-                        },
-                        {
-                          header: "Date",
+                          header: "Base Rate",
                           cell: (row) =>
-                            new Date(row.date).toLocaleDateString("en-IN"),
+                            Number(row.baseRate).toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }),
+                        },
+                        {
+                          header: "Freight",
+                          cell: (row) =>
+                            Number(row.freight).toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }),
+                        },
+                        {
+                          header: "GST",
+                          cell: (row) =>
+                            Number(row.gst).toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }),
+                        },
+                        {
+                          header: "Landed Cost",
+                          cell: (row) =>
+                            Number(row.landed).toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }),
                         },
                       ]}
                     />
@@ -319,7 +334,16 @@ export default function LandingCost() {
                 {history.map((entry, idx) => {
                   const baseRate = Number(entry.finalRate ?? entry.oldRate ?? 0) || 0;
                   const freight = Number(entry.freightRate || 0);
-                  const landed = baseRate + freight;
+                  const { gst, landed } = calculateLandingCost(
+                    baseRate,
+                    freight,
+                    entry.commodity || selectedCommodity
+                  );
+                  const formatAmount = (amount) =>
+                    amount.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    });
 
                   return (
                     <div
@@ -328,19 +352,18 @@ export default function LandingCost() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700 dark:text-emerald-300">
-                          <IndianRupee size={18} />
+                          <TrendingUp size={18} />
                         </div>
                         <div>
                           <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            ₹{landed.toLocaleString("en-IN")}
-                            {freight ? (
-                              <span className="ml-2 text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                                (₹{baseRate.toLocaleString("en-IN")} + ₹{freight.toLocaleString("en-IN")} freight)
-                              </span>
-                            ) : null}
+                            Landed Cost: {formatAmount(landed)}
+                          </div>
+                          <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                            Base: {formatAmount(baseRate)} + Freight:{" "}
+                            {formatAmount(freight)} + GST: {formatAmount(gst)}
                           </div>
                           <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                            Previous: {entry.oldRate ? `₹${Number(entry.oldRate).toLocaleString("en-IN")}` : "—"}
+                            Previous: {entry.oldRate ? formatAmount(Number(entry.oldRate)) : "—"}
                           </div>
                         </div>
                       </div>
