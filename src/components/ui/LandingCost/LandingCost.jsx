@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
@@ -9,6 +9,8 @@ import {
   Clock,
   History,
   Download,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
@@ -37,6 +39,7 @@ export default function LandingCost() {
     setSelectedLocation,
     rates,
     ratesLoading,
+    freightLoading,
     history,
     historyLoading,
     categoryOptions,
@@ -47,13 +50,78 @@ export default function LandingCost() {
     tableRows,
   } = useLandingCost();
 
-  const handleDownloadExcel = useCallback(() => {
-    if (!selectedCommodity || tableRows.length === 0) {
+  const [savedLocationData, setSavedLocationData] = useState([]);
+
+  useEffect(() => {
+    setSavedLocationData([]);
+  }, [selectedCategory, selectedCompany, selectedCommodity]);
+
+  const exportRows = useMemo(() => {
+    const rowsByLocation = new Map(
+      savedLocationData.map((entry) => [
+        entry.location.toLowerCase().trim(),
+        entry.rows,
+      ])
+    );
+
+    if (selectedLocation && !ratesLoading && !freightLoading && tableRows.length > 0) {
+      rowsByLocation.set(selectedLocation.toLowerCase().trim(), tableRows);
+    }
+
+    return Array.from(rowsByLocation.values())
+      .flat()
+      .map((row, index) => ({ ...row, slno: index + 1 }));
+  }, [savedLocationData, selectedLocation, tableRows, ratesLoading, freightLoading]);
+
+  const handleAddLocation = useCallback(() => {
+    if (!selectedLocation || ratesLoading || freightLoading || tableRows.length === 0) {
+      toast.warn("Select a location with landing cost data before adding it");
+      return;
+    }
+
+    setSavedLocationData((current) => {
+      const locationKey = selectedLocation.toLowerCase().trim();
+      const existingIndex = current.findIndex(
+        (entry) => entry.location.toLowerCase().trim() === locationKey
+      );
+      const next = [...current];
+      const entry = { location: selectedLocation, rows: tableRows };
+
+      if (existingIndex === -1) {
+        next.push(entry);
+      } else {
+        next[existingIndex] = entry;
+      }
+
+      return next;
+    });
+    toast.success(`${selectedLocation} added to selected locations`);
+  }, [selectedLocation, tableRows, ratesLoading, freightLoading]);
+
+  const handleRemoveLocation = useCallback((location) => {
+    const locationKey = location.toLowerCase().trim();
+    setSavedLocationData((current) =>
+      current.filter(
+        (entry) => entry.location.toLowerCase().trim() !== locationKey
+      )
+    );
+  }, []);
+
+  const handleDownloadExcel = useCallback(async () => {
+    if (!selectedCommodity || exportRows.length === 0) {
       toast.warn("No landing cost data available to export");
       return;
     }
-    exportLandingCostToExcel(tableRows, selectedCommodity, selectedLocation);
-  }, [selectedCommodity, selectedLocation, tableRows]);
+    const locations = [
+      ...new Set(exportRows.map((row) => row.destination).filter(Boolean)),
+    ].join("_");
+    try {
+      await exportLandingCostToExcel(exportRows, selectedCommodity, locations);
+    } catch (downloadError) {
+      console.error("Error exporting landing cost to Excel:", downloadError);
+      toast.error("Failed to download the Excel file");
+    }
+  }, [selectedCommodity, exportRows]);
 
   return (
     <Suspense fallback={<Loading />}>
@@ -149,15 +217,60 @@ export default function LandingCost() {
                 onChange={setSelectedCommodity}
                 disabled={!selectedCompany}
               />
-              <Dropdown
-                label="4. Select Location"
-                placeholder="Choose Location..."
-                options={locationOptions}
-                value={selectedLocation}
-                onChange={setSelectedLocation}
-                disabled={!selectedCommodity}
-              />
+              <div className="flex items-end gap-2">
+                <Dropdown
+                  label="4. Select Location"
+                  placeholder="Choose Location..."
+                  options={locationOptions}
+                  value={selectedLocation}
+                  onChange={setSelectedLocation}
+                  disabled={!selectedCommodity}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddLocation}
+                  disabled={
+                    !selectedLocation ||
+                    tableRows.length === 0 ||
+                    ratesLoading ||
+                    freightLoading
+                  }
+                  aria-label="Add selected location"
+                  title="Save this location's landing cost data"
+                  className="mb-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
+              </div>
             </div>
+
+            {savedLocationData.length > 0 && (
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                  Saved location sections
+                </h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {savedLocationData.map((entry) => (
+                    <div
+                      key={entry.location}
+                      className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs text-gray-700 dark:border-emerald-800 dark:bg-gray-900 dark:text-gray-200"
+                    >
+                      <span>
+                        {entry.location} · {entry.rows.length} rates
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLocation(entry.location)}
+                        aria-label={`Remove ${entry.location}`}
+                        className="text-gray-400 transition-colors hover:text-red-500"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <AnimatePresence mode="wait">
@@ -180,11 +293,11 @@ export default function LandingCost() {
                   Retry
                 </button>
               </motion.div>
-            ) : ratesLoading ? (
+            ) : ratesLoading && exportRows.length === 0 ? (
               <div className="mt-12 flex justify-center">
                 <Loading />
               </div>
-            ) : selectedCommodity && rates.length > 0 ? (
+            ) : selectedCommodity && exportRows.length > 0 ? (
               <motion.div
                 key="results"
                 initial={{ opacity: 0, y: 20 }}
@@ -197,7 +310,7 @@ export default function LandingCost() {
                   </h3>
                   <div className="flex items-center gap-3">
                     <span className="bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                      {rates.length} Rates Found
+                      {exportRows.length} Rates Found
                     </span>
                     <div className="flex items-center gap-2">
                       <button
@@ -209,10 +322,12 @@ export default function LandingCost() {
                         Excel
                       </button>
                       <DownloadLandingCostPDF
-                        tableRows={tableRows}
+                        tableRows={exportRows}
                         selectedCompany={selectedCompany}
                         selectedCommodity={selectedCommodity}
-                        selectedLocation={selectedLocation}
+                        selectedLocation={[
+                          ...new Set(exportRows.map((row) => row.destination).filter(Boolean)),
+                        ].join(", ")}
                       />
                     </div>
                   </div>
@@ -221,7 +336,7 @@ export default function LandingCost() {
                 <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4">
                   <div className="max-h-[70vh] overflow-y-auto">
                     <Table
-                      data={tableRows}
+                      data={exportRows}
                       columns={[
                         { header: "Sl No", accessor: "slno" },
                         { header: "Company", accessor: "companyName" },

@@ -24,6 +24,7 @@ export default function useLandingCost() {
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const [freightMap, setFreightMap] = useState({});
+  const [freightLoading, setFreightLoading] = useState(false);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -38,9 +39,12 @@ export default function useLandingCost() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchAllRates = async () => {
       if (!selectedCommodity) {
         setRates([]);
+        setRatesLoading(false);
         return;
       }
 
@@ -94,26 +98,34 @@ export default function useLandingCost() {
             return rateA - rateB;
           });
 
-        setRates(filteredSorted);
+        if (!cancelled) setRates(filteredSorted);
       } catch (error) {
         console.error("Error fetching all rates:", error);
-        setRates([]);
+        if (!cancelled) setRates([]);
       } finally {
-        setRatesLoading(false);
+        if (!cancelled) setRatesLoading(false);
       }
     };
 
     fetchAllRates();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCommodity, selectedLocation]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchFreightRates = async () => {
       if (!selectedLocation) {
         setFreightMap({});
+        setFreightLoading(false);
         return;
       }
 
       try {
+        setFreightLoading(true);
         const query = new URLSearchParams({
           search: selectedLocation,
           limit: "1000",
@@ -147,14 +159,20 @@ export default function useLandingCost() {
           }
         });
 
-        setFreightMap(nextMap);
+        if (!cancelled) setFreightMap(nextMap);
       } catch (error) {
         console.error("Error fetching freight rates:", error);
-        setFreightMap({});
+        if (!cancelled) setFreightMap({});
+      } finally {
+        if (!cancelled) setFreightLoading(false);
       }
     };
 
     fetchFreightRates();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedLocation]);
 
   useEffect(() => {
@@ -317,6 +335,13 @@ export default function useLandingCost() {
           destination,
           baseRate,
           freight,
+          hasFreight: Boolean(
+            destKey &&
+              r.location &&
+              freightMap[
+                `${String(r.location).toLowerCase().trim()}|${destKey}`
+              ]
+          ),
           gst,
           landed,
           date: r.date,
@@ -341,6 +366,7 @@ export default function useLandingCost() {
     ratesLoading,
     history,
     historyLoading,
+    freightLoading,
     categoryOptions,
     companyOptions,
     commodityOptions,
