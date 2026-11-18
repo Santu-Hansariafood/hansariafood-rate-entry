@@ -1,7 +1,18 @@
 import React from "react";
-import { Truck, Download } from "lucide-react";
+import {
+  Truck,
+  Download,
+  FileSpreadsheet,
+  Upload,
+} from "lucide-react";
 
-const FreightHeader = ({ onDownloadExcel }) => {
+const FreightHeader = ({
+  onDownloadExcel,
+  onDownloadMissingExcel,
+  onDownloadTemplate,
+  onOpenBulkUpload,
+  loading,
+}) => {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-4">
@@ -17,14 +28,42 @@ const FreightHeader = ({ onDownloadExcel }) => {
           </p>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onDownloadExcel}
-        className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/30 transition-all hover:bg-emerald-700 hover:shadow-emerald-500/40"
-      >
-        <Download className="w-4 h-4" />
-        Download Excel
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onDownloadMissingExcel}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          Missing Routes
+        </button>
+        <button
+          type="button"
+          onClick={onDownloadTemplate}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+        >
+          <Download className="h-4 w-4" />
+          Sample File
+        </button>
+        <button
+          type="button"
+          onClick={onOpenBulkUpload}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+        >
+          <Upload className="h-4 w-4" />
+          Bulk Upload
+        </button>
+        <button
+          type="button"
+          onClick={onDownloadExcel}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-emerald-500/30 transition-all hover:bg-emerald-700 hover:shadow-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Download className="w-4 h-4" />
+          Download Excel
+        </button>
+      </div>
     </div>
   );
 };
