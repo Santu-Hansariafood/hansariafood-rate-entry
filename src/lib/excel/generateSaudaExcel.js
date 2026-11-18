@@ -65,7 +65,7 @@ export async function generateSaudaExcel(saudaEntries) {
             time: e.time,
             group,
             saudaNo: item.saudaNo,
-            description: item.description,
+            description: item.others ?? item.description ?? "",
             tons: item.tons,
             finalRate: item.finalRate,
             unit: item.unit,

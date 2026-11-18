@@ -41,6 +41,32 @@ function scheduleDailyRateReport() {
   console.log("Scheduled daily rate report for 8:00 PM IST.");
 }
 
+function scheduleDailySaudaReport() {
+  if (dev) {
+    console.log("Daily Sauda report scheduler disabled in development.");
+    return;
+  }
+
+  cron.schedule(
+    "0 20 * * *",
+    async () => {
+      console.log(
+        "Running scheduled task: Sending daily total Sauda report at 8 PM IST",
+      );
+      try {
+        const { sendDailySaudaReport } =
+          await import("./src/lib/reports/dailySaudaReport.js");
+        await sendDailySaudaReport();
+      } catch (err) {
+        console.error("Scheduled daily Sauda report failed:", err);
+      }
+    },
+    { timezone: "Asia/Kolkata" },
+  );
+
+  console.log("Scheduled daily total Sauda report for 8:00 PM IST.");
+}
+
 if (global.serverStarted) {
   console.log("Server already started. Skipping...");
   process.exit(0);
@@ -60,6 +86,7 @@ async function startServer() {
     await app.prepare();
 
     scheduleDailyRateReport();
+    scheduleDailySaudaReport();
 
     const httpServer = createServer(async (req, res) => {
       try {
