@@ -213,7 +213,7 @@ const getBulkConfiguration = () => {
   };
 };
 
-const getBidConfiguration = () => {
+const getTemplateMessageConfiguration = () => {
   const names = ["HANSARIA_API_URL", "HANSARIA_API_KEY"];
   const config = Object.fromEntries(
     names.map((name) => [name, process.env[name]?.trim()])
@@ -254,7 +254,7 @@ const getRegisteredMobileRecipients = async () => {
   ];
 };
 
-const sendSaudaBidTemplateToEmployees = async (
+const sendTemplateMessagesToEmployeeMobiles = async (
   entries,
   templateName,
   getVariables
@@ -265,7 +265,7 @@ const sendSaudaBidTemplateToEmployees = async (
   const recipients = await getRegisteredMobileRecipients();
   if (recipients.length === 0) return { sent: 0 };
 
-  const config = getBidConfiguration();
+  const config = getTemplateMessageConfiguration();
   let sent = 0;
   const errors = [];
 
@@ -313,6 +313,19 @@ const sendSaudaBidTemplateToEmployees = async (
 
   return errors.length > 0 ? { sent, error: errors.join("; ") } : { sent };
 };
+
+export const sendTemplateToRegisteredEmployeeMobiles = (
+  variables,
+  templateName =
+    process.env.HANSARIA_TEMPLATE_NAME ||
+    process.env.HANSARIA_SAUDA_BID_TEMPLATE ||
+    "hansaria_new_bid"
+) =>
+  sendTemplateMessagesToEmployeeMobiles(
+    [variables],
+    templateName,
+    (entry) => entry
+  );
 
 const sendSaudaBulkTemplate = async (entries, templateName, getVariables) => {
   const list = Array.isArray(entries) ? entries : [];
@@ -386,7 +399,7 @@ export const sendSaudaBidTemplate = (
     process.env.HANSARIA_SAUDA_BID_TEMPLATE ||
     "hansaria_new_bid"
 ) =>
-  sendSaudaBidTemplateToEmployees(entries, templateName, (entry) => ({
+  sendTemplateMessagesToEmployeeMobiles(entries, templateName, (entry) => ({
     commodity: entry.commodity || "",
     group: company || "",
     consignee: entry.sellerName || "",

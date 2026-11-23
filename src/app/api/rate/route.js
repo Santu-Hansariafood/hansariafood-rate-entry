@@ -5,7 +5,7 @@ import RateHistory from "@/models/RateHistory";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
-import { sendTemplateToRegisteredUsers } from "@/lib/hansariaMessages";
+import { sendTemplateToRegisteredEmployeeMobiles } from "@/lib/hansariaMessages";
 import { rateLimitGuard } from "@/lib/apiUtils";
 
 // Hoisted out of request handlers: constructing an Intl formatter is expensive
@@ -254,22 +254,23 @@ export async function POST(req) {
 
     // Delivery happens after the response is flushed so the save stays snappy.
     const notificationPayload = {
-      company: cleanCompany,
-      location: cleanLocation,
       commodity: cleanCommodity,
-      quantaty: String(numericQuantity),
+      group: cleanCompany,
+      consignee: "",
+      origin: cleanLocation,
+      quantity: String(numericQuantity),
       rate: String(numericNewRate),
-      date: todayStr,
-      updateTime: currentTime,
+      endTime: `${todayStr} ${currentTime}`,
     };
 
     after(async () => {
       try {
-        await sendTemplateToRegisteredUsers(
-          "HANSARIA_RATE_TEMPLATE_ID",
-          notificationPayload,
-          { includeName: false }
+        const delivery = await sendTemplateToRegisteredEmployeeMobiles(
+          notificationPayload
         );
+        if (delivery.error) {
+          console.error("Failed to send rate template messages:", delivery.error);
+        }
       } catch (messageError) {
         console.error("Failed to send rate template messages:", messageError);
       }
@@ -456,22 +457,23 @@ export async function PUT(req) {
 
     // Delivery happens after the response is flushed so the update stays snappy.
     const notificationPayload = {
-      company: cleanCompany,
-      location: cleanLocation,
       commodity: cleanCommodity,
-      quantaty: String(rateToUpdate.quantity ?? ""),
+      group: cleanCompany,
+      consignee: "",
+      origin: cleanLocation,
+      quantity: String(rateToUpdate.quantity ?? ""),
       rate: String(Number(newRate)),
-      date: todayStr,
-      updateTime,
+      endTime: `${todayStr} ${updateTime}`,
     };
 
     after(async () => {
       try {
-        await sendTemplateToRegisteredUsers(
-          "HANSARIA_RATE_TEMPLATE_ID",
-          notificationPayload,
-          { includeName: false }
+        const delivery = await sendTemplateToRegisteredEmployeeMobiles(
+          notificationPayload
         );
+        if (delivery.error) {
+          console.error("Failed to send rate template messages:", delivery.error);
+        }
       } catch (messageError) {
         console.error("Failed to send rate template messages:", messageError);
       }
