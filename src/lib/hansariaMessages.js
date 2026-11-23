@@ -213,6 +213,107 @@ const getBulkConfiguration = () => {
   };
 };
 
+const getBidConfiguration = () => {
+  const names = ["HANSARIA_API_URL", "HANSARIA_API_KEY"];
+  const config = Object.fromEntries(
+    names.map((name) => [name, process.env[name]?.trim()])
+  );
+  const missing = names.filter((name) => !config[name]);
+
+  if (missing.length > 0) {
+    throw new Error(`Missing message API configuration: ${missing.join(", ")}`);
+  }
+
+  let endpoint;
+  try {
+    endpoint = new URL(config.HANSARIA_API_URL);
+  } catch {
+    throw new Error("HANSARIA_API_URL must be a valid HTTPS URL");
+  }
+
+  if (endpoint.protocol !== "https:") {
+    throw new Error("HANSARIA_API_URL must use HTTPS");
+  }
+
+  return { endpoint: endpoint.toString(), apiKey: config.HANSARIA_API_KEY };
+};
+
+const getRegisteredMobileRecipients = async () => {
+  const users = await User.find({
+    mobile: { $exists: true, $ne: null },
+  })
+    .select("mobile -_id")
+    .lean();
+
+  return [
+    ...new Set(
+      users
+        .map((user) => String(user.mobile ?? "").trim())
+        .filter((mobile) => /^[6-9]\d{9}$/.test(mobile))
+    ),
+  ];
+};
+
+const sendSaudaBidTemplateToEmployees = async (
+  entries,
+  templateName,
+  getVariables
+) => {
+  const list = Array.isArray(entries) ? entries : [];
+  if (list.length === 0) return { sent: 0 };
+
+  const recipients = await getRegisteredMobileRecipients();
+  if (recipients.length === 0) return { sent: 0 };
+
+  const config = getBidConfiguration();
+  let sent = 0;
+  const errors = [];
+
+  for (const entry of list) {
+    for (const toUserId of recipients) {
+      try {
+        const response = await fetch(config.endpoint, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${config.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            templateName,
+            toUserId,
+            variables: getVariables(entry),
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+
+        let result;
+        try {
+          result = await response.json();
+        } catch (error) {
+          if (response.ok) {
+            throw new Error("Message API returned an invalid JSON response", {
+              cause: error,
+            });
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            result?.error ||
+              `Message API request failed with HTTP ${response.status}`
+          );
+        }
+
+        sent += 1;
+      } catch (error) {
+        errors.push(error.message);
+      }
+    }
+  }
+
+  return errors.length > 0 ? { sent, error: errors.join("; ") } : { sent };
+};
+
 const sendSaudaBulkTemplate = async (entries, templateName, getVariables) => {
   const list = Array.isArray(entries) ? entries : [];
   if (list.length === 0) return { sent: 0 };
@@ -280,9 +381,12 @@ const sendSaudaBulkTemplate = async (entries, templateName, getVariables) => {
 export const sendSaudaBidTemplate = (
   company,
   entries,
-  templateName = process.env.HANSARIA_SAUDA_BID_TEMPLATE || "hansaria_new_bid"
+  templateName =
+    process.env.HANSARIA_TEMPLATE_NAME ||
+    process.env.HANSARIA_SAUDA_BID_TEMPLATE ||
+    "hansaria_new_bid"
 ) =>
-  sendSaudaBulkTemplate(entries, templateName, (entry) => ({
+  sendSaudaBidTemplateToEmployees(entries, templateName, (entry) => ({
     commodity: entry.commodity || "",
     group: company || "",
     consignee: entry.sellerName || "",

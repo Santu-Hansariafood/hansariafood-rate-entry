@@ -41,8 +41,10 @@ Keep the API key out of client-side code and source control:
 
 ```env
 HANSARIA_API_BASE_URL=https://hfconnect.in
+HANSARIA_API_URL=https://hfconnect.in/api/v1/messages/send
 HANSARIA_API_KEY=
 HANSARIA_ADMIN_ID=
+HANSARIA_TEMPLATE_NAME=hansaria_new_bid
 HANSARIA_RATE_TEMPLATE_ID=6ac76937c5d0a603f0d7e0f8
 HANSARIA_SAUDA_TEMPLATE_ID=6ac76988c5d0a603f0d7e0f9
 HANSARIA_OTP_TEMPLATE_ID=6ac7682dc5d0a603f0d7e0f7
@@ -50,6 +52,8 @@ HANSARIA_OTP_TEMPLATE_ID=6ac7682dc5d0a603f0d7e0f7
 
 `HANSARIA_API_BASE_URL` should be the API host only; the application appends
 `/api/v1/messages/send` and sends one request per recipient.
+New-bid notifications instead use the full `HANSARIA_API_URL` endpoint and
+`HANSARIA_TEMPLATE_NAME`, which is sent as `templateName`.
 `HANSARIA_API_KEY` authenticates the request. `HANSARIA_ADMIN_ID` must be the
 sender's MongoDB user ID on hfconnect; it is sent as `adminId`. If the API
 key is bound to a sender account, this ID must match that account.
@@ -67,11 +71,13 @@ rate, location, and update time, with the exact template variables `date`,
 `company`, `commodity`, `quantaty`, `rate`, `location`, and `updateTime`.
 Sauda and OTP notifications continue to use registered users' saved external
 app user IDs and message languages.
-New-bid Sauda notifications use the bulk `/api/v1/messages/bulk` endpoint with
-the `hansaria_new_bid` template name (overridable with
-`HANSARIA_SAUDA_BID_TEMPLATE`). They are sent automatically when a Sauda is
-created or updated, to every registered user with a saved hfconnect `toUserId`;
-users without one are skipped.
+New-bid Sauda notifications use `HANSARIA_API_URL` and the template name in
+`HANSARIA_TEMPLATE_NAME` (defaults to `hansaria_new_bid`). They are sent
+automatically when a Sauda is created or updated, once per saved entry, to
+registered employees with a valid mobile number in the employee list. The
+mobile number is sent as `toUserId`; if there are no registered employees with
+a valid mobile number, no message API request is made. These messages are
+in-app messages, not carrier SMS.
 The same save flow also sends `hansaria_bid_accepted` (overridable with
 `HANSARIA_SAUDA_BID_ACCEPTED_TEMPLATE`) using the commodity, group, origin,
 consignee, quantity, rate, saved Sauda mobile number, and notes.
