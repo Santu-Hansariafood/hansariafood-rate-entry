@@ -235,6 +235,15 @@ const getTemplateMessageConfiguration = () => {
     throw new Error("HANSARIA_API_URL must use HTTPS");
   }
 
+  const sendPath = endpoint.pathname.replace(/\/+$/, "");
+  if (!sendPath.endsWith("/messages/send")) {
+    throw new Error("HANSARIA_API_URL must end with /messages/send");
+  }
+
+  endpoint.pathname = sendPath.replace(/\/messages\/send$/, "/messages/bulk");
+  endpoint.search = "";
+  endpoint.hash = "";
+
   return { endpoint: endpoint.toString(), apiKey: config.HANSARIA_API_KEY };
 };
 
@@ -248,8 +257,13 @@ const getRegisteredMobileRecipients = async () => {
   return [
     ...new Set(
       users
-        .map((user) => String(user.mobile ?? "").trim())
-        .filter((mobile) => /^[6-9]\d{9}$/.test(mobile))
+        .map((user) => String(user.mobile ?? "").replace(/\D/g, ""))
+        .map((mobile) => {
+          if (/^91[6-9]\d{9}$/.test(mobile)) return mobile;
+          if (/^[6-9]\d{9}$/.test(mobile)) return `91${mobile}`;
+          return "";
+        })
+        .filter(Boolean)
     ),
   ];
 };
@@ -266,52 +280,50 @@ const sendTemplateMessagesToEmployeeMobiles = async (
   if (recipients.length === 0) return { sent: 0 };
 
   const config = getTemplateMessageConfiguration();
-  let sent = 0;
-  const errors = [];
+  const messageRecipients = list.flatMap((entry) =>
+    recipients.map((toUserId) => ({
+      toUserId,
+      language: "en",
+      variables: getVariables(entry),
+    }))
+  );
+  const response = await fetch(config.endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      templateName,
+      recipients: messageRecipients,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
 
-  for (const entry of list) {
-    for (const toUserId of recipients) {
-      try {
-        const response = await fetch(config.endpoint, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${config.apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            templateName,
-            toUserId,
-            variables: getVariables(entry),
-          }),
-          signal: AbortSignal.timeout(15000),
-        });
-
-        let result;
-        try {
-          result = await response.json();
-        } catch (error) {
-          if (response.ok) {
-            throw new Error("Message API returned an invalid JSON response", {
-              cause: error,
-            });
-          }
-        }
-
-        if (!response.ok) {
-          throw new Error(
-            result?.error ||
-              `Message API request failed with HTTP ${response.status}`
-          );
-        }
-
-        sent += 1;
-      } catch (error) {
-        errors.push(error.message);
-      }
+  let result;
+  try {
+    result = await response.json();
+  } catch (error) {
+    if (response.ok) {
+      throw new Error("Message API returned an invalid JSON response", {
+        cause: error,
+      });
     }
   }
 
-  return errors.length > 0 ? { sent, error: errors.join("; ") } : { sent };
+  if (!response.ok) {
+    throw new Error(
+      result?.error ||
+        `Message API request failed with HTTP ${response.status}`
+    );
+  }
+
+  console.log("Job:", result?.jobId, "Status:", result?.statusUrl);
+  return {
+    sent: messageRecipients.length,
+    jobId: result?.jobId,
+    statusUrl: result?.statusUrl,
+  };
 };
 
 export const sendTemplateToRegisteredEmployeeMobiles = (

@@ -50,10 +50,12 @@ HANSARIA_SAUDA_TEMPLATE_ID=6ac76988c5d0a603f0d7e0f9
 HANSARIA_OTP_TEMPLATE_ID=6ac7682dc5d0a603f0d7e0f7
 ```
 
-`HANSARIA_API_BASE_URL` should be the API host only; the application appends
-`/api/v1/messages/send` and sends one request per recipient.
-New-bid notifications instead use the full `HANSARIA_API_URL` endpoint and
-`HANSARIA_TEMPLATE_NAME`, which is sent as `templateName`.
+`HANSARIA_API_BASE_URL` should be the API host only; template-ID sends append
+`/api/v1/messages/send` and send one request per recipient. Rate Management and
+new-bid Sauda use `HANSARIA_API_URL` and `HANSARIA_TEMPLATE_NAME`. Configure the
+URL with the `/api/v1/messages/send` path; the app changes the final path to
+`/api/v1/messages/bulk` and sends one bulk request with a recipient entry per
+employee and rate/Sauda entry.
 `HANSARIA_API_KEY` authenticates the request. `HANSARIA_ADMIN_ID` must be the
 sender's MongoDB user ID on hfconnect; it is sent as `adminId`. If the API
 key is bound to a sender account, this ID must match that account.
@@ -65,19 +67,18 @@ environment or local `.env.local` file, and restart the server after changing
 them. Rate Management sends `HANSARIA_TEMPLATE_NAME` to every registered
 employee with a valid mobile number, using `commodity`, `group` (company),
 `consignee` (empty for rate entries), `origin` (location), `quantity`, `rate`,
-and `endTime` (date and update time). If there are no valid employee mobile
+and `endTime` (date and update time). Ten-digit Indian mobile numbers are
+prefixed with `91` for `toUserId`. If there are no valid employee mobile
 numbers, no request is sent. Other rate-history notifications continue to use
 the configured `HANSARIA_RATE_TEMPLATE_ID` and registered users' saved
 hfconnect IDs.
 Sauda and OTP notifications continue to use registered users' saved external
 app user IDs and message languages.
-New-bid Sauda notifications use `HANSARIA_API_URL` and the template name in
-`HANSARIA_TEMPLATE_NAME` (defaults to `hansaria_new_bid`). They are sent
-automatically when a Sauda is created or updated, once per saved entry, to
-registered employees with a valid mobile number in the employee list. The
-mobile number is sent as `toUserId`; if there are no registered employees with
-a valid mobile number, no message API request is made. These messages are
-in-app messages, not carrier SMS.
+New-bid Sauda notifications use `HANSARIA_TEMPLATE_NAME` (defaults to
+`hansaria_new_bid`). They are sent automatically when a Sauda is created or
+updated, once per saved entry, to registered employees with a valid mobile
+number in the employee list. These messages are in-app messages, not carrier
+SMS.
 The same save flow also sends `hansaria_bid_accepted` (overridable with
 `HANSARIA_SAUDA_BID_ACCEPTED_TEMPLATE`) using the commodity, group, origin,
 consignee, quantity, rate, saved Sauda mobile number, and notes.

@@ -265,12 +265,7 @@ export async function POST(req) {
 
     after(async () => {
       try {
-        const delivery = await sendTemplateToRegisteredEmployeeMobiles(
-          notificationPayload
-        );
-        if (delivery.error) {
-          console.error("Failed to send rate template messages:", delivery.error);
-        }
+        await sendTemplateToRegisteredEmployeeMobiles(notificationPayload);
       } catch (messageError) {
         console.error("Failed to send rate template messages:", messageError);
       }
@@ -468,12 +463,7 @@ export async function PUT(req) {
 
     after(async () => {
       try {
-        const delivery = await sendTemplateToRegisteredEmployeeMobiles(
-          notificationPayload
-        );
-        if (delivery.error) {
-          console.error("Failed to send rate template messages:", delivery.error);
-        }
+        await sendTemplateToRegisteredEmployeeMobiles(notificationPayload);
       } catch (messageError) {
         console.error("Failed to send rate template messages:", messageError);
       }
