@@ -1,3 +1,30 @@
+// Flattens a list of SaudaEntry records into a single group map that feeds the
+// sauda email template. Each item keeps its owning company so multi-company
+// reports can render a Company column.
+export const buildSaudaEntryGroups = (records = []) => {
+  const groups = {};
+
+  records.forEach((record) => {
+    const lists =
+      record.saudaEntries instanceof Map
+        ? [...record.saudaEntries.values()]
+        : Object.values(record.saudaEntries || {});
+
+    const items = lists
+      .filter(Array.isArray)
+      .flat()
+      .filter(Boolean)
+      .map((item) => ({ ...item, company: record.company || "" }));
+
+    if (!items.length) return;
+
+    const key = `${record.company || "Unknown"} - ${record.date || ""}`;
+    groups[key] = [...(groups[key] || []), ...items];
+  });
+
+  return groups;
+};
+
 export const generateSaudaEmailTemplate = ({
   company,
   date,
@@ -5,6 +32,8 @@ export const generateSaudaEmailTemplate = ({
   saudaEntries,
   userEmail,
   userName,
+  showCompany = false,
+  infoText,
 }) => {
   let tableRows = "";
   let slNo = 1;
@@ -42,6 +71,7 @@ export const generateSaudaEmailTemplate = ({
     tableRows += `
       <tr>
         <td style="padding: 14px 10px; text-align: center; border-bottom: 1px solid #e5e7eb;">${slNo++}</td>
+        ${showCompany ? `<td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.company || "-"}</td>` : ""}
         <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.unit || "-"}</td>
         <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.commodity || "-"}</td>
         <td style="padding: 14px 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">₹${rate.toFixed(2)}</td>
@@ -287,7 +317,9 @@ export const generateSaudaEmailTemplate = ({
             </div>
             
             <div class="info-bar">
-              <p><strong>Confirmed by:</strong> ${userName || userEmail || "Unknown"}</p>
+              ${infoText
+                ? `<p>${infoText}</p>`
+                : `<p><strong>Confirmed by:</strong> ${userName || userEmail || "Unknown"}</p>`}
             </div>
 
             <div class="meta-section">
@@ -305,6 +337,7 @@ export const generateSaudaEmailTemplate = ({
                   <thead>
                     <tr>
                       <th style="text-align: center;">Sl No</th>
+                      ${showCompany ? "<th>Company</th>" : ""}
                       <th>Unit</th>
                       <th>Commodity</th>
                       <th style="text-align: right;">Rate</th>
@@ -317,14 +350,14 @@ export const generateSaudaEmailTemplate = ({
                     </tr>
                   </thead>
                   <tbody>
-                    ${tableRows || '<tr><td colspan="11" style="text-align:center; padding: 60px 20px; color: #6b7280; font-size: 16px; font-weight: 500;">No entries found</td></tr>'}
+                    ${tableRows || `<tr><td colspan="${showCompany ? 11 : 10}" style="text-align:center; padding: 60px 20px; color: #6b7280; font-size: 16px; font-weight: 500;">No entries found</td></tr>`}
                   </tbody>
                   <tfoot>
                     <tr class="total-row">
-                      <td colspan="4" style="text-align: right;">Total:</td>
+                      <td colspan="${showCompany ? 5 : 4}" style="text-align: right;">Total:</td>
                       <td style="text-align: right;">${totalTons.toFixed(3)} Tons</td>
                       <td style="text-align: right;">${totalValue.toLocaleString("en-IN", { style: "currency", currency: "INR" })}</td>
-                      <td colspan="5"></td>
+                      <td colspan="4"></td>
                     </tr>
                   </tfoot>
                 </table>

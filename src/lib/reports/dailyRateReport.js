@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { connectDB } from "../mongodb.js";
 import Rate from "../../models/Rate.js";
 import { sendEmail } from "../email/sendEmail.js";
+import { generateRateReportEmailTemplate } from "../email/templates/rateReportTemplate.js";
 
 const REPORT_TIME_ZONE = "Asia/Kolkata";
 
@@ -19,29 +20,48 @@ const ROW_BATCH_SIZE = 200;
 const capitalizeWords = (str) =>
   String(str).toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 
-// Let the event loop breathe between batches so incoming requests are not
+// Lets the event loop breathe between batches so incoming requests are not
 // blocked while the workbook is built in the same process as the web server.
 const yieldToEventLoop = () => new Promise((resolve) => setImmediate(resolve));
+
+const istDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: REPORT_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
 
 const formatReportDate = (date) =>
   new Date(date).toLocaleDateString("en-GB", {
     timeZone: REPORT_TIME_ZONE,
   });
 
-async function buildReportBuffer(rates) {
-  const allDates = new Set();
-
-  rates.forEach((rate) => {
-    (rate.oldRates || []).forEach((old) => allDates.add(formatReportDate(old.date)));
-    if (rate.newRateDate) allDates.add(formatReportDate(rate.newRateDate));
+const formatReadableDate = (date) =>
+  new Date(date).toLocaleDateString("en-GB", {
+    timeZone: REPORT_TIME_ZONE,
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
   });
 
-  const sortedDates = Array.from(allDates).sort((a, b) => {
-    const [d1, m1, y1] = a.split("/").map(Number);
-    const [d2, m2, y2] = b.split("/").map(Number);
-    return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2);
+const formatReportTime = (date) =>
+  new Date(date).toLocaleTimeString("en-IN", {
+    timeZone: REPORT_TIME_ZONE,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
   });
 
+// The report only covers rates that were updated today (IST), so we resolve
+// the IST day boundaries and treat newRateDate as a UTC-midnight marker.
+const getIstTodayRange = (now = new Date()) => {
+  const todayStr = istDateFormatter.format(now);
+  const start = new Date(`${todayStr}T00:00:00.000Z`);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, end };
+};
+
+async function buildReportBuffer(rates, dateLabel) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Hansaria Food";
   const worksheet = workbook.addWorksheet("Daily Rates");
@@ -51,7 +71,7 @@ async function buildReportBuffer(rates) {
     { header: "Location", key: "Location", width: 20 },
     { header: "Commodity", key: "Commodity", width: 20 },
     { header: "Mobile", key: "Mobile", width: 15 },
-    ...sortedDates.map((date) => ({ header: date, key: date, width: 15 })),
+    { header: dateLabel, key: "Rate", width: 15 },
   ];
 
   worksheet.getRow(1).eachCell((cell) => {
@@ -70,26 +90,13 @@ async function buildReportBuffer(rates) {
 
   for (let index = 0; index < sortedRates.length; index += 1) {
     const rate = sortedRates[index];
-    const row = {
+    worksheet.addRow({
       Company: capitalizeWords(rate.company),
       Location: rate.location,
       Commodity: rate.commodity || "",
       Mobile: rate.mobile || "",
-    };
-
-    sortedDates.forEach((date) => {
-      row[date] = "";
+      Rate: rate.newRate ?? "",
     });
-
-    (rate.oldRates || []).forEach((old) => {
-      row[formatReportDate(old.date)] = old.rate;
-    });
-
-    if (rate.newRate && rate.newRateDate) {
-      row[formatReportDate(rate.newRateDate)] = rate.newRate;
-    }
-
-    worksheet.addRow(row);
 
     if ((index + 1) % ROW_BATCH_SIZE === 0) {
       await yieldToEventLoop();
@@ -135,32 +142,50 @@ export async function sendDailyRateReport() {
   try {
     await connectDB();
 
-    const rates = await Rate.find({})
-      .select("company location commodity mobile oldRates newRate newRateDate")
+    const now = new Date();
+    const { start, end } = getIstTodayRange(now);
+
+    const rates = await Rate.find({
+      newRateDate: { $gte: start, $lt: end },
+    })
+      .select("company location commodity mobile newRate newRateDate")
       .lean();
 
     if (!rates.length) {
-      console.log("[daily-rate-report] No rates found, nothing to send.");
-      return { sent: false, reason: "no-rates" };
+      console.log(
+        "[daily-rate-report] No rates updated today, nothing to send.",
+      );
+      return { sent: false, reason: "no-rates-today" };
     }
 
-    const today = new Date();
-    const buffer = await buildReportBuffer(rates);
+    const dateLabel = formatReportDate(now);
+    const subjectDate = formatReadableDate(now);
+    const reportTime = formatReportTime(now);
 
-    const stamp = formatReportDate(today).replace(/\//g, "-");
+    const buffer = await buildReportBuffer(rates, dateLabel);
+
+    const stamp = dateLabel.replace(/\//g, "-");
     const filename = `rates-report-${stamp}.xlsx`;
+
+    const html = generateRateReportEmailTemplate({
+      company: "Hansaria Food",
+      date: subjectDate,
+      time: reportTime,
+      rates: rates.map((rate) => ({
+        company: rate.company,
+        location: rate.location,
+        commodity: rate.commodity,
+        mobile: rate.mobile,
+        rate: rate.newRate,
+      })),
+    });
 
     await sendEmail({
       to: RECIPIENTS.join(", "),
-      subject: `Daily Rate Report - ${today.toLocaleDateString("en-GB", {
-        timeZone: REPORT_TIME_ZONE,
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })}`,
+      subject: `Daily Rate Report - ${subjectDate}`,
       text: `Hello,
 
-This is the daily rate report in Excel format.
+Please find attached today's rate report (${dateLabel}) in Excel format. Only rates updated today are included.
 
 Thanks,
 Santu De
@@ -169,14 +194,20 @@ Hansaria Food Private Limited
 *For Verification Goto https://hansariafood.in*
 
 (This is a system-generated email, please do not reply.)`,
+      html,
       attachments: [{ filename, content: buffer }],
     });
 
     console.log(
-      `[daily-rate-report] Sent "${filename}" to ${RECIPIENTS.length} recipients.`,
+      `[daily-rate-report] Sent "${filename}" with ${rates.length} rates to ${RECIPIENTS.length} recipients.`,
     );
 
-    return { sent: true, filename, recipients: RECIPIENTS.length };
+    return {
+      sent: true,
+      filename,
+      rates: rates.length,
+      recipients: RECIPIENTS.length,
+    };
   } finally {
     isSendingDailyReport = false;
   }
