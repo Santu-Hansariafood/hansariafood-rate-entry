@@ -1,65 +1,269 @@
-# llms.txt — RateEntry (Soya/Soya/DDGS/MDOC rate & sauda management)
+# llms.txt — RateEntry (Hansaria Food Pvt. Ltd.)
 
-> Project-level instructions for LLMs / coding agents. Keep this file in sync when
-> conventions change.
+> Project-level instructions for LLMs / coding agents. Update this file when
+> conventions change. Search-friendly: each section has a stable number and
+> keyword anchors.
 
-## 1. Stack
-- **Framework:** Next.js 16 (App Router), React 19, `"use client"` on interactive components.
-- **Language:** JavaScript (`.jsx` / `.js`), not TypeScript. No `.ts` files.
-- **Styling:** Tailwind CSS v4 (via `@tailwindcss/postcss`). `src/app/globals.css` contains `@import "tailwindcss";` and CSS variables. Dark mode uses the `dark:` variant (class-driven).
-- **UI icons:** `lucide-react`. Reuse the project's existing icons; do not add a new icon library.
-- **Animations:** `framer-motion` (used in Welcome / cards / modals).
-- **Data fetching:** `axiosInstance` from `@/lib/axiosInstance/axiosInstance` (base URL + auth interceptor). Always use it instead of raw `axios`/`fetch` for API calls.
-- **Notifications:** `react-toastify` (`toast.success` / `toast.error` / `toast.warn`).
-- **State:** React hooks + Context (`UserContext`, `SocketContext`). Feature logic lives in `src/hooks/**`.
-- **Backend:** Next.js Route Handlers under `src/app/api/**`, Mongoose models in `src/models/**`, MongoDB connection in `src/lib/mongodb.js`.
-- **Build/dev:** `npm run dev` (starts `server.mjs`), `npm run build`, `npm start`.
-- **ESLint:** `eslint.config.mjs` is currently broken repo-wide (circular-structure crash in `@eslint/eslintrc`). Do not rely on `npx eslint`; use IDE diagnostics instead.
+---
 
-## 2. Layout & structure
-- App pages: `src/app/<route>/page.jsx`.
-- Reusable UI: `src/components/ui/**` (feature components) and `src/components/common/**` (shared: Dropdown, Modal, Loading, Title, etc.).
-- Hooks: `src/hooks/**` — one folder per feature.
-- API routes: `src/app/api/**/route.js`.
-- Path alias `@/` → `src/` (see `jsconfig.json`).
+## Table of Contents
 
-## 3. Core conventions
-1. **Dark + light mode is mandatory.** Every new/edited UI element must include `dark:` variants for background, border, text, and hover states. Surfaces use `bg-white/70 dark:bg-gray-900/70` glass cards with `backdrop-blur-xl`.
-2. **No native `<select>` for filtering.** Replace dropdowns with chip/pill selectors when the option set is small-to-medium (e.g. categories). Chips: rounded-full, outlined inactive, gradient active state, with a clear/reset affordance.
-3. **Icons in buttons/chips.** Pair text with a small `lucide-react` icon (13–17px) so actions are scannable.
-4. **Glassmorphism cards.** Rounded (`rounded-2xl`/`rounded-3xl`), soft border (`border-slate-200/80 dark:border-white/10`), subtle shadow, optional decorative gradient glow blob (absolute, blurred, pointer-events-none).
-5. **Consistent color semantics:**
-   - Pending / to-do: sky (`sky-50`, `sky-200`, `sky-700`, dark `sky-500/10`, `sky-300`).
-   - Done / taken: emerald (`emerald-50`, `emerald-200`, `emerald-700`, dark `emerald-500/10`, `emerald-300`).
-   - Accent / primary gradient: indigo → violet (`from-indigo-500 to-violet-600`).
-   - Success gradient for progress bars: emerald → teal (`from-emerald-400 to-teal-500`).
+1. [Company & Product (what this app is)](#1-company--product)
+2. [Tech Stack](#2-tech-stack)
+3. [Getting Started (commands & env)](#3-getting-started)
+4. [Project Structure](#4-project-structure)
+5. [Domain / Data Models (key entities)](#5-domain--data-models)
+6. [Authentication & Middleware](#6-authentication--middleware)
+7. [API & Data Fetching](#7-api--data-fetching)
+8. [UI / UX Conventions (MUST READ)](#8-ui--ux-conventions)
+9. [Component-Specific Rules](#9-component-specific-rules)
+10. [Scripts & Tooling](#10-scripts--tooling)
+11. [Working Rules for Agents](#11-working-rules-for-agents)
+
+---
+
+## 1. Company & Product
+
+**Company:** Hansaria Food Private Limited (Kolkata, West Bengal, India)
+- Founded: 2018-06-15. Founders: Gopal Agarwal, Sunita Agarwalla.
+- Domain: Agri-commodity supply & brokerage — maize (corn), soya DOC, M DOC, DDGS,
+  poultry/animal feed raw materials.
+- Site name / app: "Hansaria Food". Theme color teal (`#0F766E`). Locale `en-IN`,
+  timezone `Asia/Kolkata`.
+- Contact: +91-98304-33535 · info@hansariafood.com
+- Developer (SEO credit): Santu De, Full Stack Developer.
+
+**Product:** An internal rate-entry & sauda (deal) management web app + PWA.
+Employees log in (mobile OTP) and enter daily rates, create/update sauda deals
+against buyer companies, manage sellers/companies/locations/commodities/categories,
+run analytics, and send rate/sauda reports via WhatsApp (Hansaria/hfconnect API),
+email, and in-app notifications (Socket.io).
+
+**Key business terms (glossary):**
+| Term | Meaning |
+|---|---|
+| Rate | Daily price (₹) of a commodity for a company × location. |
+| Sauda | A trade deal: buyer company, seller, company, commodity, tons, rate, delivery date. |
+| Commodity | Maize, Soya DOC, M DOC, DDGS, etc. |
+| Category | Grouping for companies (e.g. buyer type). |
+| Location | Origin/buyer unit (e.g. plant/branch). |
+| Loading From | Indian state of origin (from `src/data/state-city.json`). |
+| Buyer Company | The purchasing company (buyer type). |
+| Seller | Selling party; each seller has a list of companies. |
+| ManageCompany | Canonical company record with locations, commodities, visibility flags. |
+| Rate Taken | Per-day tracker of buyer companies whose rates have been taken. |
+
+---
+
+## 2. Tech Stack
+
+- **Framework:** Next.js 16 (App Router), React 19. Interactive components use `"use client"`.
+- **Language:** JavaScript (`.jsx` / `.js`). **No TypeScript.** Do not introduce `.ts` files.
+- **Styling:** Tailwind CSS v4 via `@tailwindcss/postcss`. `src/app/globals.css`
+  does `@import "tailwindcss";`. Dark mode via the `dark:` variant (class strategy).
+- **Icons:** `lucide-react` only — do not add another icon library.
+- **Animations:** `framer-motion` (Welcome screen, cards, modals).
+- **State:** React hooks + Context (`UserContext`, `SocketContext`). Feature logic in `src/hooks/**`.
+- **HTTP:** `axiosInstance` (`@/lib/axiosInstance/axiosInstance`) — base `/api`,
+  `x-api-key` header (`NEXT_PUBLIC_API_KEY`), auto-retry on 5xx for GET/HEAD,
+  GET request de-duplication, longer timeouts for rate/analytics/export paths.
+  **Always use this, never raw axios/fetch.**
+- **Toasts:** `react-toastify` (`toast.success/error/warn`).
+- **Realtime:** Socket.io via custom `server.mjs` (same port as Next).
+- **Backend:** Next.js Route Handlers `src/app/api/**`. Mongoose models `src/models/**`.
+  MongoDB connection `src/lib/mongodb.js`.
+- **Auth:** NextAuth.js (mobile OTP). `withAuth` middleware; admins from
+  `NEXT_PUBLIC_ADMIN_MOBILES`.
+- **Messaging:** Hansaria/hfconnect API (WhatsApp-style), Nodemailer (email).
+- **Exports:** `exceljs`, `jspdf`/`html2canvas`/`jspdf-autotable`, `xlsx`.
+- **Scheduling:** `node-cron` in `server.mjs` (daily rate & sauda reports at 8 PM IST).
+
+---
+
+## 3. Getting Started
+
+### Commands
+```bash
+npm install        # install deps
+npm run dev        # dev server + sockets (server.mjs), port 16000 by default
+npm run build      # production build
+npm start          # production (server.mjs)
+npm run lint       # NOTE: eslint config is currently broken (see §10)
+```
+Dev server: `http://localhost:16000` (set `PORT` to override).
+
+### Environment variables (`.env.local`)
+```env
+# DB & auth
+MONGODB_URI=
+NEXTAUTH_URL=
+NEXTAUTH_SECRET=
+
+# Client-facing
+NEXT_PUBLIC_API_KEY=
+NEXT_PUBLIC_SITE_URL=
+NEXT_PUBLIC_ADMIN_MOBILES=98XXXXXXXX,99XXXXXXXX   # comma-separated admin mobiles
+
+# Messaging (Hansaria / hfconnect)
+HANSARIA_API_BASE_URL=https://hfconnect.in
+HANSARIA_API_URL=https://hfconnect.in/api/v1/messages/send
+HANSARIA_API_KEY=
+HANSARIA_ADMIN_ID=
+HANSARIA_TEMPLATE_NAME=hansaria_new_bid
+HANSARIA_RATE_TEMPLATE_ID=...
+HANSARIA_SAUDA_TEMPLATE_ID=...
+HANSARIA_OTP_TEMPLATE_ID=...
+```
+Never expose server secrets in client code. Keep API keys out of git.
+
+---
+
+## 4. Project Structure
+
+```
+rateentry/
+├── server.mjs                 # custom Next server + Socket.io + cron
+├── public/                    # static assets, icons, manifest, sw.js (PWA)
+└── src/
+    ├── app/
+    │   ├── layout.js          # RootLayout: fonts, providers, Header/Footer, Toast
+    │   ├── globals.css        # Tailwind import + CSS vars
+    │   ├── <route>/page.jsx   # pages (rate, sauda, company, managecompany, ...)
+    │   └── api/<...>/route.js # backend route handlers
+    ├── components/
+    │   ├── common/            # shared: Dropdown, Modal, Loading, Title, Header, Footer...
+    │   └── ui/                # feature components (Sauda, Rate, Welcome, ...)
+    ├── hooks/                 # feature hooks (one folder per feature)
+    ├── lib/                   # axiosInstance, mongodb, auth, socket, email, reports, seo
+    ├── models/                # Mongoose schemas (Company, ManageCompany, Rate, SaudaEntry, Seller, ...)
+    ├── middleware/middleware.js
+    ├── config/navigation.js   # nav + admin mobiles
+    ├── context/               # UserContext, SocketContext
+    ├── data/                  # state-city.json, holiday.json, cookiePolicy.json
+    └── utils/                 # export/excel/pdf helpers, formatting, motion variants
+```
+Path alias: `@/` → `src/` (`jsconfig.json`).
+
+---
+
+## 5. Domain / Data Models
+
+Source of truth: `src/models/**`. Key entities:
+
+| Model | File | Purpose | Key fields |
+|---|---|---|---|
+| **Company** | `Company.js` | Simple company (name, category, type buyer/seller) | `name`, `category`, `type[]`, `isSelfCompany` |
+| **ManageCompany** | `ManageCompany.js` | Canonical company with contacts/locations | `name`, `location[]`, `state`, `category`, `commodities[]`, `mobileNumbers[]`, `isSoyaVisible`, `isDDGSVisible`, `isMDOCVisible` |
+| **Rate** | `Rate.js` | Daily rate per company×location×commodity | `company`, `location`, `commodity`, `newRate`, `newRateDate`, `quantity`, `payment`, `others`, `oldRates[]` |
+| **SaudaEntry** | `SaudaEntry.js` | Day's sauda deals per company | `company`, `date`, `saudaEntries` (Map of `unit-commodity` → array of `{tons, finalRate, unit, commodity, sellerName, sellerCompany, deliveryDate, loadingFrom, saudaNo, others}`). `getNextSaudaNumber(date)` returns `FY-####` (FY starts April). |
+| **Seller** | `Seller.js` | Sellers and their companies | `sellerName`, `companies[]` |
+| **Category** | `Category.js` | Categories for companies | `name` |
+| **RateTaken** | `RateTaken.js` | Per-day "rates taken" tracker | `date`, `companyIds[]` (resets on India date change) |
+| **User** | `User.js` | App users (mobile-based) | mobile, name, hfconnect id, etc. |
+| **UserCompany** | `UserCompany.js` | Company assignments per user | mobile → companies |
+| Other | `Commodity.js`, `Location.js`, `Freight.js`, `Task.js`, `DeletedSauda.js`, `TagSauda.js`, `SaudaStatus.js`, `RateHistory.js`, `RateUpdate.js`, `Purchase.js`, `EmployeeStatus.js`, `DescriptionStats.js` |
+
+**Date format for records:** `YYYY-MM-DD` (India date). UI display uses `en-IN`.
+
+---
+
+## 6. Authentication & Middleware
+
+- NextAuth credentials (mobile OTP). Sign-in page `/`.
+- `src/middleware/middleware.js`: `withAuth` protects all routes except public ones
+  (login, forgot/reset password, policy pages, `/api`, static assets). Unauthenticated
+  → redirect to `/` with `callbackUrl`.
+- Admins = `NEXT_PUBLIC_ADMIN_MOBILES` (comma-separated). Determines admin dashboard
+  view (Welcome.jsx) and extra privileges.
+- API keys: `x-api-key` header checked by `apiKeyMiddleware` on protected routes.
+- Single-device guard middleware exists (`singleDeviceGuard`).
+
+---
+
+## 7. API & Data Fetching
+
+- All client calls go through `axiosInstance` → `/api/<route>`.
+- Notable endpoints:
+  - `GET/POST /api/rate-taken` — daily rate-taken tracker.
+  - `GET /api/managecompany?type=buyer&page=&limit=` — buyer companies (paginated, 100/page).
+  - `GET /api/categories?limit=` — categories.
+  - `POST /api/save-sauda`, `POST /api/save-sauda/delete-entry` — sauda CRUD.
+  - `GET /api/rate`, `/api/rate-analysis`, `/api/analytics/*` — rate data & analytics.
+  - `/api/auth/*` (NextAuth), `/api/auth/register`, `/api/seller`, `/api/companies`, etc.
+- Server-side reports: `src/lib/reports/dailyRateReport.js`, `dailySaudaReport.js`.
+
+---
+
+## 8. UI / UX Conventions
+
+**MUST follow on every new/edited UI element:**
+
+1. **Dark + light mode mandatory.** Every element needs `dark:` variants for bg,
+   border, text, hover. Surfaces: `bg-white/70 dark:bg-gray-900/70` + `backdrop-blur-xl`.
+2. **No native `<select>` for filtering.** Use chip/pill selectors for small/medium
+   option sets (e.g. categories). Chips: `rounded-full`, outlined when inactive,
+   gradient (`from-indigo-500 to-violet-600`) when active, with a clear/reset link.
+3. **Icon + text.** Pair buttons/chips with a small `lucide-react` icon (13–17px).
+4. **Glassmorphism cards:** `rounded-2xl`/`rounded-3xl`, `border-slate-200/80 dark:border-white/10`,
+   soft shadow, optional decorative gradient glow blob (absolute, blurred, `pointer-events-none`).
+5. **Color semantics:**
+   - Pending/to-do: **sky** (`sky-50`, `sky-200`, `sky-700` / dark `sky-500/10`, `sky-300`).
+   - Done/taken: **emerald** (`emerald-50`, `emerald-200`, `emerald-700` / dark `emerald-500/10`, `emerald-300`).
+   - Accent gradient: **indigo → violet** (`from-indigo-500 to-violet-600`).
+   - Progress gradient: **emerald → teal** (`from-emerald-400 to-teal-500`).
    - Danger: red-600 hover red-700.
-6. **Inputs:** `h-9`, rounded, `border-slate-300 dark:border-gray-700`, `bg-white dark:bg-gray-800`, focus ring colored by intent.
-7. **Loading states:** inline `Loader2` spinner (animate-spin) inside the button/chip rather than a full-screen loader when possible.
-8. **Error states:** consistent alert card — red-tinted background, `AlertCircle` icon, pill-shaped Retry button.
-9. **Empty states:** dashed-border card with a descriptive message, not a misleading "all done" message.
-10. **Responsive grids:** start 2-col on mobile, scale up (md, lg). Use `min-w-0` on grid children to prevent overflow.
-11. **Preserve existing logic.** When redesigning UI, keep all state, handlers, API calls, and data flow identical — change only markup/classes and visual order.
+6. **Inputs:** `h-9`, rounded, `border-slate-300 dark:border-gray-700`, `bg-white dark:bg-gray-800`,
+   focus ring colored by intent.
+7. **Loading:** inline `Loader2` (animate-spin) inside the button/chip when possible.
+8. **Errors:** consistent alert card — red-tinted bg, `AlertCircle` icon, pill Retry button.
+9. **Empty states:** dashed-border card with a clear message (not a misleading "all done").
+10. **Responsive grids:** 2-col mobile → 4-col md → 6-col lg. Add `min-w-0` to grid children.
+11. **Preserve logic on redesigns.** When redesigning, keep state, handlers, API
+    calls, and data flow identical — change only markup/classes and visual order.
 
-## 4. Specific component rules
+---
 
-### RateTakenSection (`src/components/ui/Welcome/RateTakenSection.jsx`)
-- Category filter = chip row (All + categories), active chip uses indigo→violet gradient. Long lists scroll inside a `max-h-28` area with `scrollbar-hidden`.
-- Has a "Daily progress" card with count, percentage badge, and animated progress bar reflecting the *filtered* set.
-- Pending companies = sky chips with `+` icon; taken companies = emerald chips with `CheckCircle2` + `RotateCcw` hint. Inline spinner while a save is in flight.
+## 9. Component-Specific Rules
 
-### SaudaTable entry form (`src/components/ui/Sauda/SaudaTable/SaudaTable.jsx`)
-Each sauda entry card uses a **6-col grid on `lg`** arranged in four rows:
+### 9.1 RateTakenSection — `src/components/ui/Welcome/RateTakenSection.jsx`
+- Category filter = chip row (`All` + categories), active = indigo→violet gradient.
+  Long lists scroll in a `max-h-28` area using `scrollbar-hidden`.
+- "Daily progress" card: count, percentage badge, animated progress bar (filtered set).
+- Pending = sky chips with `+`; taken = emerald chips with `CheckCircle2` + `RotateCcw`.
+  Inline `Loader2` spinner while a save is in flight.
+
+### 9.2 SaudaTable entry form — `src/components/ui/Sauda/SaudaTable/SaudaTable.jsx`
+Each sauda entry card uses a **6-col grid on `lg`** in 4 rows:
 1. `Rate` · `Tons` · `Loading From` (2 cols each)
 2. `Seller` · `Company` (3 cols each — dropdowns get more room)
 3. `Sauda No` · `Delivery Date` · Save/Remove buttons (2 cols each; buttons right-aligned)
 4. `Others` / `+ notes` (full width)
-- Smaller breakpoints: 2-col on mobile, 4-col on `md`.
-- Filled entry = green border/card; incomplete = red border/card.
-- Buttons use `rounded-lg` + shadow, sit on the input baseline.
 
-## 5. Working rules
-- Do not add new dependencies without asking.
-- Do not modify `eslint.config.mjs` unless the task is specifically to fix it.
-- Use `GetDiagnostics` after edits; Tailwind v4 suggests `bg-linear-to-*` instead of `bg-gradient-to-*`, but the codebase uses `bg-gradient-to-*` — keep the existing convention.
-- Always read the target file before editing. Keep edits scoped to what was requested.
+Breakpoints: 2-col mobile, 4-col md. Filled entry = green border/card; incomplete = red.
+Buttons: `rounded-lg` + shadow, baseline-aligned.
+
+---
+
+## 10. Scripts & Tooling
+
+- `package.json` scripts: `dev`, `build`, `start`, `lint`.
+- **ESLint is currently broken.** `eslint.config.mjs` throws
+  `TypeError: Converting circular structure to JSON` from `@eslint/eslintrc`.
+  Do not run `npx eslint`. Use IDE diagnostics (`GetDiagnostics`) instead.
+  Do not modify the config unless the task is to fix it.
+- Tailwind v4 linter suggests `bg-linear-to-*` instead of `bg-gradient-to-*` —
+  **ignore**; the codebase uses `bg-gradient-to-*` and we keep that convention.
+- PowerShell note: `&&`/`||` not supported in PowerShell 5; use `;` or separate commands.
+
+---
+
+## 11. Working Rules for Agents
+
+1. Always `Read` the target file before editing. Keep edits scoped to the request.
+2. Do **not** add new dependencies without asking.
+3. Do **not** introduce TypeScript.
+4. Do **not** add a new icon library — use `lucide-react`.
+5. Use `axiosInstance` for all API calls.
+6. After edits, run `GetDiagnostics` and address real errors (ignore the `bg-gradient` suggestion).
+7. Never expose secrets in client code or commit them.
+8. Keep this file in sync when conventions change.
