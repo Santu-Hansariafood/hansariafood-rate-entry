@@ -16,11 +16,15 @@ const getDateKey = () =>
 
 export default function RateTakenSection() {
   const [companies, setCompanies] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [tracker, setTracker] = useState({ date: "", takenIds: [] });
   const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingTaken, setLoadingTaken] = useState(false);
   const [savingIds, setSavingIds] = useState([]);
   const [companiesError, setCompaniesError] = useState("");
+  const [categoriesError, setCategoriesError] = useState("");
   const [statusError, setStatusError] = useState("");
   const [statusReload, setStatusReload] = useState(0);
   const lastTodayRef = useRef("");
@@ -57,12 +61,34 @@ export default function RateTakenSection() {
     }
   }, []);
 
+  const fetchCategories = useCallback(async () => {
+    setLoadingCategories(true);
+    setCategoriesError("");
+
+    try {
+      const { data } = await axiosInstance.get("/categories", {
+        params: { limit: 1000 },
+      });
+      setCategories(
+        (Array.isArray(data?.categories) ? data.categories : []).filter(
+          (category) => category?._id && category.name
+        )
+      );
+    } catch (fetchError) {
+      console.error("Failed to fetch categories for rate tracking:", fetchError);
+      setCategoriesError("Could not load categories. Please try again.");
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
   useEffect(() => {
     const today = getDateKey();
     lastTodayRef.current = today;
     setTracker({ date: today, takenIds: [] });
     fetchCompanies();
-  }, [fetchCompanies]);
+    fetchCategories();
+  }, [fetchCategories, fetchCompanies]);
 
   useEffect(() => {
     if (!tracker.date) return undefined;
@@ -147,10 +173,17 @@ export default function RateTakenSection() {
   };
 
   const takenIds = new Set(tracker.takenIds);
-  const takenCompanies = companies.filter((company) =>
+  const filteredCompanies = selectedCategory
+    ? companies.filter(
+        (company) =>
+          company.category?.trim().toLowerCase() ===
+          selectedCategory.trim().toLowerCase()
+      )
+    : companies;
+  const takenCompanies = filteredCompanies.filter((company) =>
     takenIds.has(company._id)
   );
-  const pendingCompanies = companies.filter(
+  const pendingCompanies = filteredCompanies.filter(
     (company) => !takenIds.has(company._id)
   );
 
@@ -218,6 +251,44 @@ export default function RateTakenSection() {
               </button>
             </div>
           )}
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div className="w-full sm:max-w-xs">
+              <label
+                htmlFor="rate-taken-category"
+                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Category
+              </label>
+              <select
+                id="rate-taken-category"
+                value={selectedCategory}
+                onChange={(event) => setSelectedCategory(event.target.value)}
+                disabled={loadingCategories}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 disabled:cursor-wait disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+              >
+                <option value="">
+                  {loadingCategories ? "Loading categories..." : "All categories"}
+                </option>
+                {categories.map((category) => (
+                  <option key={category._id} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {categoriesError && (
+              <div className="flex items-center gap-3 text-sm text-red-600 dark:text-red-400">
+                <p>{categoriesError}</p>
+                <button
+                  type="button"
+                  onClick={fetchCategories}
+                  className="font-semibold underline"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
           <div className="mt-5 grid gap-6 lg:grid-cols-2">
             <div>
               <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-200">
