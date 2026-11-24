@@ -83,6 +83,12 @@ The same save flow also sends `hansaria_bid_accepted` (overridable with
 `HANSARIA_SAUDA_BID_ACCEPTED_TEMPLATE`) using the commodity, group, origin,
 consignee, quantity, rate, saved Sauda mobile number, and notes.
 
+The admin dashboard's Rate Taken tracker uses `GET /api/rate-taken?date=YYYY-MM-DD`
+to load marked buyer companies and `POST /api/rate-taken` with `{ date,
+companyId, taken }` to update one. The database stores only the current day's
+tracker; when the India date changes, the API clears the saved company list
+before returning the new day's status.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

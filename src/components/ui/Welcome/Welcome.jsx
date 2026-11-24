@@ -36,6 +36,10 @@ const SaudaTonsChart = dynamic(
   () => import("@/components/common/SaudaTonsChart/SaudaTonsChart"),
   { loading: () => <Loading /> }
 );
+const RateTakenSection = dynamic(
+  () => import("@/components/ui/Welcome/RateTakenSection"),
+  { loading: () => <Loading /> }
+);
 
 export default function Welcome() {
   const { mobile } = useUser();
@@ -60,54 +64,57 @@ export default function Welcome() {
   }, []);
 
   const fetchUserData = useCallback(async () => {
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      const sessionName = session?.user?.name;
-      const userNamePromise = (async () => {
-        if (sessionName) {
-          const formatted = formatName(sessionName);
-          setName(formatted);
-          localStorage.setItem("userName", formatted);
-          return formatted;
-        } else {
-          try {
-            const userResponse = await axiosInstance.get(`/auth/register?mobile=${effectiveMobile}`);
-            const userData = userResponse.data?.user;
-            if (userData?.name) {
-              const formatted = formatName(userData.name);
-              setName(formatted);
-              localStorage.setItem("userName", formatted);
-              return formatted;
-            } else {
-              const storedName = localStorage.getItem("userName");
-              const finalName = storedName || "Guest";
-              setName(finalName);
-              return finalName;
-            }
-          } catch {
-            const storedName = localStorage.getItem("userName");
-            const finalName = storedName || "Guest";
-            setName(finalName);
-            return finalName;
-          }
+    const fetchName = async () => {
+      let userName =
+        typeof session?.user?.name === "string"
+          ? session.user.name.trim()
+          : "";
+
+      if (!userName) {
+        try {
+          const userResponse = await axiosInstance.get(
+            `/auth/register?mobile=${encodeURIComponent(effectiveMobile)}`
+          );
+          userName = userResponse.data?.user?.name?.trim() || "";
+        } catch (error) {
+          console.error("Failed to fetch dashboard user name:", error);
         }
-      })();
+      }
 
-      const companyResponsePromise = axiosInstance.get(
-        `/user-companies?mobile=${encodeURIComponent(effectiveMobile)}`
-      );
+      if (!userName) {
+        const savedMobile = localStorage.getItem("userNameMobile");
+        if (savedMobile === String(effectiveMobile)) {
+          userName = localStorage.getItem("userName") || "";
+        }
+      }
 
-      const [_, companyResponse] = await Promise.all([
-        userNamePromise,
-        companyResponsePromise
-      ]);
+      const formattedName = userName ? formatName(userName) : "Guest";
+      setName(formattedName);
+      if (userName) {
+        localStorage.setItem("userName", formattedName);
+        localStorage.setItem("userNameMobile", String(effectiveMobile));
+      }
+    };
 
+    const fetchAssignedCompanies = async () => {
+      try {
+        const response = await axiosInstance.get(
+          `/user-companies?mobile=${encodeURIComponent(effectiveMobile)}`
+        );
+        setAssignedCompanies(response.data?.companies ?? []);
+      } catch (error) {
+        if (error.response?.status !== 404) {
+          console.error("Failed to fetch assigned companies:", error);
+        }
+        setAssignedCompanies([]);
+      }
+    };
+
+    try {
       if (effectiveMobile) localStorage.setItem("mobile", effectiveMobile);
-      setAssignedCompanies(companyResponse.data?.companies ?? []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setName("Guest");
+      await Promise.all([fetchName(), fetchAssignedCompanies()]);
     } finally {
       setLoading(false);
     }
@@ -302,6 +309,9 @@ export default function Welcome() {
 
 const AdminDashboard = () => (
   <div className="space-y-8 mt-12 w-full max-w-7xl mx-auto px-4">
+    <section role="region" aria-label="Rate Taken Tracker">
+      <RateTakenSection />
+    </section>
     <section role="region" aria-label="View Rate Section">
       <ViewRate />
     </section>
