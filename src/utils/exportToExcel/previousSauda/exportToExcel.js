@@ -12,6 +12,7 @@ export const downloadSaudaExcel = async (rows, fileName = "Previous_Sauda.xlsx")
     "Delivery Date": row.deliveryDate,
     "Seller Company": row.sellerCompany,
     Tons: row.tons,
+    "Loading From": row.loadingFrom,
     "Final Rate": row.finalRate,
     Status: row.statusText || "Pending",
     Others: row.others,

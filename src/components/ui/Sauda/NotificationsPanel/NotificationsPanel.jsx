@@ -40,6 +40,7 @@ const NotificationsPanel = ({ onClose }) => {
       `*Location:* ${item.location}`,
       `*Commodity:* ${item.commodity}`,
       `*Tons:* ${item.tons}`,
+      item.loadingFrom ? `*Loading From:* ${item.loadingFrom}` : null,
       `*Rate:* ₹${item.rate ?? "N/A"}`,
       item.buyerName ? `*Buyer:* ${toTitleCase(item.buyerName)}` : null,
       item.sellerCompany
@@ -154,6 +155,12 @@ const NotificationsPanel = ({ onClose }) => {
                   <div className="text-gray-600 dark:text-gray-400">
                     🪶 Tons: <span className="font-semibold">{item.tons}</span>
                   </div>
+                  {item.loadingFrom && (
+                    <div className="text-gray-600 dark:text-gray-400">
+                      🚚 Loading From:{" "}
+                      <span className="font-semibold">{item.loadingFrom}</span>
+                    </div>
+                  )}
                   {item.rate && (
                     <div className="text-gray-600 dark:text-gray-400">
                       💰 Rate:{" "}

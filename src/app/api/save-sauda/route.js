@@ -16,6 +16,11 @@ import {
 } from "@/lib/hansariaMessages";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 import { rateLimitGuard } from "@/lib/apiUtils";
+import stateCityData from "@/data/state-city.json";
+
+const VALID_LOADING_FROM_STATES = new Set(
+  stateCityData.map((item) => item.state)
+);
 
 export async function POST(req) {
   const limited = rateLimitGuard(req, "write");
@@ -102,6 +107,14 @@ export async function POST(req) {
               );
             }
 
+            const loadingFrom = String(entry.loadingFrom || "").trim();
+            if (loadingFrom && !VALID_LOADING_FROM_STATES.has(loadingFrom)) {
+              return NextResponse.json(
+                { error: "Select a valid Loading From state." },
+                { status: 400 }
+              );
+            }
+
             let saudaNumber = String(entry.saudaNo || "").trim();
 
             if (!saudaNumber) {
@@ -118,6 +131,7 @@ export async function POST(req) {
               sellerName: (entry.sellerName || "").trim(),
               sellerCompany: (entry.sellerCompany || "").trim(),
               deliveryDate: (entry.deliveryDate || "").trim(),
+              loadingFrom,
             });
           }
 
@@ -175,7 +189,9 @@ export async function POST(req) {
                 String(existingItem.others || "").trim() !==
                   String(item.others || "").trim() ||
                 String(existingItem.deliveryDate || "").trim() !==
-                  String(item.deliveryDate || "").trim()
+                  String(item.deliveryDate || "").trim() ||
+                String(existingItem.loadingFrom || "").trim() !==
+                  String(item.loadingFrom || "").trim()
               ) {
                 currentMap.set(no, item);
                 keyHasChanges = true;

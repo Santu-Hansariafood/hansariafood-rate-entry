@@ -104,6 +104,7 @@ const PreviousSauda = () => {
       // { header: "Seller Name", accessor: "sellerName" },
       { header: "Seller Company", accessor: "sellerCompany" },
       { header: "Tons", accessor: "tons" },
+      { header: "Loading From", accessor: "loadingFrom" },
       { header: "Final Rate", accessor: "finalRate" },
       { header: "Status", accessor: "status" },
       { header: "Others", accessor: "others" },

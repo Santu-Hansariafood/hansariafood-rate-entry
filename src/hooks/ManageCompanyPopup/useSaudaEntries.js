@@ -53,6 +53,7 @@ export function useSaudaEntries(company, rateMap, sellers, companyNameToId) {
         entry.sellerCompany ??
         "",
       deliveryDate: entry.deliveryDate || "",
+      loadingFrom: entry.loadingFrom || "",
     }),
     [sellerNameToId, companyNameToId]
   );
@@ -66,6 +67,7 @@ export function useSaudaEntries(company, rateMap, sellers, companyNameToId) {
       sellerId: "",
       sellerCompanyId: "",
       deliveryDate: "",
+      loadingFrom: "",
     }),
     []
   );

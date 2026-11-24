@@ -53,6 +53,7 @@ export async function GET(req) {
             time: time || "00:00",
             company: company,
             deliveryDate: item.deliveryDate || "",
+            loadingFrom: item.loadingFrom || "",
           };
 
           if (item.others) {

@@ -11,6 +11,7 @@ const saudaEntrySubSchema = new mongoose.Schema(
     sellerName: { type: String, default: "" },
     sellerCompany: { type: String, default: "" },
     deliveryDate: { type: String, default: "" },
+    loadingFrom: { type: String, default: "" },
   },
   { _id: false },
 );

@@ -5,6 +5,7 @@ import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
+import stateCityData from "@/data/state-city.json";
 
 const normalize = (s) => s?.trim().toLowerCase() || "";
 const Dropdown = dynamic(
@@ -49,6 +50,15 @@ export default function SaudaTable({
         value: s._id,
       })),
     [sellers]
+  );
+
+  const loadingFromOptions = useMemo(
+    () =>
+      stateCityData
+        .map((item) => item.state)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b)),
+    []
   );
 
   // Seller id -> that seller's companies (values are Company ids).
@@ -289,6 +299,18 @@ export default function SaudaTable({
                                 handleChange(key, idx, "tons", ev.target.value)
                               }
                             />
+                            <div className="min-w-48 flex-1">
+                              <Dropdown
+                                label="Loading From"
+                                options={loadingFromOptions}
+                                value={e.loadingFrom || ""}
+                                onChange={(value) =>
+                                  handleChange(key, idx, "loadingFrom", value)
+                                }
+                                placeholder="Select State..."
+                                clearOnEmpty
+                              />
+                            </div>
                             <div className="flex flex-col sm:flex-row gap-3 flex-grow">
                               <Dropdown
                                 label="Seller"

@@ -50,6 +50,7 @@ const usePreviousSauda = () => {
             // sellerName: item?.sellerName || "",
             sellerCompany: item?.sellerCompany || "",
             tons: item?.tons || "",
+            loadingFrom: item?.loadingFrom || "",
             finalRate: item?.finalRate || "",
             deliveryDate: item?.deliveryDate || "",
             others: item?.others || "",

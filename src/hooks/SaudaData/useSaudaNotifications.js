@@ -52,6 +52,7 @@ export default function useSaudaNotifications() {
         tons: item.tons,
         date: item.date,
         time: item.time,
+        loadingFrom: item.loadingFrom || "",
       }));
 
       try {
