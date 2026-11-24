@@ -252,7 +252,7 @@ export default function SaudaTable({
                           <div
                             key={idx}
                             className={`
-                            grid grid-cols-2 lg:grid-cols-8 items-end gap-3 p-4 rounded-xl shadow-md transition-all duration-200
+                            grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 items-end gap-3 p-4 rounded-xl shadow-md transition-all duration-200
                             border-2
                             ${
                               isFilled
@@ -262,10 +262,12 @@ export default function SaudaTable({
                             hover:shadow-lg
                           `}
                           >
-                            <span className="col-span-2 lg:col-span-8 text-base font-semibold text-gray-600 dark:text-gray-300">
+                            <span className="col-span-2 md:col-span-4 lg:col-span-6 text-base font-semibold text-gray-600 dark:text-gray-300">
                               {String.fromCharCode(97 + idx)}.
                             </span>
-                            <div className="min-w-0">
+
+                            {/* Row 1: Rate · Tons · Loading From */}
+                            <div className="min-w-0 md:col-span-1 lg:col-span-2">
                               <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                 Rate
                               </label>
@@ -289,7 +291,7 @@ export default function SaudaTable({
                                 />
                               </div>
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 md:col-span-1 lg:col-span-2">
                               <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                 Tons
                               </label>
@@ -303,7 +305,7 @@ export default function SaudaTable({
                                 }
                               />
                             </div>
-                            <div className="col-span-2 min-w-0 lg:col-span-2 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
+                            <div className="col-span-2 md:col-span-2 lg:col-span-2 min-w-0 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
                               <Dropdown
                                 label="Loading From"
                                 options={loadingFromOptions}
@@ -315,7 +317,9 @@ export default function SaudaTable({
                                 clearOnEmpty
                               />
                             </div>
-                            <div className="col-span-2 min-w-0 lg:col-span-2 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
+
+                            {/* Row 2: Seller · Company */}
+                            <div className="col-span-2 md:col-span-2 lg:col-span-3 min-w-0 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
                               <Dropdown
                                 label="Seller"
                                 options={sellerOptions}
@@ -327,7 +331,7 @@ export default function SaudaTable({
                                 placeholder="Select Seller..."
                               />
                             </div>
-                            <div className="col-span-2 min-w-0 lg:col-span-2 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
+                            <div className="col-span-2 md:col-span-2 lg:col-span-3 min-w-0 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
                               <Dropdown
                                 label="Company"
                                 options={sellerCompaniesMap.get(e.sellerId) || []}
@@ -338,36 +342,9 @@ export default function SaudaTable({
                                 placeholder="Select Company..."
                               />
                             </div>
-                            {e.showOthers || e.others !== "" ? (
-                              <input
-                                type="text"
-                                placeholder="Others"
-                                className="col-span-2 h-9 w-full min-w-0 rounded border border-yellow-300 dark:border-yellow-600 lg:col-span-2
-                                bg-white dark:bg-gray-800 
-                                text-gray-800 dark:text-gray-200 
-                                px-3 text-sm focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500"
-                                value={e.others || ""}
-                                onChange={(ev) =>
-                                  handleChange(
-                                    key,
-                                    idx,
-                                    "others",
-                                    ev.target.value
-                                  )
-                                }
-                              />
-                            ) : (
-                              <button
-                                type="button"
-                                className="col-span-2 justify-self-start text-xs text-blue-600 dark:text-blue-400 underline lg:col-span-2"
-                                onClick={() =>
-                                  handleChange(key, idx, "showOthers", true)
-                                }
-                              >
-                                + notes
-                              </button>
-                            )}
-                            <div className="min-w-0">
+
+                            {/* Row 3: Sauda No · Delivery Date · Save/Remove */}
+                            <div className="min-w-0 md:col-span-1 lg:col-span-2">
                               <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                 Sauda No
                               </label>
@@ -375,14 +352,14 @@ export default function SaudaTable({
                                 type="text"
                                 placeholder="Sauda No"
                                 className="h-9 w-full min-w-0 rounded border border-orange-400 dark:border-orange-600
-                            bg-gray-100 dark:bg-gray-700 
-                            text-gray-500 dark:text-gray-400 
-                              px-2 text-sm cursor-not-allowed"
+                                bg-gray-100 dark:bg-gray-700
+                                text-gray-500 dark:text-gray-400
+                                px-2 text-sm cursor-not-allowed"
                                 value={e.saudaNo ? e.saudaNo.toString().split("-").pop() : ""}
                                 disabled
                               />
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 md:col-span-1 lg:col-span-2">
                               <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                 Delivery Date
                               </label>
@@ -391,8 +368,8 @@ export default function SaudaTable({
                                 placeholder="DD/MM/YY"
                                 maxLength={8}
                                 className="h-9 w-full min-w-0 rounded border border-purple-400 dark:border-purple-600
-    bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 
-    px-2 text-sm focus:ring-2 focus:ring-purple-400 dark:focus:ring-purple-500"
+                                bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200
+                                px-2 text-sm focus:ring-2 focus:ring-purple-400 dark:focus:ring-purple-500"
                                 value={e.deliveryDate || ""}
                                 onChange={(ev) => {
                                   let raw = ev.target.value.replace(/\D/g, "");
@@ -441,13 +418,12 @@ export default function SaudaTable({
                                 }}
                               />
                             </div>
-
-                            <div className="col-span-2 flex flex-wrap items-center gap-2 lg:col-span-2">
+                            <div className="col-span-2 md:col-span-2 lg:col-span-2 flex flex-wrap items-end justify-end gap-2 min-w-0">
                               <button
                                 type="button"
                                 disabled={saveStatus[entryId] === "saving"}
                                 onClick={() => handleUnitSave(key, idx)}
-                                className={`rounded px-3 py-1 text-xs font-semibold text-white transition-colors
+                                className={`rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors
                                   ${
                                     saveStatus[entryId] === "saving"
                                       ? "bg-gray-400 cursor-not-allowed"
@@ -462,7 +438,7 @@ export default function SaudaTable({
                                 type="button"
                                 disabled={saveStatus[entryId] === "saving"}
                                 onClick={() => openRemoveDialog(key, idx)}
-                                className={`rounded px-3 py-1 text-xs font-semibold text-white transition-colors
+                                className={`rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors
                                   ${
                                     saveStatus[entryId] === "saving"
                                       ? "bg-gray-400 cursor-not-allowed"
@@ -472,10 +448,42 @@ export default function SaudaTable({
                                 Remove
                               </button>
                             </div>
+
+                            {/* Row 4: Notes / Others (full width) */}
+                            {e.showOthers || e.others !== "" ? (
+                              <input
+                                type="text"
+                                placeholder="Others"
+                                className="col-span-2 md:col-span-4 lg:col-span-6 h-9 w-full min-w-0 rounded border border-yellow-300 dark:border-yellow-600
+                                bg-white dark:bg-gray-800
+                                text-gray-800 dark:text-gray-200
+                                px-3 text-sm focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500"
+                                value={e.others || ""}
+                                onChange={(ev) =>
+                                  handleChange(
+                                    key,
+                                    idx,
+                                    "others",
+                                    ev.target.value
+                                  )
+                                }
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                className="col-span-2 md:col-span-4 lg:col-span-6 justify-self-start text-xs text-blue-600 dark:text-blue-400 underline"
+                                onClick={() =>
+                                  handleChange(key, idx, "showOthers", true)
+                                }
+                              >
+                                + notes
+                              </button>
+                            )}
+
                             {(saveStatus[entryId] === "saving" ||
                               saveStatus[entryId] === "success" ||
                               saveStatus[entryId] === "error") && (
-                              <div className="col-span-2 flex items-center gap-2 text-xs lg:col-span-8">
+                              <div className="col-span-2 md:col-span-4 lg:col-span-6 flex items-center gap-2 text-xs">
                                 {saveStatus[entryId] === "saving" && (
                                   <span className="text-blue-500">Saving...</span>
                                 )}
