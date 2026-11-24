@@ -1,0 +1,65 @@
+# llms.txt — RateEntry (Soya/Soya/DDGS/MDOC rate & sauda management)
+
+> Project-level instructions for LLMs / coding agents. Keep this file in sync when
+> conventions change.
+
+## 1. Stack
+- **Framework:** Next.js 16 (App Router), React 19, `"use client"` on interactive components.
+- **Language:** JavaScript (`.jsx` / `.js`), not TypeScript. No `.ts` files.
+- **Styling:** Tailwind CSS v4 (via `@tailwindcss/postcss`). `src/app/globals.css` contains `@import "tailwindcss";` and CSS variables. Dark mode uses the `dark:` variant (class-driven).
+- **UI icons:** `lucide-react`. Reuse the project's existing icons; do not add a new icon library.
+- **Animations:** `framer-motion` (used in Welcome / cards / modals).
+- **Data fetching:** `axiosInstance` from `@/lib/axiosInstance/axiosInstance` (base URL + auth interceptor). Always use it instead of raw `axios`/`fetch` for API calls.
+- **Notifications:** `react-toastify` (`toast.success` / `toast.error` / `toast.warn`).
+- **State:** React hooks + Context (`UserContext`, `SocketContext`). Feature logic lives in `src/hooks/**`.
+- **Backend:** Next.js Route Handlers under `src/app/api/**`, Mongoose models in `src/models/**`, MongoDB connection in `src/lib/mongodb.js`.
+- **Build/dev:** `npm run dev` (starts `server.mjs`), `npm run build`, `npm start`.
+- **ESLint:** `eslint.config.mjs` is currently broken repo-wide (circular-structure crash in `@eslint/eslintrc`). Do not rely on `npx eslint`; use IDE diagnostics instead.
+
+## 2. Layout & structure
+- App pages: `src/app/<route>/page.jsx`.
+- Reusable UI: `src/components/ui/**` (feature components) and `src/components/common/**` (shared: Dropdown, Modal, Loading, Title, etc.).
+- Hooks: `src/hooks/**` — one folder per feature.
+- API routes: `src/app/api/**/route.js`.
+- Path alias `@/` → `src/` (see `jsconfig.json`).
+
+## 3. Core conventions
+1. **Dark + light mode is mandatory.** Every new/edited UI element must include `dark:` variants for background, border, text, and hover states. Surfaces use `bg-white/70 dark:bg-gray-900/70` glass cards with `backdrop-blur-xl`.
+2. **No native `<select>` for filtering.** Replace dropdowns with chip/pill selectors when the option set is small-to-medium (e.g. categories). Chips: rounded-full, outlined inactive, gradient active state, with a clear/reset affordance.
+3. **Icons in buttons/chips.** Pair text with a small `lucide-react` icon (13–17px) so actions are scannable.
+4. **Glassmorphism cards.** Rounded (`rounded-2xl`/`rounded-3xl`), soft border (`border-slate-200/80 dark:border-white/10`), subtle shadow, optional decorative gradient glow blob (absolute, blurred, pointer-events-none).
+5. **Consistent color semantics:**
+   - Pending / to-do: sky (`sky-50`, `sky-200`, `sky-700`, dark `sky-500/10`, `sky-300`).
+   - Done / taken: emerald (`emerald-50`, `emerald-200`, `emerald-700`, dark `emerald-500/10`, `emerald-300`).
+   - Accent / primary gradient: indigo → violet (`from-indigo-500 to-violet-600`).
+   - Success gradient for progress bars: emerald → teal (`from-emerald-400 to-teal-500`).
+   - Danger: red-600 hover red-700.
+6. **Inputs:** `h-9`, rounded, `border-slate-300 dark:border-gray-700`, `bg-white dark:bg-gray-800`, focus ring colored by intent.
+7. **Loading states:** inline `Loader2` spinner (animate-spin) inside the button/chip rather than a full-screen loader when possible.
+8. **Error states:** consistent alert card — red-tinted background, `AlertCircle` icon, pill-shaped Retry button.
+9. **Empty states:** dashed-border card with a descriptive message, not a misleading "all done" message.
+10. **Responsive grids:** start 2-col on mobile, scale up (md, lg). Use `min-w-0` on grid children to prevent overflow.
+11. **Preserve existing logic.** When redesigning UI, keep all state, handlers, API calls, and data flow identical — change only markup/classes and visual order.
+
+## 4. Specific component rules
+
+### RateTakenSection (`src/components/ui/Welcome/RateTakenSection.jsx`)
+- Category filter = chip row (All + categories), active chip uses indigo→violet gradient. Long lists scroll inside a `max-h-28` area with `scrollbar-hidden`.
+- Has a "Daily progress" card with count, percentage badge, and animated progress bar reflecting the *filtered* set.
+- Pending companies = sky chips with `+` icon; taken companies = emerald chips with `CheckCircle2` + `RotateCcw` hint. Inline spinner while a save is in flight.
+
+### SaudaTable entry form (`src/components/ui/Sauda/SaudaTable/SaudaTable.jsx`)
+Each sauda entry card uses a **6-col grid on `lg`** arranged in four rows:
+1. `Rate` · `Tons` · `Loading From` (2 cols each)
+2. `Seller` · `Company` (3 cols each — dropdowns get more room)
+3. `Sauda No` · `Delivery Date` · Save/Remove buttons (2 cols each; buttons right-aligned)
+4. `Others` / `+ notes` (full width)
+- Smaller breakpoints: 2-col on mobile, 4-col on `md`.
+- Filled entry = green border/card; incomplete = red border/card.
+- Buttons use `rounded-lg` + shadow, sit on the input baseline.
+
+## 5. Working rules
+- Do not add new dependencies without asking.
+- Do not modify `eslint.config.mjs` unless the task is specifically to fix it.
+- Use `GetDiagnostics` after edits; Tailwind v4 suggests `bg-linear-to-*` instead of `bg-gradient-to-*`, but the codebase uses `bg-gradient-to-*` — keep the existing convention.
+- Always read the target file before editing. Keep edits scoped to what was requested.
