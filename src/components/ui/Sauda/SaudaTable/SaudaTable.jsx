@@ -252,7 +252,7 @@ export default function SaudaTable({
                           <div
                             key={idx}
                             className={`
-                            flex flex-col sm:flex-row flex-wrap gap-3 p-4 rounded-xl shadow-md transition-all duration-200
+                            grid grid-cols-2 lg:grid-cols-8 items-end gap-3 p-4 rounded-xl shadow-md transition-all duration-200
                             border-2
                             ${
                               isFilled
@@ -262,44 +262,48 @@ export default function SaudaTable({
                             hover:shadow-lg
                           `}
                           >
-                            <span className="text-base font-semibold text-gray-600 dark:text-gray-300">
+                            <span className="col-span-2 lg:col-span-8 text-base font-semibold text-gray-600 dark:text-gray-300">
                               {String.fromCharCode(97 + idx)}.
                             </span>
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm text-gray-500 dark:text-gray-400">
-                                ₹
-                              </span>
+                            <div className="min-w-0">
+                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                Rate
+                              </label>
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  ₹
+                                </span>
+                                <input
+                                  type="number"
+                                  placeholder="Rate"
+                                  className="h-9 w-full min-w-0 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                                  value={e.finalRate || ""}
+                                  onChange={(ev) =>
+                                    handleChange(
+                                      key,
+                                      idx,
+                                      "finalRate",
+                                      ev.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+                            </div>
+                            <div className="min-w-0">
+                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                Tons
+                              </label>
                               <input
                                 type="number"
-                                placeholder="Rate"
-                                className="w-20 rounded border border-gray-300 dark:border-gray-700 
-                                bg-white dark:bg-gray-800 
-                                text-gray-800 dark:text-gray-200 
-                                px-2 py-1 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
-                                value={e.finalRate || ""}
+                                placeholder="Tons"
+                                className="h-9 w-full min-w-0 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-2 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                                value={e.tons || ""}
                                 onChange={(ev) =>
-                                  handleChange(
-                                    key,
-                                    idx,
-                                    "finalRate",
-                                    ev.target.value
-                                  )
+                                  handleChange(key, idx, "tons", ev.target.value)
                                 }
                               />
                             </div>
-                            <input
-                              type="number"
-                              placeholder="Tons"
-                              className="w-20 rounded border border-gray-300 dark:border-gray-700 
-                              bg-white dark:bg-gray-800 
-                              text-gray-800 dark:text-gray-200 
-                              px-2 py-1 text-sm focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
-                              value={e.tons || ""}
-                              onChange={(ev) =>
-                                handleChange(key, idx, "tons", ev.target.value)
-                              }
-                            />
-                            <div className="min-w-48 flex-1">
+                            <div className="col-span-2 min-w-0 lg:col-span-2 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
                               <Dropdown
                                 label="Loading From"
                                 options={loadingFromOptions}
@@ -311,7 +315,7 @@ export default function SaudaTable({
                                 clearOnEmpty
                               />
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-3 flex-grow">
+                            <div className="col-span-2 min-w-0 lg:col-span-2 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
                               <Dropdown
                                 label="Seller"
                                 options={sellerOptions}
@@ -322,7 +326,8 @@ export default function SaudaTable({
                                 }}
                                 placeholder="Select Seller..."
                               />
-
+                            </div>
+                            <div className="col-span-2 min-w-0 lg:col-span-2 [&>div]:gap-1 [&_input]:h-9 [&_input]:px-3 [&_input]:py-1.5 [&_input]:pr-9">
                               <Dropdown
                                 label="Company"
                                 options={sellerCompaniesMap.get(e.sellerId) || []}
@@ -337,10 +342,10 @@ export default function SaudaTable({
                               <input
                                 type="text"
                                 placeholder="Others"
-                                className="w-full rounded border border-yellow-300 dark:border-yellow-600 
+                                className="col-span-2 h-9 w-full min-w-0 rounded border border-yellow-300 dark:border-yellow-600 lg:col-span-2
                                 bg-white dark:bg-gray-800 
                                 text-gray-800 dark:text-gray-200 
-                                px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500"
+                                px-3 text-sm focus:ring-2 focus:ring-yellow-400 dark:focus:ring-yellow-500"
                                 value={e.others || ""}
                                 onChange={(ev) =>
                                   handleChange(
@@ -354,7 +359,7 @@ export default function SaudaTable({
                             ) : (
                               <button
                                 type="button"
-                                className="text-xs text-blue-600 dark:text-blue-400 underline"
+                                className="col-span-2 justify-self-start text-xs text-blue-600 dark:text-blue-400 underline lg:col-span-2"
                                 onClick={() =>
                                   handleChange(key, idx, "showOthers", true)
                                 }
@@ -362,72 +367,82 @@ export default function SaudaTable({
                                 + notes
                               </button>
                             )}
-                            <input
-                              type="text"
-                              placeholder="Sauda No"
-                              className="w-24 rounded border border-orange-400 dark:border-orange-600 
+                            <div className="min-w-0">
+                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                Sauda No
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Sauda No"
+                                className="h-9 w-full min-w-0 rounded border border-orange-400 dark:border-orange-600
                             bg-gray-100 dark:bg-gray-700 
                             text-gray-500 dark:text-gray-400 
-                              px-2 py-1 text-sm cursor-not-allowed"
-                              value={e.saudaNo ? e.saudaNo.toString().split("-").pop() : ""}
-                              disabled
-                            />
-                            <input
-                              type="text"
-                              placeholder="Delivery Date (221125)"
-                              maxLength={8}
-                              className="w-28 rounded border border-purple-400 dark:border-purple-600 
+                              px-2 text-sm cursor-not-allowed"
+                                value={e.saudaNo ? e.saudaNo.toString().split("-").pop() : ""}
+                                disabled
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                Delivery Date
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="DD/MM/YY"
+                                maxLength={8}
+                                className="h-9 w-full min-w-0 rounded border border-purple-400 dark:border-purple-600
     bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 
-    px-2 py-1 text-sm focus:ring-2 focus:ring-purple-400 dark:focus:ring-purple-500"
-                              value={e.deliveryDate || ""}
-                              onChange={(ev) => {
-                                let raw = ev.target.value.replace(/\D/g, "");
+    px-2 text-sm focus:ring-2 focus:ring-purple-400 dark:focus:ring-purple-500"
+                                value={e.deliveryDate || ""}
+                                onChange={(ev) => {
+                                  let raw = ev.target.value.replace(/\D/g, "");
 
-                                const isDeleting =
-                                  ev.nativeEvent.inputType ===
-                                  "deleteContentBackward";
+                                  const isDeleting =
+                                    ev.nativeEvent.inputType ===
+                                    "deleteContentBackward";
 
-                                if (!isDeleting && raw.length === 4) {
-                                  const day = raw.slice(0, 2);
-                                  const month = Number(raw.slice(2, 4));
+                                  if (!isDeleting && raw.length === 4) {
+                                    const day = raw.slice(0, 2);
+                                    const month = Number(raw.slice(2, 4));
 
-                                  const now = new Date();
-                                  const shortYear = now.getFullYear() % 100;
-                                  const currentMonth = now.getMonth() + 1;
+                                    const now = new Date();
+                                    const shortYear = now.getFullYear() % 100;
+                                    const currentMonth = now.getMonth() + 1;
 
-                                  let year = shortYear;
+                                    let year = shortYear;
 
-                                  if (month < currentMonth) {
-                                    year = shortYear + 1;
+                                    if (month < currentMonth) {
+                                      year = shortYear + 1;
+                                    }
+
+                                    raw = `${day}${raw.slice(2, 4)}${year
+                                      .toString()
+                                      .padStart(2, "0")}`;
                                   }
 
-                                  raw = `${day}${raw.slice(2, 4)}${year
-                                    .toString()
-                                    .padStart(2, "0")}`;
-                                }
+                                  let formatted = raw;
+                                  if (formatted.length >= 2)
+                                    formatted =
+                                      formatted.slice(0, 2) +
+                                      "/" +
+                                      formatted.slice(2);
+                                  if (formatted.length >= 5)
+                                    formatted =
+                                      formatted.slice(0, 5) +
+                                      "/" +
+                                      formatted.slice(5, 7);
 
-                                let formatted = raw;
-                                if (formatted.length >= 2)
-                                  formatted =
-                                    formatted.slice(0, 2) +
-                                    "/" +
-                                    formatted.slice(2);
-                                if (formatted.length >= 5)
-                                  formatted =
-                                    formatted.slice(0, 5) +
-                                    "/" +
-                                    formatted.slice(5, 7);
+                                  handleChange(
+                                    key,
+                                    idx,
+                                    "deliveryDate",
+                                    formatted
+                                  );
+                                }}
+                              />
+                            </div>
 
-                                handleChange(
-                                  key,
-                                  idx,
-                                  "deliveryDate",
-                                  formatted
-                                );
-                              }}
-                            />
-
-                            <div className="flex gap-2">
+                            <div className="col-span-2 flex flex-wrap items-center gap-2 lg:col-span-2">
                               <button
                                 type="button"
                                 disabled={saveStatus[entryId] === "saving"}
@@ -457,20 +472,20 @@ export default function SaudaTable({
                                 Remove
                               </button>
                             </div>
-                            {saveStatus[entryId] === "saving" && (
-                              <span className="text-blue-500 text-xs">
-                                Saving...
-                              </span>
-                            )}
-                            {saveStatus[entryId] === "success" && (
-                              <span className="text-green-500 text-xs">
-                                ✔ Saved
-                              </span>
-                            )}
-                            {saveStatus[entryId] === "error" && (
-                              <span className="text-red-500 text-xs">
-                                ✘ Error
-                              </span>
+                            {(saveStatus[entryId] === "saving" ||
+                              saveStatus[entryId] === "success" ||
+                              saveStatus[entryId] === "error") && (
+                              <div className="col-span-2 flex items-center gap-2 text-xs lg:col-span-8">
+                                {saveStatus[entryId] === "saving" && (
+                                  <span className="text-blue-500">Saving...</span>
+                                )}
+                                {saveStatus[entryId] === "success" && (
+                                  <span className="text-green-500">✔ Saved</span>
+                                )}
+                                {saveStatus[entryId] === "error" && (
+                                  <span className="text-red-500">✘ Error</span>
+                                )}
+                              </div>
                             )}
                           </div>
                         );
