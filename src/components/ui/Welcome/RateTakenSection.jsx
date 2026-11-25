@@ -15,6 +15,9 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const PAGE_SIZE = 100;
 
+// Categories hidden from the Rate Taken filter
+const EXCLUDED_CATEGORIES = ["financer", "traders"];
+
 const getDateKey = () =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kolkata",
@@ -93,7 +96,10 @@ export default function RateTakenSection() {
       });
       setCategories(
         (Array.isArray(data?.categories) ? data.categories : []).filter(
-          (category) => category?._id && category.name
+          (category) =>
+            category?._id &&
+            category.name &&
+            !EXCLUDED_CATEGORIES.includes(category.name.trim().toLowerCase())
         )
       );
     } catch (fetchError) {
