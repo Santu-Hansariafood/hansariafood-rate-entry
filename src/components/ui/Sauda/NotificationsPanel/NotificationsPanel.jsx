@@ -150,7 +150,6 @@ const NotificationsPanel = ({ onClose }) => {
                     🌾 {item.commodity}
                   </span>
                 </div>
-
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="text-gray-600 dark:text-gray-400">
                     🪶 Tons: <span className="font-semibold">{item.tons}</span>

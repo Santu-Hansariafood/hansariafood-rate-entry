@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   CalendarDays,
@@ -11,20 +10,7 @@ import {
   RefreshCw,
   RotateCcw,
 } from "lucide-react";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-
-const PAGE_SIZE = 100;
-
-// Categories hidden from the Rate Taken filter
-const EXCLUDED_CATEGORIES = ["financer", "traders"];
-
-const getDateKey = () =>
-  new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+import useRateTaken from "@/hooks/RateTaken/useRateTaken";
 
 const categoryChipClass = (active) =>
   [
@@ -40,195 +26,30 @@ const companyChipClass = (status) =>
     : "group inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300 hover:bg-sky-100 hover:shadow-md hover:shadow-sky-500/10 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-500/25 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:border-sky-500/40 dark:hover:bg-sky-500/20";
 
 export default function RateTakenSection() {
-  const [companies, setCompanies] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [tracker, setTracker] = useState({ date: "", takenIds: [] });
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [loadingTaken, setLoadingTaken] = useState(false);
-  const [savingIds, setSavingIds] = useState([]);
-  const [companiesError, setCompaniesError] = useState("");
-  const [categoriesError, setCategoriesError] = useState("");
-  const [statusError, setStatusError] = useState("");
-  const [statusReload, setStatusReload] = useState(0);
-  const lastTodayRef = useRef("");
-
-  const fetchCompanies = useCallback(async () => {
-    setLoadingCompanies(true);
-    setCompaniesError("");
-
-    try {
-      const allCompanies = [];
-      let page = 1;
-      let total = 0;
-
-      do {
-        const { data } = await axiosInstance.get("/managecompany", {
-          params: { type: "buyer", page, limit: PAGE_SIZE },
-        });
-        const pageCompanies = Array.isArray(data?.companies)
-          ? data.companies
-          : [];
-
-        if (pageCompanies.length === 0) break;
-        allCompanies.push(...pageCompanies);
-        total = Number(data?.total) || 0;
-        page += 1;
-      } while (allCompanies.length < total);
-
-      setCompanies(allCompanies.filter((company) => company?._id && company.name));
-    } catch (fetchError) {
-      console.error("Failed to fetch companies for rate tracking:", fetchError);
-      setCompaniesError("Could not load companies. Please try again.");
-    } finally {
-      setLoadingCompanies(false);
-    }
-  }, []);
-
-  const fetchCategories = useCallback(async () => {
-    setLoadingCategories(true);
-    setCategoriesError("");
-
-    try {
-      const { data } = await axiosInstance.get("/categories", {
-        params: { limit: 1000 },
-      });
-      setCategories(
-        (Array.isArray(data?.categories) ? data.categories : []).filter(
-          (category) =>
-            category?._id &&
-            category.name &&
-            !EXCLUDED_CATEGORIES.includes(category.name.trim().toLowerCase())
-        )
-      );
-    } catch (fetchError) {
-      console.error("Failed to fetch categories for rate tracking:", fetchError);
-      setCategoriesError("Could not load categories. Please try again.");
-    } finally {
-      setLoadingCategories(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const today = getDateKey();
-    lastTodayRef.current = today;
-    setTracker({ date: today, takenIds: [] });
-    fetchCompanies();
-    fetchCategories();
-  }, [fetchCategories, fetchCompanies]);
-
-  useEffect(() => {
-    if (!tracker.date) return undefined;
-
-    let active = true;
-    const fetchTakenCompanies = async () => {
-      setLoadingTaken(true);
-      setStatusError("");
-
-      try {
-        const { data } = await axiosInstance.get("/rate-taken", {
-          params: { date: tracker.date },
-        });
-        if (active && data?.date === tracker.date) {
-          setTracker((current) =>
-            current.date === tracker.date
-              ? { ...current, takenIds: data.companyIds || [] }
-              : current
-          );
-        }
-      } catch (fetchError) {
-        console.error("Failed to fetch rate-taken status:", fetchError);
-        if (active) {
-          setStatusError("Could not load the taken list. Please retry.");
-        }
-      } finally {
-        if (active) setLoadingTaken(false);
-      }
-    };
-
-    fetchTakenCompanies();
-    return () => {
-      active = false;
-    };
-  }, [tracker.date, statusReload]);
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      const today = getDateKey();
-      if (today !== lastTodayRef.current) {
-        lastTodayRef.current = today;
-        setLoadingTaken(true);
-        setTracker({ date: today, takenIds: [] });
-      }
-    }, 60 * 1000);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
-
-  const toggleTaken = async (companyId) => {
-    if (
-      !tracker.date ||
-      loadingTaken ||
-      savingIds.length > 0 ||
-      statusError
-    ) {
-      return;
-    }
-
-    const taken = !tracker.takenIds.includes(companyId);
-    const date = tracker.date;
-    setSavingIds((current) => [...current, companyId]);
-    setStatusError("");
-
-    try {
-      const { data } = await axiosInstance.post("/rate-taken", {
-        date,
-        companyId,
-        taken,
-      });
-      setTracker((current) =>
-        current.date === date
-          ? { ...current, takenIds: data.companyIds || [] }
-          : current
-      );
-    } catch (saveError) {
-      console.error("Failed to update rate-taken status:", saveError);
-      setStatusError("Could not save this change. Please try again.");
-    } finally {
-      setSavingIds((current) => current.filter((id) => id !== companyId));
-    }
-  };
-
-  const takenIds = new Set(tracker.takenIds);
-  const visibleCompanies = companies.filter(
-    (company) =>
-      !EXCLUDED_CATEGORIES.includes(
-        company.category?.trim().toLowerCase()
-      )
-  );
-  const filteredCompanies = selectedCategory
-    ? visibleCompanies.filter(
-        (company) =>
-          company.category?.trim().toLowerCase() ===
-          selectedCategory.trim().toLowerCase()
-      )
-    : visibleCompanies;
-  const takenCompanies = filteredCompanies.filter((company) =>
-    takenIds.has(company._id)
-  );
-  const pendingCompanies = filteredCompanies.filter(
-    (company) => !takenIds.has(company._id)
-  );
-
-  const totalCompanies = filteredCompanies.length;
-  const takenCount = takenCompanies.length;
-  const pendingCount = pendingCompanies.length;
-  const progress = totalCompanies
-    ? Math.round((takenCount / totalCompanies) * 100)
-    : 0;
-  const isBusy = savingIds.length > 0;
-  const actionsDisabled = isBusy || Boolean(statusError);
+  const {
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    tracker,
+    takenCompanies,
+    pendingCompanies,
+    totalCompanies,
+    takenCount,
+    pendingCount,
+    progress,
+    loadingCompanies,
+    loadingCategories,
+    loadingTaken,
+    savingIds,
+    companiesError,
+    categoriesError,
+    statusError,
+    actionsDisabled,
+    fetchCompanies,
+    fetchCategories,
+    reloadStatus,
+    toggleTaken,
+  } = useRateTaken();
 
   return (
     <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/80 shadow-xl shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70 dark:shadow-black/40">
@@ -315,7 +136,7 @@ export default function RateTakenSection() {
                 <p className="flex-1">{statusError}</p>
                 <button
                   type="button"
-                  onClick={() => setStatusReload((value) => value + 1)}
+                  onClick={reloadStatus}
                   className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
                 >
                   Retry

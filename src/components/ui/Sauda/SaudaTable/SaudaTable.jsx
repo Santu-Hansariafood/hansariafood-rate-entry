@@ -247,6 +247,13 @@ export default function SaudaTable({
                           e?.sellerId &&
                           e?.sellerCompanyId;
                         const entryId = `${key}-${idx}`;
+                        const letter = String.fromCharCode(97 + idx);
+
+                        const daysInMonth = (month, fullYear) => {
+                          const m = Number(month);
+                          if (!m || m < 1 || m > 12) return 31;
+                          return new Date(fullYear, m, 0).getDate();
+                        };
 
                         return (
                           <div
@@ -262,13 +269,12 @@ export default function SaudaTable({
                             hover:shadow-lg
                           `}
                           >
-                            <span className="col-span-2 md:col-span-4 lg:col-span-6 text-base font-semibold text-gray-600 dark:text-gray-300">
-                              {String.fromCharCode(97 + idx)}.
-                            </span>
-
                             {/* Row 1: Rate · Tons · Loading From */}
                             <div className="min-w-0 md:col-span-1 lg:col-span-2">
-                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                              <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">
+                                <span className="mr-1 rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-bold text-gray-700 dark:bg-white/15 dark:text-gray-300">
+                                  {letter}.
+                                </span>
                                 Rate
                               </label>
                               <div className="flex items-center gap-1">
@@ -379,8 +385,12 @@ export default function SaudaTable({
                                     "deleteContentBackward";
 
                                   if (!isDeleting && raw.length === 4) {
-                                    const day = raw.slice(0, 2);
-                                    const month = Number(raw.slice(2, 4));
+                                    let day = Number(raw.slice(0, 2));
+                                    let month = Number(raw.slice(2, 4));
+
+                                    // Clamp month to 1–12
+                                    if (month > 12) month = 12;
+                                    if (month < 1) month = 1;
 
                                     const now = new Date();
                                     const shortYear = now.getFullYear() % 100;
@@ -392,7 +402,14 @@ export default function SaudaTable({
                                       year = shortYear + 1;
                                     }
 
-                                    raw = `${day}${raw.slice(2, 4)}${year
+                                    const fullYear = 2000 + year;
+                                    const maxDay = daysInMonth(month, fullYear);
+                                    if (day > maxDay) day = maxDay;
+                                    if (day < 1) day = 1;
+
+                                    raw = `${String(day).padStart(2, "0")}${String(
+                                      month
+                                    ).padStart(2, "0")}${year
                                       .toString()
                                       .padStart(2, "0")}`;
                                   }
