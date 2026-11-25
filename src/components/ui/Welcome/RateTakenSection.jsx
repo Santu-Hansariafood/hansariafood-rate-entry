@@ -11,6 +11,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import useRateTaken from "@/hooks/RateTaken/useRateTaken";
+import Loading from "@/components/common/Loading/Loading";
+import { Suspense } from "react";
 
 const categoryChipClass = (active) =>
   [
@@ -52,6 +54,7 @@ export default function RateTakenSection() {
   } = useRateTaken();
 
   return (
+    <Suspense fallback={<Loading />}>
     <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/80 shadow-xl shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/70 dark:shadow-black/40">
       <div
         aria-hidden="true"
@@ -124,10 +127,7 @@ export default function RateTakenSection() {
             </button>
           </div>
         ) : loadingCompanies || loadingTaken ? (
-          <div className="mt-5 flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-6 text-sm text-slate-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400">
-            <Loader2 size={16} className="animate-spin" />
-            Loading rate-taken data...
-          </div>
+          <Loading />
         ) : (
           <>
             {statusError && (
@@ -325,5 +325,6 @@ export default function RateTakenSection() {
         )}
       </div>
     </section>
+    </Suspense>
   );
 }
