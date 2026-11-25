@@ -201,13 +201,19 @@ export default function RateTakenSection() {
   };
 
   const takenIds = new Set(tracker.takenIds);
+  const visibleCompanies = companies.filter(
+    (company) =>
+      !EXCLUDED_CATEGORIES.includes(
+        company.category?.trim().toLowerCase()
+      )
+  );
   const filteredCompanies = selectedCategory
-    ? companies.filter(
+    ? visibleCompanies.filter(
         (company) =>
           company.category?.trim().toLowerCase() ===
           selectedCategory.trim().toLowerCase()
       )
-    : companies;
+    : visibleCompanies;
   const takenCompanies = filteredCompanies.filter((company) =>
     takenIds.has(company._id)
   );
