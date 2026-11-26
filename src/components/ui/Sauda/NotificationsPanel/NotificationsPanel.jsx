@@ -39,16 +39,16 @@ const NotificationsPanel = ({ onClose }) => {
       `*Date:* ${item.date}`,
       `*Location:* ${item.location}`,
       `*Commodity:* ${item.commodity}`,
+      item.loadingFrom ? `*Loading From:* ${item.loadingFrom}` : null,
       `*Tons:* ${item.tons}`,
       `*Rate:* ₹${item.rate ?? "N/A"}`,
-      item.loadingFrom ? `*Loading From:* ${item.loadingFrom}` : null,
       item.buyerName ? `*Buyer:* ${toTitleCase(item.buyerName)}` : null,
       item.sellerCompany
         ? `*Seller Company:* ${toTitleCase(item.sellerCompany)}`
         : null,
       item.payment !== null &&
-      item.payment !== undefined &&
-      String(item.payment).trim() !== ""
+        item.payment !== undefined &&
+        String(item.payment).trim() !== ""
         ? `*Payment Terms:* ${item.payment} *Days*`
         : null,
       item.deliveryDate ? `*Delivery Date:* ${item.deliveryDate}` : null,
