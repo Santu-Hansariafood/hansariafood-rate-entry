@@ -1,13 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
+import { Building2 } from "lucide-react";
 import useRateManagement from "@/hooks/Rate/useRateManagement";
-import axiosInstance from "@/lib/axiosInstance/axiosInstance";
+import useRateGroups from "@/hooks/Rate/useRateGroups";
+import useRateNotifications from "@/hooks/useRateNotifications/useRateNotifications";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
   loading: () => <Loading />,
@@ -34,6 +36,10 @@ const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
   { loading: () => <Loading /> }
 );
+const NotificationList = dynamic(
+  () => import("@/components/NotificationList/NotificationList"),
+  { loading: () => <Loading /> }
+);
 
 export default function Rate() {
   const {
@@ -50,59 +56,22 @@ export default function Rate() {
     totalItems,
     itemsPerPage,
   } = useRateManagement();
+  const {
+    groups,
+    visibleGroups,
+    loading: groupsLoading,
+    loaded: groupsLoaded,
+    error: groupsError,
+    currentPage: groupPage,
+    setCurrentPage: setGroupPage,
+    totalGroups,
+    itemsPerPage: groupsPerPage,
+  } = useRateGroups();
+  const { notifications } = useRateNotifications();
 
   const [showRatePopup, setShowRatePopup] = useState(false);
   const [viewMode, setViewMode] = useState("company");
-  const [groups, setGroups] = useState([]);
-  const [groupsLoading, setGroupsLoading] = useState(false);
-  const [groupsLoaded, setGroupsLoaded] = useState(false);
-  const [groupsError, setGroupsError] = useState("");
   const [selectedGroup, setSelectedGroup] = useState(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchGroups = async () => {
-      setGroupsLoading(true);
-      try {
-        const firstResponse = await axiosInstance.get(
-          "/groups?page=1&limit=100",
-          { signal: controller.signal },
-        );
-        const groupData = firstResponse.data.groups || [];
-        const totalPages = firstResponse.data.totalPages || 1;
-
-        for (let page = 2; page <= totalPages; page += 1) {
-          const response = await axiosInstance.get(
-            `/groups?page=${page}&limit=100`,
-            { signal: controller.signal },
-          );
-          groupData.push(...(response.data.groups || []));
-        }
-
-        if (!controller.signal.aborted) {
-          setGroups(groupData);
-          setGroupsError("");
-          setGroupsLoaded(true);
-        }
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          console.error("Failed to load groups for rate management", error);
-          setGroupsError(
-            error.response?.data?.error || "Failed to load company groups",
-          );
-          setGroupsLoaded(true);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setGroupsLoading(false);
-        }
-      }
-    };
-
-    fetchGroups();
-    return () => controller.abort();
-  }, []);
 
   const handleFilterChange = useCallback((newFilters) => {
     const selectedCategories = Object.values(newFilters);
@@ -191,22 +160,44 @@ export default function Rate() {
             {groupsError}
           </p>
         ) : groups.length ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {groups.map((group) => (
-              <button
-                key={group._id}
-                type="button"
-                onClick={() => handleGroupSelect(group)}
-                className="rounded-xl border border-emerald-200 bg-white p-5 text-left shadow-sm transition hover:border-emerald-500 hover:shadow-md dark:border-emerald-900 dark:bg-gray-900"
-              >
-                <span className="block font-semibold text-gray-900 dark:text-gray-100">
-                  {group.name}
-                </span>
-                <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">
-                  {(group.companies || []).filter(Boolean).length} companies
-                </span>
-              </button>
-            ))}
+          <div className="flex flex-col gap-6 lg:flex-row">
+            <div className="min-w-0 flex-1">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {visibleGroups.map((group) => (
+                  <motion.button
+                    key={group._id}
+                    type="button"
+                    onClick={() => handleGroupSelect(group)}
+                    whileHover={{ y: -2 }}
+                    className="group relative overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left transition-colors hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-emerald-100 p-2 group-hover:bg-emerald-200 dark:bg-emerald-900/50 dark:group-hover:bg-emerald-800">
+                        <Building2 className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate font-medium text-emerald-900 dark:text-emerald-100">
+                          {group.name}
+                        </span>
+                        <span className="mt-1 block text-sm text-emerald-700 dark:text-emerald-300">
+                          {(group.companies || []).filter(Boolean).length}{" "}
+                          companies
+                        </span>
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+              <Pagination
+                totalItems={totalGroups}
+                itemsPerPage={groupsPerPage}
+                currentPage={groupPage}
+                onPageChange={setGroupPage}
+              />
+            </div>
+            <aside className="w-full shrink-0 lg:w-[300px]">
+              <NotificationList notifications={notifications} />
+            </aside>
           </div>
         ) : (
           <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
