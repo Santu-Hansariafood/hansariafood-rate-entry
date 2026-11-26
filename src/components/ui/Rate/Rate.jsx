@@ -66,7 +66,6 @@ export default function Rate() {
   const { notifications } = useRateDisplayNotifications();
 
   const [showRatePopup, setShowRatePopup] = useState(false);
-  const [viewMode, setViewMode] = useState("company");
   const [selectedGroup, setSelectedGroup] = useState(null);
 
   const handleFilterChange = useCallback((newFilters) => {
@@ -76,18 +75,6 @@ export default function Rate() {
       category: selectedCategories,
     }));
   }, []);
-
-  const handleViewModeChange = (mode) => {
-    setViewMode(mode);
-    setSelectedGroup(null);
-    setSelectedCompany(null);
-    setCurrentPage(1);
-    setFilters((prev) => {
-      const nextFilters = { ...prev };
-      delete nextFilters.companyNames;
-      return nextFilters;
-    });
-  };
 
   const handleGroupSelect = (group) => {
     const companyNames = (group.companies || [])
@@ -100,6 +87,16 @@ export default function Rate() {
       ...prev,
       companyNames: companyNames.length ? companyNames : [""],
     }));
+  };
+
+  const handleBackToGroups = () => {
+    setSelectedGroup(null);
+    setCurrentPage(1);
+    setFilters((prev) => {
+      const nextFilters = { ...prev };
+      delete nextFilters.companyNames;
+      return nextFilters;
+    });
   };
 
   const renderCompanySelector = (
@@ -125,130 +122,123 @@ export default function Rate() {
         </motion.button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {[
-          { label: "Company Wise", value: "company" },
-          { label: "Group Wise", value: "group" },
-        ].map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => handleViewModeChange(option.value)}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              viewMode === option.value
-                ? "bg-emerald-600 text-white"
-                : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      {viewMode === "group" && !selectedGroup ? (
-        <RateViewLayout
-          notifications={notifications}
-          pagination={
-            !groupsLoading && !groupsError && groups.length > 0 ? (
-              <Pagination
-                totalItems={totalGroups}
-                itemsPerPage={groupsPerPage}
-                currentPage={groupPage}
-                onPageChange={setGroupPage}
-              />
-            ) : null
-          }
-        >
-          {groupsLoading ? (
-            <Loading />
-          ) : groupsError ? (
-            <p
-              role="alert"
-              className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
-            >
-              {groupsError}
-            </p>
-          ) : groups.length ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {visibleGroups.map((group) => (
-                  <motion.button
-                    key={group._id}
-                    type="button"
-                    onClick={() => handleGroupSelect(group)}
-                    whileHover={{ y: -2 }}
-                    className="group relative overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left transition-colors hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-emerald-100 p-2 group-hover:bg-emerald-200 dark:bg-emerald-900/50 dark:group-hover:bg-emerald-800">
-                        <Building2 className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="block truncate font-medium text-emerald-900 dark:text-emerald-100">
-                          {group.name}
-                        </span>
-                        <span className="mt-1 block text-sm text-emerald-700 dark:text-emerald-300">
-                          {(group.companies || []).filter(Boolean).length}{" "}
-                          companies
-                        </span>
-                      </div>
-                    </div>
-                  </motion.button>
-                ))}
+      <RateViewLayout notifications={notifications}>
+        {selectedGroup ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4 dark:border-emerald-900 dark:bg-gray-900">
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                  {selectedGroup.name}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Companies in this group
+                </p>
               </div>
-          ) : (
-            <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-              {groupsLoaded
-                ? "No groups found. Create a group from the Company menu."
-                : "Loading groups..."}
-            </p>
-          )}
-        </RateViewLayout>
-      ) : (
-        <>
-          <RateViewLayout
-            notifications={notifications}
-            header={
-              selectedGroup && (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4 dark:border-emerald-900 dark:bg-gray-900">
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">
-                      {selectedGroup.name}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Companies in this group
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedGroup(null)}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
-                  >
-                    Back to Groups
-                  </button>
-                </div>
-              )
-            }
-            pagination={
+              <button
+                type="button"
+                onClick={handleBackToGroups}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                Back to Groups and Companies
+              </button>
+            </div>
+            <Pagination
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
+            <CompanyList
+              companies={companies}
+              completedCompanies={completedCompanies}
+              loading={loading}
+              onCompanySelect={setSelectedCompany}
+              restrictSearchToCurrentPage
+              notifications={notifications}
+              showNotifications={false}
+            />
+          </>
+        ) : (
+          <>
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Company Groups
+              </h2>
+              {groupsLoading ? (
+                <Loading />
+              ) : groupsError ? (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
+                >
+                  {groupsError}
+                </p>
+              ) : groups.length ? (
+                <>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        {visibleGroups.map((group) => (
+                          <motion.button
+                            key={group._id}
+                            type="button"
+                            onClick={() => handleGroupSelect(group)}
+                            whileHover={{ y: -2 }}
+                            className="group relative overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left transition-colors hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-lg bg-emerald-100 p-2 group-hover:bg-emerald-200 dark:bg-emerald-900/50 dark:group-hover:bg-emerald-800">
+                                <Building2 className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <span className="block truncate font-medium text-emerald-900 dark:text-emerald-100">
+                                  {group.name}
+                                </span>
+                                <span className="mt-1 block text-sm text-emerald-700 dark:text-emerald-300">
+                                  {(group.companies || []).filter(Boolean).length}{" "}
+                                  companies
+                                </span>
+                              </div>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                  <Pagination
+                    totalItems={totalGroups}
+                    itemsPerPage={groupsPerPage}
+                    currentPage={groupPage}
+                    onPageChange={setGroupPage}
+                  />
+                </>
+              ) : (
+                <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+                  {groupsLoaded
+                    ? "No groups found. Create a group from the Company menu."
+                    : "Loading groups..."}
+                </p>
+              )}
+            </section>
+
+            <section className="space-y-4 border-t border-gray-200 pt-6 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Companies
+              </h2>
               <Pagination
                 totalItems={totalItems}
                 itemsPerPage={itemsPerPage}
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
               />
-            }
-          >
-            <CompanyList
-              companies={companies}
-              completedCompanies={completedCompanies}
-              loading={loading}
-              onCompanySelect={setSelectedCompany}
-              restrictSearchToCurrentPage={Boolean(selectedGroup)}
-              notifications={notifications}
-              showNotifications={false}
-            />
-          </RateViewLayout>
-        </>
-      )}
+              <CompanyList
+                companies={companies}
+                completedCompanies={completedCompanies}
+                loading={loading}
+                onCompanySelect={setSelectedCompany}
+                notifications={notifications}
+                showNotifications={false}
+              />
+            </section>
+          </>
+        )}
+      </RateViewLayout>
     </motion.div>
   );
 
