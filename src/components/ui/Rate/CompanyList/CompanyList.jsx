@@ -21,6 +21,7 @@ export default function CompanyList({
   onCompanySelect,
   restrictSearchToCurrentPage = false,
   notifications: initialNotifications,
+  showNotifications = true,
 }) {
   const socket = useSocket();
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,8 +87,14 @@ export default function CompanyList({
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="flex flex-col lg:flex-row w-full max-w-7xl mx-auto gap-6 p-4">
-        <div className="flex-1">
+      <div
+        className={`flex w-full gap-6 ${
+          showNotifications
+            ? "max-w-7xl mx-auto flex-col lg:flex-row p-4"
+            : ""
+        }`}
+      >
+        <div className="min-w-0 flex-1">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -216,9 +223,11 @@ export default function CompanyList({
             </motion.div>
           )}
         </div>
-        <div className="w-full lg:w-[300px] shrink-0">
-          <NotificationList notifications={notifications} />
-        </div>
+        {showNotifications && (
+          <div className="w-full shrink-0 lg:w-[300px]">
+            <NotificationList notifications={notifications} />
+          </div>
+        )}
       </div>
     </Suspense>
   );

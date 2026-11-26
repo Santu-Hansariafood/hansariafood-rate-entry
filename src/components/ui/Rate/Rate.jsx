@@ -10,6 +10,7 @@ import { Building2 } from "lucide-react";
 import useRateManagement from "@/hooks/Rate/useRateManagement";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
 import useRateDisplayNotifications from "@/hooks/Rate/useRateDisplayNotifications";
+import RateViewLayout from "@/components/ui/Rate/RateViewLayout";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
   loading: () => <Loading />,
@@ -36,11 +37,6 @@ const Pagination = dynamic(
   () => import("@/components/common/Pagination/Pagination"),
   { loading: () => <Loading /> }
 );
-const NotificationList = dynamic(
-  () => import("@/components/NotificationList/NotificationList"),
-  { loading: () => <Loading /> }
-);
-
 export default function Rate() {
   const {
     companies,
@@ -150,20 +146,30 @@ export default function Rate() {
       </div>
 
       {viewMode === "group" && !selectedGroup ? (
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <div className="min-w-0 flex-1">
-            {groupsLoading ? (
-              <Loading />
-            ) : groupsError ? (
-              <p
-                role="alert"
-                className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
-              >
-                {groupsError}
-              </p>
-            ) : groups.length ? (
-              <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <RateViewLayout
+          notifications={notifications}
+          pagination={
+            !groupsLoading && !groupsError && groups.length > 0 ? (
+              <Pagination
+                totalItems={totalGroups}
+                itemsPerPage={groupsPerPage}
+                currentPage={groupPage}
+                onPageChange={setGroupPage}
+              />
+            ) : null
+          }
+        >
+          {groupsLoading ? (
+            <Loading />
+          ) : groupsError ? (
+            <p
+              role="alert"
+              className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
+            >
+              {groupsError}
+            </p>
+          ) : groups.length ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleGroups.map((group) => (
                   <motion.button
                     key={group._id}
@@ -189,62 +195,58 @@ export default function Rate() {
                   </motion.button>
                 ))}
               </div>
-              <Pagination
-                totalItems={totalGroups}
-                itemsPerPage={groupsPerPage}
-                currentPage={groupPage}
-                onPageChange={setGroupPage}
-              />
-              </>
-            ) : (
-              <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-                {groupsLoaded
-                  ? "No groups found. Create a group from the Company menu."
-                  : "Loading groups..."}
-              </p>
-            )}
-          </div>
-          <aside className="w-full shrink-0 lg:w-[300px]">
-            <NotificationList notifications={notifications} />
-          </aside>
-        </div>
+          ) : (
+            <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+              {groupsLoaded
+                ? "No groups found. Create a group from the Company menu."
+                : "Loading groups..."}
+            </p>
+          )}
+        </RateViewLayout>
       ) : (
         <>
-          {selectedGroup && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4 dark:border-emerald-900 dark:bg-gray-900">
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">
-                  {selectedGroup.name}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Companies in this group
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedGroup(null)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
-              >
-                Back to Groups
-              </button>
-            </div>
-          )}
-
-          <Pagination
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />
-
-          <CompanyList
-            companies={companies}
-            completedCompanies={completedCompanies}
-            loading={loading}
-            onCompanySelect={setSelectedCompany}
-            restrictSearchToCurrentPage={Boolean(selectedGroup)}
+          <RateViewLayout
             notifications={notifications}
-          />
+            header={
+              selectedGroup && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4 dark:border-emerald-900 dark:bg-gray-900">
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">
+                      {selectedGroup.name}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Companies in this group
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGroup(null)}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                  >
+                    Back to Groups
+                  </button>
+                </div>
+              )
+            }
+            pagination={
+              <Pagination
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
+            }
+          >
+            <CompanyList
+              companies={companies}
+              completedCompanies={completedCompanies}
+              loading={loading}
+              onCompanySelect={setSelectedCompany}
+              restrictSearchToCurrentPage={Boolean(selectedGroup)}
+              notifications={notifications}
+              showNotifications={false}
+            />
+          </RateViewLayout>
         </>
       )}
     </motion.div>
