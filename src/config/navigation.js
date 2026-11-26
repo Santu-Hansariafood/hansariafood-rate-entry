@@ -23,6 +23,7 @@ export const RATE_DROPDOWN = [
 
 export const COMPANY_DROPDOWN = [
   { label: "Company", path: "/company", allowed: [] },
+  { label: "Group", path: "/group", allowed: [] },
   { label: "Manage Company", path: "/managecompany", allowed: [] },
   { label: "Seller Company", path: "/sellercompany", allowed: [] },
   { label: "Location", path: "/location", allowed: [] },

@@ -51,6 +51,7 @@ export default function MobileNav({
 
   const allCompanyDropdownItems = [
     { label: "Company", path: "/company" },
+    { label: "Group", path: "/group" },
     { label: "Manage Company", path: "/managecompany" },
     { label: "Seller Company", path: "/sellercompany" },
     { label: "Location", path: "/location" },
