@@ -7,6 +7,7 @@ import { useSocket } from "@/context/SocketContext";
 import { Search, Building2, CheckCircle2, XCircle } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import dynamic from "next/dynamic";
+import useRateDisplayNotifications from "@/hooks/Rate/useRateDisplayNotifications";
 import useDebouncedSearch from "@/hooks/useDebouncedSearch/useDebouncedSearch";
 import { toTitleCase } from "@/utils/formatName/formatName";
 const NotificationList = dynamic(() =>
@@ -19,12 +20,15 @@ export default function CompanyList({
   loading: initialLoading,
   onCompanySelect,
   restrictSearchToCurrentPage = false,
-  notifications: initialNotifications = [],
+  notifications: initialNotifications,
 }) {
   const socket = useSocket();
-  const [notifications, setNotifications] = useState(initialNotifications);
   const [searchQuery, setSearchQuery] = useState("");
   const [disabledCompanies, setDisabledCompanies] = useState([]);
+  const { notifications: fetchedNotifications } = useRateDisplayNotifications({
+    enabled: initialNotifications === undefined,
+  });
+  const notifications = initialNotifications ?? fetchedNotifications;
 
   const { results: searchResults, loading } = useDebouncedSearch(
     searchQuery,
@@ -34,37 +38,6 @@ export default function CompanyList({
   const defaultCompanies = useMemo(() => {
     return [...companies].sort((a, b) => a.localeCompare(b));
   }, [companies]);
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const response = await axiosInstance.get("/rate", {
-          params: { todayOnly: true, sort: "updatedAt_desc", limit: 100 },
-        });
-
-        // The API returns lastUpdated instead of updatedAt
-        const sortedNotifications = response.data.sort(
-          (a, b) => new Date(b.lastUpdated || b.updatedAt || 0) - new Date(a.lastUpdated || a.updatedAt || 0)
-        );
-
-        setNotifications(sortedNotifications);
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error);
-      }
-    };
-
-    fetchNotifications();
-    
-    const handleRatesUpdated = () => {
-      fetchNotifications();
-    };
-
-    window.addEventListener("rates-updated", handleRatesUpdated);
-    
-    return () => {
-      window.removeEventListener("rates-updated", handleRatesUpdated);
-    };
-  }, []);
 
   useEffect(() => {
     const fetchDisabledCompanies = async () => {
@@ -92,8 +65,6 @@ export default function CompanyList({
         if (payload.data.date === today) {
           setDisabledCompanies(payload.data.companies || []);
         }
-      } else if (payload.type === 'rate') {
-        window.dispatchEvent(new CustomEvent("rates-updated"));
       }
     };
 

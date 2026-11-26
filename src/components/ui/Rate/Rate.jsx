@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Building2 } from "lucide-react";
 import useRateManagement from "@/hooks/Rate/useRateManagement";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
-import useRateNotifications from "@/hooks/useRateNotifications/useRateNotifications";
+import useRateDisplayNotifications from "@/hooks/Rate/useRateDisplayNotifications";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
   loading: () => <Loading />,
@@ -67,7 +67,7 @@ export default function Rate() {
     totalGroups,
     itemsPerPage: groupsPerPage,
   } = useRateGroups();
-  const { notifications } = useRateNotifications();
+  const { notifications } = useRateDisplayNotifications();
 
   const [showRatePopup, setShowRatePopup] = useState(false);
   const [viewMode, setViewMode] = useState("company");
@@ -150,18 +150,19 @@ export default function Rate() {
       </div>
 
       {viewMode === "group" && !selectedGroup ? (
-        groupsLoading ? (
-          <Loading />
-        ) : groupsError ? (
-          <p
-            role="alert"
-            className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
-          >
-            {groupsError}
-          </p>
-        ) : groups.length ? (
-          <div className="flex flex-col gap-6 lg:flex-row">
-            <div className="min-w-0 flex-1">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="min-w-0 flex-1">
+            {groupsLoading ? (
+              <Loading />
+            ) : groupsError ? (
+              <p
+                role="alert"
+                className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
+              >
+                {groupsError}
+              </p>
+            ) : groups.length ? (
+              <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleGroups.map((group) => (
                   <motion.button
@@ -194,18 +195,19 @@ export default function Rate() {
                 currentPage={groupPage}
                 onPageChange={setGroupPage}
               />
-            </div>
-            <aside className="w-full shrink-0 lg:w-[300px]">
-              <NotificationList notifications={notifications} />
-            </aside>
+              </>
+            ) : (
+              <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+                {groupsLoaded
+                  ? "No groups found. Create a group from the Company menu."
+                  : "Loading groups..."}
+              </p>
+            )}
           </div>
-        ) : (
-          <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-            {groupsLoaded
-              ? "No groups found. Create a group from the Company menu."
-              : "Loading groups..."}
-          </p>
-        )
+          <aside className="w-full shrink-0 lg:w-[300px]">
+            <NotificationList notifications={notifications} />
+          </aside>
+        </div>
       ) : (
         <>
           {selectedGroup && (
@@ -241,6 +243,7 @@ export default function Rate() {
             loading={loading}
             onCompanySelect={setSelectedCompany}
             restrictSearchToCurrentPage={Boolean(selectedGroup)}
+            notifications={notifications}
           />
         </>
       )}
