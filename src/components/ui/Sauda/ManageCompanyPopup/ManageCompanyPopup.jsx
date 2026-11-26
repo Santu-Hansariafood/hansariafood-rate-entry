@@ -138,8 +138,8 @@ export default function ManageCompanyPopup({
 
   return (
     <Suspense fallback={<Loading />}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm">
-        <div className="relative w-full max-w-7xl max-h-[95vh] overflow-y-auto rounded-2xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 p-4 sm:p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/80 backdrop-blur-sm p-2 sm:p-4">
+        <div className="relative w-full max-w-7xl max-h-[calc(100dvh-1rem)] sm:max-h-[95vh] overflow-y-auto rounded-2xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 p-3 sm:p-6 shadow-2xl border border-gray-200 dark:border-gray-700">
           <button
             aria-label="Close"
             onClick={() => onClose("red")}
@@ -148,7 +148,7 @@ export default function ManageCompanyPopup({
             <X className="h-5 w-5" />
           </button>
 
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
             <Title text={companyDetail.name} />
             <div className="flex items-center gap-4">
               <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">

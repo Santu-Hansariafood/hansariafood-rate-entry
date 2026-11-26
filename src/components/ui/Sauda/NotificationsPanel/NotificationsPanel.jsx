@@ -40,8 +40,8 @@ const NotificationsPanel = ({ onClose }) => {
       `*Location:* ${item.location}`,
       `*Commodity:* ${item.commodity}`,
       `*Tons:* ${item.tons}`,
-      item.loadingFrom ? `*Loading From:* ${item.loadingFrom}` : null,
       `*Rate:* ₹${item.rate ?? "N/A"}`,
+      item.loadingFrom ? `*Loading From:* ${item.loadingFrom}` : null,
       item.buyerName ? `*Buyer:* ${toTitleCase(item.buyerName)}` : null,
       item.sellerCompany
         ? `*Seller Company:* ${toTitleCase(item.sellerCompany)}`
