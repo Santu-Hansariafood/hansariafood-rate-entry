@@ -140,6 +140,17 @@ export default function NotificationList({ notifications = [] }) {
                       }`}
                     />
                     <div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mb-1">
+                        Today, {time}
+                      </div>
+                      {n.groupNames?.length > 0 && (
+                        <div className="text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-1">
+                          Group:{" "}
+                          {n.groupNames
+                            .map((name) => toTitleCase(name))
+                            .join(", ")}
+                        </div>
+                      )}
                       <div className="font-medium">
                         <span className="text-green-600 dark:text-green-400">
                           {toTitleCase(n.company || n.companyName || "Unknown Company")}
@@ -189,9 +200,6 @@ export default function NotificationList({ notifications = [] }) {
                         >
                           <Copy className="w-4 h-4" />
                         </button>
-                      </div>
-                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        Updated: {time}
                       </div>
                     </div>
                   </div>

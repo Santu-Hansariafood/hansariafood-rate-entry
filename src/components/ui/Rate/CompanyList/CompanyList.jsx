@@ -18,6 +18,7 @@ export default function CompanyList({
   completedCompanies,
   loading: initialLoading,
   onCompanySelect,
+  restrictSearchToCurrentPage = false,
   notifications: initialNotifications = [],
 }) {
   const socket = useSocket();
@@ -106,7 +107,11 @@ export default function CompanyList({
   const displayCompanies =
     searchQuery.trim() === ""
       ? defaultCompanies
-      : searchResults.map((c) => c.name);
+      : restrictSearchToCurrentPage
+      ? defaultCompanies.filter((company) =>
+          company.toLowerCase().includes(searchQuery.trim().toLowerCase())
+        )
+      : searchResults.map((company) => company.name);
 
   return (
     <Suspense fallback={<Loading />}>

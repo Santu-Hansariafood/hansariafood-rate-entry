@@ -29,9 +29,11 @@ export default function useNotificationFilter(
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = result.filter((n) =>
-        (n.company || "").toLowerCase().includes(query)
-      );
+      result = result.filter((n) => {
+        const company = (n.company || n.companyName || "").toLowerCase();
+        const groupNames = (n.groupNames || []).join(" ").toLowerCase();
+        return company.includes(query) || groupNames.includes(query);
+      });
     }
 
     return result;

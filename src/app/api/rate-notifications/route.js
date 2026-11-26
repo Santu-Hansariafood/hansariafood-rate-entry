@@ -4,6 +4,10 @@ import RateHistory from "@/models/RateHistory";
 import ManageCompany from "@/models/ManageCompany";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { rateLimitGuard } from "@/lib/apiUtils";
+import {
+  getGroupNamesByCompanyNames,
+  normalizeGroupCompanyName,
+} from "@/lib/companyGroupNotifications";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +103,17 @@ export async function GET(req) {
         });
       }
     });
+
+    const groupNamesByCompany = await getGroupNamesByCompanyNames(
+      notifications.map((notification) => notification.companyName),
+    );
+    notifications = notifications.map((notification) => ({
+      ...notification,
+      groupNames:
+        groupNamesByCompany.get(
+          normalizeGroupCompanyName(notification.companyName),
+        ) || [],
+    }));
 
     notifications.sort((a, b) => b.timestamp - a.timestamp);
 

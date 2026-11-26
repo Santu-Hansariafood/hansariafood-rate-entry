@@ -147,6 +147,11 @@ export async function GET(req) {
     const skip = (page - 1) * limit;
 
     const search = searchParams.get("search") || searchParams.get("q") || "";
+    const hasCompanyNamesFilter = searchParams.has("companyNames");
+    const companyNames = searchParams
+      .getAll("companyNames")
+      .map((name) => name.trim())
+      .filter(Boolean);
     const categories = searchParams.getAll("category");
     const subCommodities = searchParams.getAll("subCommodities");
     const typeFilter = searchParams.get("type");
@@ -159,8 +164,29 @@ export async function GET(req) {
 
     const filter = {};
 
+    const nameFilters = [];
     if (search.trim()) {
-      filter.name = { $regex: search.trim(), $options: "i" };
+      nameFilters.push({
+        name: { $regex: search.trim(), $options: "i" },
+      });
+    }
+    if (hasCompanyNamesFilter) {
+      nameFilters.push({
+        name: {
+          $in: companyNames.map(
+            (name) =>
+              new RegExp(
+                `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+                "i",
+              ),
+          ),
+        },
+      });
+    }
+    if (nameFilters.length === 1) {
+      Object.assign(filter, nameFilters[0]);
+    } else if (nameFilters.length > 1) {
+      filter.$and = nameFilters;
     }
     if (categories.length > 0) {
       filter.category = { $in: categories };

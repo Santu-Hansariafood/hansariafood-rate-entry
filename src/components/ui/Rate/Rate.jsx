@@ -1,12 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import useRateManagement from "@/hooks/Rate/useRateManagement";
+import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
   loading: () => <Loading />,
@@ -51,6 +52,57 @@ export default function Rate() {
   } = useRateManagement();
 
   const [showRatePopup, setShowRatePopup] = useState(false);
+  const [viewMode, setViewMode] = useState("company");
+  const [groups, setGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsLoaded, setGroupsLoaded] = useState(false);
+  const [groupsError, setGroupsError] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchGroups = async () => {
+      setGroupsLoading(true);
+      try {
+        const firstResponse = await axiosInstance.get(
+          "/groups?page=1&limit=100",
+          { signal: controller.signal },
+        );
+        const groupData = firstResponse.data.groups || [];
+        const totalPages = firstResponse.data.totalPages || 1;
+
+        for (let page = 2; page <= totalPages; page += 1) {
+          const response = await axiosInstance.get(
+            `/groups?page=${page}&limit=100`,
+            { signal: controller.signal },
+          );
+          groupData.push(...(response.data.groups || []));
+        }
+
+        if (!controller.signal.aborted) {
+          setGroups(groupData);
+          setGroupsError("");
+          setGroupsLoaded(true);
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to load groups for rate management", error);
+          setGroupsError(
+            error.response?.data?.error || "Failed to load company groups",
+          );
+          setGroupsLoaded(true);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setGroupsLoading(false);
+        }
+      }
+    };
+
+    fetchGroups();
+    return () => controller.abort();
+  }, []);
 
   const handleFilterChange = useCallback((newFilters) => {
     const selectedCategories = Object.values(newFilters);
@@ -59,6 +111,31 @@ export default function Rate() {
       category: selectedCategories,
     }));
   }, []);
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    setSelectedGroup(null);
+    setSelectedCompany(null);
+    setCurrentPage(1);
+    setFilters((prev) => {
+      const nextFilters = { ...prev };
+      delete nextFilters.companyNames;
+      return nextFilters;
+    });
+  };
+
+  const handleGroupSelect = (group) => {
+    const companyNames = (group.companies || [])
+      .filter((company) => company?.name)
+      .map((company) => company.name);
+
+    setSelectedGroup(group);
+    setCurrentPage(1);
+    setFilters((prev) => ({
+      ...prev,
+      companyNames: companyNames.length ? companyNames : [""],
+    }));
+  };
 
   const renderCompanySelector = (
     <motion.div
@@ -83,19 +160,99 @@ export default function Rate() {
         </motion.button>
       </div>
 
-      <Pagination
-        totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
-      />
+      <div className="flex flex-wrap gap-2">
+        {[
+          { label: "Company Wise", value: "company" },
+          { label: "Group Wise", value: "group" },
+        ].map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => handleViewModeChange(option.value)}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+              viewMode === option.value
+                ? "bg-emerald-600 text-white"
+                : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
 
-      <CompanyList
-        companies={companies}
-        completedCompanies={completedCompanies}
-        loading={loading}
-        onCompanySelect={setSelectedCompany}
-      />
+      {viewMode === "group" && !selectedGroup ? (
+        groupsLoading ? (
+          <Loading />
+        ) : groupsError ? (
+          <p
+            role="alert"
+            className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
+          >
+            {groupsError}
+          </p>
+        ) : groups.length ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {groups.map((group) => (
+              <button
+                key={group._id}
+                type="button"
+                onClick={() => handleGroupSelect(group)}
+                className="rounded-xl border border-emerald-200 bg-white p-5 text-left shadow-sm transition hover:border-emerald-500 hover:shadow-md dark:border-emerald-900 dark:bg-gray-900"
+              >
+                <span className="block font-semibold text-gray-900 dark:text-gray-100">
+                  {group.name}
+                </span>
+                <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">
+                  {(group.companies || []).filter(Boolean).length} companies
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+            {groupsLoaded
+              ? "No groups found. Create a group from the Company menu."
+              : "Loading groups..."}
+          </p>
+        )
+      ) : (
+        <>
+          {selectedGroup && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4 dark:border-emerald-900 dark:bg-gray-900">
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                  {selectedGroup.name}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Companies in this group
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedGroup(null)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                Back to Groups
+              </button>
+            </div>
+          )}
+
+          <Pagination
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+          />
+
+          <CompanyList
+            companies={companies}
+            completedCompanies={completedCompanies}
+            loading={loading}
+            onCompanySelect={setSelectedCompany}
+            restrictSearchToCurrentPage={Boolean(selectedGroup)}
+          />
+        </>
+      )}
     </motion.div>
   );
 

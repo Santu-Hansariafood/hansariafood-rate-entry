@@ -73,9 +73,15 @@ export default function useCopyNotification() {
     }
 
     const commodity = capitalizeWords(rawCommodityLower);
+    const groupNames = Array.isArray(notification.groupNames)
+      ? notification.groupNames
+      : [];
+    const groupLine = groupNames.length
+      ? `*Group: ${groupNames.join(", ")}*\n`
+      : "";
 
     const copyText = `*Today* ${todayDate}
-*${company}* ${label} 
+${groupLine}*${company}* ${label}
 *${commodity}* - *${
       quantity && quantity !== "" ? `${quantity}mt @` : ""
     }${newRate}/-* 

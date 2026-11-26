@@ -7,6 +7,10 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { emitNotification } from "@/lib/socket";
 import { sendTemplateToRegisteredEmployeeMobiles } from "@/lib/hansariaMessages";
 import { rateLimitGuard } from "@/lib/apiUtils";
+import {
+  getGroupNamesByCompanyNames,
+  normalizeGroupCompanyName,
+} from "@/lib/companyGroupNotifications";
 
 // Hoisted out of request handlers: constructing an Intl formatter is expensive
 // and the time zone never changes, so one shared instance is enough.
@@ -319,7 +323,7 @@ export async function GET(req) {
 
     const rates = await Rate.find(dbQuery).select(selectFields).lean();
 
-    const formattedRates = rates.map((rate) => {
+    let formattedRates = rates.map((rate) => {
       const lastUpdated = rate.newRateDate ? new Date(rate.newRateDate) : null;
       let isToday = false;
       
@@ -370,6 +374,19 @@ export async function GET(req) {
         mobile: rate.mobile,
       };
     });
+
+    if (todayOnly && formattedRates.length > 0) {
+      const groupNamesByCompany = await getGroupNamesByCompanyNames(
+        formattedRates.map((rate) => rate.company),
+      );
+      formattedRates = formattedRates.map((rate) => ({
+        ...rate,
+        groupNames:
+          groupNamesByCompany.get(
+            normalizeGroupCompanyName(rate.company),
+          ) || [],
+      }));
+    }
 
     return NextResponse.json(formattedRates, { status: 200 });
   } catch (error) {
