@@ -24,15 +24,24 @@ function getErrorMessage(error) {
   );
 }
 
-function CompanyMultiSelect({ companies, selectedIds, onChange }) {
+function CompanyMultiSelect({
+  companies,
+  selectedIds,
+  onChange,
+  excludedCompanyIds,
+  loadingAssignments,
+  assignmentError,
+}) {
   const [search, setSearch] = useState("");
   const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
   const filteredCompanies = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return query
-      ? companies.filter((company) => company.name.toLowerCase().includes(query))
-      : companies;
-  }, [companies, search]);
+    return companies.filter(
+      (company) =>
+        !excludedCompanyIds.has(company._id) &&
+        (!query || company.name.toLowerCase().includes(query)),
+    );
+  }, [companies, excludedCompanyIds, search]);
 
   return (
     <div>
@@ -47,7 +56,15 @@ function CompanyMultiSelect({ companies, selectedIds, onChange }) {
         className="mb-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
       />
       <div className="max-h-52 overflow-y-auto rounded-lg border border-gray-200 p-2 dark:border-gray-700">
-        {filteredCompanies.length ? (
+        {loadingAssignments ? (
+          <p className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">
+            Loading group assignments...
+          </p>
+        ) : assignmentError ? (
+          <p role="alert" className="px-2 py-3 text-sm text-red-600 dark:text-red-400">
+            {assignmentError}
+          </p>
+        ) : filteredCompanies.length ? (
           filteredCompanies.map((company) => (
             <label
               key={company._id}
@@ -70,7 +87,7 @@ function CompanyMultiSelect({ companies, selectedIds, onChange }) {
           ))
         ) : (
           <p className="px-2 py-3 text-sm text-gray-500 dark:text-gray-400">
-            No companies found.
+            No available companies found.
           </p>
         )}
       </div>
@@ -87,6 +104,9 @@ function GroupFields({
   selectedIds,
   onSelectedIdsChange,
   companies,
+  excludedCompanyIds,
+  loadingAssignments,
+  assignmentError,
 }) {
   return (
     <div className="space-y-4">
@@ -112,6 +132,9 @@ function GroupFields({
         companies={companies}
         selectedIds={selectedIds}
         onChange={onSelectedIdsChange}
+        excludedCompanyIds={excludedCompanyIds}
+        loadingAssignments={loadingAssignments}
+        assignmentError={assignmentError}
       />
     </div>
   );
@@ -129,12 +152,28 @@ export default function GroupManager() {
   const [editingGroup, setEditingGroup] = useState(null);
   const [editName, setEditName] = useState("");
   const [editCompanyIds, setEditCompanyIds] = useState([]);
+  const [assignedCompanyIds, setAssignedCompanyIds] = useState([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(true);
+  const [assignmentError, setAssignmentError] = useState("");
   const [viewingGroup, setViewingGroup] = useState(null);
   const [deletingGroup, setDeletingGroup] = useState(null);
   const [loadingGroups, setLoadingGroups] = useState(true);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const excludedCompanyIds = useMemo(
+    () => new Set(assignedCompanyIds),
+    [assignedCompanyIds],
+  );
+  const excludedEditCompanyIds = useMemo(() => {
+    const currentGroupCompanyIds = new Set(
+      (editingGroup?.companies || []).map((company) => company._id),
+    );
+    return new Set(
+      assignedCompanyIds.filter((companyId) => !currentGroupCompanyIds.has(companyId)),
+    );
+  }, [assignedCompanyIds, editingGroup]);
 
   const fetchGroups = useCallback(
     async (page = currentPage, search = debouncedSearch) => {
@@ -156,6 +195,36 @@ export default function GroupManager() {
     [currentPage, debouncedSearch],
   );
 
+  const fetchAssignedCompanyIds = useCallback(async () => {
+    setLoadingAssignments(true);
+    setAssignmentError("");
+    try {
+      const firstResponse = await axiosInstance.get("/groups?page=1&limit=100");
+      const allGroups = firstResponse.data.groups || [];
+      const totalPages = firstResponse.data.totalPages || 1;
+
+      for (let page = 2; page <= totalPages; page += 1) {
+        const response = await axiosInstance.get(
+          `/groups?page=${page}&limit=100`,
+        );
+        allGroups.push(...(response.data.groups || []));
+      }
+
+      const companyIds = allGroups.flatMap((group) =>
+        (group.companies || [])
+          .map((company) => company?._id || company)
+          .filter(Boolean)
+          .map((companyId) => companyId.toString()),
+      );
+      setAssignedCompanyIds([...new Set(companyIds)]);
+    } catch (fetchError) {
+      console.error("Failed to fetch company group assignments", fetchError);
+      setAssignmentError(getErrorMessage(fetchError));
+    } finally {
+      setLoadingAssignments(false);
+    }
+  }, []);
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -167,6 +236,10 @@ export default function GroupManager() {
   useEffect(() => {
     fetchGroups(currentPage, debouncedSearch);
   }, [fetchGroups, currentPage, debouncedSearch]);
+
+  useEffect(() => {
+    fetchAssignedCompanyIds();
+  }, [fetchAssignedCompanyIds]);
 
   useEffect(() => {
     let cancelled = false;
@@ -222,7 +295,10 @@ export default function GroupManager() {
       setSearchQuery("");
       setDebouncedSearch("");
       setCurrentPage(1);
-      await fetchGroups(1, "");
+      await Promise.all([
+        fetchGroups(1, ""),
+        fetchAssignedCompanyIds(),
+      ]);
     } catch (saveError) {
       console.error("Failed to create group", saveError);
       setError(getErrorMessage(saveError));
@@ -248,7 +324,10 @@ export default function GroupManager() {
         companies: editCompanyIds,
       });
       setEditingGroup(null);
-      await fetchGroups(currentPage, debouncedSearch);
+      await Promise.all([
+        fetchGroups(currentPage, debouncedSearch),
+        fetchAssignedCompanyIds(),
+      ]);
     } catch (updateError) {
       console.error("Failed to update group", updateError);
       setError(getErrorMessage(updateError));
@@ -270,6 +349,7 @@ export default function GroupManager() {
       } else {
         await fetchGroups(nextPage, debouncedSearch);
       }
+      await fetchAssignedCompanyIds();
     } catch (deleteError) {
       console.error("Failed to delete group", deleteError);
       setError(getErrorMessage(deleteError));
@@ -367,10 +447,15 @@ export default function GroupManager() {
             selectedIds={selectedCompanyIds}
             onSelectedIdsChange={setSelectedCompanyIds}
             companies={companies}
+            excludedCompanyIds={excludedCompanyIds}
+            loadingAssignments={loadingAssignments}
+            assignmentError={assignmentError}
           />
           <button
             type="submit"
-            disabled={saving || loadingCompanies}
+            disabled={
+              saving || loadingCompanies || loadingAssignments || Boolean(assignmentError)
+            }
             className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Plus size={18} />
@@ -430,10 +515,15 @@ export default function GroupManager() {
               selectedIds={editCompanyIds}
               onSelectedIdsChange={setEditCompanyIds}
               companies={companies}
+              excludedCompanyIds={excludedEditCompanyIds}
+              loadingAssignments={loadingAssignments}
+              assignmentError={assignmentError}
             />
             <button
               type="submit"
-              disabled={saving || loadingCompanies}
+              disabled={
+                saving || loadingCompanies || loadingAssignments || Boolean(assignmentError)
+              }
               className="rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save Changes"}

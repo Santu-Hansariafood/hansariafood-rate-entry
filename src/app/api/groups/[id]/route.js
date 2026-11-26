@@ -56,7 +56,7 @@ export async function PUT(req, { params }) {
     const input = await req.json();
     await connectDB();
 
-    const groupData = await validateCompanyGroupInput(input);
+    const groupData = await validateCompanyGroupInput(input, id);
     if (groupData.error) {
       return NextResponse.json(
         { error: groupData.error },

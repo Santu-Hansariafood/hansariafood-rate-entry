@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import ManageCompany from "@/models/ManageCompany";
+import Company from "@/models/Company";
 import RateUpdate from "@/models/RateUpdate";
+import CompanyGroup from "@/models/CompanyGroup";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 import { rateLimitGuard } from "@/lib/apiUtils";
+import { escapeRegex } from "@/lib/companyGroupUtils";
 
 export async function POST(req) {
   const limited = rateLimitGuard(req, "write");
@@ -161,9 +164,11 @@ export async function GET(req) {
     const excludeTodayNoBuying = ["1", "true", "yes"].includes(
       (searchParams.get("excludeTodayNoBuying") || "").toLowerCase(),
     );
+    const excludeGroupedCompanies = ["1", "true", "yes"].includes(
+      (searchParams.get("excludeGroupedCompanies") || "").toLowerCase(),
+    );
 
     const filter = {};
-
     const nameFilters = [];
     if (search.trim()) {
       nameFilters.push({
@@ -183,11 +188,27 @@ export async function GET(req) {
         },
       });
     }
-    if (nameFilters.length === 1) {
-      Object.assign(filter, nameFilters[0]);
-    } else if (nameFilters.length > 1) {
-      filter.$and = nameFilters;
+
+    if (excludeGroupedCompanies) {
+      const groupedCompanyIds = await CompanyGroup.distinct("companies");
+      const groupedCompanyNames = groupedCompanyIds.length
+        ? await Company.distinct("name", {
+            _id: { $in: groupedCompanyIds },
+          })
+        : [];
+      const groupedCompanyPatterns = [
+        ...new Set(
+          groupedCompanyNames
+            .map((name) => name?.trim())
+            .filter(Boolean),
+        ),
+      ].map((name) => new RegExp(`^${escapeRegex(name)}$`, "i"));
+
+      if (groupedCompanyPatterns.length > 0) {
+        nameFilters.push({ name: { $nin: groupedCompanyPatterns } });
+      }
     }
+
     if (categories.length > 0) {
       filter.category = { $in: categories };
     }
@@ -207,10 +228,14 @@ export async function GET(req) {
       const excludedNames = todayUpdate?.companies || [];
 
       if (excludedNames.length > 0) {
-        filter.name = filter.name
-          ? { ...filter.name, $nin: excludedNames }
-          : { $nin: excludedNames };
+        nameFilters.push({ name: { $nin: excludedNames } });
       }
+    }
+
+    if (nameFilters.length === 1) {
+      Object.assign(filter, nameFilters[0]);
+    } else if (nameFilters.length > 1) {
+      filter.$and = nameFilters;
     }
 
     const [companies, total] = await Promise.all([

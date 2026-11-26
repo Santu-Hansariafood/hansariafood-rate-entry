@@ -67,6 +67,9 @@ export default function useRateManagement() {
           params.append(key, value);
         }
       });
+      if (!filters.companyNames) {
+        params.append("excludeGroupedCompanies", "true");
+      }
       params.append("page", currentPage);
       params.append("limit", itemsPerPage);
       params.append("excludeTodayNoBuying", "true");
