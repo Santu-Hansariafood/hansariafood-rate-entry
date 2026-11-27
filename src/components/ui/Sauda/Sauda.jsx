@@ -11,10 +11,7 @@ import React, {
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
 import useSaudaData from "@/hooks/SaudaData/useSaudaData";
-import useRateGroups from "@/hooks/Rate/useRateGroups";
-import Pagination from "@/components/common/Pagination/Pagination";
 import { toTitleCase } from "@/utils/formatName/formatName";
-import { Building2, Search } from "lucide-react";
 
 const ManageCompanyPopup = dynamic(
   () => import("@/components/ui/Sauda/ManageCompanyPopup/ManageCompanyPopup"),
@@ -40,9 +37,6 @@ const Sauda = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("company");
-  const [selectedGroup, setSelectedGroup] = useState(null);
-  const [groupSearch, setGroupSearch] = useState("");
   const inactivityTimer = useRef(null);
 
   useEffect(() => {
@@ -64,30 +58,6 @@ const Sauda = () => {
     updateCompanyStatus,
     refreshSaudaData,
   } = useSaudaData();
-  const {
-    groups,
-    filteredGroups,
-    visibleGroups,
-    loading: groupsLoading,
-    loaded: groupsLoaded,
-    error: groupsError,
-    currentPage: groupPage,
-    setCurrentPage: setGroupPage,
-    totalGroups,
-    itemsPerPage: groupsPerPage,
-  } = useRateGroups(groupSearch);
-
-  const groupedCompanyIds = useMemo(
-    () =>
-      new Set(
-        groups.flatMap((group) =>
-          (group.companies || [])
-            .map((company) => company?._id?.toString())
-            .filter(Boolean),
-        ),
-      ),
-    [groups],
-  );
 
   const filteredCompanies = useMemo(() => {
     if (!companies.length) return [];
@@ -112,31 +82,6 @@ const Sauda = () => {
       return true;
     });
   }, [companies, debouncedSearchTerm, filterType, hasRate]);
-
-  const visibleCompanies = useMemo(() => {
-    if (selectedGroup) {
-      const selectedCompanyIds = new Set(
-        (selectedGroup.companies || []).map((company) =>
-          company?._id?.toString(),
-        ),
-      );
-      return filteredCompanies.filter((company) =>
-        selectedCompanyIds.has(company._id.toString()),
-      );
-    }
-
-    return viewMode === "company"
-      ? filteredCompanies.filter(
-          (company) => !groupedCompanyIds.has(company._id.toString()),
-        )
-      : filteredCompanies;
-  }, [filteredCompanies, groupedCompanyIds, selectedGroup, viewMode]);
-
-  const handleViewModeChange = (mode) => {
-    setViewMode(mode);
-    setSelectedGroup(null);
-    setSelectedCompany(null);
-  };
 
   const handlePopupClose = useCallback(
     (companyId, status = null) => {
@@ -174,124 +119,18 @@ const Sauda = () => {
             <BuyerSellerFilter value={filterType} onChange={setFilterType} />
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 px-4 sm:px-6 pb-4">
-          {[
-            { label: "Company Wise", value: "company" },
-            { label: "Group Wise", value: "group" },
-          ].map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleViewModeChange(option.value)}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                viewMode === option.value
-                  ? "bg-emerald-600 text-white"
-                  : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
         <div className="w-full px-4 sm:px-6 pb-4">
           <div className="flex flex-col lg:flex-row gap-4 h-[78vh] min-h-[540px]">
             <div className="w-full lg:w-3/4 flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-full">
-              <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800">
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-600 to-green-700 dark:from-green-700 dark:to-green-800">
                 <h3 className="text-base font-semibold text-white">
-                  {selectedGroup
-                    ? `${selectedGroup.name} (${visibleCompanies.length})`
-                    : viewMode === "group"
-                      ? `📋 Company Groups (${totalGroups})`
-                      : `📋 Companies (${visibleCompanies.length})`}
+                  📋 Companies ({filteredCompanies.length})
                 </h3>
-                {selectedGroup && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedGroup(null)}
-                    className="rounded-md border border-white/50 px-3 py-1 text-sm font-medium text-white hover:bg-white/10"
-                  >
-                    Back to Groups
-                  </button>
-                )}
               </div>
               <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-                {loading ||
-                (viewMode === "company" && !groupsLoaded && !groupsError) ? (
+                {loading ? (
                   <Loading />
-                ) : viewMode === "group" && !selectedGroup ? (
-                  <div className="space-y-4">
-                    <label className="relative block w-full sm:max-w-sm">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="search"
-                        value={groupSearch}
-                        onChange={(event) => {
-                          setGroupSearch(event.target.value);
-                          setGroupPage(1);
-                        }}
-                        placeholder="Search groups or companies..."
-                        className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                      />
-                    </label>
-                    {groupsLoading ? (
-                      <Loading />
-                    ) : groupsError ? (
-                      <p
-                        role="alert"
-                        className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
-                      >
-                        {groupsError}
-                      </p>
-                    ) : filteredGroups.length ? (
-                      <>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-                          {visibleGroups.map((group) => (
-                            <button
-                              key={group._id}
-                              type="button"
-                              onClick={() => setSelectedGroup(group)}
-                              className="group flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-left transition hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40"
-                            >
-                              <span className="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/50">
-                                <Building2 className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
-                              </span>
-                              <span className="min-w-0">
-                                <span className="block truncate text-sm font-semibold text-emerald-900 dark:text-emerald-100">
-                                  {group.name}
-                                </span>
-                                <span className="block text-xs text-emerald-700 dark:text-emerald-300">
-                                  {(group.companies || []).length} companies
-                                </span>
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                        <Pagination
-                          currentPage={groupPage}
-                          totalItems={totalGroups}
-                          itemsPerPage={groupsPerPage}
-                          onPageChange={setGroupPage}
-                          showPageNumbers
-                        />
-                      </>
-                    ) : (
-                      <div className="py-10 text-center text-gray-500 dark:text-gray-400">
-                        {groups.length
-                          ? "No groups match your search."
-                          : groupsLoaded
-                            ? "No company groups found."
-                            : "Loading groups..."}
-                      </div>
-                    )}
-                  </div>
-                ) : viewMode === "company" && groupsError ? (
-                  <p
-                    role="alert"
-                    className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
-                  >
-                    {groupsError}
-                  </p>
-                ) : visibleCompanies.length > 0 ? (
+                ) : filteredCompanies.length > 0 ? (
                   <div
                     className="
                       grid gap-3
@@ -301,7 +140,7 @@ const Sauda = () => {
                       xl:grid-cols-4
                     "
                   >
-                    {visibleCompanies.map((company) => {
+                    {filteredCompanies.map((company) => {
                       const statusColor =
                         saudaStatusMap[company._id] || "green";
 
