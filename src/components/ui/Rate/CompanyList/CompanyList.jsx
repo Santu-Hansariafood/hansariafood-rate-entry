@@ -22,6 +22,7 @@ export default function CompanyList({
   restrictSearchToCurrentPage = false,
   notifications: initialNotifications,
   showNotifications = true,
+  excludeGroupedCompaniesFromSearch = false,
 }) {
   const socket = useSocket();
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,9 +32,12 @@ export default function CompanyList({
   });
   const notifications = initialNotifications ?? fetchedNotifications;
 
+  const searchUrl = excludeGroupedCompaniesFromSearch
+    ? "/managecompany?excludeGroupedCompanies=true"
+    : "/managecompany";
   const { results: searchResults, loading } = useDebouncedSearch(
     searchQuery,
-    "/managecompany"
+    searchUrl,
   );
 
   const defaultCompanies = useMemo(() => {

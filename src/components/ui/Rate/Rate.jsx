@@ -263,6 +263,7 @@ export default function Rate() {
               onCompanySelect={setSelectedCompany}
               notifications={notifications}
               showNotifications={false}
+              excludeGroupedCompaniesFromSearch
             />
           </>
         )}
