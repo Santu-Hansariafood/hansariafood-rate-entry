@@ -6,45 +6,12 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
-import { Building2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import useRateManagement from "@/hooks/Rate/useRateManagement";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
 import useRateDisplayNotifications from "@/hooks/Rate/useRateDisplayNotifications";
 import RateViewLayout from "@/components/ui/Rate/RateViewLayout";
-
-function getGroupRateProgress(group, notifications) {
-  const normalize = (value) => String(value ?? "").trim().toLocaleLowerCase();
-  const expectedLocations = new Set();
-
-  (group.companies || []).forEach((company) => {
-    const companyName = normalize(company?.name);
-    (company?.locations || []).forEach((location) => {
-      const locationName = normalize(location);
-      if (companyName && locationName) {
-        expectedLocations.add(`${companyName}|||${locationName}`);
-      }
-    });
-  });
-
-  const updatedLocations = new Set(
-    (Array.isArray(notifications) ? notifications : [])
-      .filter((rate) => rate.newRateDate || rate.lastUpdated)
-      .map(
-        (rate) =>
-          `${normalize(rate.company || rate.companyName)}|||${normalize(rate.location)}`,
-      ),
-  );
-  const completed = [...expectedLocations].filter((location) =>
-    updatedLocations.has(location),
-  ).length;
-  const total = expectedLocations.size;
-
-  return {
-    completed,
-    total,
-    percentage: total ? Math.round((completed / total) * 100) : 0,
-  };
-}
+import RateGroupCard from "@/components/ui/Rate/RateGroupCard";
 
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
   loading: () => <Loading />,
@@ -225,57 +192,14 @@ export default function Rate() {
             ) : filteredGroups.length ? (
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {visibleGroups.map((group) => {
-                    const progress = getGroupRateProgress(group, notifications);
-                    return (
-                        <motion.button
-                          key={group._id}
-                          type="button"
-                          onClick={() => handleGroupSelect(group)}
-                          whileHover={{ y: -2 }}
-                          className="group relative overflow-hidden rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left transition-colors hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-emerald-100 p-2 group-hover:bg-emerald-200 dark:bg-emerald-900/50 dark:group-hover:bg-emerald-800">
-                              <Building2 className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <span className="block truncate font-medium text-emerald-900 dark:text-emerald-100">
-                                {group.name}
-                              </span>
-                              <span className="mt-1 block text-sm text-emerald-700 dark:text-emerald-300">
-                                {(group.companies || []).filter(Boolean).length}{" "}
-                                companies
-                              </span>
-                            </div>
-                          </div>
-                          <div className="mt-4">
-                            <div className="mb-1.5 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300">
-                              <span>
-                                {progress.completed}/{progress.total} locations
-                              </span>
-                              <span className="font-semibold opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                                {progress.percentage}%
-                              </span>
-                            </div>
-                            <div
-                              role="progressbar"
-                              aria-label={`${group.name} rate progress`}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                              aria-valuenow={progress.percentage}
-                              title={`${progress.percentage}% of locations have a rate today`}
-                              className="h-1.5 overflow-hidden rounded-full bg-emerald-200 dark:bg-emerald-900/70"
-                            >
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-lime-300 via-green-500 to-emerald-700 transition-[width] duration-500"
-                                style={{ width: `${progress.percentage}%` }}
-                              />
-                            </div>
-                          </div>
-                        </motion.button>
-                    );
-                  })}
+                  {visibleGroups.map((group) => (
+                    <RateGroupCard
+                      key={group._id}
+                      group={group}
+                      notifications={notifications}
+                      onClick={() => handleGroupSelect(group)}
+                    />
+                  ))}
                 </div>
                 <Pagination
                       totalItems={totalGroups}
