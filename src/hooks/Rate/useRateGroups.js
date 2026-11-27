@@ -40,7 +40,7 @@ export default function useRateGroups(searchQuery = "") {
       setLoading(true);
       try {
         const firstResponse = await axiosInstance.get(
-          "/groups?page=1&limit=100",
+          "/groups?page=1&limit=100&includeLocations=true",
           { signal: controller.signal },
         );
         const groupData = firstResponse.data.groups || [];
@@ -48,7 +48,7 @@ export default function useRateGroups(searchQuery = "") {
 
         for (let page = 2; page <= totalPages; page += 1) {
           const response = await axiosInstance.get(
-            `/groups?page=${page}&limit=100`,
+            `/groups?page=${page}&limit=100&includeLocations=true`,
             { signal: controller.signal },
           );
           groupData.push(...(response.data.groups || []));

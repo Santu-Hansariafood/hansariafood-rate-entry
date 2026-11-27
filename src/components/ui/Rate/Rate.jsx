@@ -12,6 +12,40 @@ import useRateGroups from "@/hooks/Rate/useRateGroups";
 import useRateDisplayNotifications from "@/hooks/Rate/useRateDisplayNotifications";
 import RateViewLayout from "@/components/ui/Rate/RateViewLayout";
 
+function getGroupRateProgress(group, notifications) {
+  const normalize = (value) => String(value ?? "").trim().toLocaleLowerCase();
+  const expectedLocations = new Set();
+
+  (group.companies || []).forEach((company) => {
+    const companyName = normalize(company?.name);
+    (company?.locations || []).forEach((location) => {
+      const locationName = normalize(location);
+      if (companyName && locationName) {
+        expectedLocations.add(`${companyName}|||${locationName}`);
+      }
+    });
+  });
+
+  const updatedLocations = new Set(
+    (Array.isArray(notifications) ? notifications : [])
+      .filter((rate) => rate.newRateDate || rate.lastUpdated)
+      .map(
+        (rate) =>
+          `${normalize(rate.company || rate.companyName)}|||${normalize(rate.location)}`,
+      ),
+  );
+  const completed = [...expectedLocations].filter((location) =>
+    updatedLocations.has(location),
+  ).length;
+  const total = expectedLocations.size;
+
+  return {
+    completed,
+    total,
+    percentage: total ? Math.round((completed / total) * 100) : 0,
+  };
+}
+
 const CompanyList = dynamic(() => import("./CompanyList/CompanyList"), {
   loading: () => <Loading />,
 });
@@ -191,7 +225,9 @@ export default function Rate() {
             ) : filteredGroups.length ? (
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                      {visibleGroups.map((group) => (
+                  {visibleGroups.map((group) => {
+                    const progress = getGroupRateProgress(group, notifications);
+                    return (
                         <motion.button
                           key={group._id}
                           type="button"
@@ -213,8 +249,33 @@ export default function Rate() {
                               </span>
                             </div>
                           </div>
+                          <div className="mt-4">
+                            <div className="mb-1.5 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300">
+                              <span>
+                                {progress.completed}/{progress.total} locations
+                              </span>
+                              <span className="font-semibold opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                                {progress.percentage}%
+                              </span>
+                            </div>
+                            <div
+                              role="progressbar"
+                              aria-label={`${group.name} rate progress`}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-valuenow={progress.percentage}
+                              title={`${progress.percentage}% of locations have a rate today`}
+                              className="h-1.5 overflow-hidden rounded-full bg-emerald-200 dark:bg-emerald-900/70"
+                            >
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-lime-300 via-green-500 to-emerald-700 transition-[width] duration-500"
+                                style={{ width: `${progress.percentage}%` }}
+                              />
+                            </div>
+                          </div>
                         </motion.button>
-                      ))}
+                    );
+                  })}
                 </div>
                 <Pagination
                       totalItems={totalGroups}
