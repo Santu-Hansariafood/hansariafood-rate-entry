@@ -6,7 +6,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
-import { Building2 } from "lucide-react";
+import { Building2, Search } from "lucide-react";
 import useRateManagement from "@/hooks/Rate/useRateManagement";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
 import useRateDisplayNotifications from "@/hooks/Rate/useRateDisplayNotifications";
@@ -52,8 +52,10 @@ export default function Rate() {
     totalItems,
     itemsPerPage,
   } = useRateManagement();
+  const [groupSearch, setGroupSearch] = useState("");
   const {
     groups,
+    filteredGroups,
     visibleGroups,
     loading: groupsLoading,
     loaded: groupsLoaded,
@@ -62,7 +64,7 @@ export default function Rate() {
     setCurrentPage: setGroupPage,
     totalGroups,
     itemsPerPage: groupsPerPage,
-  } = useRateGroups();
+  } = useRateGroups(groupSearch);
   const { notifications } = useRateDisplayNotifications();
 
   const [showRatePopup, setShowRatePopup] = useState(false);
@@ -158,9 +160,24 @@ export default function Rate() {
       <RateViewLayout notifications={notifications}>
         {viewMode === "group" && !selectedGroup ? (
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Company Groups
-            </h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Company Groups
+              </h2>
+              <label className="relative block w-full sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="search"
+                  value={groupSearch}
+                  onChange={(event) => {
+                    setGroupSearch(event.target.value);
+                    setGroupPage(1);
+                  }}
+                  placeholder="Search groups or companies..."
+                  className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                />
+              </label>
+            </div>
             {groupsLoading ? (
               <Loading />
             ) : groupsError ? (
@@ -170,7 +187,7 @@ export default function Rate() {
               >
                 {groupsError}
               </p>
-            ) : groups.length ? (
+            ) : filteredGroups.length ? (
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                       {visibleGroups.map((group) => (
@@ -203,13 +220,16 @@ export default function Rate() {
                       itemsPerPage={groupsPerPage}
                       currentPage={groupPage}
                       onPageChange={setGroupPage}
+                      showPageNumbers
                 />
               </>
             ) : (
               <p className="rounded-xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-                {groupsLoaded
-                      ? "No groups found. Create a group from the Company menu."
-                      : "Loading groups..."}
+                {groups.length
+                  ? "No groups match your search."
+                  : groupsLoaded
+                    ? "No groups found. Create a group from the Company menu."
+                    : "Loading groups..."}
               </p>
             )}
           </section>
@@ -237,6 +257,7 @@ export default function Rate() {
               itemsPerPage={itemsPerPage}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
+              showPageNumbers
             />
             <CompanyList
               companies={companies}

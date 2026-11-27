@@ -7,8 +7,17 @@ export default function Pagination({
   totalItems,
   itemsPerPage = 10,
   onPageChange,
+  showPageNumbers = false,
 }) {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const firstVisiblePage = Math.max(
+    1,
+    Math.min(currentPage - 2, totalPages - 4),
+  );
+  const visiblePages = Array.from(
+    { length: Math.min(totalPages, 5) },
+    (_, index) => firstVisiblePage + index,
+  );
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 py-4 px-2 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors duration-300">
@@ -25,6 +34,24 @@ export default function Pagination({
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
+
+        {showPageNumbers &&
+          visiblePages.map((page) => (
+            <button
+              key={page}
+              type="button"
+              onClick={() => onPageChange(page)}
+              aria-current={currentPage === page ? "page" : undefined}
+              aria-label={`Go to page ${page}`}
+              className={`min-w-9 rounded-lg px-2 py-2 text-sm transition-all duration-200 ${
+                currentPage === page
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
 
         <span className="text-gray-600 dark:text-gray-300 text-sm">
           Page {currentPage} of {totalPages}

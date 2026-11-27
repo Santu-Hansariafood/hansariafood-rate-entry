@@ -5,7 +5,7 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const GROUPS_PER_PAGE = 12;
 
-export default function useRateGroups() {
+export default function useRateGroups(searchQuery = "") {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -16,10 +16,22 @@ export default function useRateGroups() {
     () => [...groups].sort((a, b) => a.name.localeCompare(b.name)),
     [groups],
   );
+  const filteredGroups = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    if (!query) return sortedGroups;
+
+    return sortedGroups.filter(
+      (group) =>
+        group.name.toLocaleLowerCase().includes(query) ||
+        (group.companies || []).some((company) =>
+          company?.name?.toLocaleLowerCase().includes(query),
+        ),
+    );
+  }, [searchQuery, sortedGroups]);
   const visibleGroups = useMemo(() => {
     const startIndex = (currentPage - 1) * GROUPS_PER_PAGE;
-    return sortedGroups.slice(startIndex, startIndex + GROUPS_PER_PAGE);
-  }, [currentPage, sortedGroups]);
+    return filteredGroups.slice(startIndex, startIndex + GROUPS_PER_PAGE);
+  }, [currentPage, filteredGroups]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -68,13 +80,14 @@ export default function useRateGroups() {
 
   return {
     groups: sortedGroups,
+    filteredGroups,
     visibleGroups,
     loading,
     loaded,
     error,
     currentPage,
     setCurrentPage,
-    totalGroups: sortedGroups.length,
+    totalGroups: filteredGroups.length,
     itemsPerPage: GROUPS_PER_PAGE,
   };
 }
