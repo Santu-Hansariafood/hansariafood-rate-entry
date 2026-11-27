@@ -145,12 +145,13 @@ export default function Rate() {
           <button
             key={option.value}
             type="button"
+            disabled={option.value === "company"}
             onClick={() => handleViewModeChange(option.value)}
             className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
               viewMode === option.value
                 ? "bg-emerald-600 text-white"
                 : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             {option.label}
           </button>
