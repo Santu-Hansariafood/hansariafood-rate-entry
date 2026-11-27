@@ -9,6 +9,35 @@ import { useSocket } from "@/context/SocketContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 
+function deduplicateRateNotifications(notifications) {
+  const uniqueNotifications = new Map();
+
+  notifications.forEach((notification) => {
+    const normalize = (value) =>
+      String(value ?? "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLocaleLowerCase();
+    const rate = notification.newRate ?? notification.rate;
+    const normalizedRate = Number.isFinite(Number(rate))
+      ? Number(rate).toString()
+      : normalize(rate);
+    const key = [
+      normalize(notification.company || notification.companyName),
+      normalize(notification.location),
+      normalize(notification.commodity || notification.type),
+      normalize(notification.updateTime || notification.time),
+      normalizedRate,
+    ].join("|||");
+
+    if (!uniqueNotifications.has(key)) {
+      uniqueNotifications.set(key, notification);
+    }
+  });
+
+  return [...uniqueNotifications.values()];
+}
+
 const Logo = dynamic(() => import("./Logo/Logo"), { ssr: false });
 const DesktopNav = dynamic(() => import("./DesktopNav/DesktopNav"), {
   ssr: false,
@@ -100,7 +129,12 @@ export default function Header() {
           source: "history",
         }));
 
-        setNotifications([...rateNotifications, ...historyNotifications]);
+        setNotifications(
+          deduplicateRateNotifications([
+            ...rateNotifications,
+            ...historyNotifications,
+          ]),
+        );
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
       }
