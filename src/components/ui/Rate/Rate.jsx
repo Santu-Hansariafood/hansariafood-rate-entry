@@ -68,7 +68,7 @@ export default function Rate() {
   const { notifications } = useRateDisplayNotifications();
 
   const [showRatePopup, setShowRatePopup] = useState(false);
-  const [viewMode, setViewMode] = useState("company");
+  const [viewMode, setViewMode] = useState("group");
   const [selectedGroup, setSelectedGroup] = useState(null);
 
   const handleFilterChange = useCallback((newFilters) => {
