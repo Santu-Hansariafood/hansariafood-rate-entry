@@ -3,6 +3,10 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { rateLimitGuard } from "@/lib/apiUtils";
+import {
+  getGroupNamesByCompanyNames,
+  normalizeGroupCompanyName,
+} from "@/lib/companyGroupNotifications";
 
 function getTodayString() {
   const today = new Date();
@@ -68,8 +72,18 @@ export async function GET(req) {
     notifications.sort((a, b) =>
       a.time < b.time ? 1 : a.time > b.time ? -1 : 0,
     );
+    const groupNamesByCompany = await getGroupNamesByCompanyNames(
+      notifications.map((notification) => notification.company),
+    );
+    const groupedNotifications = notifications.map((notification) => ({
+      ...notification,
+      groupNames:
+        groupNamesByCompany.get(
+          normalizeGroupCompanyName(notification.company),
+        ) || [],
+    }));
 
-    return NextResponse.json({ notifications });
+    return NextResponse.json({ notifications: groupedNotifications });
   } catch (error) {
     console.error("Error in GET /api/sauda/notifications:", error);
     return NextResponse.json(

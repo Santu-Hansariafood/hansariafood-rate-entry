@@ -47,6 +47,7 @@ export default function useSaudaNotifications() {
 
       const compact = limited.map((item) => ({
         company: item.company,
+        groupNames: item.groupNames || [],
         location: item.location,
         commodity: item.commodity,
         tons: item.tons,
@@ -165,6 +166,9 @@ export default function useSaudaNotifications() {
     return notifications.filter(
       (item) =>
         item.company.toLowerCase().includes(query) ||
+        item.groupNames?.some((groupName) =>
+          groupName.toLowerCase().includes(query),
+        ) ||
         item.location.toLowerCase().includes(query) ||
         item.commodity.toLowerCase().includes(query)
     );

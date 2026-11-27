@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
+import Company from "@/models/Company";
 import CompanyGroup from "@/models/CompanyGroup";
 import ManageCompany from "@/models/ManageCompany";
+import Rate from "@/models/Rate";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { rateLimitGuard } from "@/lib/apiUtils";
 import {
@@ -25,6 +27,8 @@ export async function GET(req) {
     const limit = Number(searchParams.get("limit") || 10);
     const search = searchParams.get("search")?.trim() || "";
     const includeLocations = searchParams.get("includeLocations") === "true";
+    const onlyWithRateToday =
+      searchParams.get("onlyWithRateToday") === "true";
 
     if (
       !Number.isInteger(requestedPage) ||
@@ -42,6 +46,29 @@ export async function GET(req) {
     const filter = search
       ? { name: { $regex: escapeRegex(search), $options: "i" } }
       : {};
+    if (onlyWithRateToday) {
+      const today = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date());
+      const todayStart = new Date(`${today}T00:00:00Z`);
+      const ratedCompanyNames = await Rate.distinct("company", {
+        newRateDate: { $gte: todayStart },
+      });
+      const ratedCompanyIds = ratedCompanyNames.length
+        ? await Company.distinct("_id", {
+            name: {
+              $in: ratedCompanyNames.map(
+                (name) => new RegExp(`^${escapeRegex(name)}$`, "i"),
+              ),
+            },
+          })
+        : [];
+      filter.companies = { $in: ratedCompanyIds };
+    }
+
     const total = await CompanyGroup.countDocuments(filter);
     const totalPages = Math.ceil(total / limit);
     const page =

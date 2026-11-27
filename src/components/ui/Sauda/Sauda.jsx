@@ -77,7 +77,7 @@ const Sauda = () => {
     setCurrentPage: setGroupPage,
     totalGroups,
     itemsPerPage: groupsPerPage,
-  } = useRateGroups(debouncedSearchTerm);
+  } = useRateGroups(debouncedSearchTerm, { onlyWithRateToday: true });
   const { notifications } = useRateDisplayNotifications();
 
   const filteredCompanies = useMemo(() => {
@@ -195,7 +195,8 @@ const Sauda = () => {
                   viewMode === option.value
                     ? "bg-emerald-600 text-white"
                     : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-50`}
+                disabled={option.value === "company"}
               >
                 {option.label}
               </button>
@@ -216,7 +217,7 @@ const Sauda = () => {
               </div>
               <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
                 {viewMode === "group" && !selectedGroup ? (
-                  groupsLoading ? (
+                  groupsLoading || loading ? (
                     <Loading />
                   ) : groupsError ? (
                     <p
@@ -251,7 +252,7 @@ const Sauda = () => {
                       <p className="mt-2 text-xs">
                         {groups.length
                           ? "Try adjusting your search"
-                          : "Create a group from the Company menu"}
+                          : "No groups have a rate entry today"}
                       </p>
                     </div>
                   )

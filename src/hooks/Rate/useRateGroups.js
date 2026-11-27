@@ -5,7 +5,10 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const GROUPS_PER_PAGE = 12;
 
-export default function useRateGroups(searchQuery = "") {
+export default function useRateGroups(
+  searchQuery = "",
+  { onlyWithRateToday = false } = {},
+) {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -35,12 +38,13 @@ export default function useRateGroups(searchQuery = "") {
 
   useEffect(() => {
     const controller = new AbortController();
+    const rateFilter = onlyWithRateToday ? "&onlyWithRateToday=true" : "";
 
     const fetchGroups = async () => {
       setLoading(true);
       try {
         const firstResponse = await axiosInstance.get(
-          "/groups?page=1&limit=100&includeLocations=true",
+          `/groups?page=1&limit=100&includeLocations=true${rateFilter}`,
           { signal: controller.signal },
         );
         const groupData = firstResponse.data.groups || [];
@@ -48,7 +52,7 @@ export default function useRateGroups(searchQuery = "") {
 
         for (let page = 2; page <= totalPages; page += 1) {
           const response = await axiosInstance.get(
-            `/groups?page=${page}&limit=100&includeLocations=true`,
+            `/groups?page=${page}&limit=100&includeLocations=true${rateFilter}`,
             { signal: controller.signal },
           );
           groupData.push(...(response.data.groups || []));
@@ -61,7 +65,7 @@ export default function useRateGroups(searchQuery = "") {
         }
       } catch (fetchError) {
         if (!controller.signal.aborted) {
-          console.error("Failed to load groups for rate management", fetchError);
+          console.error("Failed to load company groups", fetchError);
           setError(
             fetchError.response?.data?.error || "Failed to load company groups",
           );
@@ -75,8 +79,17 @@ export default function useRateGroups(searchQuery = "") {
     };
 
     fetchGroups();
-    return () => controller.abort();
-  }, []);
+    if (onlyWithRateToday) {
+      window.addEventListener("rates-updated", fetchGroups);
+    }
+
+    return () => {
+      controller.abort();
+      if (onlyWithRateToday) {
+        window.removeEventListener("rates-updated", fetchGroups);
+      }
+    };
+  }, [onlyWithRateToday]);
 
   return {
     groups: sortedGroups,
