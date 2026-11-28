@@ -73,15 +73,13 @@ export function getGroupSaudaProgress(group, notifications, saudaTonsByRateKey) 
   let completed = 0;
   targetQuantities.forEach((quantity, key) => {
     total += quantity;
-    completed += Math.min(Number(saudaTonsByRateKey?.[key]) || 0, quantity);
+    completed += Number(saudaTonsByRateKey?.[key]) || 0;
   });
 
   return {
     completed,
     total,
-    percentage: total
-      ? Math.min(100, Math.round((completed / total) * 100))
-      : 0,
+    percentage: total ? Math.round((completed / total) * 100) : 0,
     unit: "tons",
   };
 }
@@ -105,6 +103,9 @@ export default function RateGroupCard({
     progressMode === "sauda"
       ? `${progress.completed.toFixed(2)}/${progress.total.toFixed(2)}`
       : `${progress.completed}/${progress.total}`;
+  const isExcess = progressMode === "sauda" && progress.completed > progress.total;
+  const progressWidth = Math.min(100, Math.max(0, progress.percentage));
+  const accessiblePercentage = Math.min(100, Math.max(0, progress.percentage));
 
   return (
     <motion.button
@@ -127,13 +128,23 @@ export default function RateGroupCard({
         </div>
       </div>
       <div className="mt-4">
-        <div className="mb-1.5 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300">
+        <div
+          className={`mb-1.5 flex items-center justify-between text-xs ${
+            isExcess
+              ? "text-red-700 dark:text-red-300"
+              : "text-emerald-700 dark:text-emerald-300"
+          }`}
+        >
           <span>
             {progressValues} {progress.unit || "locations"}
           </span>
-          <span className="font-semibold opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-            {progress.percentage}%
-          </span>
+          {isExcess ? (
+            <span className="font-semibold">Excess taken · {progress.percentage}%</span>
+          ) : (
+            <span className="font-semibold opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              {progress.percentage}%
+            </span>
+          )}
         </div>
         <div
           role="progressbar"
@@ -142,13 +153,26 @@ export default function RateGroupCard({
           } progress`}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={progress.percentage}
+          aria-valuenow={accessiblePercentage}
+          aria-valuetext={
+            isExcess
+              ? `Excess taken: ${progress.percentage}% of target sauda quantity`
+              : `${progress.percentage}%`
+          }
           title={progressTitle}
-          className="h-1.5 overflow-hidden rounded-full bg-emerald-200 dark:bg-emerald-900/70"
+          className={`h-1.5 overflow-hidden rounded-full ${
+            isExcess
+              ? "bg-red-200 dark:bg-red-900/70"
+              : "bg-emerald-200 dark:bg-emerald-900/70"
+          }`}
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-lime-300 via-green-500 to-emerald-700 transition-[width] duration-500"
-            style={{ width: `${progress.percentage}%` }}
+            className={`h-full rounded-full transition-[width] duration-500 ${
+              isExcess
+                ? "bg-gradient-to-r from-red-400 to-red-700"
+                : "bg-gradient-to-r from-lime-300 via-green-500 to-emerald-700"
+            }`}
+            style={{ width: `${progressWidth}%` }}
           />
         </div>
       </div>
