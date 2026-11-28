@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import {
   BarElement,
@@ -13,6 +13,7 @@ import {
   Tooltip,
 } from "chart.js";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
 
 ChartJS.register(
@@ -31,7 +32,53 @@ const rateKey = (company, location, commodity) =>
 
 const TargetAchievementChart = ({ rates, saudas, date, today }) => {
   const [chartType, setChartType] = useState("bar");
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const chartRef = useRef(null);
   const { groups, loading, error } = useRateGroups();
+
+  const handleDownloadPdf = async () => {
+    const canvas = chartRef.current?.querySelector("canvas");
+    if (!canvas) {
+      toast.error("The chart is not ready to export");
+      return;
+    }
+
+    setIsExportingPdf(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const pdf = new jsPDF("landscape", "mm", "a4");
+      const margin = 10;
+      const headingHeight = 24;
+      const imageData = canvas.toDataURL("image/png");
+      const image = pdf.getImageProperties(imageData);
+      const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+      const maxHeight =
+        pdf.internal.pageSize.getHeight() - headingHeight - margin;
+      const scale = Math.min(maxWidth / image.width, maxHeight / image.height);
+      const imageWidth = image.width * scale;
+      const imageHeight = image.height * scale;
+      const imageX = (pdf.internal.pageSize.getWidth() - imageWidth) / 2;
+
+      pdf.setFontSize(16);
+      pdf.text("Group-wise Target vs Achieved Sauda Quantity", margin, 11);
+      pdf.setFontSize(10);
+      pdf.text(`Date: ${date}`, margin, 18);
+      pdf.addImage(
+        imageData,
+        "PNG",
+        imageX,
+        headingHeight,
+        imageWidth,
+        imageHeight,
+      );
+      pdf.save(`Group_Target_Achieved_Sauda_${date}.pdf`);
+    } catch (exportError) {
+      console.error("Failed to export Sauda quantity graph:", exportError);
+      toast.error("Failed to download the graph PDF");
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   const quantityByTarget = useMemo(() => {
     const dataByKey = new Map();
@@ -146,6 +193,8 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
         borderRadius: 6,
         tension: 0.35,
         fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 7,
       },
       {
         label: "Achieved Sauda quantity",
@@ -181,7 +230,7 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
       tooltip: {
         callbacks: {
           label: (context) =>
-            `${context.dataset.label}: ${Number(context.parsed.x).toLocaleString(
+            `${context.dataset.label}: ${Number(context.parsed.y).toLocaleString(
               undefined,
               { maximumFractionDigits: 2 },
             )} tons`,
@@ -192,6 +241,12 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
       y: {
         beginAtZero: true,
         title: { display: true, text: "Quantity (tons)" },
+        ticks: {
+          callback: (value) =>
+            Number(value).toLocaleString(undefined, {
+              maximumFractionDigits: 2,
+            }),
+        },
       },
     },
   };
@@ -217,17 +272,32 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
             Compare target and achieved quantities in tons.
           </p>
         </div>
-        <select
-          className="rounded-full border border-gray-200 bg-white/80 px-4 py-2
-                     text-sm shadow-sm backdrop-blur dark:border-gray-700
-                     dark:bg-gray-800/80"
-          value={chartType}
-          onChange={(event) => setChartType(event.target.value)}
-          aria-label="Chart type"
-        >
-          <option value="bar">Vertical bars</option>
-          <option value="line">Line graph</option>
-        </select>
+        <div className="flex flex-wrap gap-3">
+          <select
+            className="rounded-full border border-gray-200 bg-white/80 px-4 py-2
+                       text-sm shadow-sm backdrop-blur dark:border-gray-700
+                       dark:bg-gray-800/80"
+            value={chartType}
+            onChange={(event) => setChartType(event.target.value)}
+            aria-label="Chart type"
+          >
+            <option value="bar">Vertical bars</option>
+            <option value="line">Line graph</option>
+          </select>
+          {date === today && chartRows.length > 0 && !loading && !error && (
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={isExportingPdf}
+              className="rounded-full bg-emerald-600 px-4 py-2 text-sm
+                         font-semibold text-white shadow-sm transition
+                         hover:bg-emerald-700 disabled:cursor-wait
+                         disabled:opacity-60"
+            >
+              {isExportingPdf ? "Preparing PDF..." : "Download PDF"}
+            </button>
+          )}
+        </div>
       </div>
 
       {date !== today ? (
@@ -259,6 +329,7 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
                      bg-white/80 p-4 shadow-xl dark:bg-gray-900/60 md:p-6"
         >
           <div
+            ref={chartRef}
             className="h-[420px] md:h-[520px]"
             style={{ minWidth: `${Math.max(700, chartRows.length * 110)}px` }}
           >
