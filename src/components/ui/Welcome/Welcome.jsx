@@ -3,6 +3,16 @@
 import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useUser } from "@/context/UserContext";
 import { motion } from "framer-motion";
+import {
+  BarChart3,
+  Building2,
+  FileText,
+  KeyRound,
+  ListTodo,
+  Package,
+  ShieldCheck,
+  TrendingUp,
+} from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 import Link from "next/link";
@@ -55,6 +65,17 @@ export default function Welcome() {
   const isAdmin = useMemo(() => {
     return effectiveMobile && ADMINS.includes(effectiveMobile.toString());
   }, [effectiveMobile]);
+
+  const today = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en-IN", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date()),
+    []
+  );
 
   const formatName = useCallback((str) => {
     return str
@@ -181,38 +202,39 @@ export default function Welcome() {
   if (isAdmin) {
     return (
       <Suspense fallback={<Loading />}>
-        <div className="relative min-h-screen bg-gray-100 dark:bg-gray-950 pb-12">
-          <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-teal-500/10 to-transparent pointer-events-none" />
-          
-          <div className="relative pt-8 px-6 text-center">
-             <h1 className="text-4xl font-extrabold bg-gradient-to-r from-green-500 to-teal-400 bg-clip-text text-transparent">
-              Welcome Back, {name} 👋
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              Here is your administrative dashboard overview
-            </p>
+        <div className="relative min-h-screen overflow-hidden bg-slate-50 pb-16 dark:bg-gray-950">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-indigo-500/10 via-transparent to-transparent"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-24 top-16 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl dark:bg-indigo-600/10"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-24 top-48 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl dark:bg-emerald-600/10"
+          />
 
-            <Link
-              href="/analytics"
-              className="inline-flex mt-4 px-5 py-2 rounded-full text-sm font-semibold
-                         bg-gradient-to-r from-purple-500 to-pink-600 text-white
-                         shadow-lg hover:shadow-xl transition"
-            >
-              Analytics Dashboard
-            </Link>
-            <Link
-              href="/resetpassword"
-              className="inline-flex mt-4 px-5 py-2 rounded-full text-sm font-semibold
-                         bg-gradient-to-r from-blue-500 to-indigo-600 text-white
-                         shadow-lg hover:shadow-xl transition"
-            >
-              Reset Password
-            </Link>
-          </div>
+          <div className="relative mx-auto w-full max-w-7xl px-4 pt-8 sm:px-6">
+            <AdminHero name={name} today={today} />
 
-          <AdminDashboard />
-          <div className="w-full max-w-7xl mx-auto px-4 mt-8">
-            <TeamTasksPreview mobile={effectiveMobile} />
+            <section role="region" aria-label="Overview metrics" className="mt-6">
+              <AdminKpiRow companiesCount={assignedCompanies.length} />
+            </section>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <section role="region" aria-label="Rate Taken Tracker">
+                  <RateTakenSection />
+                </section>
+              </div>
+              <div className="lg:col-span-1">
+                <TeamTasksPreview mobile={effectiveMobile} />
+              </div>
+            </div>
+
+            <AdminSections />
           </div>
         </div>
       </Suspense>
@@ -307,11 +329,184 @@ export default function Welcome() {
 );
 }
 
-const AdminDashboard = () => (
-  <div className="space-y-8 mt-12 w-full max-w-7xl mx-auto px-4">
-    <section role="region" aria-label="Rate Taken Tracker">
-      <RateTakenSection />
+const KPI_ACCENTS = {
+  indigo:{
+    glow: "from-indigo-400/25",
+    tile: "from-indigo-500 to-violet-600 shadow-indigo-500/30",
+  },
+  emerald: {
+    glow: "from-emerald-400/25",
+    tile: "from-emerald-500 to-teal-600 shadow-emerald-500/30",
+  },
+  amber: {
+    glow: "from-amber-400/25",
+    tile: "from-amber-500 to-orange-600 shadow-amber-500/30",
+  },
+  violet: {
+    glow: "from-fuchsia-400/25",
+    tile: "from-fuchsia-500 to-purple-600 shadow-fuchsia-500/30",
+  },
+};
+
+const AdminHero = ({ name, today }) => {
+  const initial = (name || "A").trim().charAt(0).toUpperCase();
+
+  return (
+    <section className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl shadow-slate-900/5 backdrop-blur-xl sm:p-8 dark:border-white/10 dark:bg-gray-900/60 dark:shadow-black/30">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-indigo-400/30 to-violet-500/20 blur-3xl dark:from-indigo-500/20 dark:to-violet-600/10"
+      />
+
+      <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-xl font-black text-white shadow-lg shadow-indigo-500/30">
+            {initial}
+          </span>
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:border-indigo-500/25 dark:bg-indigo-500/10 dark:text-indigo-300">
+              <ShieldCheck size={12} />
+              Administrator
+            </span>
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+              Welcome back, {name} 👋
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              {today}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/analytics"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            <BarChart3 size={16} />
+            Analytics Dashboard
+          </Link>
+          <Link
+            href="/resetpassword"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-300 hover:text-indigo-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:border-indigo-500/40 dark:hover:text-indigo-300"
+          >
+            <KeyRound size={16} />
+            Reset Password
+          </Link>
+        </div>
+      </div>
     </section>
+  );
+};
+
+const AdminKpiRow = ({ companiesCount }) => {
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchSummary = async () => {
+      try {
+        const { data } = await axiosInstance.get(
+          "/analytics/weekly-summary?period=7days"
+        );
+        if (active && data?.success) setSummary(data.data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard metrics:", error);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    fetchSummary();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const totalTons = summary?.summary?.totalTonsDone;
+  const days = summary?.dailyData?.length || 0;
+  const avgTons = days ? (Number(totalTons) / days).toFixed(1) : 0;
+
+  const cards = [
+    {
+      label: "Rate Entries",
+      sub: "Last 7 days",
+      value: summary?.summary?.totalRateEntries ?? 0,
+      Icon: FileText,
+      accent: "indigo",
+    },
+    {
+      label: "Sauda Tons",
+      sub: "Last 7 days",
+      value: totalTons ?? 0,
+      Icon: Package,
+      accent: "emerald",
+    },
+    {
+      label: "Avg Daily Tons",
+      sub: "Last 7 days",
+      value: avgTons,
+      Icon: TrendingUp,
+      accent: "amber",
+    },
+    {
+      label: "My Companies",
+      sub: "Assigned to you",
+      value: companiesCount ?? 0,
+      Icon: Building2,
+      accent: "violet",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+      {cards.map(({ label, sub, value, Icon, accent }, index) => {
+        const tone = KPI_ACCENTS[accent];
+        return (
+          <motion.div
+            key={label}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: index * 0.05 }}
+            whileHover={{ y: -4 }}
+            className="group relative overflow-hidden rounded-3xl border border-white/60 bg-white/70 p-5 shadow-xl shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/60 dark:shadow-black/30"
+          >
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-gradient-to-br ${tone.glow} to-transparent blur-2xl`}
+            />
+            <div className="relative flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {label}
+                </p>
+                <p className="mt-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                  {loading ? (
+                    <span className="inline-block h-7 w-16 animate-pulse rounded-md bg-slate-200 dark:bg-white/10" />
+                  ) : (
+                    value
+                  )}
+                </p>
+                <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
+                  {sub}
+                </p>
+              </div>
+              <span
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg ${tone.tile}`}
+              >
+                <Icon size={20} />
+              </span>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+};
+
+const AdminSections = () => (
+  <div className="mt-6 space-y-6">
     <section role="region" aria-label="View Rate Section">
       <ViewRate />
     </section>
@@ -390,13 +585,25 @@ const TeamTasksPreview = ({ mobile }) => {
   }, [tasks, myMobile]);
 
   return (
-    <div className="rounded-2xl border border-white/20 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl shadow-lg p-6">
-      <div className="flex items-center justify-between gap-4">
-        <Title text="Team Tasks" />
+    <div className="h-full rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-gray-900/60 dark:shadow-black/30">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/25">
+            <ListTodo size={17} />
+          </span>
+          <div>
+            <h2 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
+              Team Tasks
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Pending, assigned to you
+            </p>
+          </div>
+        </div>
         <button
           type="button"
           onClick={fetchTasks}
-          className="text-xs font-semibold px-3 py-1.5 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-60"
+          className="shrink-0 rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
           disabled={isRefreshing || !myMobile}
         >
           {isRefreshing ? "Refreshing..." : "Refresh"}
