@@ -1,20 +1,35 @@
-// Flattens a list of SaudaEntry records into a single group map that feeds the
-// sauda email template. Each item keeps its owning company so multi-company
-// reports can render a Company column.
-export const buildSaudaEntryGroups = (records = []) => {
+import {
+  getGroupNamesByCompanyNames,
+  normalizeGroupCompanyName,
+} from "../../companyGroupNotifications.js";
+
+// Keeps company, group, and location details while flattening report records.
+export const buildSaudaEntryGroups = async (records = []) => {
   const groups = {};
+  const groupNamesByCompany = await getGroupNamesByCompanyNames(
+    records.map((record) => record.company),
+  );
 
   records.forEach((record) => {
-    const lists =
+    const locationEntries =
       record.saudaEntries instanceof Map
-        ? [...record.saudaEntries.values()]
-        : Object.values(record.saudaEntries || {});
+        ? [...record.saudaEntries.entries()]
+        : Object.entries(record.saudaEntries || {});
+    const groupNames =
+      groupNamesByCompany.get(
+        normalizeGroupCompanyName(record.company),
+      ) || [];
 
-    const items = lists
-      .filter(Array.isArray)
-      .flat()
-      .filter(Boolean)
-      .map((item) => ({ ...item, company: record.company || "" }));
+    const items = locationEntries.flatMap(([location, list]) =>
+      (Array.isArray(list) ? list : [])
+        .filter(Boolean)
+        .map((item) => ({
+          ...item,
+          company: record.company || "",
+          groupNames,
+          location: item.location || location,
+        })),
+    );
 
     if (!items.length) return;
 
@@ -47,13 +62,23 @@ export const generateSaudaEmailTemplate = ({
   if (saudaEntries instanceof Map) {
     for (const [key, list] of saudaEntries.entries()) {
       if (Array.isArray(list)) {
-        entriesList.push(...list);
+        entriesList.push(
+          ...list.map((entry) => ({
+            ...entry,
+            location: entry.location || key,
+          })),
+        );
       }
     }
   } else if (typeof saudaEntries === "object") {
     for (const [key, list] of Object.entries(saudaEntries)) {
       if (Array.isArray(list)) {
-        entriesList.push(...list);
+        entriesList.push(
+          ...list.map((entry) => ({
+            ...entry,
+            location: entry.location || key,
+          })),
+        );
       }
     }
   }
@@ -72,6 +97,8 @@ export const generateSaudaEmailTemplate = ({
       <tr>
         <td style="padding: 14px 10px; text-align: center; border-bottom: 1px solid #e5e7eb;">${slNo++}</td>
         ${showCompany ? `<td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.company || "-"}</td>` : ""}
+        <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.groupNames?.join(", ") || "Ungrouped Companies"}</td>
+        <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.location || "-"}</td>
         <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.unit || "-"}</td>
         <td style="padding: 14px 10px; border-bottom: 1px solid #e5e7eb;">${entry.commodity || "-"}</td>
         <td style="padding: 14px 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">₹${rate.toFixed(2)}</td>
@@ -223,7 +250,7 @@ export const generateSaudaEmailTemplate = ({
         }
         table {
           width: 100%;
-          min-width: 1200px;
+          min-width: 1400px;
           border-collapse: collapse;
           font-size: 14px;
         }
@@ -338,6 +365,8 @@ export const generateSaudaEmailTemplate = ({
                     <tr>
                       <th style="text-align: center;">Sl No</th>
                       ${showCompany ? "<th>Company</th>" : ""}
+                      <th>Group</th>
+                      <th>Location</th>
                       <th>Unit</th>
                       <th>Commodity</th>
                       <th style="text-align: right;">Rate</th>
@@ -350,11 +379,11 @@ export const generateSaudaEmailTemplate = ({
                     </tr>
                   </thead>
                   <tbody>
-                    ${tableRows || `<tr><td colspan="${showCompany ? 11 : 10}" style="text-align:center; padding: 60px 20px; color: #6b7280; font-size: 16px; font-weight: 500;">No entries found</td></tr>`}
+                    ${tableRows || `<tr><td colspan="${showCompany ? 13 : 12}" style="text-align:center; padding: 60px 20px; color: #6b7280; font-size: 16px; font-weight: 500;">No entries found</td></tr>`}
                   </tbody>
                   <tfoot>
                     <tr class="total-row">
-                      <td colspan="${showCompany ? 5 : 4}" style="text-align: right;">Total:</td>
+                      <td colspan="${showCompany ? 7 : 6}" style="text-align: right;">Total:</td>
                       <td style="text-align: right;">${totalTons.toFixed(3)} Tons</td>
                       <td style="text-align: right;">${totalValue.toLocaleString("en-IN", { style: "currency", currency: "INR" })}</td>
                       <td colspan="4"></td>

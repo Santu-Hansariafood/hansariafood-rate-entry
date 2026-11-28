@@ -1,6 +1,7 @@
-import Company from "@/models/Company";
-import CompanyGroup from "@/models/CompanyGroup";
-import { escapeRegex } from "@/lib/companyGroupUtils";
+import Company from "../models/Company.js";
+import CompanyGroup from "../models/CompanyGroup.js";
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export const normalizeGroupCompanyName = (name) =>
   (name || "").toLowerCase().replace(/\s+/g, " ").trim();

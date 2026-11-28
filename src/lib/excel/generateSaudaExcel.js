@@ -1,4 +1,8 @@
 import ExcelJS from "exceljs";
+import {
+  getGroupNamesByCompanyNames,
+  normalizeGroupCompanyName,
+} from "../companyGroupNotifications.js";
 
 const toGroupEntries = (value) => {
   if (!value) return [];
@@ -33,6 +37,9 @@ export async function generateSaudaExcel(saudaEntries) {
   workbook.creator = "Hansaria Food";
 
   const nextSheetName = makeSheetNamer();
+  const groupNamesByCompany = await getGroupNamesByCompanyNames(
+    saudaEntries.map((entry) => entry.company),
+  );
 
   const grouped = {};
   for (const entry of saudaEntries) {
@@ -44,11 +51,14 @@ export async function generateSaudaExcel(saudaEntries) {
 
   for (const [company, entries] of Object.entries(grouped)) {
     const sheet = workbook.addWorksheet(nextSheetName(company));
+    const groupNames =
+      groupNamesByCompany.get(normalizeGroupCompanyName(company)) || [];
 
     sheet.columns = [
       { header: "Date", key: "date", width: 15 },
       { header: "Time", key: "time", width: 10 },
-      { header: "Group", key: "group", width: 15 },
+      { header: "Group", key: "group", width: 24 },
+      { header: "Location", key: "location", width: 20 },
       { header: "SaudaNo", key: "saudaNo", width: 15 },
       { header: "Description", key: "description", width: 25 },
       { header: "Tons", key: "tons", width: 10 },
@@ -59,12 +69,13 @@ export async function generateSaudaExcel(saudaEntries) {
     ];
 
     for (const e of entries) {
-      for (const [group, list] of toGroupEntries(e.saudaEntries)) {
+      for (const [location, list] of toGroupEntries(e.saudaEntries)) {
         for (const item of list) {
           sheet.addRow({
             date: e.date,
             time: e.time,
-            group,
+            group: groupNames.join(", ") || "Ungrouped Companies",
+            location,
             saudaNo: item.saudaNo,
             description: item.others ?? item.description ?? "",
             tons: item.tons,

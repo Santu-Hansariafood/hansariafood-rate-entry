@@ -6,7 +6,10 @@ import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { sendEmail } from "@/lib/email/sendEmail";
-import { generateSaudaEmailTemplate } from "@/lib/email/templates/saudaTemplate";
+import {
+  buildSaudaEntryGroups,
+  generateSaudaEmailTemplate,
+} from "@/lib/email/templates/saudaTemplate";
 import DeletedSauda from "@/models/DeletedSauda";
 import { emitNotification } from "@/lib/socket";
 import {
@@ -286,11 +289,18 @@ export async function POST(req) {
         recipients.push(userEmail);
       }
 
+      const emailSaudaEntries = await buildSaudaEntryGroups([
+        {
+          company: existingEntry.company,
+          date: existingEntry.date,
+          saudaEntries: saudaEntriesObject,
+        },
+      ]);
       const emailHtml = generateSaudaEmailTemplate({
         company: existingEntry.company,
         date: existingEntry.date,
         time: existingEntry.time,
-        saudaEntries: saudaEntriesObject,
+        saudaEntries: emailSaudaEntries,
         userEmail,
         userName,
       });

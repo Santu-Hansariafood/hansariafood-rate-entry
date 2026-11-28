@@ -3,6 +3,10 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { rateLimitGuard } from "@/lib/apiUtils";
+import {
+  getGroupNamesByCompanyNames,
+  normalizeGroupCompanyName,
+} from "@/lib/companyGroupNotifications";
 import ExcelJS from "exceljs";
 import nodemailer from "nodemailer";
 
@@ -17,6 +21,9 @@ export async function GET(req) {
 
   try {
     const allEntries = await SaudaEntry.find().lean();
+    const groupNamesByCompany = await getGroupNamesByCompanyNames(
+      allEntries.map((entry) => entry.company),
+    );
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Sauda Entries");
@@ -26,7 +33,8 @@ export async function GET(req) {
     worksheet.columns = [
       { header: "Date", key: "date", width: 15 },
       { header: "Company", key: "company", width: 25 },
-      { header: "Group", key: "group", width: 20 },
+      { header: "Group", key: "group", width: 24 },
+      { header: "Location", key: "location", width: 20 },
       { header: "Commodity", key: "commodity", width: 20 },
       { header: "Unit", key: "unit", width: 10 },
       { header: "Tons", key: "tons", width: 10 },
@@ -38,13 +46,20 @@ export async function GET(req) {
 
     allEntries.forEach((entry) => {
       const { date, company, saudaEntries } = entry;
+      const groupNames =
+        groupNamesByCompany.get(normalizeGroupCompanyName(company)) || [];
+      const locationEntries =
+        saudaEntries instanceof Map
+          ? [...saudaEntries.entries()]
+          : Object.entries(saudaEntries || {});
 
-      for (const [groupKey, saudaList] of saudaEntries.entries()) {
+      for (const [location, saudaList] of locationEntries) {
         saudaList.forEach((item) => {
           worksheet.addRow({
             date,
             company,
-            group: groupKey,
+            group: groupNames.join(", ") || "Ungrouped Companies",
+            location,
             commodity: item.commodity,
             unit: item.unit,
             tons: item.tons,
