@@ -178,8 +178,11 @@ const structuredData = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0F766E",
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0F766E" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
 };
 
 export async function generateMetadata() {
@@ -284,7 +287,7 @@ export default function RootLayout({ children }) {
       </head>
 
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased flex flex-col min-h-dvh overflow-x-hidden`}
       >
         <noscript>
           <iframe
@@ -300,7 +303,7 @@ export default function RootLayout({ children }) {
               <SocketProvider>
                 <Header className="fixed top-0 w-full z-50 bg-white shadow-md" />
 
-                <main className="flex-1 pt-16 pb-20 md:pb-0">
+                <main className="flex-1 shell-top">
                   {children}
                   <ToastContainer
                     position="top-right"
@@ -310,7 +313,7 @@ export default function RootLayout({ children }) {
                     closeOnClick
                     pauseOnHover
                     draggable
-                    theme="light"
+                    theme="system"
                   />
                 </main>
 

@@ -28,7 +28,7 @@ export default function Logo() {
             width={120}
             height={60}
             priority
-            className="transition-all duration-300"
+            className="h-9 w-auto transition-all duration-300 md:h-[60px] md:w-[120px]"
           />
         </motion.div>
       </Link>

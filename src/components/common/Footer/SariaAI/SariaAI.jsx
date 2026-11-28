@@ -400,7 +400,7 @@ const SariaAI = () => {
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-28 right-4 sm:bottom-32 sm:right-6 z-[60] flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-500 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(16,185,129,0.3)] border border-white/20 backdrop-blur-sm transition-all duration-300"
+        className="fixed right-4 bottom-[calc(var(--bottom-nav-height)_+_var(--safe-bottom)_+_1rem)] sm:bottom-32 sm:right-6 z-[60] flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-500 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(16,185,129,0.3)] border border-white/20 backdrop-blur-sm transition-all duration-300"
         title="Saria AI Assistant"
       >
         <Bot size={24} strokeWidth={2} />
@@ -412,7 +412,7 @@ const SariaAI = () => {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className="fixed bottom-44 right-4 sm:bottom-48 sm:right-6 z-50 w-[calc(100%-32px)] sm:w-full sm:max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[80vh] sm:max-h-[550px]"
+            className="fixed right-4 bottom-[calc(var(--bottom-nav-height)_+_var(--safe-bottom)_+_4.5rem)] sm:bottom-48 sm:right-6 z-50 w-[calc(100%-32px)] sm:w-full sm:max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col max-h-[80vh] sm:max-h-[550px]"
           >
             <div className="p-3 sm:p-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex justify-between items-center">
               <div className="flex items-center gap-3">

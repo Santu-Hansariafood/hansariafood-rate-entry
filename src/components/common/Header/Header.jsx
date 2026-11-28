@@ -45,9 +45,8 @@ const DesktopNav = dynamic(() => import("./DesktopNav/DesktopNav"), {
 const MobileNav = dynamic(() => import("./MobileNav/MobileNav"), {
   ssr: false,
 });
-const CookieBanner = dynamic(
-  () => import("@/components/common/CookieBanner/CookieBanner"),
-  { ssr: false }
+const NotificationBell = dynamic(() =>
+  import("./NotificationBell/NotificationBell")
 );
 
 export default function Header() {
@@ -182,15 +181,22 @@ export default function Header() {
     return () => (document.body.style.overflow = "");
   }, [menuOpen]);
 
+  // Allow the bottom navigation "More" button to open the mobile drawer.
+  useEffect(() => {
+    const openMenu = () => setMenuOpen(true);
+    window.addEventListener("open-mobile-nav", openMenu);
+    return () => window.removeEventListener("open-mobile-nav", openMenu);
+  }, []);
+
   if (!isMounted)
     return (
-      <div className="h-20 bg-gradient-to-r from-neutral-950 via-black to-neutral-950" />
+      <div className="fixed top-0 w-full z-50 h-[var(--header-height)] pt-safe bg-gradient-to-r from-neutral-950 via-black to-neutral-950" />
     );
 
   return (
     <>
       <header
-        className={`fixed top-0 w-full z-50 transition-all duration-500 ease-out
+        className={`fixed top-0 w-full z-50 pt-safe transition-all duration-500 ease-out
           ${
             isScrolled
               ? "bg-gradient-to-r from-neutral-950 via-black to-neutral-950 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.55)] border-b border-emerald-500/15"
@@ -202,15 +208,13 @@ export default function Header() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
         <div
-          className={`container mx-auto flex items-center justify-between gap-4 px-4 md:px-8 transition-all duration-500 ease-out ${
-            isScrolled ? "py-2.5" : "py-3.5"
-          }`}
+          className="container mx-auto flex h-14 md:h-20 items-center justify-between gap-3 md:gap-4 px-3 sm:px-4 md:px-8"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <Logo />
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
             {session ? (
               <>
                 <DesktopNav
@@ -223,10 +227,14 @@ export default function Header() {
                 />
 
                 <div className="flex items-center gap-2">
+                  <div className="md:hidden">
+                    <NotificationBell notifications={notifications} />
+                  </div>
                   <button
-                    className="md:hidden p-2 rounded-xl bg-white/10 hover:bg-white/20 ring-1 ring-white/10 transition-all active:scale-95"
+                    className="md:hidden flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 ring-1 ring-white/10 transition-all active:scale-95"
                     onClick={() => setMenuOpen((v) => !v)}
                     aria-label="Toggle Menu"
+                    aria-expanded={menuOpen}
                   >
                     {menuOpen ? (
                       <X size={22} className="text-white" />
@@ -241,8 +249,8 @@ export default function Header() {
                 <a
                   href="/"
                   className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full
-                             bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-2.5
-                             text-xs font-semibold tracking-wide text-white sm:text-sm
+                             bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2
+                             text-xs font-semibold tracking-wide text-white sm:px-6 sm:py-2.5 sm:text-sm
                              ring-1 ring-white/20 shadow-lg shadow-emerald-500/25
                              transition-all duration-300 hover:shadow-emerald-500/40 whitespace-nowrap"
                 >
@@ -269,8 +277,6 @@ export default function Header() {
           )}
         </AnimatePresence>
       </header>
-
-      <CookieBanner />
     </>
   );
 }

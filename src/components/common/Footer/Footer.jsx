@@ -22,7 +22,7 @@ const Footer = () => {
         transition={{ duration: 0.6, ease: "easeOut" }}
         viewport={{ once: true }}
         className="
-          relative overflow-hidden mt-10
+          relative overflow-hidden mt-4 md:mt-6
           bg-gradient-to-b from-neutral-950 via-black to-neutral-950
           text-white
         "
@@ -31,8 +31,8 @@ const Footer = () => {
         <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-[36rem] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.08),transparent_60%)]" />
 
-        <div className="relative container mx-auto px-4 py-10 md:px-8">
-          <div className="flex flex-col items-center gap-6">
+        <div className="relative container mx-auto px-4 py-5 md:px-8 md:py-7">
+          <div className="flex flex-col items-center gap-3.5">
             <FooterLinks />
             <div className="h-px w-full max-w-3xl bg-gradient-to-r from-transparent via-white/10 to-transparent" />
             <FooterCopyright />

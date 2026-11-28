@@ -9,7 +9,7 @@ const FooterLinks = () => {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       viewport={{ once: true }}
-      className="flex w-full flex-col items-center justify-center gap-5 text-xs sm:text-sm"
+      className="flex w-full flex-col items-center justify-center gap-3 text-xs sm:text-sm"
     >
       <a
         href="https://bid.hansariafood.in"
@@ -18,7 +18,7 @@ const FooterLinks = () => {
         className="
           group inline-flex items-center gap-2 rounded-full
           border border-emerald-500/30 bg-emerald-500/10
-          px-5 py-2.5 font-medium text-emerald-300
+          px-4 py-2 font-medium text-emerald-300
           backdrop-blur-sm shadow-[0_0_0_1px_rgba(16,185,129,0.08)]
           transition-all duration-300
           hover:border-emerald-400/60 hover:bg-emerald-500/20 hover:text-emerald-200

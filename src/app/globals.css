@@ -7,6 +7,17 @@
   --font-body: var(--font-body);
   --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
+
+  /* Shell metrics — kept in sync with Header.jsx (h-14 / md:h-20) */
+  --header-height: 3.5rem; /* 56px */
+  --bottom-nav-height: 4.25rem; /* 68px, only used below the md breakpoint */
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  color-scheme: light;
 }
 
 @theme inline {
@@ -17,18 +28,49 @@
   --font-mono: var(--font-mono);
 }
 
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    color-scheme: dark;
   }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 5rem; /* 80px */
+    --bottom-nav-height: 0rem;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-height) + var(--safe-top));
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Reserve room for the fixed bottom navigation (only present for signed-in
+ * users on mobile). Applied via a class toggled by BottomNav so public pages
+ * are not pushed down.
+ */
+body.has-bottom-nav {
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+}
+
+/* App-like feel: block background rubber-banding/overscroll flashes. */
+@supports (overscroll-behavior: none) {
+  body {
+    overscroll-behavior-y: none;
+  }
 }
 
 h1,
@@ -39,6 +81,11 @@ h5,
 h6 {
   font-family: var(--font-heading), Arial, Helvetica, sans-serif;
   font-weight: 600;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 /* Monospace */
@@ -47,7 +94,6 @@ pre,
 kbd {
   font-family: var(--font-mono), monospace;
 }
-
 
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -63,6 +109,18 @@ input[type="number"]:focus {
   appearance: textfield;
 }
 
+/*
+ * Mobile UX: bump form controls to >=16px so iOS Safari does not zoom the
+ * viewport when a field receives focus, and give them comfortable tap height.
+ */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 .scrollbar-hidden {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -70,4 +128,51 @@ input[type="number"]:focus {
 
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+@utility pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@utility px-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@utility scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Offset page content so it clears the fixed header (+ status-bar inset). */
+@utility shell-top {
+  padding-top: calc(var(--header-height) + var(--safe-top));
+}
+
+/* Fixed-header shell spacing reserved for the bottom navigation. */
+@utility shell-bottom {
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+}
+
+/* Height of the fixed bottom navigation bar including the home indicator. */
+@utility bottom-nav-h {
+  height: calc(var(--bottom-nav-height) + var(--safe-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
