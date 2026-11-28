@@ -43,9 +43,7 @@ const useRateEntries = () => {
 
         const safeRates = Array.isArray(ratesRes.data) ? ratesRes.data : [];
 
-        setRates(
-          safeRates.filter((r) => r?.newRate && r?.mobile)
-        );
+        setRates(safeRates);
 
         const safeSaudas = Array.isArray(saudaRes.data) ? saudaRes.data : [];
         setSaudas(safeSaudas);
@@ -99,7 +97,7 @@ const useRateEntries = () => {
     return grouped;
   }, [rates, saudas]);
 
-  return { groupedRates, mobileToName, loading, date, setDate };
+  return { groupedRates, mobileToName, rates, saudas, loading, date, setDate };
 };
 
 export default useRateEntries;

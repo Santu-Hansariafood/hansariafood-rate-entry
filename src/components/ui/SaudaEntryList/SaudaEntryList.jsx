@@ -8,6 +8,7 @@ import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 import { useToday } from "@/hooks/ManageCompanyPopup/useToday";
 import DateSelector from "@/components/common/DateSelector/DateSelector";
+import TargetAchievementChart from "./TargetAchievementChart";
 
 const Title = dynamic(() => import("@/components/common/Title/Title"));
 const DownloadSaudaEntriesPDF = dynamic(() =>
@@ -15,7 +16,15 @@ const DownloadSaudaEntriesPDF = dynamic(() =>
 );
 
 const SaudaEntryList = () => {
-  const { groupedRates, mobileToName, loading, date, setDate } = useRateEntries();
+  const {
+    groupedRates,
+    mobileToName,
+    rates,
+    saudas,
+    loading,
+    date,
+    setDate,
+  } = useRateEntries();
   const [expandedMobile, setExpandedMobile] = useState(null);
   const today = useToday();
 
@@ -157,6 +166,12 @@ const SaudaEntryList = () => {
             </div>
           )}
         </motion.div>
+        <TargetAchievementChart
+          rates={rates}
+          saudas={saudas}
+          date={date}
+          today={today}
+        />
       </div>
     </Suspense>
   );
