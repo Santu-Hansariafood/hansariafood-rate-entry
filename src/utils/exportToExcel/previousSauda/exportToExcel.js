@@ -6,6 +6,7 @@ export const downloadSaudaExcel = async (rows, fileName = "Previous_Sauda.xlsx")
   const excelData = rows.map((row) => ({
     "S.No": row.sl,
     "Buyer Company": row.buyerCompany,
+    Group: row.groupName,
     Consignee: row.consigneeName || row.consignee?.split("-")[0] || "",
     "Sauda No": row.saudaNo,
     Commodity: row.commodity,

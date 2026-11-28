@@ -3,6 +3,10 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { rateLimitGuard } from "@/lib/apiUtils";
+import {
+  getGroupNamesByCompanyNames,
+  normalizeGroupCompanyName,
+} from "@/lib/companyGroupNotifications";
 
 export async function GET(req) {
   const limited = rateLimitGuard(req, "read");
@@ -22,8 +26,18 @@ export async function GET(req) {
     }
 
     const entries = await SaudaEntry.find({ date });
+    const groupNamesByCompany = await getGroupNamesByCompanyNames(
+      entries.map((entry) => entry.company),
+    );
+    const entriesWithGroups = entries.map((entry) => ({
+      ...entry.toJSON(),
+      groupNames:
+        groupNamesByCompany.get(
+          normalizeGroupCompanyName(entry.company),
+        ) || [],
+    }));
 
-    return NextResponse.json({ entries }, { status: 200 });
+    return NextResponse.json({ entries: entriesWithGroups }, { status: 200 });
   } catch (error) {
     console.error("Error in GET /sauda/get-by-date:", error);
     return NextResponse.json(

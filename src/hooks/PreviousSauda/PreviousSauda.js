@@ -43,6 +43,7 @@ const usePreviousSauda = () => {
           (list || []).map((item) => ({
             // buyerName,
             buyerCompany,
+            groupName: (doc?.groupNames || []).join(", "),
             consignee: unit,
             unit: unit?.split("-")[0] || "",
             saudaNo: item?.saudaNo || "",
