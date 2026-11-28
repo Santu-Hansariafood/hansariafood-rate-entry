@@ -16,39 +16,16 @@ const NotificationsPanel = ({ onClose }) => {
   const formatSaudaNo = (value) =>
     value ? value.toString().split("-").pop() : "";
 
-  const sortedNotifications = useMemo(() => {
-    return [...filteredNotifications].sort((a, b) => {
-      const saudaA = parseInt(
-        a.saudaNo ? a.saudaNo.toString().split("-").pop() : "0",
-        10,
-      );
-      const saudaB = parseInt(
-        b.saudaNo ? b.saudaNo.toString().split("-").pop() : "0",
-        10,
-      );
-      return saudaB - saudaA;
-    });
-  }, [filteredNotifications]);
+  const sortedNotifications = filteredNotifications;
 
   const groupedNotifications = useMemo(() => {
-    const groups = new Map();
+    const dates = new Map();
     sortedNotifications.forEach((item) => {
-      const groupNames =
-        Array.isArray(item.groupNames) && item.groupNames.length
-          ? item.groupNames
-          : ["Ungrouped Companies"];
-      groupNames.forEach((groupName) => {
-        const groupItems = groups.get(groupName) || [];
-        groupItems.push(item);
-        groups.set(groupName, groupItems);
-      });
+      const dateItems = dates.get(item.date) || [];
+      dateItems.push(item);
+      dates.set(item.date, dateItems);
     });
-
-    return [...groups.entries()].sort(([nameA], [nameB]) => {
-      if (nameA === "Ungrouped Companies") return 1;
-      if (nameB === "Ungrouped Companies") return -1;
-      return nameA.localeCompare(nameB);
-    });
+    return [...dates.entries()];
   }, [sortedNotifications]);
 
   const handleCopy = (item) => {
@@ -126,7 +103,7 @@ const NotificationsPanel = ({ onClose }) => {
         <div className="p-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <input
             type="text"
-            placeholder="Search group, company, location..."
+            placeholder="Search company, location, commodity..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg 
@@ -140,10 +117,10 @@ const NotificationsPanel = ({ onClose }) => {
           <Loading />
         ) : sortedNotifications.length > 0 ? (
           <div className="flex-1 divide-y divide-gray-200 dark:divide-gray-700">
-            {groupedNotifications.map(([groupName, items]) => (
-              <section key={groupName}>
+            {groupedNotifications.map(([date, items]) => (
+              <section key={date}>
                 <h4 className="flex items-center justify-between bg-green-50 px-4 py-2 text-sm font-semibold text-green-800 dark:bg-green-950 dark:text-green-200">
-                  <span>{groupName}</span>
+                  <span>{date}</span>
                   <span className="text-xs font-medium opacity-75">
                     {items.length}
                   </span>
@@ -243,7 +220,7 @@ const NotificationsPanel = ({ onClose }) => {
           <div className="flex-1 flex justify-center items-center p-8 text-gray-500 dark:text-gray-400">
             <div className="text-center">
               <p className="font-medium">No notifications found</p>
-              <p className="text-xs mt-2">No sauda entries for today</p>
+              <p className="text-xs mt-2">No sauda entries found</p>
             </div>
           </div>
         )}

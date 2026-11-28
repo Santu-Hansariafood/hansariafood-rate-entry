@@ -1,11 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Line } from "react-chartjs-2";
+import {
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+} from "chart.js";
 import { motion } from "framer-motion";
 import { CalendarDays, TrendingUp } from "lucide-react";
+import { toast } from "react-toastify";
 import Loading from "@/components/common/Loading/Loading";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
 import useRateAnalysisData from "@/hooks/RateCalendar/useRateAnalysisData";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+);
 
 const monthNames = [
   "January",
@@ -75,6 +95,61 @@ export default function RateCalendar() {
   const [selectedGroupId, setSelectedGroupId] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedCommodity, setSelectedCommodity] = useState("");
+  const chartRef = useRef(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    const canvas = chartRef.current?.querySelector("canvas");
+    if (!canvas) {
+      toast.error("The rate graph is not ready to export");
+      return;
+    }
+
+    setIsExportingPdf(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const pdf = new jsPDF("landscape", "mm", "a4");
+      const margin = 10;
+      const chartTop = 26;
+      const imageData = canvas.toDataURL("image/png");
+      const image = pdf.getImageProperties(imageData);
+      const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+      const maxHeight =
+        pdf.internal.pageSize.getHeight() - chartTop - margin;
+      const scale = Math.min(maxWidth / image.width, maxHeight / image.height);
+      const imageWidth = image.width * scale;
+      const imageHeight = image.height * scale;
+      const imageX = (pdf.internal.pageSize.getWidth() - imageWidth) / 2;
+
+      pdf.setFontSize(16);
+      pdf.text("Monthly Rate Analysis by Location", margin, 11);
+      pdf.setFontSize(10);
+      pdf.text(
+        `${selectedGroup?.name || ""} | ${selectedCompany} | ${selectedCommodity} | ${monthNames[selectedMonth]} ${selectedYear}`,
+        margin,
+        18,
+      );
+      pdf.addImage(
+        imageData,
+        "PNG",
+        imageX,
+        chartTop,
+        imageWidth,
+        imageHeight,
+      );
+      pdf.save(
+        `Rate_Analysis_${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}.pdf`,
+      );
+      toast.success("Rate graph downloaded as PDF");
+    } catch (exportError) {
+      console.error("Failed to export rate analysis graph:", exportError);
+      toast.error("Failed to download the rate graph PDF");
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   useEffect(() => {
     if (!selectedGroupId && groups.length) {
@@ -151,6 +226,7 @@ export default function RateCalendar() {
           maxRate: Math.max(...values),
           latestRate: latest.rate,
           updates: values.length,
+          dailyRates: row.rates,
         };
       })
       .sort((a, b) => {
@@ -160,6 +236,127 @@ export default function RateCalendar() {
         return commoditySort || a.location.localeCompare(b.location);
       });
   }, [allRates, selectedGroup, selectedMonth, selectedYear]);
+
+  const companyOptions = useMemo(
+    () => [...new Set(monthlyRows.map((row) => row.company))].sort(),
+    [monthlyRows],
+  );
+  const currentCompany = companyOptions.includes(selectedCompany)
+    ? selectedCompany
+    : companyOptions[0] || "";
+  const commodityOptions = useMemo(
+    () =>
+      [
+        ...new Set(
+          monthlyRows
+            .filter((row) => row.company === currentCompany)
+            .map((row) => row.commodity),
+        ),
+      ].sort(),
+    [currentCompany, monthlyRows],
+  );
+  const currentCommodity = commodityOptions.includes(selectedCommodity)
+    ? selectedCommodity
+    : commodityOptions[0] || "";
+  const locationRows = useMemo(
+    () =>
+      monthlyRows.filter(
+        (row) =>
+          row.company === currentCompany && row.commodity === currentCommodity,
+      ),
+    [currentCompany, currentCommodity, monthlyRows],
+  );
+  const chartLabels = useMemo(() => {
+    const days = new Set(
+      locationRows.flatMap((row) =>
+        row.dailyRates.map((point) => point.date.getDate()),
+      ),
+    );
+    return [...days]
+      .sort((a, b) => a - b)
+      .map((day) =>
+        new Date(selectedYear, selectedMonth, day).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+        }),
+      );
+  }, [locationRows, selectedMonth, selectedYear]);
+  const chartData = useMemo(() => {
+    const colors = [
+      "#2563eb",
+      "#059669",
+      "#d97706",
+      "#7c3aed",
+      "#db2777",
+      "#0891b2",
+      "#65a30d",
+      "#dc2626",
+    ];
+    const dayNumbers = chartLabels.map((label) => Number.parseInt(label, 10));
+
+    return {
+      labels: chartLabels,
+      datasets: locationRows.map((row, index) => {
+        const totalsByDay = new Map();
+        row.dailyRates.forEach((point) => {
+          const day = point.date.getDate();
+          const current = totalsByDay.get(day) || { total: 0, count: 0 };
+          current.total += point.rate;
+          current.count += 1;
+          totalsByDay.set(day, current);
+        });
+        const color = colors[index % colors.length];
+
+        return {
+          label: row.location,
+          data: dayNumbers.map((day) => {
+            const values = totalsByDay.get(day);
+            return values ? values.total / values.count : null;
+          }),
+          borderColor: color,
+          backgroundColor: color,
+          pointBackgroundColor: color,
+          pointBorderColor: color,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          tension: 0.3,
+          spanGaps: false,
+        };
+      }),
+    };
+  }, [chartLabels, locationRows]);
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 750, easing: "easeOutQuart" },
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { position: "top" },
+      tooltip: {
+        callbacks: {
+          label: (context) =>
+            `${context.dataset.label}: ₹${Number(context.parsed.y).toLocaleString(
+              undefined,
+              { maximumFractionDigits: 2 },
+            )}`,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: false,
+        title: { display: true, text: "Rate (₹)" },
+        ticks: {
+          callback: (value) =>
+            `₹${Number(value).toLocaleString(undefined, {
+              maximumFractionDigits: 2,
+            })}`,
+        },
+      },
+      x: { title: { display: true, text: "Date" } },
+    },
+  };
 
   const isLoading = groupsLoading || ratesLoading || !groupsLoaded;
   const error = groupsError || ratesError;
@@ -259,64 +456,142 @@ export default function RateCalendar() {
             {selectedGroup.name}.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-            <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
-              <thead className="bg-slate-50 dark:bg-slate-800/70">
-                <tr>
-                  {[
-                    "Company",
-                    "Commodity",
-                    "Location",
-                    "Average Rate",
-                    "Latest Rate",
-                    "Lowest",
-                    "Highest",
-                    "Updates",
-                  ].map((heading) => (
-                    <th
-                      key={heading}
-                      className="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300"
+          <>
+            <div className="mb-6 rounded-xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 md:p-6">
+              <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Monthly Rate by Location
+                  </h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Daily rate trend for {monthNames[selectedMonth]} {selectedYear}.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Company
+                    <select
+                      value={currentCompany}
+                      onChange={(event) => {
+                        setSelectedCompany(event.target.value);
+                        setSelectedCommodity("");
+                      }}
+                      className="mt-1 block min-w-48 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
                     >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
-                {monthlyRows.map((row) => (
-                  <tr
-                    key={`${row.company}-${row.commodity}-${row.location}`}
-                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      {companyOptions.map((company) => (
+                        <option key={company} value={company}>
+                          {company}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Commodity
+                    <select
+                      value={currentCommodity}
+                      onChange={(event) =>
+                        setSelectedCommodity(event.target.value)
+                      }
+                      className="mt-1 block min-w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                    >
+                      {commodityOptions.map((commodity) => (
+                        <option key={commodity} value={commodity}>
+                          {commodity}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {chartLabels.length > 0 && locationRows.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleDownloadPdf}
+                      disabled={isExportingPdf}
+                      className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {isExportingPdf ? "Preparing PDF..." : "Download PDF"}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {locationRows.length ? (
+                <div className="overflow-x-auto rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/30 md:p-5">
+                  <div
+                    ref={chartRef}
+                    className="h-[380px] md:h-[460px]"
+                    style={{
+                      minWidth: `${Math.max(720, chartLabels.length * 38)}px`,
+                    }}
                   >
-                    <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                      {row.company}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {row.commodity}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {row.location}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
-                      ₹{row.averageRate.toFixed(2)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-400">
-                      ₹{row.latestRate}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
-                      ₹{row.minRate}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
-                      ₹{row.maxRate}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {row.updates}
-                    </td>
+                    <Line data={chartData} options={chartOptions} />
+                  </div>
+                </div>
+              ) : (
+                <p className="py-10 text-center text-slate-500 dark:text-slate-400">
+                  No location rates for this company and commodity in the
+                  selected month.
+                </p>
+              )}
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+              <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
+                <thead className="bg-slate-50 dark:bg-slate-800/70">
+                  <tr>
+                    {[
+                      "Company",
+                      "Commodity",
+                      "Location",
+                      "Average Rate",
+                      "Latest Rate",
+                      "Lowest",
+                      "Highest",
+                      "Updates",
+                    ].map((heading) => (
+                      <th
+                        key={heading}
+                        className="whitespace-nowrap px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300"
+                      >
+                        {heading}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900">
+                  {monthlyRows.map((row) => (
+                    <tr
+                      key={`${row.company}-${row.commodity}-${row.location}`}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    >
+                      <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
+                        {row.company}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {row.commodity}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {row.location}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
+                        ₹{row.averageRate.toFixed(2)}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-400">
+                        ₹{row.latestRate}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
+                        ₹{row.minRate}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-700 dark:text-slate-300">
+                        ₹{row.maxRate}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {row.updates}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </motion.div>
     </section>

@@ -3,17 +3,6 @@ import { connectDB } from "@/lib/mongodb";
 import SaudaEntry from "@/models/SaudaEntry";
 import { verifyApiKey } from "@/middleware/apiKeyMiddleware/apiKeyMiddleware";
 import { rateLimitGuard } from "@/lib/apiUtils";
-import {
-  getGroupNamesByCompanyNames,
-  normalizeGroupCompanyName,
-} from "@/lib/companyGroupNotifications";
-
-function getTodayString() {
-  const today = new Date();
-  return `${String(today.getDate()).padStart(2, "0")}-${String(
-    today.getMonth() + 1,
-  ).padStart(2, "0")}-${today.getFullYear()}`;
-}
 
 export async function GET(req) {
   const limited = rateLimitGuard(req, "read");
@@ -26,10 +15,8 @@ export async function GET(req) {
   try {
     await connectDB();
 
-    const todayString = getTodayString();
-
-    const entries = await SaudaEntry.find({ date: todayString })
-      .select("company date time saudaEntries buyer seller createdAt")
+    const entries = await SaudaEntry.find()
+      .select("company date time saudaEntries buyer seller")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -69,21 +56,7 @@ export async function GET(req) {
       }
     }
 
-    notifications.sort((a, b) =>
-      a.time < b.time ? 1 : a.time > b.time ? -1 : 0,
-    );
-    const groupNamesByCompany = await getGroupNamesByCompanyNames(
-      notifications.map((notification) => notification.company),
-    );
-    const groupedNotifications = notifications.map((notification) => ({
-      ...notification,
-      groupNames:
-        groupNamesByCompany.get(
-          normalizeGroupCompanyName(notification.company),
-        ) || [],
-    }));
-
-    return NextResponse.json({ notifications: groupedNotifications });
+    return NextResponse.json({ notifications });
   } catch (error) {
     console.error("Error in GET /api/sauda/notifications:", error);
     return NextResponse.json(

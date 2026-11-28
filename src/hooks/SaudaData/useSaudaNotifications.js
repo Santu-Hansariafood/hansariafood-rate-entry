@@ -5,7 +5,7 @@ import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import { useSocket } from "@/context/SocketContext";
 
-const LOCAL_STORAGE_KEY = "sauda_notifications_cache";
+const LOCAL_STORAGE_KEY = "sauda_notifications_cache_v2";
 
 export default function useSaudaNotifications() {
   const [loading, setLoading] = useState(true);
@@ -14,53 +14,41 @@ export default function useSaudaNotifications() {
   const rateCacheRef = useRef({ data: [], lastFetched: 0 });
   const socket = useSocket();
 
-  const getTodayString = useCallback(() => {
-    const today = new Date();
-    return `${String(today.getDate()).padStart(2, "0")}-${String(
-      today.getMonth() + 1
-    ).padStart(2, "0")}-${today.getFullYear()}`;
-  }, []);
+  const sortNotifications = useCallback((items) => {
+    const getDateValue = (value) => {
+      const [day, month, year] = String(value || "").split("-").map(Number);
+      if (day && month && year) {
+        return new Date(year, month - 1, day).getTime();
+      }
+      return new Date(value).getTime() || 0;
+    };
 
-  const filterAndSortToday = useCallback(
-    (items) => {
-      const todayString = getTodayString();
-      return items
-        .filter((item) => item.tons > 0 && item.date === todayString)
-        .sort((a, b) => {
-          if (!a.time) return 1;
-          if (!b.time) return -1;
-          if (a.time < b.time) return 1;
-          if (a.time > b.time) return -1;
-          return 0;
-        });
-    },
-    [getTodayString]
-  );
+    const getSerialNumber = (value) =>
+      Number.parseInt(String(value || "").split("-").pop(), 10) || 0;
+
+    return items
+      .filter((item) => Number(item.tons) > 0)
+      .sort((a, b) => {
+        const dateDifference = getDateValue(b.date) - getDateValue(a.date);
+        if (dateDifference) return dateDifference;
+
+        const serialDifference =
+          getSerialNumber(b.saudaNo) - getSerialNumber(a.saudaNo);
+        if (serialDifference) return serialDifference;
+
+        return String(b.time || "").localeCompare(String(a.time || ""));
+      });
+  }, []);
 
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await axiosInstance.get("/save-sauda/notifications");
       const all = res.data.notifications || [];
 
-      const filtered = filterAndSortToday(all);
+      const filtered = sortNotifications(all);
       const limited = filtered.slice(0, 200);
 
-      const compact = limited.map((item) => ({
-        company: item.company,
-        groupNames: item.groupNames || [],
-        location: item.location,
-        commodity: item.commodity,
-        tons: item.tons,
-        date: item.date,
-        time: item.time,
-        loadingFrom: item.loadingFrom || "",
-      }));
-
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(compact));
-      } catch {}
-
-      if (filtered.length === 0) {
+      if (limited.length === 0) {
         setNotifications([]);
         setLoading(false);
         return;
@@ -89,9 +77,13 @@ export default function useSaudaNotifications() {
         rateMap.set(key, rate);
       });
 
+      const today = new Date();
+      const todayString = `${String(today.getDate()).padStart(2, "0")}-${String(
+        today.getMonth() + 1
+      ).padStart(2, "0")}-${today.getFullYear()}`;
       const enriched = limited.map((item) => {
         const key = `${item.company}|${item.location}|${item.commodity}`;
-        const match = rateMap.get(key);
+        const match = item.date === todayString ? rateMap.get(key) : null;
 
         return {
           ...item,
@@ -102,20 +94,23 @@ export default function useSaudaNotifications() {
       });
 
       setNotifications(enriched);
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(enriched));
+      } catch {}
     } catch (error) {
       console.error("Error fetching notifications:", error);
       toast.error("Error fetching notifications");
     } finally {
       setLoading(false);
     }
-  }, [filterAndSortToday]);
+  }, [sortNotifications]);
 
   useEffect(() => {
     const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (cached) {
       try {
         const cachedData = JSON.parse(cached);
-        const filteredCache = filterAndSortToday(cachedData);
+        const filteredCache = sortNotifications(cachedData).slice(0, 200);
         if (filteredCache.length > 0) {
           setNotifications(filteredCache);
           setLoading(false);
@@ -138,7 +133,7 @@ export default function useSaudaNotifications() {
     return () => {
       socket.off("notification", handleNotification);
     };
-  }, [fetchNotifications, filterAndSortToday, socket]);
+  }, [fetchNotifications, sortNotifications, socket]);
 
   useEffect(() => {
     const handleFocus = () => {
@@ -166,9 +161,6 @@ export default function useSaudaNotifications() {
     return notifications.filter(
       (item) =>
         item.company.toLowerCase().includes(query) ||
-        item.groupNames?.some((groupName) =>
-          groupName.toLowerCase().includes(query),
-        ) ||
         item.location.toLowerCase().includes(query) ||
         item.commodity.toLowerCase().includes(query)
     );
