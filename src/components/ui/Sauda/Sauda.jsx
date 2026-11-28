@@ -60,6 +60,7 @@ const Sauda = () => {
     companies,
     companyNameToId,
     saudaStatusMap,
+    saudaTonsByRateKey,
     loading,
     hasRate,
     filterType,
@@ -234,6 +235,8 @@ const Sauda = () => {
                             key={group._id}
                             group={group}
                             notifications={notifications}
+                            progressMode="sauda"
+                            saudaTonsByRateKey={saudaTonsByRateKey}
                             onClick={() => handleGroupSelect(group)}
                           />
                         ))}

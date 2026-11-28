@@ -7,13 +7,20 @@ const CACHE_KEYS = {
   companies: "sauda_companies_cache",
   rates: "sauda_rates_cache",
   saudaStatus: "sauda_status_cache",
+  saudaTons: "sauda_tons_cache",
 };
+
+const normalize = (value) => String(value ?? "").trim().toLocaleLowerCase();
+
+const getSaudaTonsKey = (company, location, commodity) =>
+  [company, location, commodity].map(normalize).join("|||");
 
 const useSaudaData = () => {
   const [companies, setCompanies] = useState([]);
   const [allCompanies, setAllCompanies] = useState([]);
   const [rateData, setRateData] = useState([]);
   const [saudaStatusMap, setSaudaStatusMap] = useState({});
+  const [saudaTonsByRateKey, setSaudaTonsByRateKey] = useState({});
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("all");
   const isFetchingRef = useRef(false);
@@ -105,11 +112,13 @@ const useSaudaData = () => {
       const cachedCompanies = getCachedData(CACHE_KEYS.companies);
       const cachedRates = getCachedData(CACHE_KEYS.rates);
       const cachedStatus = getCachedData(`${CACHE_KEYS.saudaStatus}_${today}`);
+      const cachedSaudaTons = getCachedData(`${CACHE_KEYS.saudaTons}_${today}`);
 
-      if (cachedCompanies && cachedRates && cachedStatus) {
+      if (cachedCompanies && cachedRates && cachedStatus && cachedSaudaTons) {
         setAllCompanies(cachedCompanies);
         setRateData(cachedRates);
         setSaudaStatusMap(cachedStatus);
+        setSaudaTonsByRateKey(cachedSaudaTons);
         setLoading(false);
         isFetchingRef.current = false;
         return;
@@ -156,12 +165,14 @@ const useSaudaData = () => {
         .map((c) => c.name);
 
       if (companiesWithRates.length === 0) {
+        setSaudaTonsByRateKey({});
+        setCachedData(`${CACHE_KEYS.saudaTons}_${today}`, {});
         setLoading(false);
         isFetchingRef.current = false;
         return;
       }
 
-      if (!cachedStatus) {
+      if (!cachedStatus || !cachedSaudaTons) {
         setLoading(false);
         const saudaChunks = chunkArray(companiesWithRates, 300);
         const saudaRequests = saudaChunks.map((chunk) =>
@@ -175,6 +186,7 @@ const useSaudaData = () => {
         const allSaudaEntries = Object.assign({}, ...responses);
 
         const saudaStatuses = {};
+        const saudaTons = {};
         for (const company of companiesWithRates) {
           let status = "green";
           const entry = allSaudaEntries[company];
@@ -186,6 +198,16 @@ const useSaudaData = () => {
 
             for (const entries of values) {
               for (const e of entries) {
+                const tons = Number(e.tons);
+                if (
+                  Number.isFinite(tons) &&
+                  tons > 0 &&
+                  e.unit &&
+                  e.commodity
+                ) {
+                  const key = getSaudaTonsKey(company, e.unit, e.commodity);
+                  saudaTons[key] = (saudaTons[key] || 0) + tons;
+                }
                 if (
                   (e.tons && Number(e.tons) > 0) ||
                   (e.description && e.description.trim() !== "")
@@ -210,10 +232,17 @@ const useSaudaData = () => {
           saudaStatuses[nameToId.get(company) ?? company] = status;
         }
 
-        setSaudaStatusMap(saudaStatuses);
-        setCachedData(`${CACHE_KEYS.saudaStatus}_${today}`, saudaStatuses);
+        setSaudaTonsByRateKey(saudaTons);
+        setCachedData(`${CACHE_KEYS.saudaTons}_${today}`, saudaTons);
+        if (!cachedStatus) {
+          setSaudaStatusMap(saudaStatuses);
+          setCachedData(`${CACHE_KEYS.saudaStatus}_${today}`, saudaStatuses);
+        } else {
+          setSaudaStatusMap(cachedStatus);
+        }
       } else {
         setSaudaStatusMap(cachedStatus);
+        setSaudaTonsByRateKey(cachedSaudaTons);
         setLoading(false);
       }
     } catch (err) {
@@ -251,12 +280,14 @@ const useSaudaData = () => {
       localStorage.removeItem(key);
     });
     localStorage.removeItem(`${CACHE_KEYS.saudaStatus}_${today}`);
+    localStorage.removeItem(`${CACHE_KEYS.saudaTons}_${today}`);
     fetchAllData();
   }, [fetchAllData, today]);
 
   useEffect(() => {
     const handleSaudaUpdate = () => {
       localStorage.removeItem(`${CACHE_KEYS.saudaStatus}_${today}`);
+      localStorage.removeItem(`${CACHE_KEYS.saudaTons}_${today}`);
       fetchAllData();
     };
     window.addEventListener("sauda_updated", handleSaudaUpdate);
@@ -268,6 +299,7 @@ const useSaudaData = () => {
     rateData,
     companyNameToId,
     saudaStatusMap,
+    saudaTonsByRateKey,
     loading,
     hasRate,
     updateCompanyStatus,

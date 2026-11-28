@@ -37,8 +37,74 @@ export function getGroupRateProgress(group, notifications) {
   };
 }
 
-export default function RateGroupCard({ group, notifications, onClick }) {
-  const progress = getGroupRateProgress(group, notifications);
+const normalize = (value) => String(value ?? "").trim().toLocaleLowerCase();
+
+export function getGroupSaudaProgress(group, notifications, saudaTonsByRateKey) {
+  const companyNames = new Set(
+    (group.companies || [])
+      .map((company) => normalize(company?.name))
+      .filter(Boolean),
+  );
+  const targetQuantities = new Map();
+
+  (Array.isArray(notifications) ? notifications : []).forEach((rate) => {
+    const company = normalize(rate.company || rate.companyName);
+    const location = normalize(rate.location);
+    const commodity = normalize(rate.commodity);
+    const quantity = Number(rate.quantity);
+    if (
+      !companyNames.has(company) ||
+      !location ||
+      !commodity ||
+      !Number.isFinite(quantity) ||
+      quantity <= 0 ||
+      !(rate.newRateDate || rate.lastUpdated)
+    ) {
+      return;
+    }
+
+    const key = `${company}|||${location}|||${commodity}`;
+    if (!targetQuantities.has(key)) {
+      targetQuantities.set(key, quantity);
+    }
+  });
+
+  let total = 0;
+  let completed = 0;
+  targetQuantities.forEach((quantity, key) => {
+    total += quantity;
+    completed += Math.min(Number(saudaTonsByRateKey?.[key]) || 0, quantity);
+  });
+
+  return {
+    completed,
+    total,
+    percentage: total
+      ? Math.min(100, Math.round((completed / total) * 100))
+      : 0,
+    unit: "tons",
+  };
+}
+
+export default function RateGroupCard({
+  group,
+  notifications,
+  onClick,
+  progressMode = "rate",
+  saudaTonsByRateKey,
+}) {
+  const progress =
+    progressMode === "sauda"
+      ? getGroupSaudaProgress(group, notifications, saudaTonsByRateKey)
+      : getGroupRateProgress(group, notifications);
+  const progressTitle =
+    progressMode === "sauda"
+      ? `${progress.percentage}% of target sauda quantity entered`
+      : `${progress.percentage}% of locations have a rate today`;
+  const progressValues =
+    progressMode === "sauda"
+      ? `${progress.completed.toFixed(2)}/${progress.total.toFixed(2)}`
+      : `${progress.completed}/${progress.total}`;
 
   return (
     <motion.button
@@ -63,7 +129,7 @@ export default function RateGroupCard({ group, notifications, onClick }) {
       <div className="mt-4">
         <div className="mb-1.5 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-300">
           <span>
-            {progress.completed}/{progress.total} locations
+            {progressValues} {progress.unit || "locations"}
           </span>
           <span className="font-semibold opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
             {progress.percentage}%
@@ -71,11 +137,13 @@ export default function RateGroupCard({ group, notifications, onClick }) {
         </div>
         <div
           role="progressbar"
-          aria-label={`${group.name} rate progress`}
+          aria-label={`${group.name} ${
+            progressMode === "sauda" ? "sauda quantity" : "rate"
+          } progress`}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={progress.percentage}
-          title={`${progress.percentage}% of locations have a rate today`}
+          title={progressTitle}
           className="h-1.5 overflow-hidden rounded-full bg-emerald-200 dark:bg-emerald-900/70"
         >
           <div
