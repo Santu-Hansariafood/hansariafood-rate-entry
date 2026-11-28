@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bar } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import {
   BarElement,
   CategoryScale,
   Chart as ChartJS,
   Legend,
+  LineElement,
   LinearScale,
+  PointElement,
   Tooltip,
 } from "chart.js";
 import { motion } from "framer-motion";
@@ -21,6 +23,8 @@ ChartJS.register(
   BarElement,
   CategoryScale,
   LinearScale,
+  LineElement,
+  PointElement,
   Tooltip,
   Legend,
 );
@@ -95,6 +99,8 @@ export default function RateCalendar() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedCommodity, setSelectedCommodity] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("all");
+  const [chartType, setChartType] = useState("bar");
   const chartRef = useRef(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
@@ -125,7 +131,7 @@ export default function RateCalendar() {
       pdf.text("Monthly Rate Analysis by Location", margin, 11);
       pdf.setFontSize(10);
       pdf.text(
-        `${selectedGroup?.name || ""} | ${selectedCompany} | ${selectedCommodity} | ${monthNames[selectedMonth]} ${selectedYear}`,
+        `${selectedGroup?.name || ""} | ${selectedCompany} | ${selectedCommodity} | ${currentLocation === "all" ? "All locations" : currentLocation} | ${monthNames[selectedMonth]} ${selectedYear}`,
         margin,
         18,
       );
@@ -264,9 +270,20 @@ export default function RateCalendar() {
       ),
     [currentCompany, currentCommodity, monthlyRows],
   );
+  const locationOptions = useMemo(
+    () => [...new Set(locationRows.map((row) => row.location))].sort(),
+    [locationRows],
+  );
+  const currentLocation = locationOptions.includes(selectedLocation)
+    ? selectedLocation
+    : "all";
+  const chartRows =
+    currentLocation === "all"
+      ? locationRows
+      : locationRows.filter((row) => row.location === currentLocation);
   const chartLabels = useMemo(() => {
     const days = new Set(
-      locationRows.flatMap((row) =>
+      chartRows.flatMap((row) =>
         row.dailyRates.map((point) => point.date.getDate()),
       ),
     );
@@ -278,7 +295,7 @@ export default function RateCalendar() {
           month: "short",
         }),
       );
-  }, [locationRows, selectedMonth, selectedYear]);
+  }, [chartRows, selectedMonth, selectedYear]);
   const chartData = useMemo(() => {
     const colors = [
       "#2563eb",
@@ -294,7 +311,7 @@ export default function RateCalendar() {
 
     return {
       labels: chartLabels,
-      datasets: locationRows.map((row, index) => {
+      datasets: chartRows.map((row, index) => {
         const totalsByDay = new Map();
         row.dailyRates.forEach((point) => {
           const day = point.date.getDate();
@@ -305,26 +322,48 @@ export default function RateCalendar() {
         });
         const color = colors[index % colors.length];
 
-        return {
+        const dataset = {
           label: row.location,
           data: dayNumbers.map((day) => {
             const values = totalsByDay.get(day);
             return values ? values.total / values.count : null;
           }),
+        };
+
+        if (chartType === "line") {
+          return {
+            ...dataset,
+            borderColor: color,
+            backgroundColor: color,
+            pointBackgroundColor: color,
+            pointBorderColor: color,
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            tension: 0.3,
+            spanGaps: false,
+          };
+        }
+
+        return {
+          ...dataset,
           backgroundColor: color,
           borderRadius: 4,
           maxBarThickness: 24,
         };
       }),
     };
-  }, [chartLabels, locationRows]);
+  }, [chartLabels, chartRows, chartType]);
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 750, easing: "easeOutQuart" },
     interaction: { mode: "index", intersect: false },
     plugins: {
-      legend: { position: "top" },
+      legend: {
+        position: "top",
+        labels: { usePointStyle: chartType === "line" },
+      },
       tooltip: {
         callbacks: {
           label: (context) =>
@@ -337,7 +376,7 @@ export default function RateCalendar() {
     },
     scales: {
       y: {
-        beginAtZero: true,
+        beginAtZero: chartType === "bar",
         title: { display: true, text: "Rate (₹)" },
         ticks: {
           callback: (value) =>
@@ -468,8 +507,9 @@ export default function RateCalendar() {
                       onChange={(event) => {
                         setSelectedCompany(event.target.value);
                         setSelectedCommodity("");
+                        setSelectedLocation("all");
                       }}
-                      className="mt-1 block min-w-48 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                      className="mt-1 block min-w-48 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800"
                     >
                       {companyOptions.map((company) => (
                         <option key={company} value={company}>
@@ -482,10 +522,11 @@ export default function RateCalendar() {
                     Commodity
                     <select
                       value={currentCommodity}
-                      onChange={(event) =>
-                        setSelectedCommodity(event.target.value)
-                      }
-                      className="mt-1 block min-w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                      onChange={(event) => {
+                        setSelectedCommodity(event.target.value);
+                        setSelectedLocation("all");
+                      }}
+                      className="mt-1 block min-w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800"
                     >
                       {commodityOptions.map((commodity) => (
                         <option key={commodity} value={commodity}>
@@ -494,7 +535,48 @@ export default function RateCalendar() {
                       ))}
                     </select>
                   </label>
-                  {chartLabels.length > 0 && locationRows.length > 0 && (
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Location
+                    <select
+                      value={currentLocation}
+                      onChange={(event) =>
+                        setSelectedLocation(event.target.value)
+                      }
+                      className="mt-1 block min-w-40 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800"
+                    >
+                      <option value="all">All locations</option>
+                      {locationOptions.map((location) => (
+                        <option key={location} value={location}>
+                          {location}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div
+                    className="flex rounded-lg border border-slate-200 bg-slate-100 p-1 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                    role="group"
+                    aria-label="Chart type"
+                  >
+                    {[
+                      ["bar", "Bars"],
+                      ["line", "Line"],
+                    ].map(([type, label]) => (
+                      <button
+                        key={type}
+                        type="button"
+                        aria-pressed={chartType === type}
+                        onClick={() => setChartType(type)}
+                        className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+                          chartType === type
+                            ? "bg-white text-blue-700 shadow dark:bg-slate-700 dark:text-blue-300"
+                            : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {chartLabels.length > 0 && chartRows.length > 0 && (
                     <button
                       type="button"
                       onClick={handleDownloadPdf}
@@ -506,8 +588,8 @@ export default function RateCalendar() {
                   )}
                 </div>
               </div>
-              {locationRows.length ? (
-                <div className="overflow-x-auto rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-950/30 md:p-5">
+              {chartRows.length ? (
+                <div className="overflow-x-auto rounded-xl border border-slate-100 bg-gradient-to-br from-white to-slate-50 p-3 shadow-inner dark:border-slate-800 dark:from-slate-950/30 dark:to-slate-900/60 md:p-5">
                   <div
                     ref={chartRef}
                     className="h-[380px] md:h-[460px]"
@@ -515,7 +597,11 @@ export default function RateCalendar() {
                       minWidth: `${Math.max(720, chartLabels.length * 38)}px`,
                     }}
                   >
-                    <Bar data={chartData} options={chartOptions} />
+                    {chartType === "line" ? (
+                      <Line data={chartData} options={chartOptions} />
+                    ) : (
+                      <Bar data={chartData} options={chartOptions} />
+                    )}
                   </div>
                 </div>
               ) : (
