@@ -2,12 +2,10 @@
 
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { ToastContainer } from "react-toastify";
 import { motion } from "framer-motion";
 import { MapPin, Building2, ChevronDown } from "lucide-react";
 import { useCreateLocationForm } from "@/hooks/Location/useCreateLocationForm";
 import Loading from "@/components/common/Loading/Loading";
-import "react-toastify/dist/ReactToastify.css";
 
 const InputBox = dynamic(
   () => import("@/components/common/InputBox/InputBox"),
@@ -83,7 +81,6 @@ export default function CreateLocation() {
           min-h-screen transition-colors duration-300
         "
       >
-        <ToastContainer position="top-right" autoClose={3000} theme="dark" />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

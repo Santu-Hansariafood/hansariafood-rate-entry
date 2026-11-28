@@ -68,7 +68,9 @@ email, and in-app notifications (Socket.io).
   `x-api-key` header (`NEXT_PUBLIC_API_KEY`), auto-retry on 5xx for GET/HEAD,
   GET request de-duplication, longer timeouts for rate/analytics/export paths.
   **Always use this, never raw axios/fetch.**
-- **Toasts:** `react-toastify` (`toast.success/error/warn`).
+- **Toasts:** `react-hot-toast`, always imported via the central helper `@/utils/toast/toast`
+  (`import { toast } from "@/utils/toast/toast"`) — do NOT import `react-hot-toast` directly.
+  Single global `<Toaster />` lives in `src/app/layout.js`.
 - **Realtime:** Socket.io via custom `server.mjs` (same port as Next).
 - **Backend:** Next.js Route Handlers `src/app/api/**`. Mongoose models `src/models/**`.
   MongoDB connection `src/lib/mongodb.js`.

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import {
   FREIGHT_COMMODITIES,
@@ -61,7 +61,7 @@ export default function FreightBulkUpload({
       });
 
       if (sourceRows.length === 0) {
-        toast.warn("The selected sheet has no freight rows");
+        toast.error("The selected sheet has no freight rows");
         return;
       }
       if (sourceRows.length > 1000) {
@@ -233,7 +233,7 @@ export default function FreightBulkUpload({
         Boolean
       );
       if (nonEmptyRows.length === 0) {
-        toast.warn("No freight data rows were found in the selected sheet");
+        toast.error("No freight data rows were found in the selected sheet");
         return;
       }
       setRows(nonEmptyRows);
@@ -250,7 +250,7 @@ export default function FreightBulkUpload({
       (row) => row.errors.length === 0 && !row.duplicateInFile
     );
     if (validRows.length === 0) {
-      toast.warn("There are no valid freight rows to upload");
+      toast.error("There are no valid freight rows to upload");
       return;
     }
 

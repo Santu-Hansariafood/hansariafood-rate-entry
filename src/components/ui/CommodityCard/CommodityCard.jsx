@@ -3,7 +3,7 @@
 import React, { Suspense, useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 

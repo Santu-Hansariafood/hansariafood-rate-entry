@@ -2,7 +2,7 @@
 
 import { Download } from "lucide-react";
 import { saveAs } from "file-saver";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import useRateEntries from "@/hooks/RateEntries/useRateEntries";
 
 const DownloadRateEntriesExcel = () => {

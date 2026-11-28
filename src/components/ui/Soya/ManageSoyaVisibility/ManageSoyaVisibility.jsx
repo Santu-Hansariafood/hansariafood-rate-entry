@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import Loading from "@/components/common/Loading/Loading";
 import Title from "@/components/common/Title/Title";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 export default function ManageSoyaVisibility() {
   const [companies, setCompanies] = useState([]);

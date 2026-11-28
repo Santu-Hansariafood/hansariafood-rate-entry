@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import { useSession } from "next-auth/react";
 import {
   FREIGHT_COMMODITIES,
@@ -202,7 +202,7 @@ export const useFreightManager = () => {
       }
 
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-        toast.warn("No freight data available to export");
+        toast.error("No freight data available to export");
         return;
       }
 
@@ -217,7 +217,7 @@ export const useFreightManager = () => {
 
   const downloadMissingFreightExcel = useCallback(async () => {
     if (companies.length === 0) {
-      toast.warn("Company locations are not available for the missing-routes report");
+      toast.error("Company locations are not available for the missing-routes report");
       return;
     }
 
@@ -286,7 +286,7 @@ export const useFreightManager = () => {
       });
 
       if (rows.length === 1) {
-        toast.info("No missing freight routes found for available companies");
+        toast.success("No missing freight routes found for available companies");
         return;
       }
 

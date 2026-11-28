@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 export default function useRegisterActions({ companies, fetchUsers }) {

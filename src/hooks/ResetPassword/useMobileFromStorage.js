@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 const useMobileFromStorage = () => {
   const [mobile, setMobile] = useState("");

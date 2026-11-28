@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 export const useSaudaSave = (
@@ -48,7 +48,7 @@ export const useSaudaSave = (
     });
 
     if (rowsToPersist.length === 0) {
-      toast.warn(
+      toast.error(
         "Please fill in tons, rate, seller name, and seller company before saving."
       );
       setSaveStatus((prev) => ({ ...prev, [entryId]: "error" }));
@@ -108,11 +108,11 @@ export const useSaudaSave = (
         }
         toast.success(`Saved successfully for ${unit} - ${commodity}`);
         if (data.notificationDelivery?.error) {
-          toast.warn(
+          toast.error(
             "Sauda saved, but the app notification could not be sent."
           );
         } else if (data.notificationDelivery?.skipped) {
-          toast.warn(
+          toast.error(
             `${data.notificationDelivery.skipped} registered user(s) need an app user ID to receive this sauda.`
           );
         }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 // Simple cache to avoid multiple requests for the same user list in the same session
 let cachedUsers = null;

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 import { toTitleCase } from "@/utils/formatName/formatName";
@@ -65,7 +65,7 @@ export default function CommodityCard({ onFilterChange, maxItems = 15 }) {
 
       if (isRemoving) {
         delete updated[commodity._id];
-        toast.info(`Filter removed: ${toTitleCase(commodity.name)}`);
+        toast(`Filter removed: ${toTitleCase(commodity.name)}`);
       } else {
         updated[commodity._id] = commodity.name;
         toast.success(`Filter added: ${toTitleCase(commodity.name)}`);

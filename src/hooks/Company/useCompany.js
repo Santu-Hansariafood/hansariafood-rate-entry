@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 const PAGE_SIZE = 100;
 const CACHE_DURATION = 60 * 1000;

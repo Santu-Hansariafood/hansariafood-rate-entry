@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 const useResetPassword = (mobile) => {
   const [loading, setLoading] = useState(false);
 
   const resetPassword = async (password, confirmPassword) => {
     if (!password || !confirmPassword) {
-      toast.warning("Please enter both password fields", {
+      toast.error("Please enter both password fields", {
         position: "top-center",
       });
       return;
@@ -32,7 +32,7 @@ const useResetPassword = (mobile) => {
       if (response.status === 200) {
         toast.success("Password changed successfully", {
           position: "top-center",
-          autoClose: 3000,
+          duration: 3000,
         });
         return true;
       } else {

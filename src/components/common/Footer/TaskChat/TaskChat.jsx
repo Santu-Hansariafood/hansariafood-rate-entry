@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ClipboardList, Send, CheckCircle, AlertCircle, X, User, ListTodo } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { useUser } from "@/context/UserContext";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import { useSession } from "next-auth/react";
 import Loading from "../../Loading/Loading";
 
@@ -82,7 +82,7 @@ const TaskChat = () => {
 
   const handleSend = async () => {
     if (!input.trim() || selectedReceivers.length === 0) {
-      toast.warning("Please mention a user (@name) to assign the task.");
+      toast.error("Please mention a user (@name) to assign the task.");
       return;
     }
 

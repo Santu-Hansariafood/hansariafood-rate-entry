@@ -2,7 +2,7 @@
 
 import { FileDown } from "lucide-react";
 import { saveAs } from "file-saver";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import useSaudaNotifications from "@/hooks/SaudaData/useSaudaNotifications";
 import { toTitleCase } from "@/utils/formatName/formatName";
 

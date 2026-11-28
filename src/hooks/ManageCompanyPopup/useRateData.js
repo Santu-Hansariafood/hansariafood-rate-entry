@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 const normalize = (s = "") => s.trim().toLowerCase();
 

@@ -14,8 +14,7 @@ import {
   Title,
 } from "chart.js";
 import { Bar, Line } from "react-chartjs-2";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "@/utils/toast/toast";
 import { motion } from "framer-motion";
 import Loading from "@/components/common/Loading/Loading";
 

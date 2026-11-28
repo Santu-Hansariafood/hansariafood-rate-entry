@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 export default function DownloadLandingCostPDF({
   tableRows = [],
@@ -15,12 +15,12 @@ export default function DownloadLandingCostPDF({
 
   const handleDownload = async () => {
     if (!tableRows || tableRows.length === 0) {
-      toast.warn("No landing cost data available to export");
+      toast.error("No landing cost data available to export");
       return;
     }
 
     if (!includeComplete && !includeIncomplete) {
-      toast.warn("Select complete or incomplete data before downloading");
+      toast.error("Select complete or incomplete data before downloading");
       return;
     }
 

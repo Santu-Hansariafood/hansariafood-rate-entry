@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import { Calendar, Hash, X, Save } from "lucide-react";
 
 const parseDateString = (dateString) => {
@@ -192,7 +192,7 @@ const StockDetailsModal = ({ details, onClose }) => {
       const newTags = parts.filter((tag) => !existingTags.includes(tag));
 
       if (newTags.length === 0) {
-        toast.warning("This sauda number is already added.");
+        toast.error("This sauda number is already added.");
         document.getElementById(`tagInput-${index}`).value = "";
         return;
       }
@@ -272,7 +272,7 @@ const StockDetailsModal = ({ details, onClose }) => {
   const handleSave = async (entry, index) => {
     const tagSaudaNo = linkedSaudas[index] || [];
     if (tagSaudaNo.length === 0) {
-      toast.warning("Please enter at least one Sauda number before saving.");
+      toast.error("Please enter at least one Sauda number before saving.");
       return;
     }
 
@@ -310,7 +310,7 @@ const StockDetailsModal = ({ details, onClose }) => {
         }));
 
         if (currentStatus === "Complete") {
-          toast.info("This sauda is now marked as Complete!");
+          toast.success("This sauda is now marked as Complete!");
         }
 
         const saudaNo = getSaudaNumber(entry);

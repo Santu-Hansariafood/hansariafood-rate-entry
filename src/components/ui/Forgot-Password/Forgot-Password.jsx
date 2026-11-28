@@ -5,7 +5,7 @@ import { Send, Phone, Lock, CheckCircle, Mail } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import Title from "@/components/common/Title/Title";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { useRouter } from "next/navigation";
 

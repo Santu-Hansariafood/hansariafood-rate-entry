@@ -17,6 +17,11 @@
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
 
+  /* React Hot Toast surface — follows the system color scheme below. */
+  --toast-bg: #ffffff;
+  --toast-fg: #171717;
+  --toast-border: #e5e7eb;
+
   color-scheme: light;
 }
 
@@ -32,6 +37,9 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --toast-bg: #1f2937;
+    --toast-fg: #f3f4f6;
+    --toast-border: #374151;
     color-scheme: dark;
   }
 }

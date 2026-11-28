@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { User, Phone, Lock } from "lucide-react";
-import "react-toastify/dist/ReactToastify.css";
 
 import useRegisterForm from "@/hooks/Register/useRegisterForm";
 import Loading from "@/components/common/Loading/Loading";

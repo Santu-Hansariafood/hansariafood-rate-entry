@@ -13,7 +13,7 @@ import {
   Tooltip,
 } from "chart.js";
 import { motion } from "framer-motion";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
 
 ChartJS.register(

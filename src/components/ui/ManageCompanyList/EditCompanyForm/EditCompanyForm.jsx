@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import useCompany from "@/hooks/Company/useCompany";
 import Loading from "@/components/common/Loading/Loading";

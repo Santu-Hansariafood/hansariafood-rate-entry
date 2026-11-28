@@ -2,8 +2,7 @@
 
 import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "@/utils/toast/toast";
 import useManageCompanyList from "@/hooks/ManageCompany/useManageCompanyList";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
@@ -154,7 +153,6 @@ const ManageCompanyList = () => {
   return (
     <Suspense fallback={<Loading />}>
       <div className="p-4 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
-        <ToastContainer position="top-right" autoClose={3000} />
         <Title text="Manage Company List" />
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-green-100 dark:border-gray-700">
           <div className="flex items-center gap-3">

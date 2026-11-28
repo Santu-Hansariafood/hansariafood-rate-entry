@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 
 const STORAGE_KEY = "CATEGORY_FILTERS_STORAGE";
@@ -53,7 +53,7 @@ export default function useCategories(onFilterChange) {
 
       if (newFilters[category._id]) {
         delete newFilters[category._id];
-        toast.info(`Filter removed: ${category.name}`);
+        toast(`Filter removed: ${category.name}`);
       } else {
         newFilters[category._id] = category.name;
         toast.success(`Filter added: ${category.name}`);

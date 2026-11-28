@@ -7,8 +7,7 @@ import Header from "@/components/common/Header/Header";
 import Footer from "@/components/common/Footer/Footer";
 import { UserProvider } from "@/context/UserContext";
 import { SocketProvider } from "@/context/SocketContext";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import ScrollToTop from "@/components/common/ScrollToTop/ScrollToTop";
 import SariaAI from "@/components/common/Footer/SariaAI/SariaAI";
 import AuthWrapper from "@/components/AuthWrapper/AuthWrapper";
@@ -305,15 +304,18 @@ export default function RootLayout({ children }) {
 
                 <main className="flex-1 shell-top">
                   {children}
-                  <ToastContainer
+                  <Toaster
                     position="top-right"
-                    autoClose={2000}
-                    hideProgressBar={false}
-                    newestOnTop
-                    closeOnClick
-                    pauseOnHover
-                    draggable
-                    theme="system"
+                    toastOptions={{
+                      duration: 3000,
+                      style: {
+                        background: "var(--toast-bg)",
+                        color: "var(--toast-fg)",
+                        border: "1px solid var(--toast-border)",
+                        fontSize: "0.875rem",
+                        maxWidth: "22rem",
+                      },
+                    }}
                   />
                 </main>
 

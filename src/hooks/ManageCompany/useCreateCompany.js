@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 export default function useCreateCompany() {
   const [company, setCompany] = useState("");

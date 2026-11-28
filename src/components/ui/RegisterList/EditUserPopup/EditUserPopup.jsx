@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { X, Save } from "lucide-react";
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "@/components/common/Loading/Loading";
 

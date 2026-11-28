@@ -2,8 +2,7 @@
 
 import React, { useMemo } from "react";
 import { X, Copy } from "lucide-react";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "@/utils/toast/toast";
 import useSaudaNotifications from "@/hooks/SaudaData/useSaudaNotifications";
 import DownloadExcelButton from "./DownloadExcelButton/DownloadExcelButton";
 import Loading from "@/components/common/Loading/Loading";
@@ -88,17 +87,6 @@ const NotificationsPanel = ({ onClose }) => {
           )}
         </div>
       </div>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
       <div className="flex-1 overflow-y-auto flex flex-col">
         <div className="p-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
           <input

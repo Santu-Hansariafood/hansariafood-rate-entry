@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import stateCityData from "@/data/state-city.json";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 export const useCreateLocationForm = () => {
   const [state, setState] = useState("");

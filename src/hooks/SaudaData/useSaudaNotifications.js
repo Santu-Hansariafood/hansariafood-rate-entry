@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import { useSocket } from "@/context/SocketContext";
 
 const LOCAL_STORAGE_KEY = "sauda_notifications_cache_v2";

@@ -2,8 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { Suspense, useCallback, useState } from "react";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import Loading from "@/components/common/Loading/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
@@ -301,7 +299,6 @@ export default function Rate() {
   return (
     <Suspense fallback={<Loading />}>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 sm:p-6 lg:p-8 transition-colors">
-        <ToastContainer position="top-right" theme="colored" />
         <div className="max-w-7xl mx-auto space-y-8">
           <Title text="Rate Management" />
           <CategoryCard onFilterChange={handleFilterChange} />

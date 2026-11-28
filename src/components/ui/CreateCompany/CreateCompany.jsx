@@ -6,8 +6,6 @@ import { motion } from "framer-motion";
 import { Building2, PlusCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Loading from "@/components/common/Loading/Loading";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 import useCategories from "@/hooks/ManageCompany/useCategories";
 import useCreateCompany from "@/hooks/ManageCompany/useCreateCompany";
@@ -174,8 +172,6 @@ export default function CreateCompany() {
             </div>
           </motion.div>
         </div>
-
-        <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       </div>
     </Suspense>
   );

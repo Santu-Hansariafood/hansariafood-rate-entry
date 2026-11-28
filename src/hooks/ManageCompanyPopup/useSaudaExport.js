@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import { generateSaudaPDF } from "@/utils/generateSaudaPDF/generateSaudaPDF";
 import { generateRatePDF } from "@/utils/generateSaudaPDF/generateRatePDF";
 
@@ -9,7 +9,7 @@ export const useSaudaExport = ({ company, today, rates, entries }) => {
   const [showRatePicker, setShowRatePicker] = useState(false);
 
   const handleShare = (loading) => {
-    if (loading) return toast.warn("Data still loading.");
+    if (loading) return toast.error("Data still loading.");
     setShowCommodityPicker(true);
   };
 
@@ -26,7 +26,7 @@ export const useSaudaExport = ({ company, today, rates, entries }) => {
   };
 
   const handleExportRate = (loading) => {
-    if (loading) return toast.warn("Data still loading.");
+    if (loading) return toast.error("Data still loading.");
     setShowRatePicker(true);
   };
 

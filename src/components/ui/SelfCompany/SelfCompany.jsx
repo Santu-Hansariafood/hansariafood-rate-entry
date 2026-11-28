@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import { X, Building2, CheckCircle, AlertTriangle, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import Purchase from "./Purchase/Purchase";

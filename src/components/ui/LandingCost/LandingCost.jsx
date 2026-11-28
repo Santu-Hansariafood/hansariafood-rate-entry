@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Loading from "@/components/common/Loading/Loading";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import useLandingCost from "@/hooks/LandingCost/useLandingCost";
 import { exportLandingCostToExcel } from "@/utils/landingCostExcel";
 import { calculateLandingCost } from "@/utils/landingCost";
@@ -75,7 +75,7 @@ export default function LandingCost() {
 
   const handleAddLocation = useCallback(() => {
     if (!selectedLocation || ratesLoading || freightLoading || tableRows.length === 0) {
-      toast.warn("Select a location with landing cost data before adding it");
+      toast.error("Select a location with landing cost data before adding it");
       return;
     }
 
@@ -109,7 +109,7 @@ export default function LandingCost() {
 
   const handleDownloadExcel = useCallback(async () => {
     if (!selectedCommodity || exportRows.length === 0) {
-      toast.warn("No landing cost data available to export");
+      toast.error("No landing cost data available to export");
       return;
     }
     const locations = [

@@ -2,7 +2,7 @@
 
 import React, { Suspense, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import usePreviousSauda from "@/hooks/PreviousSauda/PreviousSauda";
 import Loading from "@/components/common/Loading/Loading";
@@ -115,7 +115,7 @@ const PreviousSauda = () => {
 
   const handleDownloadExcel = useCallback(() => {
     if (!dataWithStatus.length) {
-      toast.warning("No data to download");
+      toast.error("No data to download");
       return;
     }
     downloadSaudaExcel(dataWithStatus, `Previous_Sauda_${date}.xlsx`);
@@ -123,7 +123,7 @@ const PreviousSauda = () => {
 
   const handleDownloadPDF = useCallback(() => {
     if (!dataWithStatus.length) {
-      toast.warning("No data to download");
+      toast.error("No data to download");
       return;
     }
     downloadSaudaPDF(dataWithStatus, `Previous_Sauda_${date}.pdf`);

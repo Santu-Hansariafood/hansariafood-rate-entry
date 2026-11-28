@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Send, X, Copy, Mic, MicOff, Trash2, Zap, TrendingUp, Users, PieChart, Building2 } from "lucide-react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import Loading from "../../Loading/Loading";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import { useSession } from "next-auth/react";
 import { useUser } from "@/context/UserContext";
 import debounce from "lodash.debounce";
@@ -87,7 +87,7 @@ const SariaAI = () => {
       // Auto-clear chat
       setMessages([]);
       localStorage.removeItem("sariaai_chat");
-      toast.info("Chat history cleared after inactivity.");
+      toast("Chat history cleared after inactivity.");
     }, AUTO_CLEAR_DELAY);
   }, []);
 

@@ -14,7 +14,7 @@ import {
 } from "chart.js";
 import { motion } from "framer-motion";
 import { CalendarDays, TrendingUp } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import Loading from "@/components/common/Loading/Loading";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
 import useRateAnalysisData from "@/hooks/RateCalendar/useRateAnalysisData";

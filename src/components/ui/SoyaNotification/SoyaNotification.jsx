@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 export default function SoyaNotification({ data }) {
   if (!data) return null;

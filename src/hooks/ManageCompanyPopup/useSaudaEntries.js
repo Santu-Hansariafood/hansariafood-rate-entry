@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import { useToday } from "./useToday";
 
 export function useSaudaEntries(company, rateMap, sellers, companyNameToId) {
@@ -92,7 +92,7 @@ export function useSaudaEntries(company, rateMap, sellers, companyNameToId) {
         const saved = data?.entry?.saudaEntries ?? {};
 
         if (!Object.keys(saved).length) {
-          toast.info("No previous sauda data, starting fresh.");
+          toast("No previous sauda data, starting fresh.");
         }
 
         const init = {};

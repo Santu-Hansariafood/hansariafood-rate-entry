@@ -10,7 +10,7 @@ import {
   FileText,
   Building2,
 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 export default function NotificationsPanel({ notifications = [] }) {
 

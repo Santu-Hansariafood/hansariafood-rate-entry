@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import Loading from "@/components/common/Loading/Loading";
 import { Package, Leaf, MapPin } from "lucide-react";
 import dynamic from "next/dynamic";

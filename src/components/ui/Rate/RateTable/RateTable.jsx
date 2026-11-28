@@ -8,7 +8,7 @@ import {
   useTransition,
 } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 import { useUser } from "@/context/UserContext";
@@ -253,11 +253,11 @@ export default function RateTable({
 
       toast.success("Rate saved!");
       if (data.notificationDelivery?.error) {
-        toast.warn(
+        toast.error(
           `Rate saved, but the app notification could not be sent: ${data.notificationDelivery.error}`
         );
       } else if (data.notificationDelivery?.skipped) {
-        toast.warn(
+        toast.error(
           `${data.notificationDelivery.skipped} registered user(s) were skipped because they do not have an external app user ID.`
         );
       }

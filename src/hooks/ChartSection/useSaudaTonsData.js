@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 export const useSaudaTonsData = () => {
   const [data, setData] = useState([]);

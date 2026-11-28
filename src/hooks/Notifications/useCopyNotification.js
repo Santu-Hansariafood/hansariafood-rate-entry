@@ -1,5 +1,5 @@
 "use client";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 
 export default function useCopyNotification() {
   const normalize = (s) => (s || "").toLowerCase().replace(/\s+/g, " ").trim();

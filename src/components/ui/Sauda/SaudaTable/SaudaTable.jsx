@@ -4,7 +4,7 @@ import React, { Suspense, useState, useMemo } from "react";
 import Loading from "@/components/common/Loading/Loading";
 import dynamic from "next/dynamic";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import stateCityData from "@/data/state-city.json";
 
 const normalize = (s) => s?.trim().toLowerCase() || "";
@@ -158,11 +158,11 @@ export default function SaudaTable({
           );
 
           if (data.notificationDelivery?.error) {
-            toast.warn(
+            toast.error(
               "Sauda deleted, but the app notification could not be sent."
             );
           } else if (data.notificationDelivery?.skipped) {
-            toast.warn(
+            toast.error(
               `${data.notificationDelivery.skipped} registered user(s) need an app user ID to receive this sauda update.`
             );
           }

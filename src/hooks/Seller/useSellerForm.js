@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
+import { toast } from "@/utils/toast/toast";
 import axiosInstance from "@/lib/axiosInstance/axiosInstance";
 import { validationPatterns } from "@/utils/validationPatterns/validationPatterns";
 
@@ -39,17 +39,17 @@ const useSellerForm = () => {
 
   const handleSave = async () => {
     if (!sellerName.trim()) {
-      toast.warning("Seller name is required!");
+      toast.error("Seller name is required!");
       return;
     }
     if (!validationPatterns.name.test(sellerName.trim())) {
-      toast.warning(
+      toast.error(
         "Enter a valid seller name (letters, numbers, spaces and common symbols, 2-100 characters)."
       );
       return;
     }
     if (selectedCompanies.length === 0) {
-      toast.warning("Please select at least one company!");
+      toast.error("Please select at least one company!");
       return;
     }
 
