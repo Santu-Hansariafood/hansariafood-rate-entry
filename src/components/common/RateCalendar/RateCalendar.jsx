@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Line } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import {
+  BarElement,
   CategoryScale,
   Chart as ChartJS,
   Legend,
   LinearScale,
-  LineElement,
-  PointElement,
   Tooltip,
 } from "chart.js";
 import { motion } from "framer-motion";
@@ -19,10 +18,9 @@ import useRateGroups from "@/hooks/Rate/useRateGroups";
 import useRateAnalysisData from "@/hooks/RateCalendar/useRateAnalysisData";
 
 ChartJS.register(
+  BarElement,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   Tooltip,
   Legend,
 );
@@ -313,15 +311,9 @@ export default function RateCalendar() {
             const values = totalsByDay.get(day);
             return values ? values.total / values.count : null;
           }),
-          borderColor: color,
           backgroundColor: color,
-          pointBackgroundColor: color,
-          pointBorderColor: color,
-          borderWidth: 2,
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          tension: 0.3,
-          spanGaps: false,
+          borderRadius: 4,
+          maxBarThickness: 24,
         };
       }),
     };
@@ -345,7 +337,7 @@ export default function RateCalendar() {
     },
     scales: {
       y: {
-        beginAtZero: false,
+        beginAtZero: true,
         title: { display: true, text: "Rate (₹)" },
         ticks: {
           callback: (value) =>
@@ -464,7 +456,8 @@ export default function RateCalendar() {
                     Monthly Rate by Location
                   </h2>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Daily rate trend for {monthNames[selectedMonth]} {selectedYear}.
+                    Daily rates by location for {monthNames[selectedMonth]}{" "}
+                    {selectedYear}.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-end gap-3">
@@ -522,7 +515,7 @@ export default function RateCalendar() {
                       minWidth: `${Math.max(720, chartLabels.length * 38)}px`,
                     }}
                   >
-                    <Line data={chartData} options={chartOptions} />
+                    <Bar data={chartData} options={chartOptions} />
                   </div>
                 </div>
               ) : (
