@@ -5,6 +5,7 @@ export default function useRateAnalysisData() {
   const [companies, setCompanies] = useState([]);
   const [allRates, setAllRates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -22,14 +23,18 @@ export default function useRateAnalysisData() {
         const listRates = Array.isArray(data.rates) ? data.rates : [];
         setCompanies(listCompanies);
         setAllRates(listRates);
+        setError("");
       } catch (error) {
         if (error.name !== "CanceledError" && error.name !== "AbortError") {
           console.error("Error fetching rate analysis data:", error);
           setCompanies([]);
           setAllRates([]);
+          setError(
+            error.response?.data?.error || "Failed to fetch rate analysis data",
+          );
         }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
@@ -40,6 +45,6 @@ export default function useRateAnalysisData() {
     };
   }, []);
 
-  return { companies, allRates, loading };
+  return { companies, allRates, loading, error };
 }
 
