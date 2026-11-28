@@ -1,25 +1,36 @@
 "use client";
 
-import { useMemo } from "react";
-import { Bar } from "react-chartjs-2";
+import { useMemo, useState } from "react";
+import { Bar, Line } from "react-chartjs-2";
 import {
   BarElement,
   CategoryScale,
   Chart as ChartJS,
   Legend,
+  LineElement,
   LinearScale,
+  PointElement,
   Tooltip,
 } from "chart.js";
 import { motion } from "framer-motion";
 import useRateGroups from "@/hooks/Rate/useRateGroups";
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend,
+);
 
 const normalize = (value) => String(value ?? "").trim().toLocaleLowerCase();
 const rateKey = (company, location, commodity) =>
   [company, location, commodity].map(normalize).join("|||");
 
 const TargetAchievementChart = ({ rates, saudas, date, today }) => {
+  const [chartType, setChartType] = useState("bar");
   const { groups, loading, error } = useRateGroups();
 
   const quantityByTarget = useMemo(() => {
@@ -99,12 +110,7 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
       });
     });
 
-    const dataByGroup = new Map(
-      (Array.isArray(groups) ? groups : []).map((group) => [
-        group.name,
-        { name: group.name, target: 0, achieved: 0 },
-      ]),
-    );
+    const dataByGroup = new Map();
     quantityByTarget.forEach((item) => {
       const companyGroups = groupNamesByCompany.get(normalize(item.company));
       const names = companyGroups?.size ? [...companyGroups] : ["Ungrouped"];
@@ -134,7 +140,12 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
         label: "Target quantity",
         data: chartRows.map((item) => item.target),
         backgroundColor: "rgba(14, 165, 233, 0.78)",
+        borderColor: "#0ea5e9",
+        pointBackgroundColor: "#0ea5e9",
+        borderWidth: 3,
         borderRadius: 6,
+        tension: 0.35,
+        fill: false,
       },
       {
         label: "Achieved Sauda quantity",
@@ -144,12 +155,23 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
             ? "rgba(239, 68, 68, 0.82)"
             : "rgba(16, 185, 129, 0.82)",
         ),
+        borderColor: "#10b981",
+        pointBackgroundColor: chartRows.map((item) =>
+          item.achieved > item.target ? "#ef4444" : "#10b981",
+        ),
+        pointBorderColor: chartRows.map((item) =>
+          item.achieved > item.target ? "#ef4444" : "#10b981",
+        ),
+        borderWidth: 3,
+        pointRadius: 4,
+        pointHoverRadius: 7,
         borderRadius: 6,
+        tension: 0.35,
+        fill: false,
       },
     ],
   };
   const chartOptions = {
-    indexAxis: "y",
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 900, easing: "easeOutQuart" },
@@ -167,11 +189,10 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
       },
     },
     scales: {
-      x: {
+      y: {
         beginAtZero: true,
         title: { display: true, text: "Quantity (tons)" },
       },
-      y: { ticks: { autoSkip: false } },
     },
   };
 
@@ -186,13 +207,27 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
     >
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 md:text-2xl">
+          <h2
+            className="bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text
+                       text-xl font-extrabold text-transparent md:text-2xl"
+          >
             Group-wise Target vs Achieved Sauda Quantity
           </h2>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Compare target and achieved quantities in tons.
           </p>
         </div>
+        <select
+          className="rounded-full border border-gray-200 bg-white/80 px-4 py-2
+                     text-sm shadow-sm backdrop-blur dark:border-gray-700
+                     dark:bg-gray-800/80"
+          value={chartType}
+          onChange={(event) => setChartType(event.target.value)}
+          aria-label="Chart type"
+        >
+          <option value="bar">Vertical bars</option>
+          <option value="line">Line graph</option>
+        </select>
       </div>
 
       {date !== today ? (
@@ -220,12 +255,18 @@ const TargetAchievementChart = ({ rates, saudas, date, today }) => {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.35 }}
-          className="max-h-[640px] overflow-auto rounded-2xl border border-gray-200 bg-white/80 p-4 dark:border-gray-700 dark:bg-gray-900/60 md:p-6"
+          className="w-full overflow-x-auto rounded-2xl border border-white/20
+                     bg-white/80 p-4 shadow-xl dark:bg-gray-900/60 md:p-6"
         >
           <div
-            style={{ height: `${Math.max(360, chartRows.length * 42)}px` }}
+            className="h-[420px] md:h-[520px]"
+            style={{ minWidth: `${Math.max(700, chartRows.length * 110)}px` }}
           >
-            <Bar data={chartData} options={chartOptions} />
+            {chartType === "bar" ? (
+              <Bar data={chartData} options={chartOptions} />
+            ) : (
+              <Line data={chartData} options={chartOptions} />
+            )}
           </div>
         </motion.div>
       )}
